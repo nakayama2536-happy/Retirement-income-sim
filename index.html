@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#1d2733"><title>老後収支シミュレーター</title>
+<link rel="manifest" href="manifest.webmanifest"><link rel="apple-touch-icon" href="icons/icon-192.png"><link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<header class="topbar"><div><h1>老後収支シミュレーター</h1><p>計画・制度・実績を一つの計算エンジンで管理</p></div><div class="version"><span id="appVersion"></span><span>制度 <b id="rulesVersion"></b></span></div></header>
+<div id="notice" class="notice" hidden></div>
+<nav class="tabs" aria-label="画面切替">
+<button data-tab="home" class="active">ホーム</button><button data-tab="cashflow">年間収支</button><button data-tab="actuals">実績</button><button data-tab="scenarios">比較</button><button data-tab="rules">制度</button><button data-tab="settings">設定</button>
+</nav>
+<main>
+<section id="emptyState" class="empty card" hidden>
+<h2>個人設定を読み込んで開始</h2><p>資産額などの個人データはアプリ本体へ埋め込んでいません。「設定JSON読込」から専用設定ファイルを読み込むと計算を開始します。</p>
+<label class="file-btn">設定JSONを選択<input id="importFile" type="file" accept="application/json"></label>
+<p class="muted">設定はこの端末のブラウザ内に保存されます。個人設定JSONを公開GitHubへ置かない運用を推奨します。</p>
+</section>
+<div id="dashboard" hidden>
+<section id="home" class="panel">
+<div class="hero-grid">
+<article class="card status-card"><span>計画状態</span><strong id="status"></strong><small>管理基準との比較</small></article>
+<article class="card"><span>64歳開始資産</span><strong id="currentAsset"></strong></article>
+<article class="card"><span>95歳末・当初計画</span><strong id="finalAsset"></strong></article>
+<article class="card forecast-card"><span>95歳末・実績反映後</span><strong id="forecastFinalAsset">未入力</strong><small id="forecastNote">実績入力後に自動更新</small></article>
+<article class="card"><span>95歳管理基準</span><strong id="finalThreshold"></strong></article>
+<article class="card"><span>予備枠</span><strong id="reserve"></strong><small>最低安全資産 <b id="safeAssetMinimum"></b> / 全使用後 <b id="afterReserve"></b> / 95歳最低目安 <b id="reserveUsedThreshold"></b></small></article>
+</div>
+<article class="card"><div class="section-title"><h2>資産推移</h2><button class="info" data-help="資産推移" data-help-text="当初計画線を保持し、実績が入力されると最新実績から95歳までの再予測線を重ねます。支出のインフレ基準年は64歳のまま維持します。">ⓘ</button></div><svg id="assetChart" role="img" aria-label="64歳から95歳末までの資産推移"></svg><div class="legend"><span><i class="legend-plan"></i>当初計画</span><span><i class="legend-forecast"></i>実績反映後予測</span><span><i class="legend-actual"></i>実績</span></div></article>
+<div class="two-col">
+<article class="card"><h2>管理基準</h2><div class="table-wrap"><table><thead><tr><th>年齢末</th><th>予測</th><th>基準</th><th>差</th></tr></thead><tbody id="keyAges"></tbody></table></div></article>
+<article class="card"><h2>確認事項</h2><ul id="checks" class="checks"></ul><h3>主要イベント</h3><ol id="timeline" class="timeline"></ol></article>
+</div>
+<div class="two-col">
+<article class="card"><div class="section-title"><h2>入力値の確度</h2><button class="info" data-help="入力値の確度" data-help-text="数字の大きさとは別に、その数字が確定値・公式見込・会社見込・計画・仮定・シナリオ・未確認のどれかを表示します。計算結果が精密に見えても、前提が仮定なら将来結果にも幅があることを確認するための機能です。">ⓘ</button></div><div id="certaintySummary"></div></article>
+<article class="card"><div class="section-title"><h2>95歳資産の増減要因</h2><button class="info" data-help="増減要因分解" data-help-text="基準ケースと現在条件の95歳資産差を、開始資産・運用・労働収入・年金・支出条件・DCや転居等のイベントへ配分します。相互作用も配分するため、各要因の合計は総差額と一致します。">ⓘ</button></div><div id="factorSummary"></div></article>
+</div>
+<div class="two-col"><article class="card"><div class="section-title"><h2>データ整合性</h2><button class="info" data-help="データ整合性" data-help-text="年間予算の抜け・重複、予備枠内訳、生活費内訳、臨時イベントなどを自動点検します。計算を続けられる警告と、修正が必要なエラーを区別して表示します。">ⓘ</button></div><div id="integritySummary"></div></article><article class="card"><div class="section-title"><h2>見直し条件</h2><span id="reviewCount" class="pill"></span></div><div id="reviewAlerts" class="pending-list"></div></article></div>
+<div class="two-col"><article class="card"><div class="section-title"><h2>この結果の計算根拠</h2><button class="info" data-help="計算根拠" data-help-text="95歳末資産は月次計算で、運用益・就労収入・公的年金・iDeCo/DC受取・年代別年間予算・臨時イベントを同一時間軸に反映しています。税・社会保険は年代別年間予算に含むため、制度ツールの詳細額を別加算しません。">ⓘ</button></div><div id="calculationBasis" class="summary-box"></div></article><article class="card"><div class="section-title"><h2>制度根拠・更新状態</h2><button class="info" data-help="制度根拠" data-help-text="年金・NISA・iDeCo/DC・退職金・雇用保険・税社会保険について、制度基準日と公式出典を制度タブに保持します。将来時点では現在法を確定値として扱わず、受取・退職前に再確認します。">ⓘ</button></div><div id="sourceStatus"></div></article></div>
+<article class="card"><div class="section-title"><h2>保留事項</h2><span id="pendingCount" class="pill"></span></div><p class="muted">利用者の判断・外部確認が必要な事項だけを残し、その他は自動で進めます。</p><div id="pendingList" class="pending-list"></div></article>
+</section>
+<section id="cashflow" class="panel" hidden><div class="two-col"><article class="card"><div class="section-title"><h2>基本生活費内訳</h2><button class="info" data-help="基本生活費内訳" data-help-text="月額生活費の内訳を確認するための管理用データです。年代別年間予算が老後資産計算の正本なので、この内訳を別途加算しません。">ⓘ</button></div><div id="expenseDetail"></div></article><article class="card"><h2>年間予算との整合</h2><div id="expenseReconcile" class="summary-box"></div></article></div><article class="card"><h2>年次計算表</h2><p class="muted">単位：万円。計算のブラックボックス化を避けるため、当初計画と実績差を全年度で確認できます。</p><div class="table-wrap"><table><thead><tr><th>年齢期</th><th>期首資産</th><th>運用益</th><th>収入</th><th>支出</th><th>計画年末</th><th>実績年末</th><th>差</th></tr></thead><tbody id="yearRows"></tbody></table></div></article></section>
+<section id="actuals" class="panel" hidden>
+<div class="two-col">
+<article class="card"><div class="section-title"><h2>年次実績入力</h2><button class="info" data-help="実績入力" data-help-text="最低限、年末総資産だけ入力すれば再予測できます。年間支出・収入・運用利回り等は差異分析用なので、分かる範囲だけで構いません。">ⓘ</button></div>
+<form id="actualForm" class="form-grid">
+<label>年齢<select name="age" id="actualAge"></select></label>
+<label>年末総資産（万円）<input name="endAsset" type="number" step="1" required></label>
+<label>年間支出（万円）<input name="expense" type="number" step="1"></label>
+<label>労働収入（万円）<input name="labor" type="number" step="1"></label>
+<label>年金収入（万円）<input name="pension" type="number" step="1"></label>
+<label>税引後運用利回り（%）<input name="returnRate" type="number" step="0.01"></label>
+<label>予備枠残高（万円）<input name="reserveBalance" type="number" step="1"></label>
+<label>安全資産残高（万円）<input name="safeAssetBalance" type="number" step="1"></label>
+<label>税・社会保険実額（万円/年）<input name="taxSocial" type="number" step="1"></label>
+<label>メモ<input name="note" type="text" maxlength="80"></label>
+<button class="primary" type="submit">実績を保存して再予測</button>
+</form></article>
+<article class="card"><h2>最新実績との差異</h2><div id="actualSummary" class="summary-box"></div><p class="muted">年末資産を保存すると、その時点を新しい出発点として95歳まで自動再予測します。当初計画は上書きしません。</p></article>
+</div>
+<article class="card"><div class="section-title"><h2>年次点検チェックリスト</h2><button class="info" data-help="年次点検" data-help-text="毎年1回確認する項目を記録します。チェックは確認済みという意味で、数値を自動で変更しません。未確認項目を翌年へ持ち越さないための管理機能です。">ⓘ</button></div><div class="review-head"><label>対象年齢<select id="annualReviewAge"></select></label><span id="annualReviewProgress" class="pill"></span></div><div id="annualReviewList" class="annual-review-list"></div><label>年次点検メモ<textarea id="annualReviewNote" rows="3" maxlength="300"></textarea></label><button id="saveAnnualReviewBtn" class="primary">年次点検を保存</button></article>
+<article class="card"><h2>登録済み実績</h2><div class="table-wrap"><table><thead><tr><th>年齢</th><th>計画資産</th><th>実績資産</th><th>差</th><th>支出</th><th>税社保</th><th>安全資産</th><th>メモ</th><th></th></tr></thead><tbody id="actualRows"></tbody></table></div></article>
+</section>
+<section id="scenarios" class="panel" hidden>
+<div class="two-col">
+<article class="card"><div class="section-title"><h2>シナリオ保存</h2><button class="info" data-help="シナリオ比較" data-help-text="現在の設定を名前付きで保存し、最大3案を同時比較します。実績データはシナリオ条件から除外し、将来条件だけを比較します。">ⓘ</button></div>
+<label>シナリオ名<input id="scenarioName" type="text" value=""></label><button id="saveScenarioBtn" class="primary">現在条件を保存</button><p class="muted">初回は読み込んだ基準条件を「基準ケース」として自動保存します。</p></article>
+<article class="card"><h2>比較ルール</h2><p>最大3案を選択すると、95歳資産、80歳・90歳資産、予備枠全使用後などを同じ計算式で比較します。</p><p class="muted">点数化や「最適案」の自動判定は行いません。判断に必要な数値だけを並べます。</p></article>
+</div>
+<article class="card"><h2>保存済みシナリオ</h2><div id="scenarioList" class="scenario-list"></div></article>
+<article class="card"><h2>3案比較</h2><div id="scenarioCompare" class="table-wrap"></div></article>
+</section>
+<section id="rules" class="panel" hidden>
+<article class="card"><div class="section-title"><h2>制度ルール</h2><span class="pill">基準日 <b id="rulesAsOf"></b></span></div><div id="ruleCards" class="rule-grid"></div></article>
+<div class="tool-grid">
+<article class="card"><h2>年金受給開始比較</h2><label>65歳基準年額（万円）<input id="pensionBase65" type="number" value="0" step="1"></label><label>受給開始年齢<input id="pensionToolAge" type="number" value="65" min="60" max="75" step="1"></label><button id="pensionToolRun" class="primary">試算</button><p id="pensionToolResult" class="result"></p><small>簡易計算。加給年金・在職支給停止等は未反映。</small></article>
+<article class="card"><h2>NISA枠確認</h2><label>今年のつみたて枠使用（万円）<input id="nisaTsumitate" type="number" value="0"></label><label>今年の成長枠使用（万円）<input id="nisaGrowth" type="number" value="0"></label><label>生涯枠の使用簿価（万円）<input id="nisaLifetime" type="number" value="0"></label><button id="nisaToolRun" class="primary">確認</button><p id="nisaToolResult" class="result"></p></article>
+<article class="card"><h2>iDeCo / DC受取</h2><label>受取時残高（万円）<input id="idecoBalance" type="number" value="0"></label><label>受取開始年齢<input id="idecoStartAge" type="number" value="60" min="60" max="75"></label><label>年金受取年数<input id="idecoYears" type="number" value="10" min="5" max="20"></label><button id="idecoToolRun" class="primary">比較</button><p id="idecoToolResult" class="result"></p><details><summary>税務・重複調整の計算根拠</summary><p id="idecoToolBasis" class="muted">個人設定を読み込むと加入期間・退職金との重複調整参考を表示します。</p></details><small>入力残高の単純均等割りに加え、個人設定がある場合は65歳見込・50%一時金・5年年金・退職所得控除の19年内重複調整・一時金手取参考を併記します。併用可否・比率指定は運営管理機関へ確認し、将来税制は受取前に再確認します。</small></article>
+<article class="card"><h2>退職金控除</h2><label>退職金（万円）<input id="retirementAmount" type="number" value="0"></label><label>勤続年数<input id="serviceYears" type="number" value="0"></label><button id="retirementToolRun" class="primary">試算</button><p id="retirementToolResult" class="result"></p><details><summary>計算根拠</summary><p id="retirementToolBasis" class="muted">勤続年数から退職所得控除を計算します。</p></details><small>iDeCo/DC一時金との重複調整は現行ルール参考を別表示します。</small></article>
+<article class="card"><h2>雇用保険 65歳前後比較</h2><button id="unemploymentToolRun" class="primary">現在条件で比較</button><p id="unemploymentToolResult" class="result"></p><details><summary>計算根拠</summary><p id="unemploymentToolBasis" class="muted">2026/8/1制度を基準に計算します。</p></details><small>退職時点では制度・離職理由・離職前6か月賃金を再確認してください。</small></article>
+<article class="card"><h2>税・社会保険 手取参考</h2><label>年齢<input id="taxToolAge" type="number" value="70" min="60" max="95"></label><label>給与年額（万円）<input id="taxToolSalary" type="number" value="0"></label><label>年金年額（万円）<input id="taxToolPension" type="number" value="0"></label><label>配偶者の合計所得（万円・任意）<input id="taxToolSpouseIncome" type="number" value="" placeholder="未入力"></label><label>配偶者年齢<input id="taxToolSpouseAge" type="number" value="70" min="0" max="110"></label><button id="taxToolRun" class="primary">概算</button><p id="taxToolResult" class="result"></p><details><summary>計算根拠</summary><p id="taxToolBasis" class="muted">入力後に給与所得・年金所得・控除・保険料内訳を表示します。</p></details><small>所得税・住民税は2026年制度参考、国保・介護保険・後期高齢者医療は福山市2026年度参考。軽減判定・個別控除など未入力条件は概算です。年代別年間予算には税・社保を含むため、資産計算へ別加算しません。</small></article>
+</div>
+</section>
+<section id="settings" class="panel" hidden>
+<div class="two-col"><article class="card"><h2>主要前提</h2><form id="settingsForm" class="form-grid"><label>64歳時点資産（万円）<input name="initialAsset" type="number"></label><label>税引後運用利回り（%）<input name="afterTaxReturn" type="number" step="0.00001"></label><label>インフレ率（%）<input name="inflation" type="number" step="0.1"></label><label>夫婦アルバイト年額（万円・参考）<input name="laborAnnual" type="number"></label><label>予備枠（万円）<input name="reserveTotal" type="number"></label><button class="primary" type="submit">保存して再計算</button></form><p class="muted">年金開始月・退職日・iDeCo受取等は個人設定JSONで管理します。月次条件を単純な年齢入力へ戻さないためです。</p></article>
+<article class="card"><h2>データ管理</h2><p>個人データは端末側へ保存します。</p><label class="file-btn">設定JSON読込<input id="importFile2" type="file" accept="application/json"></label><button id="exportBtn" class="secondary">現在設定をバックアップ</button><button id="exportFullBtn" class="secondary">設定＋シナリオを一括バックアップ</button><p class="muted">バックアップJSONは公開リポジトリへ保存しないでください。</p></article></div>
+<article class="card"><div class="section-title"><h2>入力値の確度区分</h2><button class="info" data-help="確度区分の変更" data-help-text="確度は計算値そのものを変更しません。後で公式資料や確定額が得られたときに、前提の信頼性を管理するためのラベルです。">ⓘ</button></div><form id="certaintyForm" class="form-grid"></form></article>
+</section>
+</div>
+</main>
+<dialog id="helpDialog"><h2 id="helpTitle"></h2><p id="helpBody"></p><button id="helpClose" class="primary">閉じる</button></dialog>
+<footer>計算結果は将来を保証するものではありません。税制・社会保険・年金・介護制度は改正されるため、重要な判断時には公式情報を再確認してください。</footer>
+<script type="module" src="app.mjs"></script>
+</body></html>
