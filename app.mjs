@@ -317,3 +317,163 @@ function populateActualForm(age){
   f.returnRate.value=a?.returnRate ?? '';
   f.reserveBalance.value=a?.reserveBalance ?? '';
   f.safeAssetBalance.value=a?.safeAssetBalance ?? '';
+  f.taxSocial.value=a?.taxSocial ?? '';
+  f.note.value=a?.note ?? '';
+}
+
+function saveActual(ev){
+  ev.preventDefault(); const f=ev.currentTarget; const age=Number(f.age.value);
+  config.actuals ||= {};
+  config.actuals[age]={
+    endAsset:Number(f.endAsset.value), expense:numOrBlank(f.expense.value), labor:numOrBlank(f.labor.value),
+    pension:numOrBlank(f.pension.value), returnRate:numOrBlank(f.returnRate.value), reserveBalance:numOrBlank(f.reserveBalance.value),
+    safeAssetBalance:numOrBlank(f.safeAssetBalance.value), taxSocial:numOrBlank(f.taxSocial.value),
+    note:f.note.value.trim(), updatedAt:new Date().toISOString()
+  };
+  f.reset(); refresh(); el('actualAge').value=age; showNotice(`${age}歳の実績を保存し、95歳まで再予測しました。`);
+}
+
+function deleteActual(age){
+  if(!config.actuals?.[age]) return;
+  delete config.actuals[age]; refresh(); showNotice(`${age}歳の実績を削除しました。`);
+}
+
+
+function renderAnnualReview(ageOverride=null){
+  const select=el('annualReviewAge');
+  const current=ageOverride ?? select.value;
+  select.innerHTML='';
+  for(let age=config.plan.startAge;age<=config.plan.endAge;age++){
+    const o=document.createElement('option');o.value=age;o.textContent=`${age}歳`;select.appendChild(o);
+  }
+  const latest=latestActual(config);
+  const target=Number(current || latest?.age || config.plan.startAge);
+  select.value=String(target);
+  const review=config.reviews?.[target] || {items:{},note:''};
+  const list=el('annualReviewList');
+  list.innerHTML=ANNUAL_REVIEW_ITEMS.map(item=>`<label class="review-check"><input type="checkbox" data-review-key="${item.key}" ${review.items?.[item.key]?'checked':''}><span>${escapeHtml(item.label)}</span></label>`).join('');
+  el('annualReviewNote').value=review.note || '';
+  const done=ANNUAL_REVIEW_ITEMS.filter(item=>review.items?.[item.key]).length;
+  el('annualReviewProgress').textContent=`${done}/${ANNUAL_REVIEW_ITEMS.length} 確認済み`;
+}
+
+function saveAnnualReview(){
+  const age=Number(el('annualReviewAge').value);
+  config.reviews ||= {};
+  const items={};
+  document.querySelectorAll('[data-review-key]').forEach(cb=>{items[cb.dataset.reviewKey]=cb.checked;});
+  config.reviews[age]={items,note:el('annualReviewNote').value.trim(),updatedAt:new Date().toISOString()};
+  refresh(); el('annualReviewAge').value=String(age); renderAnnualReview(age); showNotice(`${age}歳の年次点検を保存しました。`);
+}
+
+function renderScenarios(){
+  const wrap=el('scenarioList'); wrap.innerHTML='';
+  scenarios.forEach(s=>{
+    const m=scenarioMetrics(s.config);
+    const article=document.createElement('article'); article.className='scenario-item';
+    const baseline=s.role==='baseline';
+    article.innerHTML=`<label class="scenario-check"><input type="checkbox" data-scenario-select="${s.id}" ${s.selected?'checked':''}><span><strong>${escapeHtml(s.name)} ${baseline?'<em class="baseline-badge">基準</em>':''}</strong><small>95歳 ${money(m.finalAsset)} / 80歳 ${m.age80Asset==null?'—':money(m.age80Asset)}</small></span></label>${baseline?'<span class="muted">固定</span>':`<button class="link-btn" data-scenario-delete="${s.id}">削除</button>`}`;
+    wrap.appendChild(article);
+  });
+  renderScenarioCompare();
+}
+
+function renderScenarioCompare(){
+  const selected=scenarios.filter(s=>s.selected).slice(0,3);
+  if(!selected.length){ el('scenarioCompare').innerHTML='<p class="muted">比較するシナリオを選択してください。</p>'; return; }
+  const metrics=selected.map(s=>({s,m:scenarioMetrics(s.config)}));
+  const rows=[
+    ['95歳末資産', x=>money(x.m.finalAsset)],
+    ['予備枠全使用後', x=>money(x.m.afterReserve)],
+    ['80歳末資産', x=>x.m.age80Asset==null?'—':money(x.m.age80Asset)],
+    ['90歳末資産', x=>x.m.age90Asset==null?'—':money(x.m.age90Asset)],
+    ['税引後運用利回り', x=>`${x.s.config.plan.afterTaxReturn}%`],
+    ['インフレ率', x=>`${x.s.config.plan.inflation}%`],
+    ['本人バイト終了', x=>x.s.config.employment?.primary?.sideWork?.endDate?.slice(0,7)||'—'],
+    ['本人年金開始', x=>x.s.config.income?.pensions?.primary?.startDate?.slice(0,7)||'—']
+  ];
+  let html='<table><thead><tr><th>指標</th>'+metrics.map(x=>`<th>${escapeHtml(x.s.name)}</th>`).join('')+'</tr></thead><tbody>';
+  html+=rows.map(([label,fn])=>`<tr><td>${label}</td>${metrics.map(x=>`<td>${fn(x)}</td>`).join('')}</tr>`).join('');
+  html+='</tbody></table>'; el('scenarioCompare').innerHTML=html;
+}
+
+function saveCurrentScenario(){
+  const input=el('scenarioName'); const name=input.value.trim() || `シナリオ${scenarios.length+1}`;
+  scenarios.push({id:crypto.randomUUID(),name,savedAt:new Date().toISOString(),selected:scenarios.filter(s=>s.selected).length<3,config:scenarioSnapshot(config)});
+  saveScenarios(scenarios); input.value=''; renderScenarios(); showNotice(`「${name}」を保存しました。`);
+}
+
+function toggleScenario(id, checked){
+  const current=scenarios.filter(s=>s.selected).length;
+  const target=scenarios.find(s=>s.id===id); if(!target) return;
+  if(checked && current>=3){ showNotice('同時比較は最大3案です。','error'); renderScenarios(); return; }
+  target.selected=checked; saveScenarios(scenarios); renderScenarios();
+}
+
+function deleteScenario(id){
+  const target=scenarios.find(s=>s.id===id);
+  if(target?.role==='baseline'){ showNotice('基準ケースは差分管理の基準なので削除できません。','error'); return; }
+  scenarios=scenarios.filter(s=>s.id!==id); saveScenarios(scenarios); renderScenarios(); showNotice('シナリオを削除しました。');
+}
+
+function escapeHtml(s=''){ return String(s).replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c])); }
+
+function renderSettings(){
+  const f=el('settingsForm'); const p=config.plan;
+  f.initialAsset.value=p.initialAsset; f.afterTaxReturn.value=p.afterTaxReturn; f.inflation.value=p.inflation;
+  f.laborAnnual.value=(Number(config.employment?.primary?.sideWork?.monthlyGross||0)+Number(config.employment?.spouse?.sideWork?.monthlyGross||0))*12;
+  f.reserveTotal.value=config.reserve.total;
+  renderCertaintySettings();
+}
+
+
+function renderCertaintySettings(){
+  const form=el('certaintyForm');
+  if(!form) return;
+  const labels={initialAsset:'64歳開始資産',returnRate:'運用利回り',inflation:'インフレ率',laborIncome:'労働収入',pension:'年金',dc:'DC受取',budgets:'年間予算',retirement:'退職金'};
+  const order=Object.keys(labels);
+  const options=Object.entries(CERTAINTY_LABELS).map(([value,label])=>`<option value="${value}">${label}</option>`).join('');
+  form.innerHTML=order.map(key=>`<label>${labels[key]}<select name="${key}">${options}</select></label>`).join('')+'<button class="primary" type="submit">確度区分を保存</button>';
+  order.forEach(key=>{ if(form.elements[key]) form.elements[key].value=config.certainty?.[key] || 'unknown'; });
+}
+
+function saveCertainty(ev){
+  ev.preventDefault(); const f=ev.currentTarget;
+  config.certainty ||= {};
+  for(const key of ['initialAsset','returnRate','inflation','laborIncome','pension','dc','budgets','retirement']) config.certainty[key]=f.elements[key].value;
+  if(config.income?.pensions?.primary) config.income.pensions.primary.certainty=config.certainty.pension;
+  refresh(); showNotice('入力値の確度区分を保存しました。');
+}
+
+function applySettings(ev){
+  ev.preventDefault(); const f=ev.currentTarget;
+  config.plan.initialAsset=+f.initialAsset.value; config.plan.afterTaxReturn=+f.afterTaxReturn.value; config.plan.inflation=+f.inflation.value;
+  const householdAnnual=+f.laborAnnual.value; const eachMonthly=householdAnnual/24;
+  if(config.employment?.primary?.sideWork) config.employment.primary.sideWork.monthlyGross=eachMonthly;
+  if(config.employment?.spouse?.sideWork) config.employment.spouse.sideWork.monthlyGross=eachMonthly;
+  config.reserve.total=+f.reserveTotal.value;
+  refresh(); showNotice('設定を保存し、月次計算で95歳まで再計算しました。');
+}
+
+
+function renderCalculationBasis(){
+  const box=el('calculationBasis'), source=el('sourceStatus');
+  if(!box||!source||!config||!result) return;
+  const start=config.plan?.startDate || '—';
+  const ret=config.employment?.primary?.mainRetirement?.baseDate || '—';
+  const idecoTax=config.ideco?.applyCurrentLawTaxReference ? '現行制度参考を反映' : '税引前で計上';
+  box.innerHTML=`<dl>
+    <div><dt>計算単位</dt><dd>月次</dd></div>
+    <div><dt>計画開始</dt><dd>${escapeHtml(start)}</dd></div>
+    <div><dt>本業退職・基本日</dt><dd>${escapeHtml(ret)}</dd></div>
+    <div><dt>通常運用</dt><dd>税引後 ${Number(config.plan?.afterTaxReturn||0).toFixed(5)}%/年</dd></div>
+    <div><dt>インフレ</dt><dd>${Number(config.plan?.inflation||0).toFixed(2)}%/年</dd></div>
+    <div><dt>支出の正本</dt><dd>年代別年間予算（税・社保を含む）</dd></div>
+    <div><dt>iDeCo一時金</dt><dd>${idecoTax}</dd></div>
+    <div><dt>95歳末</dt><dd>${money(result.finalAsset)}</dd></div>
+  </dl><p class="muted">月末資産＝月初資産＋月次運用益＋各種収入－インフレ調整後支出－臨時支出。制度ツールの税・社会保険詳細は手取・予算内訳確認用で、年代別年間予算へ重ねて加算しません。</p>`;
+  const entries=Object.values(RULES).filter(r=>r&&typeof r==='object'&&r.title);
+  source.innerHTML=`<p><strong>制度基準日 ${escapeHtml(RULES.asOf)}</strong></p><ul class="source-list">${entries.map(r=>`<li><a href="${r.url}" target="_blank" rel="noopener">${escapeHtml(r.title)}：${escapeHtml(r.source)}</a></li>`).join('')}</ul><p class="muted">将来の退職・受取時は、その時点の法令・自治体保険料・運営管理機関条件で再確認します。</p>`;
+}
+
+function renderRules(){
