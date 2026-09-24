@@ -2,12 +2,13 @@ import {
   runRetirementPlan, runForecastFromLatestActual, latestActual, planRowAtAge, scenarioMetrics,
   formatMan, pensionAnnualFromBase65, pensionAdjustmentFactor,
   retirementIncomeDeduction, taxableRetirementIncome, nisaCapacity, expenseDetailSummary, evaluateReviewTriggers,
-  factorDecomposition, certaintyItems, CERTAINTY_LABELS, integrityChecks, ANNUAL_REVIEW_ITEMS, RULES_VERSION,
+  factorDecomposition, certaintyItems, CERTAINTY_LABELS, CERTAINTY_DESCRIPTIONS, integrityChecks, ANNUAL_REVIEW_ITEMS, RULES_VERSION,
   projectIdeco, unemploymentComparison, idecoOverlapReference, retirementIdecoTaxSummary, estimateSimpleIncomeTaxes, retirementTaxEstimate,
   fukuyamaCarePremium2026, lateElderlyMedicalPremium2026, lateElderlyMedicalPremium2026Details, fukuyamaNhiPremium2026, fukuyamaNhiPremium2026Details
 } from './calc.mjs';
 import { saveConfig, loadConfig, loadScenarios, saveScenarios, downloadJson, migrateConfig } from './storage.mjs';
 import { RULES } from './rules.mjs';
+import { cashflowSummaryForAge, flattenEditableItems, applyPeriodEdit, formatPeriodList } from './cashflow.mjs';
 
 let config = loadConfig();
 let scenarios = loadScenarios();
@@ -75,7 +76,7 @@ function refresh() {
   el('dashboard').hidden = false;
   saveConfig(config);
   ensureBaseScenario();
-  renderHome(); renderExpenseDetail(); renderYearTable(); renderActuals(); renderAnnualReview(); renderScenarios(); renderSettings(); renderRules(); drawChart(); renderTimeline(); renderCertainty(); renderFactors(); renderIntegrity(); renderCalculationBasis();
+  renderHome(); renderCashflow(); renderYearTable(); renderActuals(); renderAnnualReview(); renderScenarios(); renderSettings(); renderRules(); drawChart(); renderTimeline(); renderCertainty(); renderFactors(); renderIntegrity(); renderCalculationBasis();
 }
 
 function renderHome() {
@@ -110,7 +111,7 @@ function renderHome() {
   const check = [];
   const ideco=projectIdeco(config);
   if (ideco) check.push(`65歳iDeCo/DC見込は運用前提による試算です（約${formatMan(ideco.balance)}万円）`);
-  if (config.income?.pensions?.spouse?.certainty !== 'confirmed') check.push('配偶者の公的年金額は未確認です');
+  if (!['confirmed','official_estimate'].includes(config.income?.pensions?.spouse?.certainty)) check.push('配偶者の公的年金額は未確認です');
   if (config.reserve.total > 0 && result.finalAfterReserveUse < result.reserveUsedThreshold) check.push('予備枠全使用時は95歳の最低目安を下回ります');
   if (forecast && forecast.projection.finalAsset < result.finalThreshold) check.push('最新実績からの再予測が95歳管理基準を下回っています');
   el('checks').innerHTML = check.length ? check.map(x=>`<li>${x}</li>`).join('') : '<li>主要な未確認事項はありません。</li>';
@@ -173,24 +174,47 @@ function renderReviewAlerts() {
     : '<p class="muted">現在、設定済みの自動見直し条件には該当していません。</p>';
 }
 
-function renderExpenseDetail() {
-  const detail = config.expenseDetail;
-  const wrap = el('expenseDetail');
-  const reconcile = el('expenseReconcile');
-  if (!detail?.monthlyCategories?.length) {
-    wrap.innerHTML='<p class="muted">生活費内訳データは未登録です。</p>';
-    reconcile.innerHTML='<p class="muted">個人設定JSONへ内訳を追加すると確認できます。</p>';
-    return;
+function renderCashflow() {
+  const ageSel=el('cashflowAge'); if(!ageSel) return;
+  const prev=Number(ageSel.value||65); ageSel.innerHTML='';
+  for(let age=Math.max(65,Number(config.plan?.startAge||64));age<=Number(config.plan?.endAge||95);age++){const o=document.createElement('option');o.value=age;o.textContent=`${age}歳`;ageSel.appendChild(o);}
+  ageSel.value=String(Math.min(Number(config.plan?.endAge||95),Math.max(65,prev||65)));
+  const age=Number(ageSel.value), cf=cashflowSummaryForAge(config,age), planRow=planRowAtAge(result,age), investment=Number(planRow?.investmentGain||0);
+  el('cashflowSummary').innerHTML=`<dl><div><dt>現金収入</dt><dd>${money(cf.totalIncome)}</dd></div><div><dt>資産運用益</dt><dd>${money(investment)}</dd></div><div><dt>予定原価（詳細内訳）</dt><dd>${money(cf.plannedCost)}</dd></div><div><dt>管理予算</dt><dd>${money(cf.managementBudget)}</dd></div><div><dt>予算バッファ</dt><dd class="${cf.buffer<0?'buffer-negative':'buffer-positive'}">${cf.buffer>=0?'+':''}${money(cf.buffer)}</dd></div><div><dt>現金収支（予定原価基準）</dt><dd class="${cf.operatingBalance<0?'neg':'pos'}">${cf.operatingBalance>=0?'+':''}${money(cf.operatingBalance)}</dd></div></dl><p class="muted">${age}歳時点。固定費等は64歳価格からインフレ${Number(config.plan?.inflation||0).toFixed(1)}%/年で調整。税・社会保険は計算可能な場合、2026年制度を将来へ仮適用した自動予定額を使います。</p>`;
+  const i=cf.income;
+  const incomeRows=[['本人 労働収入',i.primaryLabor],['配偶者 労働収入',i.spouseLabor],['本人 公的年金',i.primaryPension],['配偶者 公的年金',i.spousePension],['iDeCo/DC年金',i.idecoAnnuity],['雇用保険',i.unemployment],['一時金・臨時収入',i.extraIncome],...cf.manualIncomeRows.map(x=>[x.label,x.annual])].filter(x=>Math.abs(Number(x[1]||0))>0.0001);
+  el('incomeDetail').innerHTML=`<table class="cashflow-table"><thead><tr><th>項目</th><th>年額</th><th>月平均</th></tr></thead><tbody>${incomeRows.map(([label,annual])=>`<tr><td>${escapeHtml(label)}</td><td>${money(annual)}</td><td>${money(Number(annual)/12)}</td></tr>`).join('')||'<tr><td colspan="3">収入なし</td></tr>'}<tr class="cashflow-cat"><td>現金収入合計</td><td>${money(cf.totalIncome)}</td><td>${money(cf.totalIncome/12)}</td></tr><tr><td>資産運用益（別管理）</td><td>${money(investment)}</td><td>—</td></tr></tbody></table>`;
+  let exp='';
+  for(const cat of cf.expenseCategories){
+    exp+=`<tr class="cashflow-cat"><td>${escapeHtml(cat.label)}${cat.auto?' <span class="pill">自動</span>':''}</td><td>${money(cat.monthly)}</td><td>${money(cat.annual)}</td></tr>`;
+    for(const item of cat.items||[]){const monthly=item.monthly!=null?item.monthly:Number(item.annual||0)/12;const period=item.periods?`<div class="period-note">${escapeHtml(formatPeriodList(item.periods,'monthly'))}</div>`:'';exp+=`<tr><td class="cashflow-sub">${escapeHtml(item.label)}${period}</td><td>${money(monthly)}</td><td>${money(item.annual||monthly*12)}</td></tr>`;}
+    if(cat.note) exp+=`<tr><td colspan="3" class="muted">${escapeHtml(cat.note)}</td></tr>`;
   }
-  wrap.innerHTML = `<div class="expense-list">${detail.monthlyCategories.map(c=>`<details><summary><span>${escapeHtml(c.label)}</span><strong>${formatMan(c.amount,1)}万円/月</strong></summary>${(c.items||[]).length?`<ul>${c.items.map(i=>`<li><span>${escapeHtml(i.label)}</span><b>${formatMan(i.amount,1)}万円</b></li>`).join('')}</ul>`:'<p class="muted">詳細内訳なし</p>'}</details>`).join('')}</div>`;
-  const s = expenseDetailSummary(config);
-  const cls = Math.abs(s.difference) < 0.01 ? 'pos' : '';
-  reconcile.innerHTML = `<dl><div><dt>月額合計</dt><dd>${formatMan(s.monthlyTotal,1)}万円</dd></div><div><dt>基本生活費・年額</dt><dd>${formatMan(s.annualOperating,1)}万円</dd></div><div><dt>旅行費・年額</dt><dd>${formatMan(s.travelAnnual,1)}万円</dd></div><div><dt>内訳合計</dt><dd>${formatMan(s.combined,1)}万円</dd></div><div><dt>年間予算基準</dt><dd>${formatMan(s.reference,1)}万円</dd></div><div><dt>調整差</dt><dd class="${cls}">${s.difference>=0?'+':''}${formatMan(s.difference,1)}万円</dd></div></dl><p class="muted">内訳は管理・整合確認用です。年間資産計算では年代別年間予算を正本とし、二重計上しません。</p>`;
+  exp+=`<tr class="cashflow-cat"><td>旅行費</td><td>—</td><td>${money(cf.travelAnnual)}<div class="period-note">基準額 ${money(cf.travelBase)}/年</div></td></tr><tr class="cashflow-cat"><td>予定原価 合計</td><td>${money(cf.operatingAnnual/12)}</td><td>${money(cf.plannedCost)}</td></tr>`;
+  el('expenseDetail').innerHTML=`<table class="cashflow-table"><thead><tr><th>項目</th><th>月額</th><th>年額</th></tr></thead><tbody>${exp}</tbody></table>`;
+  el('expenseReconcile').innerHTML=`<dl><div><dt>詳細予定原価</dt><dd>${money(cf.plannedCost)}</dd></div><div><dt>管理予算</dt><dd>${money(cf.managementBudget)}</dd></div><div><dt>バッファ</dt><dd class="${cf.buffer<0?'buffer-negative':'buffer-positive'}">${cf.buffer>=0?'+':''}${money(cf.buffer)}</dd></div><div><dt>旅行費</dt><dd>${money(cf.travelAnnual)}</dd></div></dl><p class="muted">資産シミュレーションは管理予算を支出正本とします。予定原価が下がればバッファが増え、予定原価が管理予算を超えると赤字表示して予算見直し対象にします。</p>`;
+  const reductions=config.cashflow?.expenseReductionIdeas||[], improvements=config.cashflow?.incomeImprovementIdeas||[];
+  el('improvementIdeas').innerHTML=`<div class="idea-grid"><div><h3>経費削減案</h3><ul>${reductions.map(x=>`<li>${escapeHtml(x)}</li>`).join('')}</ul></div><div><h3>収益改善案</h3><ul>${improvements.map(x=>`<li>${escapeHtml(x)}</li>`).join('')}</ul></div></div>`;
+  renderPeriodEditor();
+}
+function renderPeriodEditor(){
+  const sel=el('periodTarget'); if(!sel) return;
+  const previous=sel.value, items=flattenEditableItems(config);
+  sel.innerHTML=items.map(x=>`<option value="${x.kind}:${x.key}">${escapeHtml(x.categoryLabel)}｜${escapeHtml(x.label)}</option>`).join('');
+  if(items.some(x=>`${x.kind}:${x.key}`===previous)) sel.value=previous;
+  const current=items.find(x=>`${x.kind}:${x.key}`===sel.value)||items[0], f=el('periodEditForm');
+  if(current){let periods=[];if(current.kind==='expense') periods=(config.cashflow?.expenseCategories||[]).flatMap(c=>c.items||[]).find(x=>x.key===current.key)?.periods||[];else if(current.kind==='budget') periods=(config.budgets||[]).map(x=>({fromAge:x.fromAge,toAge:x.toAge,amount:x.annualBudget}));else if(current.kind==='travel') periods=(config.cashflow?.travel||[]).map(x=>({fromAge:x.fromAge,toAge:x.toAge,amount:x.annualAmount}));else periods=(config.cashflow?.manualIncomeItems||[]).find(x=>x.key===current.key)?.periods||[];el('periodCurrent').textContent=`現在設定：${formatPeriodList(periods,current.unit)||'期間設定なし'}`;if(f?.elements?.unit) f.elements.unit.value=current.unit||'monthly';}
+}
+function savePeriodEdit(ev){
+  ev.preventDefault(); const f=ev.currentTarget, [kind,key]=String(f.target.value).split(':');
+  const ok=applyPeriodEdit(config,{kind,key,fromAge:+f.fromAge.value,toAge:+f.toAge.value,amount:+f.amount.value,unit:f.unit.value});
+  if(!ok){showNotice('対象項目を更新できませんでした。','error');return;}
+  refresh(); showNotice(`${f.fromAge.value}〜${f.toAge.value}歳の金額を一括設定しました。`);
 }
 
 function derivePending() {
   const items = [];
-  if (config.income?.pensions?.spouse?.certainty === 'unknown') items.push({type:'要確認', title:'配偶者の公的年金額', reason:`設定中の配偶者年金 ${formatMan(config.income?.pensions?.spouse?.annualAtStart||0,1)}万円/年は暫定値です。ねんきん定期便等で確認後に更新します。`});
+  if (!['confirmed','official_estimate'].includes(config.income?.pensions?.spouse?.certainty)) items.push({type:'要確認', title:'配偶者の公的年金額', reason:`設定中の配偶者年金 ${formatMan(config.income?.pensions?.spouse?.annualAtStart||0,1)}万円/年は暫定値です。ねんきん定期便等で確認後に更新します。`});
   if (config.nisa?.accountBreakdownStatus === 'pending') items.push({type:'要判断', title:'NISA・課税口座・現金の64歳時点内訳', reason:'総資産試算は継続できます。取崩し順序と税引後精度を高める段階で確定します。'});
   if (config.retirement?.majorSpendDetailStatus === 'pending') items.push({type:'要判断', title:'退職金の大型支出内訳と開始資産の時点整合', reason:`社宅退去を本業退職の約6か月前に検討するため、大型支出枠 ${formatMan(config.retirement?.majorSpendPlanned||0)}万円と開始資産の関係を詳細内訳確定時に照合します。`});
   if (!config.care?.facilityRoomType) items.push({type:'要判断', title:'特養の個室／多床室など介護費の詳細条件', reason:'現状は年代別年間予算で包含しています。施設費を個別積上げする際に必要です。'});
@@ -428,13 +452,13 @@ function renderSettings(){
 
 
 function renderCertaintySettings(){
-  const form=el('certaintyForm');
-  if(!form) return;
-  const labels={initialAsset:'64歳開始資産',returnRate:'運用利回り',inflation:'インフレ率',laborIncome:'労働収入',pension:'年金',dc:'DC受取',budgets:'年間予算',retirement:'退職金'};
-  const order=Object.keys(labels);
-  const options=Object.entries(CERTAINTY_LABELS).map(([value,label])=>`<option value="${value}">${label}</option>`).join('');
-  form.innerHTML=order.map(key=>`<label>${labels[key]}<select name="${key}">${options}</select></label>`).join('')+'<button class="primary" type="submit">確度区分を保存</button>';
-  order.forEach(key=>{ if(form.elements[key]) form.elements[key].value=config.certainty?.[key] || 'unknown'; });
+  const form=el('certaintyForm'); if(!form) return;
+  const guide=el('certaintyGuide');
+  if(guide) guide.innerHTML=`<dl>${Object.entries(CERTAINTY_LABELS).map(([key,label])=>`<dt>${escapeHtml(label)}</dt><dd>${escapeHtml(CERTAINTY_DESCRIPTIONS[key]||'')}</dd>`).join('')}</dl>`;
+  const items=certaintyItems(config), labels={initialAsset:'64歳開始資産',returnRate:'運用利回り',inflation:'インフレ率',laborIncome:'労働収入',pension:'本人年金',spousePension:'配偶者年金',dc:'DC受取',budgets:'年間予算',retirement:'退職金'};
+  const order=Object.keys(labels), itemMap=Object.fromEntries(items.map(x=>[x.key,x])), options=Object.entries(CERTAINTY_LABELS).map(([value,label])=>`<option value="${value}">${label}</option>`).join('');
+  form.innerHTML=order.map(key=>{const it=itemMap[key];const value=it?.value==null?'—':`${formatMan(it.value,it.unit==='%'?2:1)}${it.unit||''}`;return `<label class="certainty-setting">${labels[key]}<select name="${key}">${options}</select><small>現在値：${escapeHtml(value)} / ${escapeHtml(CERTAINTY_DESCRIPTIONS[it?.level||'unknown']||'')}</small></label>`;}).join('')+'<button class="primary" type="submit">確度区分を保存</button>';
+  order.forEach(key=>{if(!form.elements[key])return;if(key==='spousePension')form.elements[key].value=config.income?.pensions?.spouse?.certainty||'unknown';else form.elements[key].value=config.certainty?.[key]||itemMap[key]?.level||'unknown';});
 }
 
 function saveCertainty(ev){
@@ -442,6 +466,7 @@ function saveCertainty(ev){
   config.certainty ||= {};
   for(const key of ['initialAsset','returnRate','inflation','laborIncome','pension','dc','budgets','retirement']) config.certainty[key]=f.elements[key].value;
   if(config.income?.pensions?.primary) config.income.pensions.primary.certainty=config.certainty.pension;
+  if(config.income?.pensions?.spouse && f.elements.spousePension) config.income.pensions.spouse.certainty=f.elements.spousePension.value;
   refresh(); showNotice('入力値の確度区分を保存しました。');
 }
 
@@ -468,16 +493,17 @@ function renderCalculationBasis(){
     <div><dt>本業退職・基本日</dt><dd>${escapeHtml(ret)}</dd></div>
     <div><dt>通常運用</dt><dd>税引後 ${Number(config.plan?.afterTaxReturn||0).toFixed(5)}%/年</dd></div>
     <div><dt>インフレ</dt><dd>${Number(config.plan?.inflation||0).toFixed(2)}%/年</dd></div>
-    <div><dt>支出の正本</dt><dd>年代別年間予算（税・社保を含む）</dd></div>
+    <div><dt>支出の正本</dt><dd>管理予算（詳細予定原価＋バッファ）</dd></div>
     <div><dt>iDeCo一時金</dt><dd>${idecoTax}</dd></div>
     <div><dt>95歳末</dt><dd>${money(result.finalAsset)}</dd></div>
-  </dl><p class="muted">月末資産＝月初資産＋月次運用益＋各種収入－インフレ調整後支出－臨時支出。制度ツールの税・社会保険詳細は手取・予算内訳確認用で、年代別年間予算へ重ねて加算しません。</p>`;
+  </dl><p class="muted">月末資産＝月初資産＋月次運用益＋各種収入－インフレ調整後支出－臨時支出。詳細予定原価は固定内訳・旅行費・税社会保険自動試算から算出し、管理予算との差をバッファとして管理します。資産計算では管理予算を支出正本とします。</p>`;
   const entries=Object.values(RULES).filter(r=>r&&typeof r==='object'&&r.title);
   source.innerHTML=`<p><strong>制度基準日 ${escapeHtml(RULES.asOf)}</strong></p><ul class="source-list">${entries.map(r=>`<li><a href="${r.url}" target="_blank" rel="noopener">${escapeHtml(r.title)}：${escapeHtml(r.source)}</a></li>`).join('')}</ul><p class="muted">将来の退職・受取時は、その時点の法令・自治体保険料・運営管理機関条件で再確認します。</p>`;
 }
 
 function renderRules(){
   el('rulesAsOf').textContent = RULES.asOf;
+  const base65=config?.income?.pensions?.primary?.alternatives?.['65']; if(base65!=null && el('pensionBase65')) el('pensionBase65').value=Number(base65).toFixed(4);
   const wrap=el('ruleCards'); wrap.innerHTML='';
   Object.entries(RULES).filter(([k])=>k!=='asOf').forEach(([key,r])=>{
     const article=document.createElement('article'); article.className='rule-card';
@@ -579,6 +605,9 @@ async function importConfig(file){
 }
 
 el('settingsForm').addEventListener('submit', applySettings);
+el('periodEditForm').addEventListener('submit', savePeriodEdit);
+el('cashflowAge').addEventListener('change', renderCashflow);
+el('periodTarget').addEventListener('change', renderPeriodEditor);
 el('certaintyForm').addEventListener('submit', saveCertainty);
 el('actualForm').addEventListener('submit', saveActual);
 el('actualAge').addEventListener('change', e=>populateActualForm(e.target.value));
@@ -588,7 +617,7 @@ el('saveScenarioBtn').addEventListener('click', saveCurrentScenario);
 el('importFile').addEventListener('change', e=>{ const f=e.target.files?.[0]; if(f) importConfig(f).catch(err=>showNotice(`読込失敗: ${err.message}`,'error')); });
 el('importFile2').addEventListener('change', e=>{ const f=e.target.files?.[0]; if(f) importConfig(f).catch(err=>showNotice(`読込失敗: ${err.message}`,'error')); });
 el('exportBtn').addEventListener('click',()=>{ if(config) downloadJson(config,`retirement-plan-backup-${new Date().toISOString().slice(0,10)}.json`); });
-el('exportFullBtn').addEventListener('click',()=>{ if(config) downloadJson({schemaVersion:'0.8', exportedAt:new Date().toISOString(), config, scenarios},`retirement-plan-full-backup-${new Date().toISOString().slice(0,10)}.json`); });
+el('exportFullBtn').addEventListener('click',()=>{ if(config) downloadJson({schemaVersion:'0.9', exportedAt:new Date().toISOString(), config, scenarios},`retirement-plan-full-backup-${new Date().toISOString().slice(0,10)}.json`); });
 el('pensionToolRun').addEventListener('click',runPensionTool);
 el('nisaToolRun').addEventListener('click',runNisaTool);
 el('idecoToolRun').addEventListener('click',runIdecoTool);
@@ -616,6 +645,6 @@ document.querySelectorAll('[data-help]').forEach(btn=>btn.addEventListener('clic
 }));
 el('helpClose').addEventListener('click',()=>el('helpDialog').close());
 
-el('appVersion').textContent='v0.8 final'; el('rulesVersion').textContent=RULES_VERSION;
+el('appVersion').textContent='v0.9'; el('rulesVersion').textContent=RULES_VERSION;
 refresh();
 if('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(()=>{});
