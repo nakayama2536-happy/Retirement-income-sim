@@ -152,3 +152,168 @@ function renderFactors(){
   box.innerHTML=`<p class="muted">比較基準：${escapeHtml(baseline.name)}。現在条件との差額を配分しています。</p><div class="factor-total"><span>基準比</span><strong class="${d.totalDifference<0?'neg':d.totalDifference>0?'pos':''}">${d.totalDifference>=0?'+':''}${formatMan(d.totalDifference,0)}万円</strong></div>${rows}${actualImpact==null?'':`<div class="actual-impact"><span>最新実績を反映した追加影響</span><strong class="${actualImpact<0?'neg':actualImpact>0?'pos':''}">${actualImpact>=0?'+':''}${formatMan(actualImpact,0)}万円</strong></div>`}<p class="muted">要因分解は条件変更の相互作用を各項目へ配分する方式です。最新実績の影響は条件変更とは分けて表示します。</p>`;
 }
 
+
+function renderIntegrity(){
+  const issues=integrityChecks(config);
+  const box=el('integritySummary');
+  const errors=issues.filter(x=>x.level==='error');
+  const warns=issues.filter(x=>x.level==='warn');
+  if(!issues.length){
+    box.innerHTML='<p class="integrity-ok"><strong>整合性チェック：問題なし</strong></p><p class="muted">年間予算、予備枠、生活費内訳、臨時イベントの主要整合を確認済みです。</p>';
+    return;
+  }
+  box.innerHTML=`<p><strong>${errors.length?`エラー ${errors.length}件`:'エラーなし'} / 警告 ${warns.length}件</strong></p><div class="pending-list">${issues.map(i=>`<article class="pending-item"><span class="pending-type ${i.level==='error'?'integrity-error':'integrity-warn'}">${i.level==='error'?'エラー':'警告'}</span><div><strong>${escapeHtml(i.title)}</strong><p>${escapeHtml(i.detail)}</p></div></article>`).join('')}</div>`;
+}
+
+function renderReviewAlerts() {
+  const triggers = evaluateReviewTriggers(config, result);
+  el('reviewCount').textContent = triggers.length ? `${triggers.length}件` : '該当なし';
+  el('reviewAlerts').innerHTML = triggers.length
+    ? triggers.map(t=>`<article class="pending-item"><span class="pending-type ${t.level==='review'?'review-type':''}">${t.level==='review'?'見直し':'注意'}</span><div><strong>${t.title}</strong><p>${t.detail}</p></div></article>`).join('')
+    : '<p class="muted">現在、設定済みの自動見直し条件には該当していません。</p>';
+}
+
+function renderExpenseDetail() {
+  const detail = config.expenseDetail;
+  const wrap = el('expenseDetail');
+  const reconcile = el('expenseReconcile');
+  if (!detail?.monthlyCategories?.length) {
+    wrap.innerHTML='<p class="muted">生活費内訳データは未登録です。</p>';
+    reconcile.innerHTML='<p class="muted">個人設定JSONへ内訳を追加すると確認できます。</p>';
+    return;
+  }
+  wrap.innerHTML = `<div class="expense-list">${detail.monthlyCategories.map(c=>`<details><summary><span>${escapeHtml(c.label)}</span><strong>${formatMan(c.amount,1)}万円/月</strong></summary>${(c.items||[]).length?`<ul>${c.items.map(i=>`<li><span>${escapeHtml(i.label)}</span><b>${formatMan(i.amount,1)}万円</b></li>`).join('')}</ul>`:'<p class="muted">詳細内訳なし</p>'}</details>`).join('')}</div>`;
+  const s = expenseDetailSummary(config);
+  const cls = Math.abs(s.difference) < 0.01 ? 'pos' : '';
+  reconcile.innerHTML = `<dl><div><dt>月額合計</dt><dd>${formatMan(s.monthlyTotal,1)}万円</dd></div><div><dt>基本生活費・年額</dt><dd>${formatMan(s.annualOperating,1)}万円</dd></div><div><dt>旅行費・年額</dt><dd>${formatMan(s.travelAnnual,1)}万円</dd></div><div><dt>内訳合計</dt><dd>${formatMan(s.combined,1)}万円</dd></div><div><dt>年間予算基準</dt><dd>${formatMan(s.reference,1)}万円</dd></div><div><dt>調整差</dt><dd class="${cls}">${s.difference>=0?'+':''}${formatMan(s.difference,1)}万円</dd></div></dl><p class="muted">内訳は管理・整合確認用です。年間資産計算では年代別年間予算を正本とし、二重計上しません。</p>`;
+}
+
+function derivePending() {
+  const items = [];
+  if (config.income?.pensions?.spouse?.certainty === 'unknown') items.push({type:'要確認', title:'配偶者の公的年金額', reason:`設定中の配偶者年金 ${formatMan(config.income?.pensions?.spouse?.annualAtStart||0,1)}万円/年は暫定値です。ねんきん定期便等で確認後に更新します。`});
+  if (config.nisa?.accountBreakdownStatus === 'pending') items.push({type:'要判断', title:'NISA・課税口座・現金の64歳時点内訳', reason:'総資産試算は継続できます。取崩し順序と税引後精度を高める段階で確定します。'});
+  if (config.retirement?.majorSpendDetailStatus === 'pending') items.push({type:'要判断', title:'退職金の大型支出内訳と開始資産の時点整合', reason:`社宅退去を本業退職の約6か月前に検討するため、大型支出枠 ${formatMan(config.retirement?.majorSpendPlanned||0)}万円と開始資産の関係を詳細内訳確定時に照合します。`});
+  if (!config.care?.facilityRoomType) items.push({type:'要判断', title:'特養の個室／多床室など介護費の詳細条件', reason:'現状は年代別年間予算で包含しています。施設費を個別積上げする際に必要です。'});
+  if (config.taxPolicy?.rulesAsOf) items.push({type:'要更新', title:'退職前の制度再確認', reason:`税・社会保険・雇用保険は現在 ${config.taxPolicy.rulesAsOf} 制度による参考計算です。退職前に最新制度で更新します。`});
+  for (const title of config.pendingDecisions || []) {
+    if (!items.some(i=>i.title===title)) items.push({type:'保留',title,reason:'判断または外部確認が必要なため、計算を止めず保留管理しています。'});
+  }
+  return items;
+}
+
+function renderPending() {
+  const items = derivePending();
+  el('pendingCount').textContent = `${items.length}件`;
+  el('pendingList').innerHTML = items.map(i=>`<article class="pending-item"><span class="pending-type">${i.type}</span><div><strong>${i.title}</strong><p>${i.reason}</p></div></article>`).join('') || '<p>現在、保留事項はありません。</p>';
+}
+
+function renderYearTable() {
+  const body = el('yearRows'); body.innerHTML = '';
+  result.rows.forEach(r => {
+    const a = config.actuals?.[r.age];
+    const actualAsset = a?.endAsset;
+    const diff = actualAsset === undefined || actualAsset === null ? null : Number(actualAsset) - r.endAsset;
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${r.age}</td><td>${formatMan(r.startAsset)}</td><td>${formatMan(r.investmentGain)}</td><td>${formatMan(r.totalIncome)}</td><td>${formatMan(r.expense+r.extraExpense)}</td><td>${formatMan(r.endAsset)}</td><td>${actualAsset==null?'—':formatMan(actualAsset)}</td><td class="${diff==null?'':diff<0?'neg':'pos'}">${diff==null?'—':`${diff>=0?'+':''}${formatMan(diff)}`}</td>`;
+    body.appendChild(tr);
+  });
+}
+
+function drawPolyline(svg, points, x, y, className) {
+  if (!points.length) return;
+  const ns='http://www.w3.org/2000/svg';
+  const line=document.createElementNS(ns,'polyline');
+  line.setAttribute('points',points.map(p=>`${x(p.age)},${y(p.endAsset)}`).join(' '));
+  line.setAttribute('class',className); line.setAttribute('fill','none'); svg.appendChild(line);
+}
+
+function drawChart() {
+  const svg = el('assetChart');
+  const w = 820, h = 300, pad = {l:54,r:18,t:18,b:36};
+  svg.setAttribute('viewBox', `0 0 ${w} ${h}`); svg.innerHTML = '';
+  const planPoints = [{age:config.plan.startAge, endAsset:config.plan.initialAsset}, ...result.rows.map(r=>({age:r.age+1,endAsset:r.endAsset}))];
+  const actualPoints = Object.entries(config.actuals || {}).map(([age,a])=>({age:+age,endAsset:+a.endAsset})).filter(p=>Number.isFinite(p.endAsset)).sort((a,b)=>a.age-b.age);
+  const forecastPoints = forecast ? [{age:forecast.actual.age+1,endAsset:+forecast.actual.endAsset}, ...forecast.projection.rows.map(r=>({age:r.age+1,endAsset:r.endAsset}))] : [];
+  const all = [...planPoints, ...actualPoints, ...forecastPoints];
+  const maxY = Math.max(...all.map(p=>p.endAsset), 1000) * 1.08;
+  const minAge = config.plan.startAge, maxAge = config.plan.endAge + 1;
+  const x = age => pad.l + (age-minAge)/(maxAge-minAge)*(w-pad.l-pad.r);
+  const y = val => h-pad.b - val/maxY*(h-pad.t-pad.b);
+  const ns='http://www.w3.org/2000/svg';
+
+  const roughStep=maxY/4;
+  const magnitude=Math.pow(10,Math.max(0,Math.floor(Math.log10(roughStep||1))));
+  const gridStep=Math.max(1,Math.ceil(roughStep/magnitude)*magnitude);
+  for(let v=0;v<=maxY;v+=gridStep){
+    const gy=document.createElementNS(ns,'line'); gy.setAttribute('x1',pad.l);gy.setAttribute('x2',w-pad.r);gy.setAttribute('y1',y(v));gy.setAttribute('y2',y(v));gy.setAttribute('class','grid');svg.appendChild(gy);
+    const t=document.createElementNS(ns,'text');t.textContent=`${formatMan(v)}`;t.setAttribute('x',pad.l-8);t.setAttribute('y',y(v)+4);t.setAttribute('text-anchor','end');t.setAttribute('class','axis');svg.appendChild(t);
+  }
+  [65,70,75,80,85,90,95,96].forEach(a=>{
+    const t=document.createElementNS(ns,'text');t.textContent=`${a}`;t.setAttribute('x',x(a));t.setAttribute('y',h-12);t.setAttribute('text-anchor','middle');t.setAttribute('class','axis');svg.appendChild(t);
+  });
+
+  drawPolyline(svg, planPoints, x, y, 'asset-line');
+  if (forecastPoints.length) drawPolyline(svg, forecastPoints, x, y, 'forecast-line');
+
+  actualPoints.forEach(p=>{
+    const c=document.createElementNS(ns,'circle'); c.setAttribute('cx',x(p.age)); c.setAttribute('cy',y(p.endAsset)); c.setAttribute('r','5'); c.setAttribute('class','actual-point'); svg.appendChild(c);
+  });
+  result.keyAges.forEach(k=>{
+    const c=document.createElementNS(ns,'circle');c.setAttribute('cx',x(k.age+1));c.setAttribute('cy',y(k.asset));c.setAttribute('r','3');c.setAttribute('class','key-point');svg.appendChild(c);
+  });
+}
+
+function renderTimeline(){
+  const list=el('timeline'); list.innerHTML='';
+  const primaryBirth=new Date(`${config.people?.primary?.birthDate}T00:00:00`);
+  const ageAt=d=>{const x=new Date(`${d}T00:00:00`);let a=x.getFullYear()-primaryBirth.getFullYear();if(x.getMonth()<primaryBirth.getMonth()||(x.getMonth()===primaryBirth.getMonth()&&x.getDate()<primaryBirth.getDate()))a--;return a;};
+  const raw=[
+    [config.plan?.startDate,'老後計画開始'],
+    [config.retirement?.receiveDate,'退職金受取'],
+    [config.employment?.primary?.mainRetirement?.baseDate,'本業退職（基本）'],
+    [config.ideco?.lumpDate||config.ideco?.contributionEndDate,'iDeCo/DC 50%一時金・年金開始'],
+    [config.income?.pensions?.spouse?.startDate,'配偶者 公的年金開始'],
+    [config.income?.pensions?.primary?.startDate,'本人 公的年金開始'],
+    [config.employment?.spouse?.sideWork?.endDate,'配偶者アルバイト終了'],
+    [config.employment?.primary?.sideWork?.endDate,'本人アルバイト終了']
+  ].filter(x=>x[0]).map(([date,label])=>({date,label,age:ageAt(date)}));
+  const items=[...raw,...(config.events||[]).filter(e=>e.date).map(e=>({date:e.date,label:e.label,age:ageAt(e.date)}))].sort((a,b)=>a.date.localeCompare(b.date));
+  items.forEach(i=>{ const li=document.createElement('li'); li.innerHTML=`<strong>${i.age}歳</strong><span>${escapeHtml(i.label)} <small>${escapeHtml(i.date.slice(0,7))}</small></span>`; list.appendChild(li); });
+}
+
+function renderActuals() {
+  const select = el('actualAge');
+  const selected = select.value;
+  select.innerHTML = '';
+  for (let age=config.plan.startAge; age<=config.plan.endAge; age++) {
+    const o=document.createElement('option');o.value=age;o.textContent=`${age}歳`;select.appendChild(o);
+  }
+  const latest = latestActual(config);
+  select.value = selected || latest?.age || config.plan.startAge;
+  populateActualForm(select.value);
+
+  const body=el('actualRows'); body.innerHTML='';
+  const entries=Object.entries(config.actuals||{}).map(([age,a])=>({age:+age,...a})).sort((a,b)=>a.age-b.age);
+  entries.forEach(a=>{
+    const p=planRowAtAge(result,a.age); const diff=p?Number(a.endAsset)-p.endAsset:null;
+    const tr=document.createElement('tr');
+    tr.innerHTML=`<td>${a.age}</td><td>${p?formatMan(p.endAsset):'—'}</td><td>${formatMan(a.endAsset)}</td><td class="${diff==null?'':diff<0?'neg':'pos'}">${diff==null?'—':`${diff>=0?'+':''}${formatMan(diff)}`}</td><td>${a.expense==null?'—':formatMan(a.expense)}</td><td>${a.taxSocial==null?'—':formatMan(a.taxSocial)}</td><td>${a.safeAssetBalance==null?'—':formatMan(a.safeAssetBalance)}</td><td>${a.note||''}</td><td><button class="link-btn" data-delete-actual="${a.age}">削除</button></td>`;
+    body.appendChild(tr);
+  });
+
+  const box=el('actualSummary');
+  if(!latest){ box.innerHTML='<p>まだ実績は登録されていません。</p>'; return; }
+  const plan=planRowAtAge(result,latest.age); const diff=Number(latest.endAsset)-(plan?.endAsset||0); const pct=plan?.endAsset?diff/plan.endAsset*100:0;
+  box.innerHTML=`<dl><div><dt>最新実績</dt><dd>${latest.age}歳</dd></div><div><dt>計画資産</dt><dd>${money(plan?.endAsset||0)}</dd></div><div><dt>実績資産</dt><dd>${money(latest.endAsset)}</dd></div><div><dt>差額</dt><dd class="${diff<0?'neg':'pos'}">${diff>=0?'+':''}${money(diff)}（${pct>=0?'+':''}${pct.toFixed(1)}%）</dd></div><div><dt>95歳再予測</dt><dd>${forecast?money(forecast.projection.finalAsset):'—'}</dd></div></dl>`;
+}
+
+
+function populateActualForm(age){
+  const f=el('actualForm'); const a=config.actuals?.[Number(age)];
+  f.endAsset.value=a?.endAsset ?? '';
+  f.expense.value=a?.expense ?? '';
+  f.labor.value=a?.labor ?? '';
+  f.pension.value=a?.pension ?? '';
+  f.returnRate.value=a?.returnRate ?? '';
+  f.reserveBalance.value=a?.reserveBalance ?? '';
+  f.safeAssetBalance.value=a?.safeAssetBalance ?? '';
