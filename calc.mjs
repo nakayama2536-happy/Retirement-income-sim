@@ -298,3 +298,153 @@ export function idecoOverlapReference(config){
 export function retirementIdecoTaxSummary(config){
   const r=config?.retirement||{};
   const plan=projectIdeco(config);
+  const overlap=idecoOverlapReference(config);
+  const companyDeduction=retirementIncomeDeduction(Number(r.serviceYears||0));
+  const companyTax=retirementTaxEstimate(Number(r.amount||0),companyDeduction);
+  const idecoDeduction=overlap?.adjustedDeduction ?? overlap?.fullDeduction ?? 0;
+  const idecoLumpTax=plan ? retirementTaxEstimate(plan.lumpGross,idecoDeduction) : null;
+  const pensionGross=plan?.annuityAnnual||0;
+  const pensionDeduction=publicPensionDeduction(pensionGross,65);
+  const pensionIncome=Math.max(0,pensionGross-pensionDeduction);
+  return {companyDeduction,companyTax,plan,overlap,idecoDeduction,idecoLumpTax,pensionGross,pensionDeduction,pensionIncome};
+}
+
+export function unemploymentDailyBenefit2026(wageDailyYen, mode='pre65'){
+  const raw=Math.max(0,Number(wageDailyYen)||0);
+  const minDaily=2562;
+  if(mode==='highAge'){
+    // 高年齢求職者給付金は30歳未満の受給資格者と同じ基本手当日額の計算式を使う現行制度参考。
+    const w=Math.min(14900,Math.max(3203,raw));
+    let y;
+    if(w<5480) y=0.8*w;
+    else if(w<=13490) y=0.8*w-0.3*((w-5480)/(13490-5480))*w;
+    else y=0.5*w;
+    return Math.min(7450,Math.max(minDaily,y));
+  }
+  const w=Math.min(17400,Math.max(3203,raw));
+  let y;
+  if(w<5480) y=0.8*w;
+  else if(w<=12120) y=Math.min(0.8*w-0.35*((w-5480)/(12120-5480))*w,0.05*w+4848);
+  else y=0.45*w;
+  return Math.min(7830,Math.max(minDaily,y));
+}
+
+export function unemploymentComparison(config){
+  const u=config?.unemployment||{};
+  const annualSalary=Number(u.preRetirementAnnualSalary||0);
+  const wageDaily=annualSalary*10000/12*6/180;
+  const dailyPre65=unemploymentDailyBenefit2026(wageDaily,'pre65');
+  const dailyAt65=unemploymentDailyBenefit2026(wageDaily,'highAge');
+  const yenToMan=x=>x/10000;
+  const highDays=Number(u.highAgeDays||50), generalDays=Number(u.pre65GeneralDays||150), specialDays=Number(u.pre65SpecialDays||240);
+  return {
+    wageDailyYen:wageDaily,
+    estimatedDailyYen:dailyPre65,
+    dailyPre65Yen:dailyPre65,
+    dailyAt65Yen:dailyAt65,
+    at65:{days:highDays,dailyYen:dailyAt65,amount:yenToMan(dailyAt65*highDays),label:'65歳以後離職（高年齢求職者給付金）'},
+    pre65General:{days:generalDays,dailyYen:dailyPre65,amount:yenToMan(dailyPre65*generalDays),label:'65歳未満離職（一般・20年以上）'},
+    pre65Special:{days:specialDays,dailyYen:dailyPre65,amount:yenToMan(dailyPre65*specialDays),label:'65歳未満離職（特定受給資格等に該当する参考）'},
+    rulesAsOf:'2026-08-01',
+    note:'退職時点の離職理由・賃金・制度で再確認する参考値'
+  };
+}
+
+
+function primaryBirth(config){ return parseDate(config?.people?.primary?.birthDate) || new Date(1965,0,1); }
+function spouseBirth(config){ return parseDate(config?.people?.spouse?.birthDate) || new Date(1965,0,1); }
+function startDateFor(config){ return parseDate(config?.plan?.startDate) || addYears(primaryBirth(config),Number(config?.plan?.startAge||64)); }
+function endDateFor(config){ return addYears(primaryBirth(config),Number(config?.plan?.endAge||95)+1); } // endAge=95 は95歳の1年間終了時（96歳誕生日）
+function retirementDateFor(config){ return parseDate(config?.employment?.primary?.mainRetirement?.baseDate) || addYears(primaryBirth(config),65); }
+function defaultPrimarySideWorkStart(config){
+  const explicit=parseDate(config?.employment?.primary?.sideWork?.startDate);
+  if(explicit) return explicit;
+  const ret=retirementDateFor(config);
+  const mode=config?.employment?.primary?.sideWork?.startMode || 'after_high_age_benefit';
+  return mode==='at_retirement' ? ret : addMonths(ret,Number(config?.unemployment?.baselineSideWorkDelayMonths??2));
+}
+function defaultPrimarySideWorkEnd(config){
+  return parseDate(config?.employment?.primary?.sideWork?.endDate) || addYears(primaryBirth(config),76);
+}
+
+function pensionMonthlyForPerson(person,date){
+  if(!person) return 0;
+  const start=parseDate(person.startDate);
+  if(!start || monthKey(date)<monthKey(start)) return 0;
+  return Number(person.annualAtStart||0)/12;
+}
+
+function incomeForMonth(config,date,idecoProjection){
+  const income={labor:0,pension:0,idecoAnnuity:0,unemployment:0,extraIncome:0,detail:[]};
+  const pSide=config?.employment?.primary?.sideWork||{};
+  const pStart=defaultPrimarySideWorkStart(config), pEnd=defaultPrimarySideWorkEnd(config);
+  if(monthInRange(date,pStart,pEnd)){ const v=Number(pSide.monthlyGross||0); income.labor+=v; if(v)income.detail.push(['本人アルバイト',v]); }
+  const sSide=config?.employment?.spouse?.sideWork||{};
+  const sStart=parseDate(sSide.startDate), sEnd=parseDate(sSide.endDate);
+  if(monthInRange(date,sStart,sEnd)){ const v=Number(sSide.monthlyGross||0); income.labor+=v; if(v)income.detail.push(['配偶者アルバイト',v]); }
+  const pPen=pensionMonthlyForPerson(config?.income?.pensions?.primary,date); income.pension+=pPen; if(pPen)income.detail.push(['本人公的年金',pPen]);
+  const sPen=pensionMonthlyForPerson(config?.income?.pensions?.spouse,date); income.pension+=sPen; if(sPen)income.detail.push(['配偶者公的年金',sPen]);
+  const i=config?.ideco;
+  const lumpDate=parseDate(i?.lumpDate || i?.contributionEndDate || retirementDateFor(config));
+  if(i && idecoProjection && sameMonth(date,lumpDate)){
+    let receipt=idecoProjection.lumpGross;
+    if(i.applyCurrentLawTaxReference){
+      const overlap=idecoOverlapReference(config);
+      if(overlap?.adjustedDeduction!=null){
+        const tax=retirementTaxEstimate(idecoProjection.lumpGross,overlap.adjustedDeduction);
+        receipt=tax.net;
+        income.detail.push(['iDeCo/DC一時金（税引前）',idecoProjection.lumpGross]);
+        income.detail.push(['iDeCo/DC一時金税額（現行制度参考）',-tax.totalTax]);
+      }
+    }
+    income.extraIncome+=receipt;
+    income.detail.push(['iDeCo/DC一時金（資産計上額）',receipt]);
+  }
+  if(i && idecoProjection && lumpDate){
+    const m=monthsBetween(lumpDate,date);
+    if(m>=0 && m<idecoProjection.annuityMonths){ income.idecoAnnuity+=idecoProjection.annuityMonthly; income.detail.push(['iDeCo/DC年金',idecoProjection.annuityMonthly]); }
+  }
+  const u=config?.unemployment;
+  if(u?.baselineMode==='retire_at_65' && sameMonth(date,retirementDateFor(config))){
+    const comp=unemploymentComparison(config); income.unemployment+=comp.at65.amount; income.detail.push(['高年齢求職者給付金（2026制度参考）',comp.at65.amount]);
+  }
+  for(const e of config?.events||[]){
+    const ed=parseDate(e.date);
+    if(ed && sameMonth(date,ed) && e.type==='income'){income.extraIncome+=Number(e.amount||0);income.detail.push([e.label||'臨時収入',Number(e.amount||0)]);}
+  }
+  return income;
+}
+
+export function runRetirementPlan(config, options = {}) {
+  const c=structuredClone(config);
+  const start=options.startDate?parseDate(options.startDate):startDateFor(c);
+  const end=endDateFor(c);
+  const ret=retirementDateFor(c);
+  const birth=primaryBirth(c);
+  let asset=Number(options.initialAsset ?? c.plan?.initialAsset ?? 0);
+  const monthlyReturn=annualToMonthlyEffective(Number(c.plan?.afterTaxReturn||0));
+  const inflation=Number(c.plan?.inflation||0)/100;
+  const idecoProjection=projectIdeco(c);
+  const rows=[]; let date=new Date(start); let agg=null;
+  const baseStart=new Date(start);
+
+  function newAgg(targetAge,startAsset){return {age:targetAge,startAsset,investmentGain:0,labor:0,pension:0,idecoAnnuity:0,unemployment:0,extraIncome:0,expense:0,extraExpense:0,events:[]};}
+  agg=newAgg(fullAgeOn(date,birth),asset);
+
+  while(date<end){
+    const age=fullAgeOn(date,birth);
+    const startAssetMonth=asset;
+    const gain=startAssetMonth*monthlyReturn; asset+=gain; agg.investmentGain+=gain;
+    const inc=incomeForMonth(c,date,idecoProjection);
+    agg.labor+=inc.labor; agg.pension+=inc.pension; agg.idecoAnnuity+=inc.idecoAnnuity; agg.unemployment+=inc.unemployment; agg.extraIncome+=inc.extraIncome;
+    if(inc.detail.length) agg.events.push(...inc.detail.map(([label,amount])=>({label,amount,date:isoDate(date)})));
+
+    let expense=0, extraExpense=0;
+    if(monthKey(date)>=monthKey(ret)){
+      const annualBase=budgetForAge(Math.max(65,age),c.budgets);
+      const yearsFromBase=monthsBetween(baseStart,date)/12;
+      expense=annualBase*Math.pow(1+inflation,yearsFromBase)/12;
+      for(const e of c.events||[]){
+        const ed=parseDate(e.date);
+        if(ed&&sameMonth(date,ed)&&e.type==='expense'){
+          const amount=Number(e.amount||0)*(e.inflationAdjusted?Math.pow(1+inflation,yearsFromBase):1);
