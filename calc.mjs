@@ -148,3 +148,153 @@ export function spouseDeductionReference2026({taxpayerIncomeMan=0,spouseIncomeMa
   const t=Math.max(0,Number(taxpayerIncomeMan)||0), s=Math.max(0,Number(spouseIncomeMan)||0);
   // 配偶者特別控除は段階計算が必要なため、この関数では通常の配偶者控除のみを扱う。
   if(t>1000 || s>62) return {incomeTax:0,residentTax:0,eligible:false,note:s>62?'配偶者特別控除の可能性あり（別計算）':'納税者所得要件外'};
+  let incomeTax=0,residentTax=0;
+  if(t<=900){incomeTax=spouseAge>=70?48:38;residentTax=spouseAge>=70?38:33;}
+  else if(t<=950){incomeTax=spouseAge>=70?32:26;residentTax=spouseAge>=70?26:22;}
+  else {incomeTax=spouseAge>=70?16:13;residentTax=spouseAge>=70?13:11;}
+  // 住民税の配偶者控除所得要件は58万円以下。58超62以下は所得税のみ満額となり得るため0にする。
+  if(s>58) residentTax=0;
+  return {incomeTax,residentTax,eligible:true,note:'2026年現行制度参考'};
+}
+export function estimateSimpleIncomeTaxes({salaryGross=0,pensionGross=0,age=65,spouseIncomeMan=null,spouseAge=65,spouseDeduction=null,socialInsurance=0}={}){
+  const salaryIncome=Math.max(0,Number(salaryGross)-salaryIncomeDeduction(salaryGross));
+  const pensionIncome=Math.max(0,Number(pensionGross)-publicPensionDeduction(pensionGross,age));
+  const totalIncome=salaryIncome+pensionIncome;
+  const automaticSpouse=spouseIncomeMan==null?null:spouseDeductionReference2026({taxpayerIncomeMan:totalIncome,spouseIncomeMan,spouseAge});
+  const spouseIncomeTaxDeduction=spouseDeduction==null?(automaticSpouse?.incomeTax||0):Number(spouseDeduction||0);
+  const base=incomeTaxBasicDeduction(totalIncome);
+  const taxableIncome=Math.max(0,totalIncome-base-spouseIncomeTaxDeduction-Number(socialInsurance||0));
+  const incomeTax=incomeTaxFromTaxableIncome(taxableIncome);
+
+  const residentSalaryIncome=Math.max(0,Number(salaryGross)-residentSalaryIncomeDeduction2026(salaryGross));
+  const residentPensionIncome=Math.max(0,Number(pensionGross)-publicPensionDeduction(pensionGross,age));
+  const residentTotalIncome=residentSalaryIncome+residentPensionIncome;
+  const residentSpouseDeduction=spouseDeduction==null?(automaticSpouse?.residentTax||0):(Number(spouseDeduction||0)>0?33:0);
+  const residentTaxable=Math.max(0,residentTotalIncome-43-residentSpouseDeduction-Number(socialInsurance||0));
+  const residentTax=residentTaxable*0.10 + (residentTaxable>0?0.55:0); // 福山市：所得割10%＋均等割等0.55万円の参考
+  return {
+    salaryIncome,pensionIncome,totalIncome,baseDeduction:base,spouseIncomeTaxDeduction,taxableIncome,incomeTax,
+    residentSalaryIncome,residentPensionIncome,residentTotalIncome,residentSpouseDeduction,residentTaxable,residentTax,
+    totalTax:incomeTax+residentTax,spouseReference:automaticSpouse
+  };
+}
+
+export function fukuyamaCarePremium2026({totalIncome=0,pensionGross=0,ownResidentTaxed=true,householdResidentTaxed=true}={}){
+  const income=Number(totalIncome||0), pen=Number(pensionGross||0);
+  if(ownResidentTaxed){
+    if(income<120)return 9.02; if(income<210)return 10.27; if(income<320)return 11.83; if(income<420)return 13.23;
+    if(income<520)return 14.78; if(income<620)return 16.34; if(income<720)return 17.89; if(income<820)return 19.45;
+    if(income<920)return 20.23; if(income<1020)return 21.01; return 21.78;
+  }
+  const lowBase=pen+Math.max(0,income);
+  if(!householdResidentTaxed){ if(lowBase<=82.65)return 2.11; if(lowBase<=120)return 3.77; return 5.33; }
+  return lowBase<=82.65?6.61:7.78;
+}
+
+export function lateElderlyMedicalPremium2026Details(totalIncomeMan=0){
+  const income=Math.max(0,Number(totalIncomeMan)||0), basis=Math.max(0,income-43);
+  const medical=Math.min(85,5.509+basis*0.0993);
+  const child=Math.min(2.1,0.1337+basis*0.0025);
+  return {basis,medical,child,total:medical+child};
+}
+export function lateElderlyMedicalPremium2026(totalIncomeMan=0){ return lateElderlyMedicalPremium2026Details(totalIncomeMan).total; }
+
+export function fukuyamaNhiPremium2026Details({householdIncomeMan=0,memberIncomesMan=null,members=1,adultMembers=null,careMembers40to64=0,months=12}={}){
+  const n=Math.max(1,Number(members||1));
+  const adults=Math.max(0,adultMembers==null?n:Number(adultMembers||0));
+  const careMembers=Math.max(0,Number(careMembers40to64||0));
+  const basis=Array.isArray(memberIncomesMan)
+    ? memberIncomesMan.reduce((sum,x)=>sum+Math.max(0,Number(x||0)-43),0)
+    : Math.max(0,Number(householdIncomeMan||0)-43);
+  const ratio=Math.max(0,Math.min(12,Number(months||12)))/12;
+  const medical=Math.min(67,basis*0.0899+n*2.952+1.968)*ratio;
+  const support=Math.min(26,basis*0.0315+n*1.068+0.648)*ratio;
+  const care=careMembers>0?Math.min(17,basis*0.0279+careMembers*0.996+0.480)*ratio:0;
+  const child=Math.min(3,basis*0.0029+n*0.1262+adults*0.0079+0.0802)*ratio;
+  return {basis,medical,support,care,child,total:medical+support+care+child};
+}
+export function fukuyamaNhiPremium2026(args={}){ return fukuyamaNhiPremium2026Details(args).total; }
+// 後方互換。v0.8以降は2026年度率を使用する。
+export function fukuyamaNhiReference2025(args={}){ return fukuyamaNhiPremium2026(args); }
+
+
+export function nisaCapacity({ tsumitateUsed = 0, growthUsed = 0, lifetimeBookUsed = 0 } = {}) {
+  const annualTsumitate = 120, annualGrowth = 240, lifetime = 1800, growthLifetime = 1200;
+  return {
+    annualTsumitate,annualGrowth,lifetime,growthLifetime,
+    tsumitateRemaining: Math.max(0, annualTsumitate - tsumitateUsed),
+    growthRemaining: Math.max(0, annualGrowth - growthUsed),
+    annualRemaining: Math.max(0, annualTsumitate + annualGrowth - tsumitateUsed - growthUsed),
+    lifetimeRemaining: Math.max(0, lifetime - lifetimeBookUsed)
+  };
+}
+
+function budgetForAge(age, budgets) {
+  const row = (budgets||[]).find(b => age >= Number(b.fromAge) && age <= Number(b.toAge));
+  if (!row) throw new Error(`年間予算が未設定の年齢です: ${age}`);
+  return Number(row.annualBudget||0);
+}
+
+export function projectIdeco(config){
+  const i=config?.ideco;
+  if(!i) return null;
+  const asOf=parseDate(i.asOfDate); const end=parseDate(i.contributionEndDate || config?.employment?.primary?.mainRetirement?.baseDate);
+  if(!asOf||!end) return null;
+  let balance=Number(i.currentBalance||0);
+  const months=Math.max(0,monthsBetween(asOf,end));
+  const mr=annualToMonthlyEffective(Number(i.accumulationReturn||0));
+  const contribution=Number(i.monthlyContribution||0);
+  for(let n=0;n<months;n++){ balance=balance*(1+mr)+contribution; }
+  const optimisticRate=Number(i.optimisticReturn??i.accumulationReturn??0);
+  let optimistic=Number(i.currentBalance||0); const omr=annualToMonthlyEffective(optimisticRate);
+  for(let n=0;n<months;n++){ optimistic=optimistic*(1+omr)+contribution; }
+  const lumpPct=Number(i.lumpPercent??50)/100;
+  const annuityPct=Number(i.annuityPercent??50)/100;
+  const lumpGross=balance*lumpPct;
+  const annuityPrincipal=balance*annuityPct;
+  const annuityMonths=Math.max(1,Math.round(Number(i.annuityYears||5)*12));
+  const amr=annualToMonthlyEffective(Number(i.annuityReturn||0));
+  const annuityMonthly=amr===0?annuityPrincipal/annuityMonths:annuityPrincipal*amr/(1-Math.pow(1+amr,-annuityMonths));
+  return {months,balance,optimistic,lumpGross,annuityPrincipal,annuityMonths,annuityMonthly,annuityAnnual:annuityMonthly*12};
+}
+
+export function idecoOverlapReference(config){
+  const i=config?.ideco, r=config?.retirement;
+  if(!i||!r) return null;
+  const join=parseDate(i.joinDate);
+  const lumpDate=parseDate(i.lumpDate || i.contributionEndDate || config?.employment?.primary?.mainRetirement?.baseDate);
+  const priorDate=parseDate(r.receiveDate);
+  if(!join||!lumpDate) return null;
+  const serviceYears=Math.ceil(Math.max(0,monthsBetween(join,lumpDate))/12);
+  const fullDeduction=retirementIncomeDeduction(serviceYears);
+  const priorAmount=Number(r.amount||0), priorYears=Number(r.serviceYears||0);
+  const priorFull=retirementIncomeDeduction(priorYears);
+  const yearGap=priorDate ? lumpDate.getUTCFullYear()-priorDate.getUTCFullYear() : null;
+  // 現行制度参考：DC老齢一時金を受ける年の前年以前19年内に退職手当等がある場合に重複調整を確認する。
+  const within19YearRule=yearGap!=null && yearGap>=1 && yearGap<=19;
+  let deemedYears=priorYears;
+  if(priorAmount<priorFull){
+    deemedYears=priorAmount<=800 ? Math.floor(priorAmount/40) : Math.floor((priorAmount-800)/70+20);
+  }
+  const companyStart=parseDate(r.companyStartDate);
+  let overlapYears=0, adjustedDeduction=fullDeduction;
+  if(within19YearRule && companyStart){
+    const deemedEnd=addYears(companyStart,deemedYears);
+    const overlapStart=join>companyStart?join:companyStart;
+    const overlapEnd=lumpDate<deemedEnd?lumpDate:deemedEnd;
+    overlapYears=Math.max(0,Math.floor(monthsBetween(overlapStart,overlapEnd)/12));
+    adjustedDeduction=Math.max(0,fullDeduction-retirementIncomeDeduction(overlapYears));
+  }
+  return {
+    serviceYears,fullDeduction,priorFull,deemedYears,overlapYears,adjustedDeduction,
+    priorDate:r.receiveDate||null,lumpDate:i.lumpDate||i.contributionEndDate||null,
+    yearGap,within19YearRule,
+    note: within19YearRule
+      ? '2026年現行制度では、DC一時金受取年の前年以前19年内の退職手当等として重複調整を確認します。'
+      : '2026年現行制度の前年以前19年内ルールには該当しない参考判定です。'
+  };
+}
+
+export function retirementIdecoTaxSummary(config){
+  const r=config?.retirement||{};
+  const plan=projectIdeco(config);
