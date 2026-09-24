@@ -477,3 +477,145 @@ function renderCalculationBasis(){
 }
 
 function renderRules(){
+  el('rulesAsOf').textContent = RULES.asOf;
+  const wrap=el('ruleCards'); wrap.innerHTML='';
+  Object.entries(RULES).filter(([k])=>k!=='asOf').forEach(([key,r])=>{
+    const article=document.createElement('article'); article.className='rule-card';
+    article.innerHTML=`<h3>${r.title}</h3><p>${r.summary}</p><small>出典：<a href="${r.url}" target="_blank" rel="noopener">${r.source}</a> / 制度基準日 ${RULES.asOf}</small>`;
+    wrap.appendChild(article);
+  });
+}
+
+function runPensionTool(){
+  const base=+el('pensionBase65').value, age=+el('pensionToolAge').value;
+  const birthYear=Number((config?.people?.primary?.birthDate||'1965-01-01').slice(0,4));
+  const factor=pensionAdjustmentFactor(age,birthYear), annual=pensionAnnualFromBase65(base,age,birthYear);
+  el('pensionToolResult').textContent=`増減率 ${(factor-1)*100>=0?'+':''}${((factor-1)*100).toFixed(1)}% → 年額 約${formatMan(annual,1)}万円`;
+}
+function runNisaTool(){
+  const r=nisaCapacity({tsumitateUsed:+el('nisaTsumitate').value,growthUsed:+el('nisaGrowth').value,lifetimeBookUsed:+el('nisaLifetime').value});
+  el('nisaToolResult').textContent=`今年残り ${formatMan(r.annualRemaining)}万円 / 生涯残り ${formatMan(r.lifetimeRemaining)}万円`;
+}
+function runIdecoTool(){
+  const balance=+el('idecoBalance').value, years=+el('idecoYears').value;
+  const annual=years>0?balance/years:0;
+  const summary=retirementIdecoTaxSummary(config);
+  const plan=summary?.plan, overlap=summary?.overlap, lumpTax=summary?.idecoLumpTax;
+  const detail=plan?` / 現行計画の65歳見込 約${formatMan(plan.balance,1)}万円、50%一時金 約${formatMan(plan.lumpGross,1)}万円、5年年金 約${formatMan(plan.annuityAnnual,1)}万円/年`:'';
+  const warn=overlap?.within19YearRule
+    ?` / 19年ルール該当・調整後控除 約${formatMan(overlap.adjustedDeduction,0)}万円`
+    :' / 19年ルール非該当参考';
+  const net=lumpTax?` / 一時金手取参考 約${formatMan(lumpTax.net,1)}万円`:'';
+  el('idecoToolResult').textContent=`入力残高を${years}年均等なら税引前年額 約${formatMan(annual,1)}万円${detail}${warn}${net}`;
+  const basis=el('idecoToolBasis');
+  if(basis && plan){
+    let taxText='重複調整に必要な加入日・退職金情報が不足しています。';
+    if(overlap?.adjustedDeduction!=null && lumpTax){
+      taxText=`iDeCo加入期間参考 ${overlap.serviceYears}年、通常の退職所得控除 ${formatMan(overlap.fullDeduction,0)}万円。60歳退職金との年差 ${overlap.yearGap ?? '—'}年、${overlap.within19YearRule?'現行19年ルールの対象':'現行19年ルールの対象外'}。前の退職金が控除額未満のため前職期間を ${overlap.deemedYears}年相当として扱う参考計算を行い、重複期間 ${overlap.overlapYears}年、調整後控除 ${formatMan(overlap.adjustedDeduction,0)}万円。一時金の課税退職所得 約${formatMan(lumpTax.taxable,1)}万円、所得税等 約${formatMan(lumpTax.incomeTax,1)}万円、住民税 約${formatMan(lumpTax.residentTax,1)}万円、手取参考 約${formatMan(lumpTax.net,1)}万円。5年年金は公的年金等として扱い、満額1年換算では年額約${formatMan(summary.pensionGross,1)}万円、公的年金等控除後の雑所得参考 約${formatMan(summary.pensionIncome,1)}万円。`;
+    }
+    basis.textContent=`現在残高から拠出終了月まで月次複利で推計。年金受取は設定利回りで元利均等取崩し。${taxText} 50%一時金＋50%年金の併用可否・比率指定は運営管理機関によって異なるため受取前に確認します。税制は2026年現行法を将来へ仮適用した参考で、受取時点に再確認します。`;
+  }
+}
+
+function runRetirementTool(){
+  const amount=+el('retirementAmount').value, years=+el('serviceYears').value;
+  const deduction=retirementIncomeDeduction(years), taxable=taxableRetirementIncome(amount,years), tax=retirementTaxEstimate(amount,deduction);
+  el('retirementToolResult').textContent=`退職所得控除 ${formatMan(deduction)}万円 / 課税退職所得 ${formatMan(taxable,1)}万円 / 税額概算 ${formatMan(tax.totalTax,1)}万円 / 手取概算 ${formatMan(tax.net,1)}万円`;
+  const basis=el('retirementToolBasis');
+  if(basis) basis.textContent=years<=20?`控除は40万円×勤続年数（最低80万円）。控除超過分の1/2を課税退職所得として税額参考を計算します。`:`控除は800万円＋70万円×（勤続年数−20年）。控除超過分の1/2を課税退職所得として税額参考を計算します。65歳のiDeCo/DC一時金側では、この退職金との19年内重複調整を別途適用します。`;
+}
+
+
+function runUnemploymentTool(){
+  const u=unemploymentComparison(config);
+  el('unemploymentToolResult').textContent=`離職前賃金日額 約${Math.round(u.wageDailyYen).toLocaleString()}円 / 65歳未満の日額 約${Math.round(u.dailyPre65Yen).toLocaleString()}円 / 65歳以上の日額 約${Math.round(u.dailyAt65Yen).toLocaleString()}円 / 65歳以後 ${u.at65.days}日・約${formatMan(u.at65.amount,1)}万円 / 65歳未満一般 ${u.pre65General.days}日・約${formatMan(u.pre65General.amount,1)}万円`;
+  const d=el('unemploymentToolBasis');
+  if(d) d.textContent=`2026/8/1制度参考。60～64歳は45～80%・日額上限7,830円、高年齢求職者給付金は30歳未満と同じ日額計算式の参考を使用。給付日数・離職理由・賃金は退職直前に再確認します。`;
+}
+function runTaxSocialTool(){
+  const age=+el('taxToolAge').value, salary=+el('taxToolSalary').value, pension=+el('taxToolPension').value;
+  const spouseIncomeRaw=el('taxToolSpouseIncome').value;
+  const spouseIncome=spouseIncomeRaw===''?null:+spouseIncomeRaw;
+  const spouseAge=+el('taxToolSpouseAge').value||65;
+  const tax=estimateSimpleIncomeTaxes({salaryGross:salary,pensionGross:pension,age,spouseIncomeMan:spouseIncome,spouseAge});
+  const ownIncome=tax.residentTotalIncome;
+  const ownTaxed=tax.residentTax>0;
+  const householdTaxed=ownTaxed || (spouseIncome!=null && spouseIncome>43);
+  const care=age>=65?fukuyamaCarePremium2026({totalIncome:ownIncome,pensionGross:pension,ownResidentTaxed:ownTaxed,householdResidentTaxed:householdTaxed}):0;
+  let medical=0, healthLabel='', healthDetail='';
+  if(age>=75){
+    const md=lateElderlyMedicalPremium2026Details(ownIncome); medical=md.total; healthLabel='後期高齢者医療2026参考';
+    healthDetail=`医療分 ${formatMan(md.medical,1)} / 子ども分 ${formatMan(md.child,1)}万円`;
+  }else{
+    const incomes=spouseIncome==null?[ownIncome]:[ownIncome,spouseIncome];
+    const md=fukuyamaNhiPremium2026Details({memberIncomesMan:incomes,members:incomes.length,adultMembers:incomes.length,careMembers40to64:age>=40&&age<65?1:0});
+    medical=md.total; healthLabel=`福山市国保2026参考（${incomes.length}人世帯）`;
+    healthDetail=`医療 ${formatMan(md.medical,1)} / 支援 ${formatMan(md.support,1)} / 介護 ${formatMan(md.care,1)} / 子ども ${formatMan(md.child,1)}万円`;
+  }
+  const net=salary+pension-tax.totalTax-care-medical;
+  el('taxToolResult').textContent=`所得税 約${formatMan(tax.incomeTax,1)}万円 / 住民税 約${formatMan(tax.residentTax,1)}万円 / 介護保険 約${formatMan(care,1)}万円 / ${healthLabel} 約${formatMan(medical,1)}万円 / 手取参考 約${formatMan(net,1)}万円`;
+  const b=el('taxToolBasis');
+  if(b){
+    const spouseText=spouseIncome==null?'配偶者控除は未指定':`配偶者控除参考：所得税 ${formatMan(tax.spouseIncomeTaxDeduction,0)}万円・住民税 ${formatMan(tax.residentSpouseDeduction,0)}万円`;
+    b.textContent=`給与所得 ${formatMan(tax.salaryIncome,1)}万円、公的年金等所得 ${formatMan(tax.pensionIncome,1)}万円、所得税基礎控除 ${formatMan(tax.baseDeduction,0)}万円。${spouseText}。${healthDetail}。年代別年間予算には税・社保を含むため、資産計算へ別加算しません。`;
+  }
+}
+
+async function importConfig(file){
+  const text=await file.text(); const parsed=JSON.parse(text);
+  if(parsed?.config && Array.isArray(parsed?.scenarios)){
+    const next=migrateConfig(parsed.config); const errors=validateConfig(next);
+    if(errors.length) throw new Error(errors.join(' / '));
+    config=next; scenarios=parsed.scenarios; saveScenarios(scenarios); refresh(); showNotice('設定＋シナリオの一括バックアップを復元しました。'); return;
+  }
+  const next=migrateConfig(parsed); const errors=validateConfig(next);
+  if(errors.length) throw new Error(errors.join(' / '));
+  const oldBaseline=scenarios.find(s=>s.role==='baseline');
+  if(oldBaseline){ oldBaseline.role='scenario'; oldBaseline.name=`${oldBaseline.name || '基準ケース'}（旧基準）`; oldBaseline.selected=false; }
+  config=next;
+  scenarios.push({id:crypto.randomUUID(),name:config.meta?.label||'基準ケース',role:'baseline',savedAt:new Date().toISOString(),selected:true,config:scenarioSnapshot(config)});
+  saveScenarios(scenarios);
+  refresh(); showNotice('設定JSONを読み込み、新しい基準ケースとして固定しました。');
+}
+
+el('settingsForm').addEventListener('submit', applySettings);
+el('certaintyForm').addEventListener('submit', saveCertainty);
+el('actualForm').addEventListener('submit', saveActual);
+el('actualAge').addEventListener('change', e=>populateActualForm(e.target.value));
+el('annualReviewAge').addEventListener('change', e=>renderAnnualReview(e.target.value));
+el('saveAnnualReviewBtn').addEventListener('click', saveAnnualReview);
+el('saveScenarioBtn').addEventListener('click', saveCurrentScenario);
+el('importFile').addEventListener('change', e=>{ const f=e.target.files?.[0]; if(f) importConfig(f).catch(err=>showNotice(`読込失敗: ${err.message}`,'error')); });
+el('importFile2').addEventListener('change', e=>{ const f=e.target.files?.[0]; if(f) importConfig(f).catch(err=>showNotice(`読込失敗: ${err.message}`,'error')); });
+el('exportBtn').addEventListener('click',()=>{ if(config) downloadJson(config,`retirement-plan-backup-${new Date().toISOString().slice(0,10)}.json`); });
+el('exportFullBtn').addEventListener('click',()=>{ if(config) downloadJson({schemaVersion:'0.8', exportedAt:new Date().toISOString(), config, scenarios},`retirement-plan-full-backup-${new Date().toISOString().slice(0,10)}.json`); });
+el('pensionToolRun').addEventListener('click',runPensionTool);
+el('nisaToolRun').addEventListener('click',runNisaTool);
+el('idecoToolRun').addEventListener('click',runIdecoTool);
+el('retirementToolRun').addEventListener('click',runRetirementTool);
+el('unemploymentToolRun').addEventListener('click',runUnemploymentTool);
+el('taxToolRun').addEventListener('click',runTaxSocialTool);
+
+document.addEventListener('click', e=>{
+  const da=e.target.closest('[data-delete-actual]'); if(da) deleteActual(Number(da.dataset.deleteActual));
+  const ds=e.target.closest('[data-scenario-delete]'); if(ds) deleteScenario(ds.dataset.scenarioDelete);
+});
+document.addEventListener('change', e=>{
+  if(e.target.matches('[data-scenario-select]')) toggleScenario(e.target.dataset.scenarioSelect,e.target.checked);
+});
+
+document.querySelectorAll('[data-tab]').forEach(btn=>btn.addEventListener('click',()=>{
+  document.querySelectorAll('[data-tab]').forEach(b=>b.classList.toggle('active',b===btn));
+  document.querySelectorAll('.panel').forEach(p=>p.hidden=p.id!==btn.dataset.tab);
+}));
+
+document.querySelectorAll('[data-help]').forEach(btn=>btn.addEventListener('click',()=>{
+  el('helpTitle').textContent=btn.dataset.help;
+  el('helpBody').textContent=btn.dataset.helpText || 'この項目は老後計画の前提値です。変更後は全期間を再計算します。';
+  el('helpDialog').showModal();
+}));
+el('helpClose').addEventListener('click',()=>el('helpDialog').close());
+
+el('appVersion').textContent='v0.8 final'; el('rulesVersion').textContent=RULES_VERSION;
+refresh();
+if('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(()=>{});
