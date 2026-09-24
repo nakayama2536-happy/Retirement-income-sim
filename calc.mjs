@@ -448,3 +448,137 @@ export function runRetirementPlan(config, options = {}) {
         const ed=parseDate(e.date);
         if(ed&&sameMonth(date,ed)&&e.type==='expense'){
           const amount=Number(e.amount||0)*(e.inflationAdjusted?Math.pow(1+inflation,yearsFromBase):1);
+          extraExpense+=amount; agg.events.push({label:e.label||'臨時支出',amount:-amount,date:isoDate(date)});
+        }
+      }
+    }
+    agg.expense+=expense; agg.extraExpense+=extraExpense;
+    const incomeTotal=inc.labor+inc.pension+inc.idecoAnnuity+inc.unemployment+inc.extraIncome;
+    asset+=incomeTotal-expense-extraExpense;
+
+    const next=addMonths(date,1);
+    const nextAge=fullAgeOn(next,birth);
+    if(nextAge>age || next>=end){
+      agg.endAsset=asset;
+      agg.totalIncome=agg.labor+agg.pension+agg.idecoAnnuity+agg.unemployment+agg.extraIncome;
+      rows.push(agg);
+      if(next<end) agg=newAgg(nextAge,asset);
+    }
+    date=next;
+  }
+
+  const thresholds=c.management?.thresholds||{};
+  const keyAges=Object.keys(thresholds).map(Number).sort((a,b)=>a-b).map(age=>{
+    const row=rows.find(r=>r.age===age); const threshold=Number(thresholds[age]||0);
+    return row?{age,asset:row.endAsset,threshold,margin:row.endAsset-threshold}:null;
+  }).filter(Boolean);
+  const finalAsset=rows.at(-1)?.endAsset??asset;
+  const reserve=Number(c.reserve?.total||0);
+  const finalAfterReserveUse=finalAsset-reserve;
+  const finalThreshold=Number(thresholds[c.plan?.endAge||95]||0);
+  const reserveUsedThreshold=Number(c.management?.reserveUsedFinalThreshold||1000);
+  const status=finalAsset>=finalThreshold?'正常':finalAsset>=finalThreshold*0.9?'注意':'要見直し';
+  return {rows,keyAges,finalAsset,reserve,finalAfterReserveUse,finalThreshold,reserveUsedThreshold,status,startAge:Number(c.plan?.startAge||64),endAge:Number(c.plan?.endAge||95),idecoProjection,retirementDate:isoDate(ret)};
+}
+
+export function latestActual(config) {
+  const actuals=config?.actuals||{};
+  const ages=Object.keys(actuals).map(Number).filter(age=>Number.isFinite(age)&&actuals[age]&&Number.isFinite(Number(actuals[age].endAsset))).sort((a,b)=>a-b);
+  if(!ages.length)return null; const age=ages.at(-1); return {age,...actuals[age]};
+}
+export function runForecastFromLatestActual(config){
+  const actual=latestActual(config); if(!actual)return null;
+  const birth=primaryBirth(config); const forecastStart=addYears(birth,actual.age+1); // ageキーはその年齢1年間の終了実績
+  const projection=runRetirementPlan(config,{startDate:isoDate(forecastStart),initialAsset:Number(actual.endAsset)});
+  return {actual,projection};
+}
+export function planRowAtAge(result,age){ return result?.rows?.find(r=>r.age===Number(age))||null; }
+export function scenarioMetrics(config){
+  const result=runRetirementPlan(config); const a80=planRowAtAge(result,80)?.endAsset??null; const a90=planRowAtAge(result,90)?.endAsset??null;
+  const minRow=result.rows.reduce((min,row)=>!min||row.endAsset<min.endAsset?row:min,null);
+  return {finalAsset:result.finalAsset,afterReserve:result.finalAfterReserveUse,age80Asset:a80,age90Asset:a90,minimumAsset:minRow?.endAsset??result.finalAsset,minimumAssetAge:minRow?.age??config.plan.endAge,status:result.status};
+}
+
+export function expenseDetailSummary(config){
+  const detail=config?.expenseDetail; if(!detail?.monthlyCategories?.length)return null;
+  const monthlyTotal=detail.monthlyCategories.reduce((sum,row)=>sum+Number(row.amount||0),0);
+  const annualOperating=monthlyTotal*12, travelAnnual=Number(detail.travelAnnualBase||0), combined=annualOperating+travelAnnual, reference=Number(detail.annualBudgetReference||0);
+  return {monthlyTotal,annualOperating,travelAnnual,combined,reference,difference:reference-combined};
+}
+
+export function evaluateReviewTriggers(config, baselineResult=null){
+  const result=baselineResult||runRetirementPlan(config),triggers=[];
+  const inf=Number(config?.plan?.inflation||0); if(inf>=2)triggers.push({level:'review',code:'inflation',title:'インフレ率が2%以上',detail:`現在設定 ${inf.toFixed(1)}%`});
+  const actualEntries=Object.entries(config?.actuals||{}).map(([age,value])=>({age:Number(age),...value})).filter(x=>Number.isFinite(x.age)).sort((a,b)=>a.age-b.age);
+  for(const a of actualEntries){
+    const plan=planRowAtAge(result,a.age);
+    if(plan&&Number.isFinite(Number(a.expense))&&Number(a.expense)>(plan.expense+plan.extraExpense)*1.10){const pct=(Number(a.expense)/(plan.expense+plan.extraExpense)-1)*100;triggers.push({level:'review',code:`expense-${a.age}`,title:`${a.age}歳の年間支出が計画比10%以上増加`,detail:`計画比 +${pct.toFixed(1)}%`});}
+    const threshold=Number(config?.management?.thresholds?.[a.age]);
+    if(threshold>0&&Number.isFinite(Number(a.endAsset))&&Number(a.endAsset)<threshold*0.90){const pct=(1-Number(a.endAsset)/threshold)*100;triggers.push({level:'review',code:`asset-${a.age}`,title:`${a.age}歳資産が管理基準を10%以上下回る`,detail:`基準比 -${pct.toFixed(1)}%`});}
+    if(Number.isFinite(Number(a.reserveBalance))&&Number(a.reserveBalance)<Number(config?.reserve?.warningStrongBelow||0))triggers.push({level:'review',code:`reserve-strong-${a.age}`,title:`${a.age}歳の予備枠が強警告水準未満`,detail:`残高 ${formatMan(a.reserveBalance)}万円`});
+    else if(Number.isFinite(Number(a.reserveBalance))&&Number(a.reserveBalance)<Number(config?.reserve?.total||0))triggers.push({level:'watch',code:`reserve-${a.age}`,title:`${a.age}歳の予備枠残高が目標未満`,detail:`残高 ${formatMan(a.reserveBalance)}万円`});
+    if(Number.isFinite(Number(a.safeAssetBalance))&&Number(a.safeAssetBalance)<Number(config?.reserve?.minimumSafeAsset||0))triggers.push({level:'review',code:`safe-asset-${a.age}`,title:`${a.age}歳の安全資産が最低基準未満`,detail:`安全資産 ${formatMan(a.safeAssetBalance)}万円 / 最低基準 ${formatMan(config?.reserve?.minimumSafeAsset||0)}万円`});
+    if(Number.isFinite(Number(a.taxSocial))){
+      const taxCat=(config?.expenseDetail?.monthlyCategories||[]).find(x=>x.key==='taxSocial');
+      if(taxCat){
+        const years=Math.max(0,a.age-Number(config?.plan?.startAge||64));
+        const planTax=Number(taxCat.amount||0)*12*Math.pow(1+Number(config?.plan?.inflation||0)/100,years);
+        const delta=Number(a.taxSocial)-planTax;
+        if(delta>=Number(config?.taxPolicy?.reviewDeltaAnnual||0))triggers.push({level:'review',code:`tax-social-${a.age}`,title:`${a.age}歳の税・社会保険が予算内訳を大きく超過`,detail:`計画参考 ${formatMan(planTax,1)}万円 / 実績 ${formatMan(a.taxSocial,1)}万円 / 差 +${formatMan(delta,1)}万円`});
+      }
+    }
+  }
+  const returns=actualEntries.filter(a=>Number.isFinite(Number(a.returnRate)));
+  for(let i=1;i<returns.length;i++){const prev=returns[i-1],cur=returns[i];if(cur.age===prev.age+1&&Number(prev.returnRate)<2&&Number(cur.returnRate)<2)triggers.push({level:'review',code:`return-${prev.age}-${cur.age}`,title:'税引後運用利回りが2年連続2%未満',detail:`${prev.age}歳 ${Number(prev.returnRate).toFixed(2)}% / ${cur.age}歳 ${Number(cur.returnRate).toFixed(2)}%`});}
+  return triggers;
+}
+
+const FACTOR_GROUPS=[
+  {id:'initialAsset',label:'開始資産',apply:(to,from)=>{to.plan.initialAsset=from.plan.initialAsset;}},
+  {id:'investment',label:'運用利回り',apply:(to,from)=>{to.plan.afterTaxReturn=from.plan.afterTaxReturn;}},
+  {id:'labor',label:'就労・失業給付',apply:(to,from)=>{to.employment=structuredClone(from.employment);to.unemployment=structuredClone(from.unemployment);}},
+  {id:'pension',label:'公的年金',apply:(to,from)=>{to.income.pensions=structuredClone(from.income.pensions);}},
+  {id:'spending',label:'支出条件',apply:(to,from)=>{to.plan.inflation=from.plan.inflation;to.budgets=structuredClone(from.budgets);}},
+  {id:'events',label:'iDeCo・転居等',apply:(to,from)=>{to.ideco=structuredClone(from.ideco);to.events=structuredClone(from.events||[]);}}
+];
+function factorial(n){let v=1;for(let i=2;i<=n;i++)v*=i;return v;}
+function configWithSubset(reference,current,mask){const c=structuredClone(reference);FACTOR_GROUPS.forEach((g,i)=>{if(mask&(1<<i))g.apply(c,current);});c.actuals={};return c;}
+export function factorDecomposition(referenceConfig,currentConfig){
+  if(!referenceConfig||!currentConfig)return null;const n=FACTOR_GROUPS.length,values=new Map();
+  for(let mask=0;mask<(1<<n);mask++)values.set(mask,runRetirementPlan(configWithSubset(referenceConfig,currentConfig,mask)).finalAsset);
+  const baseAsset=values.get(0),currentAsset=values.get((1<<n)-1),denom=factorial(n);
+  const impacts=FACTOR_GROUPS.map((g,i)=>{let impact=0;for(let mask=0;mask<(1<<n);mask++){if(mask&(1<<i))continue;let s=0;for(let j=0;j<n;j++)if(mask&(1<<j))s++;const w=factorial(s)*factorial(n-s-1)/denom;impact+=w*(values.get(mask|(1<<i))-values.get(mask));}return{id:g.id,label:g.label,impact};});
+  const totalDifference=currentAsset-baseAsset,allocated=impacts.reduce((s,x)=>s+x.impact,0);return{baseAsset,currentAsset,totalDifference,impacts,residual:totalDifference-allocated};
+}
+
+export function certaintyItems(config){
+  const c=config||{},certainty=c.certainty||{};
+  const pensionLevel=certainty.pension||'assumption',dcLevel=certainty.dc||'assumption';
+  const ideco=projectIdeco(c);
+  const items=[
+    {key:'initialAsset',label:'64歳開始資産',value:c.plan?.initialAsset,unit:'万円',level:certainty.initialAsset||'plan'},
+    {key:'returnRate',label:'税引後運用利回り',value:c.plan?.afterTaxReturn,unit:'%',level:certainty.returnRate||'scenario'},
+    {key:'inflation',label:'インフレ率',value:c.plan?.inflation,unit:'%',level:certainty.inflation||'scenario'},
+    {key:'laborIncome',label:'就労収入',value:c.employment?.primary?.sideWork?.monthlyGross,unit:'万円/月',level:certainty.laborIncome||'plan'},
+    {key:'pension',label:'本人年金',value:c.income?.pensions?.primary?.annualAtStart,unit:'万円/年',level:c.income?.pensions?.primary?.certainty||pensionLevel},
+    {key:'spousePension',label:'配偶者年金',value:c.income?.pensions?.spouse?.annualAtStart,unit:'万円/年',level:c.income?.pensions?.spouse?.certainty||'unknown'},
+    {key:'dc',label:'65歳iDeCo/DC見込',value:ideco?.balance,unit:'万円',level:dcLevel},
+    {key:'budgets',label:'年代別年間予算',value:null,unit:'',level:certainty.budgets||'plan'},
+    {key:'retirement',label:'退職金',value:c.retirement?.amount,unit:'万円',level:certainty.retirement||'company_estimate'}
+  ];
+  return items.map(x=>({...x,labelText:CERTAINTY_LABELS[x.level]||CERTAINTY_LABELS.unknown}));
+}
+
+export function integrityChecks(config){
+  const c=config||{},issues=[]; const error=(code,title,detail)=>issues.push({level:'error',code,title,detail}),warn=(code,title,detail)=>issues.push({level:'warn',code,title,detail});
+  const start=Number(c.plan?.startAge),end=Number(c.plan?.endAge);
+  if(!Number.isFinite(start)||!Number.isFinite(end)||end<=start)error('age-range','計画年齢範囲が不正','開始年齢と終了年齢を確認してください。');
+  else for(let age=65;age<=end;age++){const matches=(c.budgets||[]).filter(b=>age>=Number(b.fromAge)&&age<=Number(b.toAge));if(matches.length===0)error(`budget-missing-${age}`,`${age}歳の年間予算が未設定`,'全年齢を年代別年間予算のいずれか1区分でカバーしてください。');if(matches.length>1)error(`budget-overlap-${age}`,`${age}歳の年間予算が重複`,`${matches.length}区分が同じ年齢をカバーしています。`);}
+  for(const[label,value]of[['開始資産',c.plan?.initialAsset],['税引後運用利回り',c.plan?.afterTaxReturn],['インフレ率',c.plan?.inflation],['予備枠',c.reserve?.total],['最低安全資産',c.reserve?.minimumSafeAsset]])if(!Number.isFinite(Number(value)))error(`numeric-${label}`,`${label}が数値ではありません`,'設定値を確認してください。');
+  if(Number(c.reserve?.minimumSafeAsset)>Number(c.reserve?.total))warn('safe-over-reserve','最低安全資産が予備枠総額を超えています','二重計上または設定誤りを確認してください。');
+  const reserveBreakdown=c.reserve?.breakdown;if(reserveBreakdown&&Object.keys(reserveBreakdown).length){const sum=Object.values(reserveBreakdown).reduce((a,v)=>a+Number(v||0),0);if(Math.abs(sum-Number(c.reserve.total||0))>0.01)warn('reserve-sum','予備枠の内訳合計が総額と不一致',`内訳 ${formatMan(sum,1)}万円 / 総額 ${formatMan(c.reserve.total,1)}万円`);}
+  for(const cat of c.expenseDetail?.monthlyCategories||[]){if(!cat.items?.length)continue;const sum=cat.items.reduce((a,i)=>a+Number(i.amount||0),0);if(Math.abs(sum-Number(cat.amount||0))>0.01)warn(`expense-${cat.key||cat.label}`,`${cat.label}の詳細内訳がカテゴリ額と不一致`,`詳細 ${formatMan(sum,1)}万円 / カテゴリ ${formatMan(cat.amount,1)}万円`);}
+  const ideco=projectIdeco(c);if(c.ideco&&!ideco)warn('ideco-projection','iDeCo/DC見込計算に必要な日付が不足','現在残高・基準日・拠出終了日を確認してください。');
+  if(!parseDate(c.employment?.primary?.mainRetirement?.baseDate))warn('retirement-date','本業退職基準日が未設定','65歳誕生日月を基本に設定してください。');
+  return issues;
+}
