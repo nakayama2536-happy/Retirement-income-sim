@@ -1,4 +1,4 @@
-export const RULES_VERSION = '2026-09-24 / app v0.8-final';
+export const RULES_VERSION = '2026-09-25 / app v0.9';
 
 export const CERTAINTY_LABELS = {
   confirmed: '確定',
@@ -8,6 +8,16 @@ export const CERTAINTY_LABELS = {
   assumption: '仮定',
   scenario: 'シナリオ',
   unknown: '未確認'
+};
+
+export const CERTAINTY_DESCRIPTIONS = {
+  confirmed: '契約書・通知書・確定実績などで金額が確定している値。',
+  official_estimate: 'ねんきん定期便など公的・公式資料に記載された将来見込値。',
+  company_estimate: '勤務先・制度運営者などが提示した見込値。将来変更の可能性があります。',
+  plan: '本人が管理目的で設定した予算・方針値。実績との差を定期確認します。',
+  assumption: '計算継続のために置いた暫定値。確認後に更新が必要です。',
+  scenario: '比較・ストレステスト用の仮想条件。確定予定を意味しません。',
+  unknown: '根拠資料・金額が未確認の値。重要判断前に確認が必要です。'
 };
 
 export const ANNUAL_REVIEW_ITEMS = [
@@ -415,6 +425,51 @@ function incomeForMonth(config,date,idecoProjection){
   return income;
 }
 
+
+
+function agePeriodStart(config,age){ return addYears(primaryBirth(config),Number(age)); }
+
+export function incomeSummaryForAge(config,age){
+  const c=structuredClone(config), start=agePeriodStart(c,age), end=addYears(start,1), idecoProjection=projectIdeco(c);
+  const out={age:Number(age),primaryLabor:0,spouseLabor:0,primaryPension:0,spousePension:0,idecoAnnuity:0,unemployment:0,extraIncome:0,totalCashIncome:0};
+  let d=new Date(start);
+  while(d<end){
+    const pSide=c?.employment?.primary?.sideWork||{}, pStart=defaultPrimarySideWorkStart(c), pEnd=defaultPrimarySideWorkEnd(c);
+    if(monthInRange(d,pStart,pEnd)) out.primaryLabor+=Number(pSide.monthlyGross||0);
+    const sSide=c?.employment?.spouse?.sideWork||{}, sStart=parseDate(sSide.startDate), sEnd=parseDate(sSide.endDate);
+    if(monthInRange(d,sStart,sEnd)) out.spouseLabor+=Number(sSide.monthlyGross||0);
+    out.primaryPension+=pensionMonthlyForPerson(c?.income?.pensions?.primary,d);
+    out.spousePension+=pensionMonthlyForPerson(c?.income?.pensions?.spouse,d);
+    const inc=incomeForMonth(c,d,idecoProjection);
+    out.idecoAnnuity+=inc.idecoAnnuity; out.unemployment+=inc.unemployment; out.extraIncome+=inc.extraIncome;
+    d=addMonths(d,1);
+  }
+  out.totalCashIncome=out.primaryLabor+out.spouseLabor+out.primaryPension+out.spousePension+out.idecoAnnuity+out.unemployment+out.extraIncome;
+  return out;
+}
+
+export function householdTaxSocialReferenceForAge(config,age){
+  const c=structuredClone(config), inc=incomeSummaryForAge(c,age);
+  const pBirth=primaryBirth(c), sBirth=spouseBirth(c), periodStart=agePeriodStart(c,age);
+  const pAge=fullAgeOn(periodStart,pBirth), sAge=fullAgeOn(periodStart,sBirth);
+  const pSalary=inc.primaryLabor, sSalary=inc.spouseLabor, pPension=inc.primaryPension+inc.idecoAnnuity, sPension=inc.spousePension;
+  const pTax0=estimateSimpleIncomeTaxes({salaryGross:pSalary,pensionGross:pPension,age:pAge,spouseIncomeMan:null});
+  const sTax0=estimateSimpleIncomeTaxes({salaryGross:sSalary,pensionGross:sPension,age:sAge,spouseIncomeMan:null});
+  const pIncome=pTax0.residentTotalIncome, sIncome=sTax0.residentTotalIncome;
+  const pTaxed=pTax0.residentTax>0, sTaxed=sTax0.residentTax>0, householdTaxed=pTaxed||sTaxed;
+  let nhi=0, late=0; const under75=[];
+  if(pAge<75) under75.push(pIncome); else late+=lateElderlyMedicalPremium2026(pIncome);
+  if(sAge<75) under75.push(sIncome); else late+=lateElderlyMedicalPremium2026(sIncome);
+  if(under75.length) nhi=fukuyamaNhiPremium2026({memberIncomesMan:under75,members:under75.length,adultMembers:under75.length,careMembers40to64:0});
+  const pCare=pAge>=65?fukuyamaCarePremium2026({totalIncome:pIncome,pensionGross:pPension,ownResidentTaxed:pTaxed,householdResidentTaxed:householdTaxed}):0;
+  const sCare=sAge>=65?fukuyamaCarePremium2026({totalIncome:sIncome,pensionGross:sPension,ownResidentTaxed:sTaxed,householdResidentTaxed:householdTaxed}):0;
+  const healthTotal=nhi+late+pCare+sCare, denom=Math.max(1,pIncome+sIncome), pShare=healthTotal*(pIncome/denom), sShare=healthTotal-pShare;
+  const pTax=estimateSimpleIncomeTaxes({salaryGross:pSalary,pensionGross:pPension,age:pAge,spouseIncomeMan:sIncome,spouseAge:sAge,socialInsurance:pShare});
+  const sTax=estimateSimpleIncomeTaxes({salaryGross:sSalary,pensionGross:sPension,age:sAge,spouseIncomeMan:pIncome,spouseAge:pAge,socialInsurance:sShare});
+  const incomeTax=pTax.incomeTax+sTax.incomeTax, residentTax=pTax.residentTax+sTax.residentTax;
+  return {age:Number(age),primaryAge:pAge,spouseAge:sAge,income:inc,incomeTax,residentTax,nhi,lateElderly:late,care:pCare+sCare,total:incomeTax+residentTax+nhi+late+pCare+sCare,fallback:false,rulesAsOf:'2026-09-25',note:'2026年制度・福山市保険料を将来へ仮適用した参考値。'};
+}
+
 export function runRetirementPlan(config, options = {}) {
   const c=structuredClone(config);
   const start=options.startDate?parseDate(options.startDate):startDateFor(c);
@@ -519,13 +574,10 @@ export function evaluateReviewTriggers(config, baselineResult=null){
     else if(Number.isFinite(Number(a.reserveBalance))&&Number(a.reserveBalance)<Number(config?.reserve?.total||0))triggers.push({level:'watch',code:`reserve-${a.age}`,title:`${a.age}歳の予備枠残高が目標未満`,detail:`残高 ${formatMan(a.reserveBalance)}万円`});
     if(Number.isFinite(Number(a.safeAssetBalance))&&Number(a.safeAssetBalance)<Number(config?.reserve?.minimumSafeAsset||0))triggers.push({level:'review',code:`safe-asset-${a.age}`,title:`${a.age}歳の安全資産が最低基準未満`,detail:`安全資産 ${formatMan(a.safeAssetBalance)}万円 / 最低基準 ${formatMan(config?.reserve?.minimumSafeAsset||0)}万円`});
     if(Number.isFinite(Number(a.taxSocial))){
-      const taxCat=(config?.expenseDetail?.monthlyCategories||[]).find(x=>x.key==='taxSocial');
-      if(taxCat){
-        const years=Math.max(0,a.age-Number(config?.plan?.startAge||64));
-        const planTax=Number(taxCat.amount||0)*12*Math.pow(1+Number(config?.plan?.inflation||0)/100,years);
-        const delta=Number(a.taxSocial)-planTax;
-        if(delta>=Number(config?.taxPolicy?.reviewDeltaAnnual||0))triggers.push({level:'review',code:`tax-social-${a.age}`,title:`${a.age}歳の税・社会保険が予算内訳を大きく超過`,detail:`計画参考 ${formatMan(planTax,1)}万円 / 実績 ${formatMan(a.taxSocial,1)}万円 / 差 +${formatMan(delta,1)}万円`});
-      }
+      let planTax=Number(config?.cashflow?.taxFallbackMonthly ?? 4)*12;
+      try{ const ref=householdTaxSocialReferenceForAge(config,a.age); if(Number.isFinite(ref?.total)) planTax=ref.total; }catch{}
+      const delta=Number(a.taxSocial)-planTax;
+      if(delta>=Number(config?.taxPolicy?.reviewDeltaAnnual||0))triggers.push({level:'review',code:`tax-social-${a.age}`,title:`${a.age}歳の税・社会保険が予定額を大きく超過`,detail:`予定参考 ${formatMan(planTax,1)}万円 / 実績 ${formatMan(a.taxSocial,1)}万円 / 差 +${formatMan(delta,1)}万円`});
     }
   }
   const returns=actualEntries.filter(a=>Number.isFinite(Number(a.returnRate)));
