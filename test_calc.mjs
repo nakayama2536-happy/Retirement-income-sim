@@ -3,8 +3,9 @@ import {
   runRetirementPlan, runForecastFromLatestActual, retirementIncomeDeduction,
   pensionAdjustmentFactor, nisaCapacity, expenseDetailSummary, evaluateReviewTriggers,
   factorDecomposition, certaintyItems, integrityChecks, ANNUAL_REVIEW_ITEMS,
-  projectIdeco, idecoOverlapReference, retirementIdecoTaxSummary, unemploymentComparison, unemploymentDailyBenefit2026, retirementTaxEstimate, fukuyamaNhiPremium2026Details, lateElderlyMedicalPremium2026Details, estimateSimpleIncomeTaxes
+  projectIdeco, idecoOverlapReference, retirementIdecoTaxSummary, unemploymentComparison, unemploymentDailyBenefit2026, retirementTaxEstimate, fukuyamaNhiPremium2026Details, lateElderlyMedicalPremium2026Details, estimateSimpleIncomeTaxes, incomeSummaryForAge, householdTaxSocialReferenceForAge
 } from './calc.mjs';
+import { setPeriodValue, cashflowSummaryForAge, valueForPeriods } from './cashflow.mjs';
 
 const synthetic = {
   meta:{schemaVersion:'0.7',label:'synthetic'},
@@ -90,7 +91,7 @@ assert.ok(nhi.child>0); assert.ok(nhi.total>nhi.medical+nhi.support);
 const late=lateElderlyMedicalPremium2026Details(100); assert.ok(late.child>0); assert.ok(late.total<=87.1);
 const tax=estimateSimpleIncomeTaxes({salaryGross:72,pensionGross:260,age:70,spouseIncomeMan:0,spouseAge:70});
 assert.equal(tax.salaryIncome,0); assert.equal(tax.spouseIncomeTaxDeduction,48); assert.equal(tax.residentSpouseDeduction,38);
-console.log('OK: v0.8 monthly calculation, tax/social, unemployment, iDeCo, actual forecast, review triggers, factor decomposition, certainty and integrity tests passed');
+console.log('OK: v0.9 monthly calculation, tax/social, unemployment, iDeCo, actual forecast, review triggers, factor decomposition, certainty and integrity tests passed');
 
 const taxCfg={
   people:{primary:{birthDate:'1980-01-01'},spouse:{birthDate:'1981-01-01'}},
@@ -113,3 +114,22 @@ const ov2=idecoOverlapReference(outside);
 assert.equal(ov2.within19YearRule,false);
 assert.equal(ov2.adjustedDeduction,ov2.fullDeduction);
 console.log('OK: step3 retirement/iDeCo tax overlap tests passed');
+
+
+// v0.9 cashflow range editing and detailed annual summary
+let periods=[{fromAge:64,toAge:95,amount:10}];
+periods=setPeriodValue(periods,80,89,12);
+assert.equal(valueForPeriods(periods,79),10);
+assert.equal(valueForPeriods(periods,80),12);
+assert.equal(valueForPeriods(periods,90),10);
+const cfCfg=structuredClone(synthetic);
+cfCfg.plan.endAge=95;
+cfCfg.budgets=[{fromAge:65,toAge:75,annualBudget:700},{fromAge:76,toAge:80,annualBudget:620},{fromAge:81,toAge:86,annualBudget:600},{fromAge:87,toAge:95,annualBudget:560}];
+cfCfg.cashflow={taxSocialMode:'auto_if_possible',expenseCategories:[
+ {key:'fixed',label:'固定費',items:[{key:'rent',label:'家賃',periods:[{fromAge:64,toAge:95,amount:11}]}]},
+ {key:'taxSocial',label:'税金・社会保険',fallbackMonthly:4,items:[]}
+],travel:[{fromAge:65,toAge:75,annualAmount:170},{fromAge:76,toAge:80,annualAmount:70},{fromAge:81,toAge:86,annualAmount:40},{fromAge:87,toAge:95,annualAmount:0}],manualIncomeItems:[]};
+const inc65=incomeSummaryForAge(cfCfg,65); assert.ok(inc65.totalCashIncome>=0);
+const tax65=householdTaxSocialReferenceForAge(cfCfg,65); assert.ok(tax65.total>=0);
+const cfs=cashflowSummaryForAge(cfCfg,65); assert.ok(cfs.plannedCost>0); assert.ok(Number.isFinite(cfs.buffer));
+console.log('OK: v0.9 cashflow schedule, period range edit and tax/social planned value tests passed');
