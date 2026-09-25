@@ -8,7 +8,7 @@ import {
 } from './calc.mjs';
 import { saveConfig, loadConfig, loadScenarios, saveScenarios, downloadJson, migrateConfig } from './storage.mjs';
 import { RULES } from './rules.mjs';
-import { cashflowSummaryForAge, flattenEditableItems, applyPeriodEdit, formatPeriodList } from './cashflow.mjs';
+import { cashflowSummaryForAge, flattenEditableItems, applyPeriodEdit, formatPeriodList } from './cashflow.mjs';\nimport { downloadAnnualCsv } from './csv-export.mjs';
 
 let config = loadConfig();
 let scenarios = loadScenarios();
@@ -617,7 +617,7 @@ el('saveScenarioBtn').addEventListener('click', saveCurrentScenario);
 el('importFile').addEventListener('change', e=>{ const f=e.target.files?.[0]; if(f) importConfig(f).catch(err=>showNotice(`読込失敗: ${err.message}`,'error')); });
 el('importFile2').addEventListener('change', e=>{ const f=e.target.files?.[0]; if(f) importConfig(f).catch(err=>showNotice(`読込失敗: ${err.message}`,'error')); });
 el('exportBtn').addEventListener('click',()=>{ if(config) downloadJson(config,`retirement-plan-backup-${new Date().toISOString().slice(0,10)}.json`); });
-el('exportFullBtn').addEventListener('click',()=>{ if(config) downloadJson({schemaVersion:'0.9', exportedAt:new Date().toISOString(), config, scenarios},`retirement-plan-full-backup-${new Date().toISOString().slice(0,10)}.json`); });
+el('exportFullBtn').addEventListener('click',()=>{ if(config) downloadJson({schemaVersion:'0.9', exportedAt:new Date().toISOString(), config, scenarios},`retirement-plan-full-backup-${new Date().toISOString().slice(0,10)}.json`); });\nel('exportAnnualCsvBtn').addEventListener('click',()=>{\n  if(!config || !result) return;\n  try { downloadAnnualCsv(config,result); showNotice('年度別の全項目CSVを出力しました。'); }\n  catch(err) { showNotice(`CSV出力失敗: ${err.message}`,'error'); }\n});
 el('pensionToolRun').addEventListener('click',runPensionTool);
 el('nisaToolRun').addEventListener('click',runNisaTool);
 el('idecoToolRun').addEventListener('click',runIdecoTool);
