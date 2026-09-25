@@ -50,7 +50,7 @@
 <article class="card"><div class="section-title"><h2>支出内訳</h2><button class="info" data-help="支出内訳" data-help-text="固定費、光熱費、変動費、車、税・社会保険、保険、更新積立、旅行費を分けて表示します。税・社会保険は計算できる場合は自動試算値を予定額として使います。">ⓘ</button></div><div id="expenseDetail"></div></article>
 </div>
 <div class="two-col"><article class="card"><h2>管理予算・バッファ</h2><div id="expenseReconcile" class="summary-box"></div></article><article class="card"><h2>改善候補</h2><div id="improvementIdeas"></div></article></div>
-<article class="card"><h2>年次計算表</h2><p class="muted">単位：万円。資産計算では管理予算を支出正本とし、詳細予定原価との差はバッファとして管理します。</p><div class="table-wrap"><table><thead><tr><th>年齢期</th><th>期首資産</th><th>運用益</th><th>収入</th><th>支出</th><th>計画年末</th><th>実績年末</th><th>差</th></tr></thead><tbody id="yearRows"></tbody></table></div></article></section>
+<article class="card"><div class="section-title"><h2>年次計算表</h2><button id="exportAnnualCsvBtn" class="secondary" type="button">全項目CSV出力</button></div><p class="muted">単位：万円。資産計算では管理予算を支出正本とし、詳細予定原価との差はバッファとして管理します。CSVは1行＝1年齢期で、収入・支出内訳・資産・実績・イベントを年度別に出力します。</p><div class="table-wrap"><table><thead><tr><th>年齢期</th><th>期首資産</th><th>運用益</th><th>収入</th><th>支出</th><th>計画年末</th><th>実績年末</th><th>差</th></tr></thead><tbody id="yearRows"></tbody></table></div></article></section>
 <section id="actuals" class="panel" hidden>
 <div class="two-col">
 <article class="card"><div class="section-title"><h2>年次実績入力</h2><button class="info" data-help="実績入力" data-help-text="最低限、年末総資産だけ入力すれば再予測できます。年間支出・収入・運用利回り等は差異分析用なので、分かる範囲だけで構いません。">ⓘ</button></div>
