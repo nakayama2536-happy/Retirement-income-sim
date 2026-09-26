@@ -36,3 +36,6 @@
 - 見直し条件の自動判定
 - 年度別・全項目CSV出力（UTF-8 BOM、Excel対応）\n- JSONバックアップ
 - PWA対応
+
+## データ管理
+個人情報の公開/非公開区分と正本管理は [データ管理方針](docs/DATA_MANAGEMENT_POLICY.md) に従います。
