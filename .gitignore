@@ -1,3 +1,28 @@
-*個人データ*.json
-user_config*.json
+# OS
 .DS_Store
+
+# Secrets / credentials
+.env
+.env.*
+*.key
+*.pem
+*.p12
+*.pfx
+secrets/
+_private/
+private/
+personal/
+
+# Personal configuration / backups
+*個人データ*.json
+*個人用*.json
+*バックアップ*.json
+personal_config*.json
+user_config*.json
+*.private.json
+retirement-plan-full*.json
+retirement-plan-backup*.json
+
+# Private exports / screenshots
+private_exports/
+private_screenshots/
