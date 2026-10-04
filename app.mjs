@@ -1,24 +1,96 @@
+import {mountCalendarSheet} from './calendar-ui.mjs';
+import {mountExpenseSheet} from './expense-ui.mjs';
+import {mountIncomeSheet} from './income-ui.mjs';
+import {expenseDisplayModel,expenseDisplayHtml,expenseDisplayProfile} from './expense-display.mjs';
+import {annualCashflowSummary,annualCashflowHtml} from './annual-cashflow.mjs';
+import {taxSocialMethodAudit,taxSocialMethodHtml} from './tax-social-audit.mjs';
+import {downloadAnnualCsv} from './annual-csv.mjs';
+import {createFullBackup,restoreFullBackup,isFullBackup} from './full-backup.mjs';
+import {assertBackupCompatibility} from './backup-compatibility.mjs';
+import {acquireWriteAccess,assertWriteAccess} from './write-access.mjs';
+import {mountRecoveryCheck} from './recovery-ui.mjs';
 import {
   runRetirementPlan, runForecastFromLatestActual, latestActual, planRowAtAge, scenarioMetrics,
   formatMan, pensionAnnualFromBase65, pensionAdjustmentFactor,
   retirementIncomeDeduction, taxableRetirementIncome, nisaCapacity, expenseDetailSummary, evaluateReviewTriggers,
-  factorDecomposition, certaintyItems, CERTAINTY_LABELS, CERTAINTY_DESCRIPTIONS, integrityChecks, ANNUAL_REVIEW_ITEMS, RULES_VERSION,
+  factorDecomposition, certaintyItems, CERTAINTY_LABELS, integrityChecks, ANNUAL_REVIEW_ITEMS, RULES_VERSION,
   projectIdeco, unemploymentComparison, idecoOverlapReference, retirementIdecoTaxSummary, estimateSimpleIncomeTaxes, retirementTaxEstimate,
-  fukuyamaCarePremium2026, lateElderlyMedicalPremium2026, lateElderlyMedicalPremium2026Details, fukuyamaNhiPremium2026, fukuyamaNhiPremium2026Details
+  fukuyamaCarePremium2026, lateElderlyMedicalPremium2026, lateElderlyMedicalPremium2026Details, fukuyamaNhiPremium2026, fukuyamaNhiPremium2026Details,
+  replaceAgeRangeOverride, estimateAnnualTaxSocial, applyCarDisposalTransfer, expenseDetailRows
 } from './calc.mjs';
-import { saveConfig, loadConfig, loadScenarios, saveScenarios, downloadJson, migrateConfig } from './storage.mjs';
+import { loadState, STATE_KEY, downloadJson, migrateConfig, configSignature } from './storage.mjs';
+import { commitPlanState } from './state.mjs';
 import { RULES } from './rules.mjs';
-import { cashflowSummaryForAge, flattenEditableItems, applyPeriodEdit, formatPeriodList } from './cashflow.mjs';
-import { downloadAnnualCsv } from './csv-export.mjs';
+import { mountPensionSheet } from './pension-ui.mjs';
+import { mountSalarySheet } from './salary-ui.mjs';
+import { inspectMigration, MIGRATION_KEYS, validateSavedState } from './migration.mjs';
+import { mountMigration } from './migration-ui.mjs';
 
-let config = loadConfig();
-let scenarios = loadScenarios();
+const writeAccess=await acquireWriteAccess();
+let initialState, startupError;
+try{const check=inspectMigration();if(check.integrated.status==='invalid')throw new Error(check.integrated.error);initialState=loadState();}catch(e){initialState={config:null,scenarios:[]};startupError=e.message;}
+let config=initialState.config;
+let scenarios=initialState.scenarios;
+const currentConfig=()=>config;
+const currentScenarios=()=>scenarios;
 let result = null;
 let forecast = null;
+let renderedInputValues=new Map();
+
+function inputValues(){
+  return new Map([...document.querySelectorAll('#dashboard input, #dashboard select, #dashboard textarea')]
+    .filter(input=>input.id!=='expenseDisplaySource'&&!input.closest('#pension, #salary, #calendarSheet, #expenseSheet, #incomeSheet'))
+    .map(input=>[input.id||(input.dataset.reviewKey?`review/${input.dataset.reviewKey}`:input.form?.id&&input.name?`${input.form.id}/${input.name}`:''),{input,value:input.type==='checkbox'?input.checked:input.value}])
+    .filter(([key])=>key));
+}
 
 const el = id => document.getElementById(id);
 const money = v => `${formatMan(v, 0)}万円`;
 const numOrBlank = v => v === '' || v === null || v === undefined ? null : Number(v);
+const pensionSheet=mountPensionSheet({getConfig:()=>config,showNotice,onCommit:updated=>{
+  const pending=[...inputValues()].filter(([key,entry])=>renderedInputValues.has(key)&&entry.value!==renderedInputValues.get(key));
+  config=updated.config;
+  refresh({save:false,calculated:updated});
+  const now=inputValues();
+  for(const [key,{value}] of pending){
+    const input=now.get(key)?.input;if(!input)continue;
+    if(input.type==='checkbox')input.checked=value;
+    else if(input.tagName!=='SELECT'||[...input.options].some(o=>o.value===value))input.value=value;
+  }
+}});
+const salarySheet=mountSalarySheet({getState:()=>({config,scenarios}),showNotice,onCommit:updated=>{
+  const pending=[...inputValues()].filter(([key,entry])=>renderedInputValues.has(key)&&entry.value!==renderedInputValues.get(key));
+  config=updated.config;scenarios=updated.scenarios;
+  try{refresh({calculated:updated});}catch{showNotice('保存済みですが表示を更新できません。再読み込みしてください。','error');}
+  const now=inputValues();
+  for(const [key,{value}] of pending){const input=now.get(key)?.input;if(!input)continue;if(input.type==='checkbox')input.checked=value;else if(input.tagName!=='SELECT'||[...input.options].some(o=>o.value===value))input.value=value;}
+}});
+const calendarSheet=mountCalendarSheet({getState:()=>({config,scenarios}),showNotice,onCommit:updated=>{
+  const pending=[...inputValues()].filter(([key,entry])=>renderedInputValues.has(key)&&entry.value!==renderedInputValues.get(key));
+  config=updated.config;scenarios=updated.scenarios;
+  try{refresh({calculated:updated});}catch{showNotice('保存済みですが表示を更新できません。再読み込みしてください。','error');}
+  const now=inputValues();
+  for(const [key,{value}] of pending){const input=now.get(key)?.input;if(!input)continue;if(input.type==='checkbox')input.checked=value;else if(input.tagName!=='SELECT'||[...input.options].some(o=>o.value===value))input.value=value;}
+}});
+
+const expenseSheet=mountExpenseSheet({getState:()=>({config,scenarios}),showNotice,onCommit:updated=>{
+  const pending=[...inputValues()].filter(([key,entry])=>renderedInputValues.has(key)&&entry.value!==renderedInputValues.get(key));
+  config=updated.state.config;scenarios=updated.state.scenarios;
+  if(config.expenseWorkflow?.lastApply?.sourceProfile)el('expenseDisplaySource').value=config.expenseWorkflow.lastApply.sourceProfile;
+  try{refresh({calculated:updated});}finally{
+  const now=inputValues();
+  for(const [key,{value}] of pending){const input=now.get(key)?.input;if(!input)continue;if(input.type==='checkbox')input.checked=value;else if(input.tagName!=='SELECT'||[...input.options].some(o=>o.value===value))input.value=value;}
+  }
+}});
+
+const incomeSheet=mountIncomeSheet({getState:()=>({config,scenarios}),showNotice,onCommit:updated=>{
+  const pending=[...inputValues()].filter(([key,entry])=>renderedInputValues.has(key)&&entry.value!==renderedInputValues.get(key));
+  config=updated.state.config;scenarios=updated.state.scenarios;
+  try{refresh({calculated:updated});}finally{
+    const now=inputValues();
+    for(const [key,{value}] of pending){const input=now.get(key)?.input;if(!input)continue;if(input.type==='checkbox')input.checked=value;else if(input.tagName!=='SELECT'||[...input.options].some(o=>o.value===value))input.value=value;}
+  }
+}});
 
 function showNotice(msg, type='info') {
   const n = el('notice'); n.textContent = msg; n.dataset.type = type; n.hidden = false;
@@ -41,19 +113,20 @@ function setEmptyState() {
   renderRules();
 }
 
-function ensureBaseScenario() {
-  if (!config) return;
-  const existing = scenarios.find(s => s.role === 'baseline');
-  if (existing) return;
-  if (scenarios.length) {
-    scenarios[0].role = 'baseline';
-    scenarios[0].name ||= '基準ケース';
-    saveScenarios(scenarios);
-    return;
+function commitState(nextConfig,nextScenarios=scenarios,preserveDrafts=true){
+  const pending=preserveDrafts?[...inputValues()].filter(([key,entry])=>renderedInputValues.has(key)&&entry.value!==renderedInputValues.get(key)):[];
+  let committed;
+  try{committed=commitPlanState({config,scenarios},{config:nextConfig,scenarios:nextScenarios});}
+  catch(e){showNotice(`保存できませんでした。${e.message}`,'error');return false;}
+  config=committed.config;scenarios=committed.scenarios;
+  try{refresh({calculated:committed});}catch(e){showNotice('保存済みですが表示を更新できません。再読み込みしてください。','error');}
+  const now=inputValues();
+  for(const [key,{value}] of pending){
+    const input=now.get(key)?.input;if(!input)continue;
+    if(input.type==='checkbox')input.checked=value;
+    else if(input.tagName!=='SELECT'||[...input.options].some(o=>o.value===value))input.value=value;
   }
-  const snapshot = scenarioSnapshot(config);
-  scenarios = [{ id: crypto.randomUUID(), name: config.meta?.label || '基準ケース', role:'baseline', savedAt: new Date().toISOString(), selected: true, config: snapshot }];
-  saveScenarios(scenarios);
+  return true;
 }
 
 function scenarioSnapshot(c) {
@@ -64,20 +137,24 @@ function scenarioSnapshot(c) {
   return s;
 }
 
-function refresh() {
+function refresh({calculated=null}={}) {
   if (!config) return setEmptyState();
   config = migrateConfig(config);
   const errors = validateConfig(config);
   if (errors.length) { showNotice(`設定エラー: ${errors.join(' / ')}`, 'error'); return; }
   try {
-    result = runRetirementPlan(config);
-    forecast = runForecastFromLatestActual(config);
+    result = calculated?.result || runRetirementPlan(config);
+    forecast = calculated ? calculated.forecast : runForecastFromLatestActual(config);
   } catch (e) { showNotice(e.message, 'error'); return; }
   el('emptyState').hidden = true;
   el('dashboard').hidden = false;
-  saveConfig(config);
-  ensureBaseScenario();
-  renderHome(); renderCashflow(); renderYearTable(); renderActuals(); renderAnnualReview(); renderScenarios(); renderSettings(); renderRules(); drawChart(); renderTimeline(); renderCertainty(); renderFactors(); renderIntegrity(); renderCalculationBasis();
+  renderHome(); renderExpenseDetail(); renderYearTable(); renderActuals(); renderAnnualReview(); renderScenarios(); renderSettings(); renderRules(); drawChart(); renderTimeline(); renderCertainty(); renderFactors(); renderIntegrity(); renderCalculationBasis();
+  pensionSheet.render();
+  salarySheet.render();
+  calendarSheet.render();
+  expenseSheet.render();
+  incomeSheet.render();
+  renderedInputValues=new Map([...inputValues()].map(([key,{value}])=>[key,value]));
 }
 
 function renderHome() {
@@ -112,7 +189,7 @@ function renderHome() {
   const check = [];
   const ideco=projectIdeco(config);
   if (ideco) check.push(`65歳iDeCo/DC見込は運用前提による試算です（約${formatMan(ideco.balance)}万円）`);
-  if (!['confirmed','official_estimate'].includes(config.income?.pensions?.spouse?.certainty)) check.push('配偶者の公的年金額は未確認です');
+  if (!config.income?.pensions?.spouse?.annualAtStart || ['unknown','assumption'].includes(config.income?.pensions?.spouse?.certainty)) check.push('配偶者の公的年金額は未確認または仮定です');
   if (config.reserve.total > 0 && result.finalAfterReserveUse < result.reserveUsedThreshold) check.push('予備枠全使用時は95歳の最低目安を下回ります');
   if (forecast && forecast.projection.finalAsset < result.finalThreshold) check.push('最新実績からの再予測が95歳管理基準を下回っています');
   el('checks').innerHTML = check.length ? check.map(x=>`<li>${x}</li>`).join('') : '<li>主要な未確認事項はありません。</li>';
@@ -155,6 +232,7 @@ function renderFactors(){
 }
 
 
+
 function renderIntegrity(){
   const issues=integrityChecks(config);
   const box=el('integritySummary');
@@ -175,47 +253,65 @@ function renderReviewAlerts() {
     : '<p class="muted">現在、設定済みの自動見直し条件には該当していません。</p>';
 }
 
-function renderCashflow() {
-  const ageSel=el('cashflowAge'); if(!ageSel) return;
-  const prev=Number(ageSel.value||65); ageSel.innerHTML='';
-  for(let age=Math.max(65,Number(config.plan?.startAge||64));age<=Number(config.plan?.endAge||95);age++){const o=document.createElement('option');o.value=age;o.textContent=`${age}歳`;ageSel.appendChild(o);}
-  ageSel.value=String(Math.min(Number(config.plan?.endAge||95),Math.max(65,prev||65)));
-  const age=Number(ageSel.value), cf=cashflowSummaryForAge(config,age), planRow=planRowAtAge(result,age), investment=Number(planRow?.investmentGain||0);
-  el('cashflowSummary').innerHTML=`<dl><div><dt>現金収入</dt><dd>${money(cf.totalIncome)}</dd></div><div><dt>資産運用益</dt><dd>${money(investment)}</dd></div><div><dt>予定原価（詳細内訳）</dt><dd>${money(cf.plannedCost)}</dd></div><div><dt>管理予算</dt><dd>${money(cf.managementBudget)}</dd></div><div><dt>予算バッファ</dt><dd class="${cf.buffer<0?'buffer-negative':'buffer-positive'}">${cf.buffer>=0?'+':''}${money(cf.buffer)}</dd></div><div><dt>現金収支（予定原価基準）</dt><dd class="${cf.operatingBalance<0?'neg':'pos'}">${cf.operatingBalance>=0?'+':''}${money(cf.operatingBalance)}</dd></div></dl><p class="muted">${age}歳時点。固定費等は64歳価格からインフレ${Number(config.plan?.inflation||0).toFixed(1)}%/年で調整。税・社会保険は計算可能な場合、2026年制度を将来へ仮適用した自動予定額を使います。</p>`;
-  const i=cf.income;
-  const incomeRows=[['本人 労働収入',i.primaryLabor],['配偶者 労働収入',i.spouseLabor],['本人 公的年金',i.primaryPension],['配偶者 公的年金',i.spousePension],['iDeCo/DC年金',i.idecoAnnuity],['雇用保険',i.unemployment],['一時金・臨時収入',i.extraIncome],...cf.manualIncomeRows.map(x=>[x.label,x.annual])].filter(x=>Math.abs(Number(x[1]||0))>0.0001);
-  el('incomeDetail').innerHTML=`<table class="cashflow-table"><thead><tr><th>項目</th><th>年額</th><th>月平均</th></tr></thead><tbody>${incomeRows.map(([label,annual])=>`<tr><td>${escapeHtml(label)}</td><td>${money(annual)}</td><td>${money(Number(annual)/12)}</td></tr>`).join('')||'<tr><td colspan="3">収入なし</td></tr>'}<tr class="cashflow-cat"><td>現金収入合計</td><td>${money(cf.totalIncome)}</td><td>${money(cf.totalIncome/12)}</td></tr><tr><td>資産運用益（別管理）</td><td>${money(investment)}</td><td>—</td></tr></tbody></table>`;
-  let exp='';
-  for(const cat of cf.expenseCategories){
-    exp+=`<tr class="cashflow-cat"><td>${escapeHtml(cat.label)}${cat.auto?' <span class="pill">自動</span>':''}</td><td>${money(cat.monthly)}</td><td>${money(cat.annual)}</td></tr>`;
-    for(const item of cat.items||[]){const monthly=item.monthly!=null?item.monthly:Number(item.annual||0)/12;const period=item.periods?`<div class="period-note">${escapeHtml(formatPeriodList(item.periods,'monthly'))}</div>`:'';exp+=`<tr><td class="cashflow-sub">${escapeHtml(item.label)}${period}</td><td>${money(monthly)}</td><td>${money(item.annual||monthly*12)}</td></tr>`;}
-    if(cat.note) exp+=`<tr><td colspan="3" class="muted">${escapeHtml(cat.note)}</td></tr>`;
+function renderExpenseDetail() {
+  const wrap = el('expenseDetail');
+  const reconcile = el('expenseReconcile');
+  const annual = el('annualCashflowSummary');
+  const taxAudit = el('taxSocialMethodAudit');
+  const ageSelect=el('cashflowViewAge');
+  const start=Number(config.plan?.startAge||64), end=Number(config.plan?.endAge||95);
+  if(ageSelect){
+    const selected=Number(ageSelect.value);
+    ageSelect.innerHTML=Array.from({length:end-start+1},(_,i)=>start+i).map(a=>'<option value="'+a+'">'+a+'歳</option>').join('');
+    ageSelect.value=String(Number.isFinite(selected)&&selected>=start&&selected<=end?selected:start);
   }
-  exp+=`<tr class="cashflow-cat"><td>旅行費</td><td>—</td><td>${money(cf.travelAnnual)}<div class="period-note">基準額 ${money(cf.travelBase)}/年</div></td></tr><tr class="cashflow-cat"><td>予定原価 合計</td><td>${money(cf.operatingAnnual/12)}</td><td>${money(cf.plannedCost)}</td></tr>`;
-  el('expenseDetail').innerHTML=`<table class="cashflow-table"><thead><tr><th>項目</th><th>月額</th><th>年額</th></tr></thead><tbody>${exp}</tbody></table>`;
-  el('expenseReconcile').innerHTML=`<dl><div><dt>詳細予定原価</dt><dd>${money(cf.plannedCost)}</dd></div><div><dt>管理予算</dt><dd>${money(cf.managementBudget)}</dd></div><div><dt>バッファ</dt><dd class="${cf.buffer<0?'buffer-negative':'buffer-positive'}">${cf.buffer>=0?'+':''}${money(cf.buffer)}</dd></div><div><dt>旅行費</dt><dd>${money(cf.travelAnnual)}</dd></div></dl><p class="muted">資産シミュレーションは管理予算を支出正本とします。予定原価が下がればバッファが増え、予定原価が管理予算を超えると赤字表示して予算見直し対象にします。</p>`;
-  const reductions=config.cashflow?.expenseReductionIdeas||[], improvements=config.cashflow?.incomeImprovementIdeas||[];
-  el('improvementIdeas').innerHTML=`<div class="idea-grid"><div><h3>経費削減案</h3><ul>${reductions.map(x=>`<li>${escapeHtml(x)}</li>`).join('')}</ul></div><div><h3>収益改善案</h3><ul>${improvements.map(x=>`<li>${escapeHtml(x)}</li>`).join('')}</ul></div></div>`;
-  renderPeriodEditor();
+  const age=Number(ageSelect?.value||start);
+  try{
+    const source=el('expenseDisplaySource');
+    source.value=expenseDisplayProfile(config,source.value)||'';
+    const html=expenseDisplayHtml(expenseDisplayModel(config,age,{sourceProfile:source.value}));
+    wrap.innerHTML=html.detail;reconcile.innerHTML=html.summary;
+    annual.innerHTML=annualCashflowHtml(annualCashflowSummary(config,age,{sourceProfile:source.value}));
+    if(taxAudit)taxAudit.innerHTML=taxSocialMethodHtml(taxSocialMethodAudit(config,age));
+  }catch(e){wrap.textContent='内訳を表示できません。'+e.message;reconcile.textContent='未計算のため予算余裕は判定できません。';annual.textContent='年間収支を表示できません。'+e.message;if(taxAudit)taxAudit.textContent='税・社会保険の方式差を表示できません。'+e.message;}
+  renderPeriodOverrides();
 }
-function renderPeriodEditor(){
-  const sel=el('periodTarget'); if(!sel) return;
-  const previous=sel.value, items=flattenEditableItems(config);
-  sel.innerHTML=items.map(x=>`<option value="${x.kind}:${x.key}">${escapeHtml(x.categoryLabel)}｜${escapeHtml(x.label)}</option>`).join('');
-  if(items.some(x=>`${x.kind}:${x.key}`===previous)) sel.value=previous;
-  const current=items.find(x=>`${x.kind}:${x.key}`===sel.value)||items[0], f=el('periodEditForm');
-  if(current){let periods=[];if(current.kind==='expense') periods=(config.cashflow?.expenseCategories||[]).flatMap(c=>c.items||[]).find(x=>x.key===current.key)?.periods||[];else if(current.kind==='budget') periods=(config.budgets||[]).map(x=>({fromAge:x.fromAge,toAge:x.toAge,amount:x.annualBudget}));else if(current.kind==='travel') periods=(config.cashflow?.travel||[]).map(x=>({fromAge:x.fromAge,toAge:x.toAge,amount:x.annualAmount}));else periods=(config.cashflow?.manualIncomeItems||[]).find(x=>x.key===current.key)?.periods||[];el('periodCurrent').textContent=`現在設定：${formatPeriodList(periods,current.unit)||'期間設定なし'}`;if(f?.elements?.unit) f.elements.unit.value=current.unit||'monthly';}
+
+function renderPeriodOverrides(){
+  const box=el('periodOverrideRows'); if(!box)return;
+  const carForm=el('carTransferForm');
+  if(carForm&&!carForm.dataset.initialized){
+    carForm.elements.disposeAge.value=config.car?.disposeAge??'';
+    carForm.elements.monthlyCost.value=config.car?.monthlyCost??'';
+    carForm.elements.medicalCareMonthlyIncrease.value=config.car?.medicalCareMonthlyIncrease??'';
+    carForm.dataset.initialized='true';
+  }
+  const form=el('periodEditForm');
+  if(form){
+    if(!form.fromAge.value)form.fromAge.value=String(config.plan?.startAge||64);
+    if(!form.toAge.value)form.toAge.value=String(config.plan?.endAge||95);
+  }
+  const rows=config.cashflow?.periodOverrides||[];
+  if(!rows.length){box.innerHTML='<p class="muted">期間別設定はありません。</p>';return;}
+  const names={expense:'生活費内訳',travel:'旅行費',budget:'管理予算',income:'追加収入'};
+  box.innerHTML='<table><thead><tr><th>種類</th><th>項目</th><th>年齢</th><th>金額</th><th></th></tr></thead><tbody>'+rows.map((x,i)=>'<tr><td>'+(names[x.kind]||x.kind)+'</td><td>'+escapeHtml(x.label||x.key)+'</td><td>'+x.fromAge+'〜'+x.toAge+'歳</td><td>'+formatMan(x.amount,1)+'万円/'+(x.unit==='monthly'?'月':'年')+'</td><td>'+(x.kind==='income'?'<span class="muted">専用画面で管理</span>':'<button class="link-btn" data-delete-period="'+i+'">削除</button>')+'</td></tr>').join('')+'</tbody></table>';
 }
-function savePeriodEdit(ev){
-  ev.preventDefault(); const f=ev.currentTarget, [kind,key]=String(f.target.value).split(':');
-  const ok=applyPeriodEdit(config,{kind,key,fromAge:+f.fromAge.value,toAge:+f.toAge.value,amount:+f.amount.value,unit:f.unit.value});
-  if(!ok){showNotice('対象項目を更新できませんでした。','error');return;}
-  refresh(); showNotice(`${f.fromAge.value}〜${f.toAge.value}歳の金額を一括設定しました。`);
+
+function savePeriodOverride(ev){
+  const config=structuredClone(currentConfig());
+  ev.preventDefault(); const f=ev.currentTarget;
+  const incoming={kind:f.kind.value,key:f.key.value.trim(),label:f.label.value.trim()||f.key.value.trim(),fromAge:+f.fromAge.value,toAge:+f.toAge.value,amount:+f.amount.value,unit:f.unit.value};
+  try{
+    if(incoming.kind==='income')throw new Error('追加収入は専用画面で差分を確認して反映してください。');
+    config.cashflow ||= {};
+    config.cashflow.periodOverrides=replaceAgeRangeOverride(config.cashflow.periodOverrides||[],incoming);
+    if(!commitState(config))return; showNotice('指定期間を更新し、全期間を再計算しました。');
+  }catch(e){showNotice(e.message,'error');}
 }
 
 function derivePending() {
   const items = [];
-  if (!['confirmed','official_estimate'].includes(config.income?.pensions?.spouse?.certainty)) items.push({type:'要確認', title:'配偶者の公的年金額', reason:`設定中の配偶者年金 ${formatMan(config.income?.pensions?.spouse?.annualAtStart||0,1)}万円/年は暫定値です。ねんきん定期便等で確認後に更新します。`});
+  if (config.income?.pensions?.spouse?.certainty === 'unknown') items.push({type:'要確認', title:'配偶者の公的年金額', reason:`設定中の配偶者年金 ${formatMan(config.income?.pensions?.spouse?.annualAtStart||0,1)}万円/年は暫定値です。ねんきん定期便等で確認後に更新します。`});
   if (config.nisa?.accountBreakdownStatus === 'pending') items.push({type:'要判断', title:'NISA・課税口座・現金の64歳時点内訳', reason:'総資産試算は継続できます。取崩し順序と税引後精度を高める段階で確定します。'});
   if (config.retirement?.majorSpendDetailStatus === 'pending') items.push({type:'要判断', title:'退職金の大型支出内訳と開始資産の時点整合', reason:`社宅退去を本業退職の約6か月前に検討するため、大型支出枠 ${formatMan(config.retirement?.majorSpendPlanned||0)}万円と開始資産の関係を詳細内訳確定時に照合します。`});
   if (!config.care?.facilityRoomType) items.push({type:'要判断', title:'特養の個室／多床室など介護費の詳細条件', reason:'現状は年代別年間予算で包含しています。施設費を個別積上げする際に必要です。'});
@@ -239,7 +335,7 @@ function renderYearTable() {
     const actualAsset = a?.endAsset;
     const diff = actualAsset === undefined || actualAsset === null ? null : Number(actualAsset) - r.endAsset;
     const tr = document.createElement('tr');
-    tr.innerHTML = `<td>${r.age}</td><td>${formatMan(r.startAsset)}</td><td>${formatMan(r.investmentGain)}</td><td>${formatMan(r.totalIncome)}</td><td>${formatMan(r.expense+r.extraExpense)}</td><td>${formatMan(r.endAsset)}</td><td>${actualAsset==null?'—':formatMan(actualAsset)}</td><td class="${diff==null?'':diff<0?'neg':'pos'}">${diff==null?'—':`${diff>=0?'+':''}${formatMan(diff)}`}</td>`;
+    tr.innerHTML = `<td>${r.age}</td><td>${formatMan(r.startAsset)}</td><td>${formatMan(r.investmentGain)}</td><td>${formatMan(r.labor)}</td><td>${formatMan(r.primaryPension)}</td><td>${formatMan(r.spousePension)}</td><td>${formatMan(r.idecoAnnuity)}</td><td>${formatMan(r.unemployment)}</td><td>${formatMan(r.extraIncome)}</td><td>${formatMan(r.expense+r.extraExpense)}</td><td>${formatMan(r.endAsset)}</td><td>${actualAsset==null?'—':formatMan(actualAsset)}</td><td class="${diff==null?'':diff<0?'neg':'pos'}">${diff==null?'—':`${diff>=0?'+':''}${formatMan(diff)}`}</td>`;
     body.appendChild(tr);
   });
 }
@@ -322,7 +418,7 @@ function renderActuals() {
   entries.forEach(a=>{
     const p=planRowAtAge(result,a.age); const diff=p?Number(a.endAsset)-p.endAsset:null;
     const tr=document.createElement('tr');
-    tr.innerHTML=`<td>${a.age}</td><td>${p?formatMan(p.endAsset):'—'}</td><td>${formatMan(a.endAsset)}</td><td class="${diff==null?'':diff<0?'neg':'pos'}">${diff==null?'—':`${diff>=0?'+':''}${formatMan(diff)}`}</td><td>${a.expense==null?'—':formatMan(a.expense)}</td><td>${a.taxSocial==null?'—':formatMan(a.taxSocial)}</td><td>${a.safeAssetBalance==null?'—':formatMan(a.safeAssetBalance)}</td><td>${a.note||''}</td><td><button class="link-btn" data-delete-actual="${a.age}">削除</button></td>`;
+    tr.innerHTML=`<td>${a.age}</td><td>${p?formatMan(p.endAsset):'—'}</td><td>${formatMan(a.endAsset)}</td><td class="${diff==null?'':diff<0?'neg':'pos'}">${diff==null?'—':`${diff>=0?'+':''}${formatMan(diff)}`}</td><td>${a.expense==null?'—':formatMan(a.expense)}</td><td>${a.taxSocial==null?'—':formatMan(a.taxSocial)}</td><td>${a.safeAssetBalance==null?'—':formatMan(a.safeAssetBalance)}</td><td>${escapeHtml(a.note||'')}</td><td><button class="link-btn" data-delete-actual="${a.age}">削除</button></td>`;
     body.appendChild(tr);
   });
 
@@ -347,6 +443,7 @@ function populateActualForm(age){
 }
 
 function saveActual(ev){
+  const config=structuredClone(currentConfig());
   ev.preventDefault(); const f=ev.currentTarget; const age=Number(f.age.value);
   config.actuals ||= {};
   config.actuals[age]={
@@ -355,12 +452,13 @@ function saveActual(ev){
     safeAssetBalance:numOrBlank(f.safeAssetBalance.value), taxSocial:numOrBlank(f.taxSocial.value),
     note:f.note.value.trim(), updatedAt:new Date().toISOString()
   };
-  f.reset(); refresh(); el('actualAge').value=age; showNotice(`${age}歳の実績を保存し、95歳まで再予測しました。`);
+  if(!commitState(config))return; el('actualAge').value=age; showNotice(`${age}歳の実績を保存し、95歳まで再予測しました。`);
 }
 
 function deleteActual(age){
+  const config=structuredClone(currentConfig());
   if(!config.actuals?.[age]) return;
-  delete config.actuals[age]; refresh(); showNotice(`${age}歳の実績を削除しました。`);
+  delete config.actuals[age]; if(!commitState(config))return; showNotice(`${age}歳の実績を削除しました。`);
 }
 
 
@@ -383,12 +481,13 @@ function renderAnnualReview(ageOverride=null){
 }
 
 function saveAnnualReview(){
+  const config=structuredClone(currentConfig());
   const age=Number(el('annualReviewAge').value);
   config.reviews ||= {};
   const items={};
   document.querySelectorAll('[data-review-key]').forEach(cb=>{items[cb.dataset.reviewKey]=cb.checked;});
   config.reviews[age]={items,note:el('annualReviewNote').value.trim(),updatedAt:new Date().toISOString()};
-  refresh(); el('annualReviewAge').value=String(age); renderAnnualReview(age); showNotice(`${age}歳の年次点検を保存しました。`);
+  if(!commitState(config))return; el('annualReviewAge').value=String(age); renderAnnualReview(age); showNotice(`${age}歳の年次点検を保存しました。`);
 }
 
 function renderScenarios(){
@@ -423,22 +522,25 @@ function renderScenarioCompare(){
 }
 
 function saveCurrentScenario(){
+  let scenarios=structuredClone(currentScenarios());
   const input=el('scenarioName'); const name=input.value.trim() || `シナリオ${scenarios.length+1}`;
   scenarios.push({id:crypto.randomUUID(),name,savedAt:new Date().toISOString(),selected:scenarios.filter(s=>s.selected).length<3,config:scenarioSnapshot(config)});
-  saveScenarios(scenarios); input.value=''; renderScenarios(); showNotice(`「${name}」を保存しました。`);
+  if(!commitState(config,scenarios))return; input.value=''; renderScenarios(); showNotice(`「${name}」を保存しました。`);
 }
 
 function toggleScenario(id, checked){
+  let scenarios=structuredClone(currentScenarios());
   const current=scenarios.filter(s=>s.selected).length;
   const target=scenarios.find(s=>s.id===id); if(!target) return;
   if(checked && current>=3){ showNotice('同時比較は最大3案です。','error'); renderScenarios(); return; }
-  target.selected=checked; saveScenarios(scenarios); renderScenarios();
+  target.selected=checked; if(!commitState(config,scenarios))return; renderScenarios();
 }
 
 function deleteScenario(id){
+  let scenarios=structuredClone(currentScenarios());
   const target=scenarios.find(s=>s.id===id);
   if(target?.role==='baseline'){ showNotice('基準ケースは差分管理の基準なので削除できません。','error'); return; }
-  scenarios=scenarios.filter(s=>s.id!==id); saveScenarios(scenarios); renderScenarios(); showNotice('シナリオを削除しました。');
+  scenarios=scenarios.filter(s=>s.id!==id); if(!commitState(config,scenarios))return; renderScenarios(); showNotice('シナリオを削除しました。');
 }
 
 function escapeHtml(s=''){ return String(s).replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c])); }
@@ -453,32 +555,37 @@ function renderSettings(){
 
 
 function renderCertaintySettings(){
-  const form=el('certaintyForm'); if(!form) return;
-  const guide=el('certaintyGuide');
-  if(guide) guide.innerHTML=`<dl>${Object.entries(CERTAINTY_LABELS).map(([key,label])=>`<dt>${escapeHtml(label)}</dt><dd>${escapeHtml(CERTAINTY_DESCRIPTIONS[key]||'')}</dd>`).join('')}</dl>`;
-  const items=certaintyItems(config), labels={initialAsset:'64歳開始資産',returnRate:'運用利回り',inflation:'インフレ率',laborIncome:'労働収入',pension:'本人年金',spousePension:'配偶者年金',dc:'DC受取',budgets:'年間予算',retirement:'退職金'};
-  const order=Object.keys(labels), itemMap=Object.fromEntries(items.map(x=>[x.key,x])), options=Object.entries(CERTAINTY_LABELS).map(([value,label])=>`<option value="${value}">${label}</option>`).join('');
-  form.innerHTML=order.map(key=>{const it=itemMap[key];const value=it?.value==null?'—':`${formatMan(it.value,it.unit==='%'?2:1)}${it.unit||''}`;return `<label class="certainty-setting">${labels[key]}<select name="${key}">${options}</select><small>現在値：${escapeHtml(value)} / ${escapeHtml(CERTAINTY_DESCRIPTIONS[it?.level||'unknown']||'')}</small></label>`;}).join('')+'<button class="primary" type="submit">確度区分を保存</button>';
-  order.forEach(key=>{if(!form.elements[key])return;if(key==='spousePension')form.elements[key].value=config.income?.pensions?.spouse?.certainty||'unknown';else form.elements[key].value=config.certainty?.[key]||itemMap[key]?.level||'unknown';});
+  const form=el('certaintyForm');
+  if(!form) return;
+  const labels={initialAsset:'64歳開始資産',returnRate:'運用利回り',inflation:'インフレ率',laborIncome:'労働収入',pension:'年金',dc:'DC受取',budgets:'年間予算',retirement:'退職金'};
+  const order=Object.keys(labels);
+  const options=Object.entries(CERTAINTY_LABELS).map(([value,label])=>`<option value="${value}">${label}</option>`).join('');
+  form.innerHTML=order.map(key=>`<label>${labels[key]}<select name="${key}">${options}</select></label>`).join('')+'<button class="primary" type="submit">確度区分を保存</button>';
+  order.forEach(key=>{ if(form.elements[key]) form.elements[key].value=config.certainty?.[key] || 'unknown'; });
 }
 
 function saveCertainty(ev){
+  const config=structuredClone(currentConfig());
   ev.preventDefault(); const f=ev.currentTarget;
   config.certainty ||= {};
   for(const key of ['initialAsset','returnRate','inflation','laborIncome','pension','dc','budgets','retirement']) config.certainty[key]=f.elements[key].value;
   if(config.income?.pensions?.primary) config.income.pensions.primary.certainty=config.certainty.pension;
-  if(config.income?.pensions?.spouse && f.elements.spousePension) config.income.pensions.spouse.certainty=f.elements.spousePension.value;
-  refresh(); showNotice('入力値の確度区分を保存しました。');
+  if(!commitState(config))return; showNotice('入力値の確度区分を保存しました。');
 }
 
 function applySettings(ev){
+  const config=structuredClone(currentConfig());
   ev.preventDefault(); const f=ev.currentTarget;
   config.plan.initialAsset=+f.initialAsset.value; config.plan.afterTaxReturn=+f.afterTaxReturn.value; config.plan.inflation=+f.inflation.value;
-  const householdAnnual=+f.laborAnnual.value; const eachMonthly=householdAnnual/24;
-  if(config.employment?.primary?.sideWork) config.employment.primary.sideWork.monthlyGross=eachMonthly;
-  if(config.employment?.spouse?.sideWork) config.employment.spouse.sideWork.monthlyGross=eachMonthly;
+  const householdAnnual=+f.laborAnnual.value;
+  const pMonthly=Number(config.employment?.primary?.sideWork?.monthlyGross||0),sMonthly=Number(config.employment?.spouse?.sideWork?.monthlyGross||0);
+  if(Math.abs(householdAnnual-(pMonthly+sMonthly)*12)>1e-8){
+    const share=pMonthly+sMonthly>0?pMonthly/(pMonthly+sMonthly):0.5;
+    if(config.employment?.primary?.sideWork)config.employment.primary.sideWork.monthlyGross=householdAnnual/12*share;
+    if(config.employment?.spouse?.sideWork)config.employment.spouse.sideWork.monthlyGross=householdAnnual/12*(1-share);
+  }
   config.reserve.total=+f.reserveTotal.value;
-  refresh(); showNotice('設定を保存し、月次計算で95歳まで再計算しました。');
+  if(!commitState(config))return; showNotice('設定を保存し、月次計算で95歳まで再計算しました。');
 }
 
 
@@ -492,19 +599,20 @@ function renderCalculationBasis(){
     <div><dt>計算単位</dt><dd>月次</dd></div>
     <div><dt>計画開始</dt><dd>${escapeHtml(start)}</dd></div>
     <div><dt>本業退職・基本日</dt><dd>${escapeHtml(ret)}</dd></div>
+    <div><dt>給与生活の計算方式</dt><dd>${config.cashflow?.salaryLife?'純入出金方式（最終給与月 '+escapeHtml(config.cashflow.salaryLife.lastSalaryMonth)+'）':'旧方式'}</dd></div>
     <div><dt>通常運用</dt><dd>税引後 ${Number(config.plan?.afterTaxReturn||0).toFixed(5)}%/年</dd></div>
     <div><dt>インフレ</dt><dd>${Number(config.plan?.inflation||0).toFixed(2)}%/年</dd></div>
-    <div><dt>支出の正本</dt><dd>管理予算（詳細予定原価＋バッファ）</dd></div>
+    <div><dt>支出の正本</dt><dd>年代別年間予算（税・社保を含む）</dd></div>
     <div><dt>iDeCo一時金</dt><dd>${idecoTax}</dd></div>
     <div><dt>95歳末</dt><dd>${money(result.finalAsset)}</dd></div>
-  </dl><p class="muted">月末資産＝月初資産＋月次運用益＋各種収入－インフレ調整後支出－臨時支出。詳細予定原価は固定内訳・旅行費・税社会保険自動試算から算出し、管理予算との差をバッファとして管理します。資産計算では管理予算を支出正本とします。</p>`;
+  </dl><p class="muted">月末資産＝月初資産＋月次運用益＋各種収入－インフレ調整後支出－臨時支出。制度ツールの税・社会保険詳細は手取・予算内訳確認用で、年代別年間予算へ重ねて加算しません。</p>`;
+  if(config.cashflow?.salaryLife)box.innerHTML+='<p class="muted">給与生活中は家計からの追加・取崩しを計上し、給与を再加算しません。前倒し後65歳までの支出は給与生活シートの管理予算です。掛金・臨時収支は指定した計上先で一度だけ扱います。税社保の精密な手取計算・新方式の要因分解は未対応です。</p>';
   const entries=Object.values(RULES).filter(r=>r&&typeof r==='object'&&r.title);
   source.innerHTML=`<p><strong>制度基準日 ${escapeHtml(RULES.asOf)}</strong></p><ul class="source-list">${entries.map(r=>`<li><a href="${r.url}" target="_blank" rel="noopener">${escapeHtml(r.title)}：${escapeHtml(r.source)}</a></li>`).join('')}</ul><p class="muted">将来の退職・受取時は、その時点の法令・自治体保険料・運営管理機関条件で再確認します。</p>`;
 }
 
 function renderRules(){
   el('rulesAsOf').textContent = RULES.asOf;
-  const base65=config?.income?.pensions?.primary?.alternatives?.['65']; if(base65!=null && el('pensionBase65')) el('pensionBase65').value=Number(base65).toFixed(4);
   const wrap=el('ruleCards'); wrap.innerHTML='';
   Object.entries(RULES).filter(([k])=>k!=='asOf').forEach(([key,r])=>{
     const article=document.createElement('article'); article.className='rule-card';
@@ -589,26 +697,53 @@ function runTaxSocialTool(){
 }
 
 async function importConfig(file){
-  const text=await file.text(); const parsed=JSON.parse(text);
-  if(parsed?.config && Array.isArray(parsed?.scenarios)){
-    const next=migrateConfig(parsed.config); const errors=validateConfig(next);
-    if(errors.length) throw new Error(errors.join(' / '));
-    config=next; scenarios=parsed.scenarios; saveScenarios(scenarios); refresh(); showNotice('設定＋シナリオの一括バックアップを復元しました。'); return;
+  assertWriteAccess();
+  const expected=loadState();
+  const parsed=JSON.parse(await file.text());
+  assertBackupCompatibility(parsed);
+  const full=isFullBackup(parsed);
+  if(!full && ('config' in parsed || 'scenarios' in parsed))throw new Error('一括バックアップの必須項目が不足しています。設定だけを部分復元しません。読み込み前のデータは変更されていません。');
+  if(full){
+    const committed=restoreFullBackup(expected,parsed);
+    config=committed.config;scenarios=committed.scenarios;
+    pensionSheet.reset();salarySheet.reset();calendarSheet.reset();expenseSheet.reset();incomeSheet.reset();el('expenseDisplaySource').value='';delete el('carTransferForm').dataset.initialized;
+    refresh({calculated:committed});showNotice('設定・シナリオ・付帯データをまとめて復元しました。');return;
   }
-  const next=migrateConfig(parsed); const errors=validateConfig(next);
-  if(errors.length) throw new Error(errors.join(' / '));
-  const oldBaseline=scenarios.find(s=>s.role==='baseline');
-  if(oldBaseline){ oldBaseline.role='scenario'; oldBaseline.name=`${oldBaseline.name || '基準ケース'}（旧基準）`; oldBaseline.selected=false; }
-  config=next;
-  scenarios.push({id:crypto.randomUUID(),name:config.meta?.label||'基準ケース',role:'baseline',savedAt:new Date().toISOString(),selected:true,config:scenarioSnapshot(config)});
-  saveScenarios(scenarios);
-  refresh(); showNotice('設定JSONを読み込み、新しい基準ケースとして固定しました。');
+  validateSavedState({config:parsed,scenarios:[]});
+  const next=migrateConfig(full?parsed.config:parsed);
+  if(configSignature(next)===configSignature(config)){showNotice('同じ設定は採用済みです。比較案と履歴を追加しません。');return;}
+  if(configSignature(expected)!==configSignature(loadState()))throw new Error('別画面で設定が更新されています。再読み込みしてください。');
+  const nextScenarios=full?structuredClone(parsed.scenarios):structuredClone(scenarios);
+  if(!full){
+    for(const s of nextScenarios)if(s.role==='baseline'){s.role='scenario';s.name=`${s.name||'基準ケース'}（旧基準）`;s.selected=false;}
+    nextScenarios.push({id:crypto.randomUUID(),name:next.meta?.label||'基準ケース',role:'baseline',savedAt:new Date().toISOString(),selected:true,config:scenarioSnapshot(next)});
+  }
+  if(!commitState(next,nextScenarios,false))return;
+  pensionSheet.reset();salarySheet.reset();calendarSheet.reset();expenseSheet.reset();incomeSheet.reset();el('expenseDisplaySource').value='';delete el('carTransferForm').dataset.initialized;
+  refresh();showNotice(full?'設定とシナリオをまとめて復元しました。':'設定JSONを新しい基準ケースとして読み込みました。');
 }
 
 el('settingsForm').addEventListener('submit', applySettings);
-el('periodEditForm').addEventListener('submit', savePeriodEdit);
-el('cashflowAge').addEventListener('change', renderCashflow);
-el('periodTarget').addEventListener('change', renderPeriodEditor);
+el('periodEditForm').addEventListener('submit', savePeriodOverride);
+el('carTransferForm').addEventListener('submit',event=>{
+  event.preventDefault();const form=event.currentTarget;
+  try{
+    const input=structuredClone(config);input.car ||= {};
+    for(const key of ['disposeAge','monthlyCost','medicalCareMonthlyIncrease'])input.car[key]=Number(form.elements[key].value);
+    const next=applyCarDisposalTransfer(input), errors=validateConfig(next);
+    if(errors.length)throw new Error(errors.join(' / '));
+    if(!commitState(next))return;
+    showNotice(`${config.car.disposeAge}歳以降の車費用を介護・通院・移動費へ振り替えました。`);
+  }catch(e){showNotice(e.message,'error');}
+});
+el('periodEditForm').elements.kind.addEventListener('change',e=>{
+  const unit=el('periodEditForm').elements.unit;
+  const monthly=unit.querySelector('option[value="monthly"]');
+  if(e.target.value==='budget'){unit.value='annual';monthly.disabled=true;}else monthly.disabled=false;
+});
+el('cashflowViewAge').addEventListener('change', renderExpenseDetail);
+el('expenseDisplaySource').addEventListener('change', renderExpenseDetail);
+el('exportAnnualCsvBtn').addEventListener('click',()=>{if(!config)return;const x=downloadAnnualCsv(config,{sourceProfile:el('expenseDisplaySource').value});showNotice(`年間収支CSV（${x.rowCount}期間）を作成しました。保存先を確認してください。`);});
 el('certaintyForm').addEventListener('submit', saveCertainty);
 el('actualForm').addEventListener('submit', saveActual);
 el('actualAge').addEventListener('change', e=>populateActualForm(e.target.value));
@@ -617,13 +752,8 @@ el('saveAnnualReviewBtn').addEventListener('click', saveAnnualReview);
 el('saveScenarioBtn').addEventListener('click', saveCurrentScenario);
 el('importFile').addEventListener('change', e=>{ const f=e.target.files?.[0]; if(f) importConfig(f).catch(err=>showNotice(`読込失敗: ${err.message}`,'error')); });
 el('importFile2').addEventListener('change', e=>{ const f=e.target.files?.[0]; if(f) importConfig(f).catch(err=>showNotice(`読込失敗: ${err.message}`,'error')); });
-el('exportBtn').addEventListener('click',()=>{ if(config) downloadJson(config,`retirement-plan-backup-${new Date().toISOString().slice(0,10)}.json`); });
-el('exportFullBtn').addEventListener('click',()=>{ if(config) downloadJson({schemaVersion:'0.9', exportedAt:new Date().toISOString(), config, scenarios},`retirement-plan-full-backup-${new Date().toISOString().slice(0,10)}.json`); });
-el('exportAnnualCsvBtn').addEventListener('click',()=>{
-  if(!config || !result) return;
-  try { downloadAnnualCsv(config,result); showNotice('年度別の全項目CSVを出力しました。'); }
-  catch(err) { showNotice(`CSV出力失敗: ${err.message}`,'error'); }
-});
+el('exportBtn').addEventListener('click',()=>{ if(config) downloadJson(config,`lifeplan-backup-${new Date().toISOString().slice(0,10)}.json`); });
+el('exportFullBtn').addEventListener('click',()=>{try{const state=loadState();if(!state.config)return;downloadJson(createFullBackup(state),`lifeplan-full-backup-${new Date().toISOString().slice(0,10)}.json`);}catch(e){showNotice(`一括バックアップを作成できません。${e.message}`,'error');}});
 el('pensionToolRun').addEventListener('click',runPensionTool);
 el('nisaToolRun').addEventListener('click',runNisaTool);
 el('idecoToolRun').addEventListener('click',runIdecoTool);
@@ -632,17 +762,29 @@ el('unemploymentToolRun').addEventListener('click',runUnemploymentTool);
 el('taxToolRun').addEventListener('click',runTaxSocialTool);
 
 document.addEventListener('click', e=>{
+  const navigation=e.target.closest('[data-open-tab]');if(navigation)switchTab(navigation.dataset.openTab);
   const da=e.target.closest('[data-delete-actual]'); if(da) deleteActual(Number(da.dataset.deleteActual));
   const ds=e.target.closest('[data-scenario-delete]'); if(ds) deleteScenario(ds.dataset.scenarioDelete);
+  const dp=e.target.closest('[data-delete-period]');
+  if(dp){const next=structuredClone(config);next.cashflow.periodOverrides.splice(Number(dp.dataset.deletePeriod),1);if(!commitState(next))return;showNotice('期間別設定を削除し、再計算しました。');}
 });
 document.addEventListener('change', e=>{
   if(e.target.matches('[data-scenario-select]')) toggleScenario(e.target.dataset.scenarioSelect,e.target.checked);
 });
 
-document.querySelectorAll('[data-tab]').forEach(btn=>btn.addEventListener('click',()=>{
-  document.querySelectorAll('[data-tab]').forEach(b=>b.classList.toggle('active',b===btn));
-  document.querySelectorAll('.panel').forEach(p=>p.hidden=p.id!==btn.dataset.tab);
-}));
+function switchTab(id){
+  document.querySelectorAll('[data-tab]').forEach(b=>b.classList.toggle('active',b.dataset.tab===id));
+  document.querySelectorAll('.panel').forEach(p=>p.hidden=p.id!==id);
+}
+document.querySelectorAll('[data-tab]').forEach(btn=>btn.addEventListener('click',()=>switchTab(btn.dataset.tab)));
+const migrationPanel=mountMigration({onCommit:()=>{const saved=loadState();config=saved.config;scenarios=saved.scenarios;refresh();}});
+mountRecoveryCheck();
+window.addEventListener('storage',event=>{
+  migrationPanel.invalidate(event);
+  if(event.key===null||MIGRATION_KEYS.includes(event.key)){
+    pensionSheet.invalidate();salarySheet.invalidate();calendarSheet.invalidate();expenseSheet.invalidate();incomeSheet.invalidate();showNotice('別画面で設定が更新されました。再読み込みしてから編集してください。','error');
+  }
+});
 
 document.querySelectorAll('[data-help]').forEach(btn=>btn.addEventListener('click',()=>{
   el('helpTitle').textContent=btn.dataset.help;
@@ -651,6 +793,8 @@ document.querySelectorAll('[data-help]').forEach(btn=>btn.addEventListener('clic
 }));
 el('helpClose').addEventListener('click',()=>el('helpDialog').close());
 
-el('appVersion').textContent='v0.9'; el('rulesVersion').textContent=RULES_VERSION;
-refresh();
-if('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(()=>{});
+el('appVersion').textContent='v0.9.7 / I-08 開発検証版'; el('rulesVersion').textContent=RULES_VERSION;
+if(startupError){setEmptyState();showNotice(`保存データを読み込めません。復元用バックアップを確認してください。${startupError}`,'error');}
+else refresh();
+if(!writeAccess.writable)showNotice('この画面は読み取り専用です。別の編集画面を閉じて再読み込みしてください。同時更新制御が利用できない場合も保存を停止します。','error');
+if('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js',{updateViaCache:'none'}).catch(()=>showNotice('アプリの更新を取得できませんでした。現在版と保存データを保持します。通信状態を確認してください。','error'));

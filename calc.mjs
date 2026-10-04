@@ -1,4 +1,7 @@
-export const RULES_VERSION = '2026-09-25 / app v0.9';
+import {calendarMode} from './calendar-mode.mjs';
+const TERMINAL_FORECAST=Symbol('terminal-forecast');
+import {salaryLifeIssues, SalaryLifeValidationError, salaryLifeIsBefore, salaryLifeContribution, parseMonth, monthIndex} from './salary-life.mjs';
+export const RULES_VERSION = '2026-09-24 / app v0.9.7';
 
 export const CERTAINTY_LABELS = {
   confirmed: '確定',
@@ -8,16 +11,6 @@ export const CERTAINTY_LABELS = {
   assumption: '仮定',
   scenario: 'シナリオ',
   unknown: '未確認'
-};
-
-export const CERTAINTY_DESCRIPTIONS = {
-  confirmed: '契約書・通知書・確定実績などで金額が確定している値。',
-  official_estimate: 'ねんきん定期便など公的・公式資料に記載された将来見込値。',
-  company_estimate: '勤務先・制度運営者などが提示した見込値。将来変更の可能性があります。',
-  plan: '本人が管理目的で設定した予算・方針値。実績との差を定期確認します。',
-  assumption: '計算継続のために置いた暫定値。確認後に更新が必要です。',
-  scenario: '比較・ストレステスト用の仮想条件。確定予定を意味しません。',
-  unknown: '根拠資料・金額が未確認の値。重要判断前に確認が必要です。'
 };
 
 export const ANNUAL_REVIEW_ITEMS = [
@@ -47,23 +40,39 @@ export function formatMan(value, digits = 0) {
 
 function parseDate(v, fallback=null){
   if (!v) return fallback;
-  const d = new Date(`${v}T00:00:00`);
-  return Number.isNaN(d.getTime()) ? fallback : d;
+  const m=String(v).match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if(!m) return fallback;
+  const y=Number(m[1]), mo=Number(m[2])-1, day=Number(m[3]);
+  const d=new Date(Date.UTC(y,mo,day));
+  return d.getUTCFullYear()===y && d.getUTCMonth()===mo && d.getUTCDate()===day ? d : fallback;
 }
 function isoDate(d){ return d.toISOString().slice(0,10); }
-function addMonths(date, months){ const d=new Date(date); d.setMonth(d.getMonth()+months); return d; }
-function addYears(date, years){ const d=new Date(date); d.setFullYear(d.getFullYear()+years); return d; }
-function monthKey(d){ return d.getFullYear()*12+d.getMonth(); }
+function addMonths(date, months){
+  const d=new Date(date), day=d.getUTCDate();
+  const targetFirst=new Date(Date.UTC(d.getUTCFullYear(),d.getUTCMonth()+months,1));
+  const lastDay=new Date(Date.UTC(targetFirst.getUTCFullYear(),targetFirst.getUTCMonth()+1,0)).getUTCDate();
+  return new Date(Date.UTC(targetFirst.getUTCFullYear(),targetFirst.getUTCMonth(),Math.min(day,lastDay)));
+}
+function addYears(date, years){
+  const d=new Date(date), y=d.getUTCFullYear()+years, mo=d.getUTCMonth(), day=d.getUTCDate();
+  const lastDay=new Date(Date.UTC(y,mo+1,0)).getUTCDate();
+  return new Date(Date.UTC(y,mo,Math.min(day,lastDay)));
+}
+function monthKey(d){ return d.getUTCFullYear()*12+d.getUTCMonth(); }
 function monthInRange(d, start, endExclusive){
   const m=monthKey(d); return (!start || m>=monthKey(start)) && (!endExclusive || m<monthKey(endExclusive));
 }
-function monthsBetween(a,b){ return (b.getFullYear()-a.getFullYear())*12+(b.getMonth()-a.getMonth()); }
+function monthsBetween(a,b){ return (b.getUTCFullYear()-a.getUTCFullYear())*12+(b.getUTCMonth()-a.getUTCMonth()); }
 function fullAgeOn(date,birth){
-  let age=date.getFullYear()-birth.getFullYear();
-  const before=(date.getMonth()<birth.getMonth())||(date.getMonth()===birth.getMonth()&&date.getDate()<birth.getDate());
+  let age=date.getUTCFullYear()-birth.getUTCFullYear();
+  const before=(date.getUTCMonth()<birth.getUTCMonth())||(date.getUTCMonth()===birth.getUTCMonth()&&date.getUTCDate()<birth.getUTCDate());
   return age-(before?1:0);
 }
-function sameMonth(a,b){ return a&&b&&a.getFullYear()===b.getFullYear()&&a.getMonth()===b.getMonth(); }
+function salaryLifeAgeOn(date,birth){
+  const years=date.getUTCFullYear()-birth.getUTCFullYear();
+  return years-(date<addYears(birth,years)?1:0);
+}
+function sameMonth(a,b){ return a&&b&&a.getUTCFullYear()===b.getUTCFullYear()&&a.getUTCMonth()===b.getUTCMonth(); }
 function annualToMonthlyEffective(ratePct){ return Math.pow(1+Number(ratePct||0)/100,1/12)-1; }
 
 export function pensionAdjustmentFactor(startAge, birthYear = 1965) {
@@ -227,6 +236,78 @@ export function fukuyamaNhiPremium2026(args={}){ return fukuyamaNhiPremium2026De
 // 後方互換。v0.8以降は2026年度率を使用する。
 export function fukuyamaNhiReference2025(args={}){ return fukuyamaNhiPremium2026(args); }
 
+// 予定原価の税・社保参考額。資産推移の管理予算には反映しない。
+export function estimateAnnualTaxSocial(config, age){
+  const primary=primaryBirth(config), spouse=spouseBirth(config);
+  const date=addYears(primary,Number(age));
+  const spouseAge=fullAgeOn(date,spouse), pAge=Number(age);
+  const annualSalary=person=>{
+    const side=person==='primary'?config?.employment?.primary?.sideWork:config?.employment?.spouse?.sideWork;
+    if(!side)return 0;
+    const start=person==='primary'?defaultPrimarySideWorkStart(config):parseDate(side.startDate);
+    const end=person==='primary'?defaultPrimarySideWorkEnd(config):parseDate(side.endDate);
+    return Array.from({length:12},(_,m)=>addMonths(date,m)).reduce((sum,d)=>sum+(monthInRange(d,start,end)?Number(side.monthlyGross||0):0),0);
+  };
+  const pSalary=annualSalary('primary'), sSalary=annualSalary('spouse');
+  // 年金開始日はage指定より優先。金額は設定済みの nominal fixed-base scenario を用いる。
+  const pp=config?.income?.pensions?.primary, sp=config?.income?.pensions?.spouse;
+  const annualPension=person=>Array.from({length:12},(_,m)=>addMonths(date,m)).reduce((sum,d)=>sum+pensionMonthlyForPerson(person,d),0);
+  const pGross=annualPension(pp), sGross=annualPension(sp);
+  const pTax=estimateSimpleIncomeTaxes({salaryGross:pSalary,pensionGross:pGross,age:pAge});
+  const sTax=estimateSimpleIncomeTaxes({salaryGross:sSalary,pensionGross:sGross,age:spouseAge});
+  const people=[{age:pAge,tax:pTax,pension:pGross},{age:spouseAge,tax:sTax,pension:sGross}];
+  let health=0, care=0;
+  const under75=people.filter(x=>x.age<75);
+  if(under75.length){
+    const vals=under75.map(x=>x.tax.residentTotalIncome);
+    health+=fukuyamaNhiPremium2026({memberIncomesMan:vals,members:under75.length,adultMembers:under75.length,careMembers40to64:under75.filter(x=>x.age>=40&&x.age<65).length});
+  }
+  for(const person of people){
+    if(person.age>=75) health+=lateElderlyMedicalPremium2026(person.tax.residentTotalIncome);
+    if(person.age>=65) care+=fukuyamaCarePremium2026({totalIncome:person.tax.residentTotalIncome,pensionGross:person.pension,ownResidentTaxed:person.tax.residentTax>0,householdResidentTaxed:people.some(x=>x.tax.residentTax>0)});
+  }
+  const total=pTax.totalTax+sTax.totalTax+health+care;
+  return {total, incomeTax:pTax.incomeTax+sTax.incomeTax, residentTax:pTax.residentTax+sTax.residentTax, health, care, estimated:true,
+    incomeBasis:{startDate:isoDate(date),primaryAge:pAge,spouseAge,primarySalary:pSalary,spouseSalary:sSalary,primaryPension:pGross,spousePension:sGross},
+    source:pGross+sGross+pSalary+sSalary>0?'income_based':'fallback', note:'福山市・2026年度制度参考。本人の年齢期12か月の給与・公的年金による概算。暦年課税・前年所得・年度途中の保険切替・個別控除・iDeCo年金との合算は未反映'};
+}
+
+export function applyCarDisposalTransfer(config){
+  const c=structuredClone(config), car=c.car||{};
+  const fromAge=Number(car.disposeAge), toAge=Number(c.plan?.endAge);
+  if(car.disposeAge==null||!Number.isInteger(fromAge)||fromAge<0)throw new Error('車処分年齢を入力してください');
+  if(fromAge>toAge)throw new Error('車費用振替の開始年齢が計画終了年齢を超えています');
+  if(car.monthlyCost==null||car.medicalCareMonthlyIncrease==null)throw new Error('車費用と追加の医療・介護費を入力してください（追加なしは0）');
+  const monthly=Number(car.monthlyCost), medical=Number(car.medicalCareMonthlyIncrease);
+  if(!Number.isFinite(monthly)||monthly<0||!Number.isFinite(medical)||medical<0)throw new Error('車費用・医療介護費は0以上の数値で入力してください');
+  const source='car-disposal';
+  const labels={car:'車関係（処分後）',careTransit:'介護・通院・移動（車費振替）',medicalCareIncrease:'医療・介護費の追加'};
+  c.cashflow ||= {};
+  const oldRows=c.cashflow.periodOverrides||[];
+  // v0.9.1が生成した、識別子のない既知の行も引き継ぐ。
+  const legacyRow=x=>!x.source&&x.kind==='expense'&&x.unit==='monthly'&&labels[x.key]===x.label;
+  const generated=x=>x.source===source||(legacyRow(x)&&Object.keys(labels).every(key=>oldRows.some(r=>legacyRow(r)&&r.key===key&&r.fromAge===x.fromAge&&r.toAge===x.toAge&&(key!=='car'||Number(r.amount)===0))));
+  const prior=oldRows.filter(generated);
+  let rows=oldRows.filter(x=>!generated(x));
+  // 以前の自動振替で隠れた手入力を、まだ自動行が残っている範囲だけ復元する。
+  for(const original of c.cashflow.carDisposalDisplaced||[]){
+    for(const managed of prior.filter(x=>x.key===original.key)){
+      const a=Math.max(Number(original.fromAge),Number(managed.fromAge));
+      const b=Math.min(Number(original.toAge),Number(managed.toAge));
+      if(a<=b)rows=replaceAgeRangeOverride(rows,{...original,fromAge:a,toAge:b});
+    }
+  }
+  c.cashflow.carDisposalDisplaced=rows.filter(x=>x.kind==='expense'&&Object.hasOwn(labels,x.key)&&Number(x.toAge)>=fromAge&&Number(x.fromAge)<=toAge)
+    .map(x=>({...x,fromAge:Math.max(fromAge,Number(x.fromAge)),toAge:Math.min(toAge,Number(x.toAge))}));
+  for(const item of [
+    {kind:'expense',key:'car',label:'車関係（処分後）',fromAge,toAge,amount:0,unit:'monthly'},
+    {kind:'expense',key:'careTransit',label:'介護・通院・移動（車費振替）',fromAge,toAge,amount:monthly,unit:'monthly'},
+    {kind:'expense',key:'medicalCareIncrease',label:'医療・介護費の追加',fromAge,toAge,amount:medical,unit:'monthly'}
+  ]) rows=replaceAgeRangeOverride(rows,{...item,source});
+  c.cashflow.periodOverrides=rows;
+  return c;
+}
+
 
 export function nisaCapacity({ tsumitateUsed = 0, growthUsed = 0, lifetimeBookUsed = 0 } = {}) {
   const annualTsumitate = 120, annualGrowth = 240, lifetime = 1800, growthLifetime = 1200;
@@ -239,7 +320,40 @@ export function nisaCapacity({ tsumitateUsed = 0, growthUsed = 0, lifetimeBookUs
   };
 }
 
-function budgetForAge(age, budgets) {
+const PERIOD_KINDS=new Set(['expense','travel','budget','income']);
+export function replaceAgeRangeOverride(existing, incoming) {
+  const kind=String(incoming?.kind||''), key=String(incoming?.key||'').trim();
+  const fromAge=Number(incoming?.fromAge), toAge=Number(incoming?.toAge), amount=Number(incoming?.amount);
+  const unit=incoming?.unit==='monthly'?'monthly':'annual';
+  if(!PERIOD_KINDS.has(kind)||!key) throw new Error('期間設定の種類と項目名を入力してください。');
+  if(!Number.isInteger(fromAge)||!Number.isInteger(toAge)||fromAge<0||toAge<fromAge) throw new Error('年齢範囲を確認してください。');
+  if(!Number.isFinite(amount)||amount<0) throw new Error('金額は0以上の数値で入力してください。');
+  if(kind==='budget'&&unit!=='annual') throw new Error('管理予算は年額で入力してください。');
+  const next={...structuredClone(incoming),kind,key,fromAge,toAge,amount,unit};
+  const out=[];
+  for(const row of existing||[]){
+    if(row.kind!==kind||String(row.key)!==key||Number(row.toAge)<fromAge||Number(row.fromAge)>toAge){out.push(structuredClone(row));continue;}
+    const a=Number(row.fromAge), b=Number(row.toAge);
+    if(a<fromAge)out.push({...structuredClone(row),toAge:fromAge-1});
+    if(b>toAge)out.push({...structuredClone(row),fromAge:toAge+1});
+  }
+  out.push(next);
+  return out.sort((a,b)=>Number(a.fromAge)-Number(b.fromAge)||Number(a.toAge)-Number(b.toAge)||a.kind.localeCompare(b.kind)||String(a.key).localeCompare(String(b.key)));
+}
+function periodOverride(config,kind,key,age){
+  return (config?.cashflow?.periodOverrides||[]).find(x=>x.kind===kind&&String(x.key)===String(key)&&Number(age)>=Number(x.fromAge)&&Number(age)<=Number(x.toAge))||null;
+}
+function periodAnnualAmount(row){
+  const amount=Number(row?.amount||0);
+  return row?.unit==='monthly'?amount*12:amount;
+}
+function periodMonthlyAmount(row){
+  const amount=Number(row?.amount||0);
+  return row?.unit==='annual'?amount/12:amount;
+}
+function budgetForAge(age, budgets, config=null) {
+  const override=periodOverride(config,'budget','budget',age);
+  if(override)return periodAnnualAmount(override);
   const row = (budgets||[]).find(b => age >= Number(b.fromAge) && age <= Number(b.toAge));
   if (!row) throw new Error(`年間予算が未設定の年齢です: ${age}`);
   return Number(row.annualBudget||0);
@@ -384,19 +498,35 @@ function pensionMonthlyForPerson(person,date){
   return Number(person.annualAtStart||0)/12;
 }
 
-function incomeForMonth(config,date,idecoProjection){
-  const income={labor:0,pension:0,idecoAnnuity:0,unemployment:0,extraIncome:0,detail:[]};
+function incomeForMonth(config,date,idecoProjection, resolvedAge=null){
+  const income={labor:0,pension:0,primaryPension:0,spousePension:0,idecoAnnuity:0,unemployment:0,extraIncome:0,detail:[]};
+  const funding=config.cashflow?.salaryLife;
+  const before=funding && salaryLifeIsBefore(funding,date);
+  const existingLabor=!funding || (!before && funding.postSalaryLabor?.mode==='existing_confirmed');
+  const receiptIncluded=key=>before && funding.receiptTreatment?.[key]==='net_transfer';
   const pSide=config?.employment?.primary?.sideWork||{};
   const pStart=defaultPrimarySideWorkStart(config), pEnd=defaultPrimarySideWorkEnd(config);
-  if(monthInRange(date,pStart,pEnd)){ const v=Number(pSide.monthlyGross||0); income.labor+=v; if(v)income.detail.push(['本人アルバイト',v]); }
+  if(existingLabor && monthInRange(date,pStart,pEnd)){ const v=Number(pSide.monthlyGross||0); income.labor+=v; if(v)income.detail.push(['本人アルバイト',v]); }
   const sSide=config?.employment?.spouse?.sideWork||{};
   const sStart=parseDate(sSide.startDate), sEnd=parseDate(sSide.endDate);
-  if(monthInRange(date,sStart,sEnd)){ const v=Number(sSide.monthlyGross||0); income.labor+=v; if(v)income.detail.push(['配偶者アルバイト',v]); }
-  const pPen=pensionMonthlyForPerson(config?.income?.pensions?.primary,date); income.pension+=pPen; if(pPen)income.detail.push(['本人公的年金',pPen]);
-  const sPen=pensionMonthlyForPerson(config?.income?.pensions?.spouse,date); income.pension+=sPen; if(sPen)income.detail.push(['配偶者公的年金',sPen]);
+  if(existingLabor && monthInRange(date,sStart,sEnd)){ const v=Number(sSide.monthlyGross||0); income.labor+=v; if(v)income.detail.push(['配偶者アルバイト',v]); }
+  if(funding && !before && funding.postSalaryLabor?.mode==='monthly' && monthIndex(date)<=parseMonth(funding.postSalaryLabor.lastMonth)){
+    income.labor=funding.postSalaryLabor.monthlyAmount;
+    if(income.labor)income.detail.push(['終了後の就労収入（夫婦合計）',income.labor]);
+  }
+  const pPen=receiptIncluded('pension')?0:pensionMonthlyForPerson(config?.income?.pensions?.primary,date); income.pension+=pPen; income.primaryPension=pPen; if(pPen)income.detail.push(['本人公的年金',pPen]);
+  const sPen=receiptIncluded('pension')?0:pensionMonthlyForPerson(config?.income?.pensions?.spouse,date); income.pension+=sPen; income.spousePension=sPen; if(sPen)income.detail.push(['配偶者公的年金',sPen]);
+  const age=resolvedAge??(funding?salaryLifeAgeOn(date,primaryBirth(config)):fullAgeOn(date,primaryBirth(config)));
+  const periodIncome=(config?.cashflow?.periodOverrides||[]).filter(x=>x.kind==='income'&&age>=Number(x.fromAge)&&age<=Number(x.toAge));
+  for(const item of periodIncome){
+    if(before && item.fundingTreatment==='net_transfer')continue;
+    const monthly=item.unit==='monthly'?Number(item.amount||0):Number(item.amount||0)/12;
+    income.extraIncome+=monthly;
+    if(monthly)income.detail.push([item.label||item.key,monthly]);
+  }
   const i=config?.ideco;
   const lumpDate=parseDate(i?.lumpDate || i?.contributionEndDate || retirementDateFor(config));
-  if(i && idecoProjection && sameMonth(date,lumpDate)){
+  if(i && idecoProjection && sameMonth(date,lumpDate) && !receiptIncluded('ideco')){
     let receipt=idecoProjection.lumpGross;
     if(i.applyCurrentLawTaxReference){
       const overlap=idecoOverlapReference(config);
@@ -410,68 +540,35 @@ function incomeForMonth(config,date,idecoProjection){
     income.extraIncome+=receipt;
     income.detail.push(['iDeCo/DC一時金（資産計上額）',receipt]);
   }
-  if(i && idecoProjection && lumpDate){
+  if(i && idecoProjection && lumpDate && !receiptIncluded('ideco')){
     const m=monthsBetween(lumpDate,date);
     if(m>=0 && m<idecoProjection.annuityMonths){ income.idecoAnnuity+=idecoProjection.annuityMonthly; income.detail.push(['iDeCo/DC年金',idecoProjection.annuityMonthly]); }
   }
   const u=config?.unemployment;
-  if(u?.baselineMode==='retire_at_65' && sameMonth(date,retirementDateFor(config))){
+  if(u?.baselineMode==='retire_at_65' && sameMonth(date,retirementDateFor(config)) && !receiptIncluded('unemployment')){
     const comp=unemploymentComparison(config); income.unemployment+=comp.at65.amount; income.detail.push(['高年齢求職者給付金（2026制度参考）',comp.at65.amount]);
   }
   for(const e of config?.events||[]){
     const ed=parseDate(e.date);
-    if(ed && sameMonth(date,ed) && e.type==='income'){income.extraIncome+=Number(e.amount||0);income.detail.push([e.label||'臨時収入',Number(e.amount||0)]);}
+    if(ed && sameMonth(date,ed) && e.type==='income' && !(before && e.fundingTreatment==='net_transfer')){income.extraIncome+=Number(e.amount||0);income.detail.push([e.label||'臨時収入',Number(e.amount||0)]);}
   }
   return income;
 }
 
-
-
-function agePeriodStart(config,age){ return addYears(primaryBirth(config),Number(age)); }
-
-export function incomeSummaryForAge(config,age){
-  const c=structuredClone(config), start=agePeriodStart(c,age), end=addYears(start,1), idecoProjection=projectIdeco(c);
-  const out={age:Number(age),primaryLabor:0,spouseLabor:0,primaryPension:0,spousePension:0,idecoAnnuity:0,unemployment:0,extraIncome:0,totalCashIncome:0};
-  let d=new Date(start);
-  while(d<end){
-    const pSide=c?.employment?.primary?.sideWork||{}, pStart=defaultPrimarySideWorkStart(c), pEnd=defaultPrimarySideWorkEnd(c);
-    if(monthInRange(d,pStart,pEnd)) out.primaryLabor+=Number(pSide.monthlyGross||0);
-    const sSide=c?.employment?.spouse?.sideWork||{}, sStart=parseDate(sSide.startDate), sEnd=parseDate(sSide.endDate);
-    if(monthInRange(d,sStart,sEnd)) out.spouseLabor+=Number(sSide.monthlyGross||0);
-    out.primaryPension+=pensionMonthlyForPerson(c?.income?.pensions?.primary,d);
-    out.spousePension+=pensionMonthlyForPerson(c?.income?.pensions?.spouse,d);
-    const inc=incomeForMonth(c,d,idecoProjection);
-    out.idecoAnnuity+=inc.idecoAnnuity; out.unemployment+=inc.unemployment; out.extraIncome+=inc.extraIncome;
-    d=addMonths(d,1);
-  }
-  out.totalCashIncome=out.primaryLabor+out.spouseLabor+out.primaryPension+out.spousePension+out.idecoAnnuity+out.unemployment+out.extraIncome;
-  return out;
-}
-
-export function householdTaxSocialReferenceForAge(config,age){
-  const c=structuredClone(config), inc=incomeSummaryForAge(c,age);
-  const pBirth=primaryBirth(c), sBirth=spouseBirth(c), periodStart=agePeriodStart(c,age);
-  const pAge=fullAgeOn(periodStart,pBirth), sAge=fullAgeOn(periodStart,sBirth);
-  const pSalary=inc.primaryLabor, sSalary=inc.spouseLabor, pPension=inc.primaryPension+inc.idecoAnnuity, sPension=inc.spousePension;
-  const pTax0=estimateSimpleIncomeTaxes({salaryGross:pSalary,pensionGross:pPension,age:pAge,spouseIncomeMan:null});
-  const sTax0=estimateSimpleIncomeTaxes({salaryGross:sSalary,pensionGross:sPension,age:sAge,spouseIncomeMan:null});
-  const pIncome=pTax0.residentTotalIncome, sIncome=sTax0.residentTotalIncome;
-  const pTaxed=pTax0.residentTax>0, sTaxed=sTax0.residentTax>0, householdTaxed=pTaxed||sTaxed;
-  let nhi=0, late=0; const under75=[];
-  if(pAge<75) under75.push(pIncome); else late+=lateElderlyMedicalPremium2026(pIncome);
-  if(sAge<75) under75.push(sIncome); else late+=lateElderlyMedicalPremium2026(sIncome);
-  if(under75.length) nhi=fukuyamaNhiPremium2026({memberIncomesMan:under75,members:under75.length,adultMembers:under75.length,careMembers40to64:0});
-  const pCare=pAge>=65?fukuyamaCarePremium2026({totalIncome:pIncome,pensionGross:pPension,ownResidentTaxed:pTaxed,householdResidentTaxed:householdTaxed}):0;
-  const sCare=sAge>=65?fukuyamaCarePremium2026({totalIncome:sIncome,pensionGross:sPension,ownResidentTaxed:sTaxed,householdResidentTaxed:householdTaxed}):0;
-  const healthTotal=nhi+late+pCare+sCare, denom=Math.max(1,pIncome+sIncome), pShare=healthTotal*(pIncome/denom), sShare=healthTotal-pShare;
-  const pTax=estimateSimpleIncomeTaxes({salaryGross:pSalary,pensionGross:pPension,age:pAge,spouseIncomeMan:sIncome,spouseAge:sAge,socialInsurance:pShare});
-  const sTax=estimateSimpleIncomeTaxes({salaryGross:sSalary,pensionGross:sPension,age:sAge,spouseIncomeMan:pIncome,spouseAge:pAge,socialInsurance:sShare});
-  const incomeTax=pTax.incomeTax+sTax.incomeTax, residentTax=pTax.residentTax+sTax.residentTax;
-  return {age:Number(age),primaryAge:pAge,spouseAge:sAge,income:inc,incomeTax,residentTax,nhi,lateElderly:late,care:pCare+sCare,total:incomeTax+residentTax+nhi+late+pCare+sCare,fallback:false,rulesAsOf:'2026-09-25',note:'2026年制度・福山市保険料を将来へ仮適用した参考値。'};
+export function validateSalaryLife(config){
+  return salaryLifeIssues(config,{start:startDateFor(config),end:endDateFor(config),birth:primaryBirth(config),retirementDate:retirementDateFor(config),idecoProjection:projectIdeco(config)});
 }
 
 export function runRetirementPlan(config, options = {}) {
+  // Saved only after explicit adoption. Missing mode preserves legacy behavior.
+  const anchoredCalendar=calendarMode(config,options)==='anchored-months-v1';
+  // Opt-in observations of this loop, never a second calculation or stored plan.
+  const includeMonthlyDetails=options.includeMonthlyDetails===true;
+  const monthlyDetails=includeMonthlyDetails?[]:null;
   const c=structuredClone(config);
+  const fundingIssues=validateSalaryLife(c);
+  if(fundingIssues.length)throw new SalaryLifeValidationError(fundingIssues);
+  const funding=c.cashflow?.salaryLife;
   const start=options.startDate?parseDate(options.startDate):startDateFor(c);
   const end=endDateFor(c);
   const ret=retirementDateFor(c);
@@ -481,38 +578,89 @@ export function runRetirementPlan(config, options = {}) {
   const inflation=Number(c.plan?.inflation||0)/100;
   const idecoProjection=projectIdeco(c);
   const rows=[]; let date=new Date(start); let agg=null;
-  const baseStart=new Date(start);
+  // 実績から再予測しても、支出の価格基準は元の計画開始日に固定する。
+  const baseStart=startDateFor(c);
+  if(anchoredCalendar){
+    if(!start||start<baseStart||start>end||(start.getTime()===end.getTime()&&!options[TERMINAL_FORECAST])||!Number.isFinite(asset))throw new Error('再開日・残高が計画範囲外です');
+    const expected=addMonths(baseStart,monthsBetween(baseStart,start));
+    if(!options[TERMINAL_FORECAST]&&isoDate(start)!==isoDate(expected))throw new Error('再開日は元計画の対象月の計算日に合わせてください');
+  }
+  if(funding && (!start || start<baseStart || start>end || !Number.isFinite(asset)))throw new SalaryLifeValidationError([{level:'error',code:'salary-life-restart',detail:'再予測開始日と残高が計画範囲に合っていません。'}]);
 
-  function newAgg(targetAge,startAsset){return {age:targetAge,startAsset,investmentGain:0,labor:0,pension:0,idecoAnnuity:0,unemployment:0,extraIncome:0,expense:0,extraExpense:0,events:[]};}
-  agg=newAgg(fullAgeOn(date,birth),asset);
+  function newAgg(targetAge,startAsset){return {age:targetAge,startAsset,investmentGain:0,labor:0,pension:0,primaryPension:0,spousePension:0,idecoAnnuity:0,unemployment:0,extraIncome:0,expense:0,extraExpense:0,events:[],...(funding?{householdAddition:0,householdWithdrawal:0,idecoContributionFromAsset:0}: {})};}
+  const ageAt=d=>(funding||anchoredCalendar)?salaryLifeAgeOn(d,birth):fullAgeOn(d,birth);
+  agg=newAgg(ageAt(date),asset);
 
   while(date<end){
-    const age=fullAgeOn(date,birth);
+    const age=ageAt(date);
+    const eventStart=includeMonthlyDetails?agg.events.length:0;
+    let budgetObservation=null, contributionObservation=null;
     const startAssetMonth=asset;
     const gain=startAssetMonth*monthlyReturn; asset+=gain; agg.investmentGain+=gain;
-    const inc=incomeForMonth(c,date,idecoProjection);
-    agg.labor+=inc.labor; agg.pension+=inc.pension; agg.idecoAnnuity+=inc.idecoAnnuity; agg.unemployment+=inc.unemployment; agg.extraIncome+=inc.extraIncome;
+    const inc=incomeForMonth(c,date,idecoProjection,anchoredCalendar?age:null);
+    agg.labor+=inc.labor; agg.pension+=inc.pension; agg.primaryPension+=inc.primaryPension; agg.spousePension+=inc.spousePension; agg.idecoAnnuity+=inc.idecoAnnuity; agg.unemployment+=inc.unemployment; agg.extraIncome+=inc.extraIncome;
     if(inc.detail.length) agg.events.push(...inc.detail.map(([label,amount])=>({label,amount,date:isoDate(date)})));
 
     let expense=0, extraExpense=0;
-    if(monthKey(date)>=monthKey(ret)){
-      const annualBase=budgetForAge(Math.max(65,age),c.budgets);
+    const before=funding && salaryLifeIsBefore(funding,date);
+    if(funding ? !before : monthKey(date)>=monthKey(ret)){
+      const annualBase=funding && age<65 ? funding.pre65MonthlyBudget*12 : budgetForAge(Math.max(65,age),c.budgets,c);
       const yearsFromBase=monthsBetween(baseStart,date)/12;
-      expense=annualBase*Math.pow(1+inflation,yearsFromBase)/12;
+      const priceFactor=Math.pow(1+inflation,yearsFromBase);
+      expense=annualBase*priceFactor/12;
+      if(includeMonthlyDetails)budgetObservation={baseAnnualAmount:annualBase,priceFactor,budgetAge:funding&&age<65?age:Math.max(65,age),source:funding&&age<65?'salaryLife.pre65MonthlyBudget':'budgets-or-periodOverride'};
+    }
+    if(funding || monthKey(date)>=monthKey(ret)){
+      const yearsFromBase=monthsBetween(baseStart,date)/12;
       for(const e of c.events||[]){
         const ed=parseDate(e.date);
-        if(ed&&sameMonth(date,ed)&&e.type==='expense'){
+        if(ed&&sameMonth(date,ed)&&e.type==='expense' && (!funding || e.fundingTreatment==='separate')){
           const amount=Number(e.amount||0)*(e.inflationAdjusted?Math.pow(1+inflation,yearsFromBase):1);
           extraExpense+=amount; agg.events.push({label:e.label||'臨時支出',amount:-amount,date:isoDate(date)});
+        }
+      }
+    }
+    const scheduledExtraExpense=includeMonthlyDetails?extraExpense:0;
+    if(funding){
+      if(before){
+        inc.extraIncome+=funding.monthlyAddition; agg.extraIncome+=funding.monthlyAddition;
+        extraExpense+=funding.monthlyWithdrawal;
+        agg.householdAddition+=funding.monthlyAddition; agg.householdWithdrawal+=funding.monthlyWithdrawal;
+        if(funding.monthlyAddition)agg.events.push({label:'家計からの追加',amount:funding.monthlyAddition,date:isoDate(date)});
+        if(funding.monthlyWithdrawal)agg.events.push({label:'家計への取崩し',amount:-funding.monthlyWithdrawal,date:isoDate(date)});
+      }
+      const contribution=salaryLifeContribution(c,date,ret), source=funding.idecoFunding?.[before?'before':'after'];
+      if(includeMonthlyDetails)contributionObservation={amount:contribution,source:source?.source??null,accounting:source?.accounting??null,fromAsset:contribution>0&&source?.source==='plan_asset'?contribution:0,separateExpense:contribution>0&&source?.source==='plan_asset'&&source.accounting==='separate'?contribution:0};
+      if(contribution>0 && source?.source==='plan_asset'){
+        agg.idecoContributionFromAsset+=contribution; // 内数を含む参考値。支出に再加算しない。
+        if(source.accounting==='separate'){
+          extraExpense+=contribution;
+          agg.events.push({label:'iDeCo掛金（計画資産・別枠）',amount:-contribution,date:isoDate(date)});
         }
       }
     }
     agg.expense+=expense; agg.extraExpense+=extraExpense;
     const incomeTotal=inc.labor+inc.pension+inc.idecoAnnuity+inc.unemployment+inc.extraIncome;
     asset+=incomeTotal-expense-extraExpense;
+    if(funding && !Number.isFinite(asset))throw new SalaryLifeValidationError([{level:'error',code:'salary-life-nonfinite',detail:'計算結果が数値範囲を超えました。金額・利回り・期間を確認してください。'}]);
 
-    const next=addMonths(date,1);
-    const nextAge=fullAgeOn(next,birth);
+    if(includeMonthlyDetails)monthlyDetails.push({
+      sequence:monthlyDetails.length,date:isoDate(date),month:isoDate(date).slice(0,7),age,
+      annualRowIndex:rows.length,annualAge:agg.age,baseDate:isoDate(baseStart),monthsFromBase:monthsBetween(baseStart,date),
+      cashflowMode:funding?.mode??'legacy',phase:funding?(before?'salary':'asset-funded'):(monthKey(date)>=monthKey(ret)?'legacy-after-retirement':'legacy-before-retirement'),
+      startAsset:startAssetMonth,investmentGain:gain,endAsset:asset,
+      labor:inc.labor,pension:inc.pension,primaryPension:inc.primaryPension,spousePension:inc.spousePension,
+      idecoAnnuity:inc.idecoAnnuity,unemployment:inc.unemployment,extraIncome:inc.extraIncome,totalIncome:incomeTotal,
+      expense,extraExpense,scheduledExtraExpense,budget:budgetObservation,
+      householdAddition:funding&&before?funding.monthlyAddition:0,householdWithdrawal:funding&&before?funding.monthlyWithdrawal:0,
+      idecoContributionFromAsset:contributionObservation?.fromAsset??null,idecoFunding:contributionObservation,
+      // Entries include informational subcomponents; do not add them to totals.
+      events:structuredClone(agg.events.slice(eventStart))
+    });
+
+    // New mode keeps the original day anchor after short months. Legacy is unchanged.
+    const next=(funding||anchoredCalendar)?addMonths(baseStart,monthsBetween(baseStart,date)+1):addMonths(date,1);
+    const nextAge=ageAt(next);
     if(nextAge>age || next>=end){
       agg.endAsset=asset;
       agg.totalIncome=agg.labor+agg.pension+agg.idecoAnnuity+agg.unemployment+agg.extraIncome;
@@ -533,7 +681,7 @@ export function runRetirementPlan(config, options = {}) {
   const finalThreshold=Number(thresholds[c.plan?.endAge||95]||0);
   const reserveUsedThreshold=Number(c.management?.reserveUsedFinalThreshold||1000);
   const status=finalAsset>=finalThreshold?'正常':finalAsset>=finalThreshold*0.9?'注意':'要見直し';
-  return {rows,keyAges,finalAsset,reserve,finalAfterReserveUse,finalThreshold,reserveUsedThreshold,status,startAge:Number(c.plan?.startAge||64),endAge:Number(c.plan?.endAge||95),idecoProjection,retirementDate:isoDate(ret)};
+  return {rows,keyAges,finalAsset,reserve,finalAfterReserveUse,finalThreshold,reserveUsedThreshold,status,startAge:Number(c.plan?.startAge||64),endAge:Number(c.plan?.endAge||95),idecoProjection,retirementDate:isoDate(ret),...(anchoredCalendar?{calendarMode:'anchored-months-v1'}:{}),...(includeMonthlyDetails?{monthlyDetails}:{}),...(funding?{cashflowMode:funding.mode,limitations:['税・社会保険は既存の簡略概算。新方式の税額・加入資格の判定は未対応。','給与生活終了月は実退職日・年金・iDeCo受取日を変更しません。']}: {})};
 }
 
 export function latestActual(config) {
@@ -541,10 +689,19 @@ export function latestActual(config) {
   const ages=Object.keys(actuals).map(Number).filter(age=>Number.isFinite(age)&&actuals[age]&&Number.isFinite(Number(actuals[age].endAsset))).sort((a,b)=>a-b);
   if(!ages.length)return null; const age=ages.at(-1); return {age,...actuals[age]};
 }
-export function runForecastFromLatestActual(config){
+export function runForecastFromLatestActual(config,options={}){
+  const mode=calendarMode(config,options);
   const actual=latestActual(config); if(!actual)return null;
-  const birth=primaryBirth(config); const forecastStart=addYears(birth,actual.age+1); // ageキーはその年齢1年間の終了実績
-  const projection=runRetirementPlan(config,{startDate:isoDate(forecastStart),initialAsset:Number(actual.endAsset)});
+  let forecastStart,terminal=false;
+  if(mode==='anchored-months-v1'){
+    // Continue the chosen plan's exact monthly axis, including partial first years.
+    const plan=runRetirementPlan(config,{calendarMode:mode,includeMonthlyDetails:true});
+    if(!Number.isInteger(actual.age)||!plan.rows.some(r=>r.age===actual.age)||actual.endAsset==null||!Number.isFinite(Number(actual.endAsset)))throw new Error('実績の年齢期・終了資産を確認してください。');
+    const next=plan.monthlyDetails.find(m=>m.annualAge>actual.age);
+    forecastStart=next?parseDate(next.date):endDateFor(config);terminal=!next;
+  }else forecastStart=addYears(primaryBirth(config),actual.age+1);
+  // Caller start/asset overrides cannot replace the actual record.
+  const projection=runRetirementPlan(config,{calendarMode:mode,includeMonthlyDetails:options.includeMonthlyDetails,startDate:isoDate(forecastStart),initialAsset:Number(actual.endAsset),[TERMINAL_FORECAST]:terminal});
   return {actual,projection};
 }
 export function planRowAtAge(result,age){ return result?.rows?.find(r=>r.age===Number(age))||null; }
@@ -554,11 +711,56 @@ export function scenarioMetrics(config){
   return {finalAsset:result.finalAsset,afterReserve:result.finalAfterReserveUse,age80Asset:a80,age90Asset:a90,minimumAsset:minRow?.endAsset??result.finalAsset,minimumAssetAge:minRow?.age??config.plan.endAge,status:result.status};
 }
 
-export function expenseDetailSummary(config){
+export function expenseDetailRows(config,age=Number(config?.plan?.startAge||64)){
+  const detail=config?.expenseDetail; if(!detail?.monthlyCategories?.length)return [];
+  const ageDelta=Math.max(0,Number(age)-Number(config?.plan?.startAge||64));
+  const priceFactor=Math.pow(1+Number(config?.plan?.inflation||0)/100,ageDelta);
+  const periodExpenses=(config?.cashflow?.periodOverrides||[]).filter(x=>x.kind==='expense'&&Number(age)>=Number(x.fromAge)&&Number(age)<=Number(x.toAge));
+  const consumed=new Set();
+  const amountFor=row=>{
+    if(String(row.key||row.label)==='taxSocial'){
+      const estimate=estimateAnnualTaxSocial(config,age);
+      return estimate.source==='fallback'?Number(row.amount||0):estimate.total/12;
+    }
+    return Number(row.amount||0);
+  };
+  const rows=detail.monthlyCategories.map(row=>{
+    const categoryKey=String(row.key||row.label);
+    const categoryOverride=periodExpenses.find(x=>String(x.key)===categoryKey);
+    if(categoryOverride){
+      consumed.add(categoryOverride);
+      for(const item of row.items||[]){const child=periodExpenses.find(x=>String(x.key)===String(item.key||item.label));if(child)consumed.add(child);}
+      return {key:categoryKey,label:row.label,amount:periodMonthlyAmount(categoryOverride)*priceFactor,overridden:true,items:[]};
+    }
+    if(Array.isArray(row.items)&&row.items.length){
+      const items=row.items.map(item=>{
+        const key=String(item.key||item.label), override=periodExpenses.find(x=>String(x.key)===key);
+        if(override)consumed.add(override);
+        return {key,label:item.label,amount:(override?periodMonthlyAmount(override):amountFor(item))*priceFactor};
+      });
+      return {key:categoryKey,label:row.label,amount:items.reduce((sum,x)=>sum+x.amount,0),items};
+    }
+    return {key:categoryKey,label:row.label,amount:amountFor(row)*priceFactor,items:[]};
+  });
+  rows.push(...periodExpenses.filter(x=>!consumed.has(x)).map(x=>({key:x.key,label:x.label||x.key,amount:periodMonthlyAmount(x)*priceFactor,added:true,items:[]})));
+  return rows;
+}
+
+export function expenseDetailSummary(config,age=Number(config?.plan?.startAge||64)){
   const detail=config?.expenseDetail; if(!detail?.monthlyCategories?.length)return null;
-  const monthlyTotal=detail.monthlyCategories.reduce((sum,row)=>sum+Number(row.amount||0),0);
-  const annualOperating=monthlyTotal*12, travelAnnual=Number(detail.travelAnnualBase||0), combined=annualOperating+travelAnnual, reference=Number(detail.annualBudgetReference||0);
+  const ageDelta=Math.max(0,Number(age)-Number(config?.plan?.startAge||64));
+  const priceFactor=Math.pow(1+Number(config?.plan?.inflation||0)/100,ageDelta);
+  const monthlyTotal=expenseDetailRows(config,age).reduce((sum,x)=>sum+x.amount,0);
+  const travelOverride=periodOverride(config,'travel','travel',age);
+  const annualOperating=monthlyTotal*12, travelAnnual=(travelOverride?periodAnnualAmount(travelOverride):Number(detail.travelAnnualBase||0))*priceFactor, combined=annualOperating+travelAnnual, budgetOverride=periodOverride(config,'budget','budget',age);
+  const baseBudget=(config?.budgets||[]).find(b=>age>=Number(b.fromAge)&&age<=Number(b.toAge));
+  const reference=(budgetOverride?periodAnnualAmount(budgetOverride):Number(baseBudget?.annualBudget??detail.annualBudgetReference??0))*priceFactor;
   return {monthlyTotal,annualOperating,travelAnnual,combined,reference,difference:reference-combined};
+}
+
+export function plannedTaxSocialAnnual(config,age){
+  const rows=expenseDetailRows(config,age).flatMap(r=>r.items.length?r.items:[r]).filter(r=>r.key==='taxSocial');
+  return rows.length?rows.reduce((sum,r)=>sum+r.amount*12,0):null;
 }
 
 export function evaluateReviewTriggers(config, baselineResult=null){
@@ -573,11 +775,12 @@ export function evaluateReviewTriggers(config, baselineResult=null){
     if(Number.isFinite(Number(a.reserveBalance))&&Number(a.reserveBalance)<Number(config?.reserve?.warningStrongBelow||0))triggers.push({level:'review',code:`reserve-strong-${a.age}`,title:`${a.age}歳の予備枠が強警告水準未満`,detail:`残高 ${formatMan(a.reserveBalance)}万円`});
     else if(Number.isFinite(Number(a.reserveBalance))&&Number(a.reserveBalance)<Number(config?.reserve?.total||0))triggers.push({level:'watch',code:`reserve-${a.age}`,title:`${a.age}歳の予備枠残高が目標未満`,detail:`残高 ${formatMan(a.reserveBalance)}万円`});
     if(Number.isFinite(Number(a.safeAssetBalance))&&Number(a.safeAssetBalance)<Number(config?.reserve?.minimumSafeAsset||0))triggers.push({level:'review',code:`safe-asset-${a.age}`,title:`${a.age}歳の安全資産が最低基準未満`,detail:`安全資産 ${formatMan(a.safeAssetBalance)}万円 / 最低基準 ${formatMan(config?.reserve?.minimumSafeAsset||0)}万円`});
-    if(Number.isFinite(Number(a.taxSocial))){
-      let planTax=Number(config?.cashflow?.taxFallbackMonthly ?? 4)*12;
-      try{ const ref=householdTaxSocialReferenceForAge(config,a.age); if(Number.isFinite(ref?.total)) planTax=ref.total; }catch{}
-      const delta=Number(a.taxSocial)-planTax;
-      if(delta>=Number(config?.taxPolicy?.reviewDeltaAnnual||0))triggers.push({level:'review',code:`tax-social-${a.age}`,title:`${a.age}歳の税・社会保険が予定額を大きく超過`,detail:`予定参考 ${formatMan(planTax,1)}万円 / 実績 ${formatMan(a.taxSocial,1)}万円 / 差 +${formatMan(delta,1)}万円`});
+    if(a.taxSocial!=null&&a.taxSocial!==''&&Number.isFinite(Number(a.taxSocial))){
+      const planTax=plannedTaxSocialAnnual(config,a.age);
+      if(planTax!==null){
+        const delta=Number(a.taxSocial)-planTax;
+        if(delta>1e-8&&delta+1e-8>=Math.max(0,Number(config?.taxPolicy?.reviewDeltaAnnual||0)))triggers.push({level:'review',code:`tax-social-${a.age}`,title:`${a.age}歳の税・社会保険が予算内訳を大きく超過`,detail:`計画参考 ${formatMan(planTax,1)}万円 / 実績 ${formatMan(a.taxSocial,1)}万円 / 差 +${formatMan(delta,1)}万円`});
+      }
     }
   }
   const returns=actualEntries.filter(a=>Number.isFinite(Number(a.returnRate)));
@@ -588,14 +791,15 @@ export function evaluateReviewTriggers(config, baselineResult=null){
 const FACTOR_GROUPS=[
   {id:'initialAsset',label:'開始資産',apply:(to,from)=>{to.plan.initialAsset=from.plan.initialAsset;}},
   {id:'investment',label:'運用利回り',apply:(to,from)=>{to.plan.afterTaxReturn=from.plan.afterTaxReturn;}},
-  {id:'labor',label:'就労・失業給付',apply:(to,from)=>{to.employment=structuredClone(from.employment);to.unemployment=structuredClone(from.unemployment);}},
+  {id:'labor',label:'就労・失業給付',apply:(to,from)=>{to.employment=structuredClone(from.employment);to.unemployment=structuredClone(from.unemployment);to.cashflow ||= {};to.cashflow.periodOverrides=(to.cashflow.periodOverrides||[]).filter(x=>x.kind!=='income').concat(structuredClone((from.cashflow?.periodOverrides||[]).filter(x=>x.kind==='income')));}},
   {id:'pension',label:'公的年金',apply:(to,from)=>{to.income.pensions=structuredClone(from.income.pensions);}},
-  {id:'spending',label:'支出条件',apply:(to,from)=>{to.plan.inflation=from.plan.inflation;to.budgets=structuredClone(from.budgets);}},
+  {id:'spending',label:'支出条件',apply:(to,from)=>{to.plan.inflation=from.plan.inflation;to.budgets=structuredClone(from.budgets);to.cashflow ||= {};to.cashflow.periodOverrides=(to.cashflow.periodOverrides||[]).filter(x=>x.kind==='income').concat(structuredClone((from.cashflow?.periodOverrides||[]).filter(x=>x.kind!=='income')));}},
   {id:'events',label:'iDeCo・転居等',apply:(to,from)=>{to.ideco=structuredClone(from.ideco);to.events=structuredClone(from.events||[]);}}
 ];
 function factorial(n){let v=1;for(let i=2;i<=n;i++)v*=i;return v;}
 function configWithSubset(reference,current,mask){const c=structuredClone(reference);FACTOR_GROUPS.forEach((g,i)=>{if(mask&(1<<i))g.apply(c,current);});c.actuals={};return c;}
 export function factorDecomposition(referenceConfig,currentConfig){
+  if(referenceConfig?.cashflow?.salaryLife!==undefined || currentConfig?.cashflow?.salaryLife!==undefined)throw new Error('新方式の要因分解は未対応です。旧方式と混ぜず、計画全体の差分を比較してください。');
   if(!referenceConfig||!currentConfig)return null;const n=FACTOR_GROUPS.length,values=new Map();
   for(let mask=0;mask<(1<<n);mask++)values.set(mask,runRetirementPlan(configWithSubset(referenceConfig,currentConfig,mask)).finalAsset);
   const baseAsset=values.get(0),currentAsset=values.get((1<<n)-1),denom=factorial(n);
@@ -623,14 +827,30 @@ export function certaintyItems(config){
 
 export function integrityChecks(config){
   const c=config||{},issues=[]; const error=(code,title,detail)=>issues.push({level:'error',code,title,detail}),warn=(code,title,detail)=>issues.push({level:'warn',code,title,detail});
+  try{calendarMode(c);}catch(e){error('calendar-mode','計算期間方式が不正',e.message);}
+  issues.push(...validateSalaryLife(c));
   const start=Number(c.plan?.startAge),end=Number(c.plan?.endAge);
   if(!Number.isFinite(start)||!Number.isFinite(end)||end<=start)error('age-range','計画年齢範囲が不正','開始年齢と終了年齢を確認してください。');
   else for(let age=65;age<=end;age++){const matches=(c.budgets||[]).filter(b=>age>=Number(b.fromAge)&&age<=Number(b.toAge));if(matches.length===0)error(`budget-missing-${age}`,`${age}歳の年間予算が未設定`,'全年齢を年代別年間予算のいずれか1区分でカバーしてください。');if(matches.length>1)error(`budget-overlap-${age}`,`${age}歳の年間予算が重複`,`${matches.length}区分が同じ年齢をカバーしています。`);}
   for(const[label,value]of[['開始資産',c.plan?.initialAsset],['税引後運用利回り',c.plan?.afterTaxReturn],['インフレ率',c.plan?.inflation],['予備枠',c.reserve?.total],['最低安全資産',c.reserve?.minimumSafeAsset]])if(!Number.isFinite(Number(value)))error(`numeric-${label}`,`${label}が数値ではありません`,'設定値を確認してください。');
   if(Number(c.reserve?.minimumSafeAsset)>Number(c.reserve?.total))warn('safe-over-reserve','最低安全資産が予備枠総額を超えています','二重計上または設定誤りを確認してください。');
+  const periods=c.cashflow?.periodOverrides||[];
+  for(const [i,row] of periods.entries()){
+    if(!PERIOD_KINDS.has(row.kind)||!String(row.key||'').trim()||!Number.isInteger(Number(row.fromAge))||!Number.isInteger(Number(row.toAge))||Number(row.toAge)<Number(row.fromAge)||!Number.isFinite(Number(row.amount))||Number(row.amount)<0)error(`period-invalid-${i}`,'期間別設定に不正な行があります','種類・項目名・年齢範囲・金額を確認してください。');
+    for(let j=i+1;j<periods.length;j++){
+      const other=periods[j];
+      if(row.kind===other.kind&&String(row.key)===String(other.key)&&Number(row.fromAge)<=Number(other.toAge)&&Number(other.fromAge)<=Number(row.toAge))error(`period-overlap-${i}-${j}`,'同じ期間別設定が重複しています','一括更新で期間を分割し、同じ項目・年齢の重複を解消してください。');
+    }
+  }
   const reserveBreakdown=c.reserve?.breakdown;if(reserveBreakdown&&Object.keys(reserveBreakdown).length){const sum=Object.values(reserveBreakdown).reduce((a,v)=>a+Number(v||0),0);if(Math.abs(sum-Number(c.reserve.total||0))>0.01)warn('reserve-sum','予備枠の内訳合計が総額と不一致',`内訳 ${formatMan(sum,1)}万円 / 総額 ${formatMan(c.reserve.total,1)}万円`);}
   for(const cat of c.expenseDetail?.monthlyCategories||[]){if(!cat.items?.length)continue;const sum=cat.items.reduce((a,i)=>a+Number(i.amount||0),0);if(Math.abs(sum-Number(cat.amount||0))>0.01)warn(`expense-${cat.key||cat.label}`,`${cat.label}の詳細内訳がカテゴリ額と不一致`,`詳細 ${formatMan(sum,1)}万円 / カテゴリ ${formatMan(cat.amount,1)}万円`);}
   const ideco=projectIdeco(c);if(c.ideco&&!ideco)warn('ideco-projection','iDeCo/DC見込計算に必要な日付が不足','現在残高・基準日・拠出終了日を確認してください。');
+  if(ideco&&c.plan?.initialAssetIncludesIdeco!==false){
+    const message='現在の計算は開始資産とは別にiDeCo受取を加算します。開始資産に含む場合は口座間移動の計算が必要です。金額を自動補正しません。';
+    if(c.plan?.initialAssetIncludesIdeco===true)error('ideco-asset-scope','開始資産に含むiDeCoの受取計算は未対応',message);
+    else warn('ideco-asset-scope','開始資産にiDeCoを含むか未確認',message);
+  }
+  if(c.retirement?.receiveDate>=c.plan?.startDate&&Number(c.retirement?.amount)>0)warn('retirement-receipt-route','計画開始後の退職金の入金経路を確認','退職金の参考額だけでは資産へ自動加算されません。臨時収入の設定と重複・漏れを確認してください。');
   if(!parseDate(c.employment?.primary?.mainRetirement?.baseDate))warn('retirement-date','本業退職基準日が未設定','65歳誕生日月を基本に設定してください。');
   return issues;
 }
