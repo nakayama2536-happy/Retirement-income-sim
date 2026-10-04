@@ -30,22 +30,22 @@ jobs:
 
       - name: Syntax check
         run: |
-          node --check app.mjs
-          node --check calc.mjs
-          node --check cashflow.mjs
-          node --check csv-export.mjs
-          node --check rules.mjs
-          node --check storage.mjs
-          node --check sw.js
+          set -euo pipefail
+          for file in *.mjs; do
+            node --check "$file"
+          done
 
-      - name: Calculation regression tests
-        run: node test_calc.mjs
-
-      - name: CSV export regression tests
-        run: node test_csv_export.mjs
-
-      - name: PWA static asset smoke test
-        run: node test_pwa_assets.mjs
+      - name: Full application regression suite
+        run: |
+          set -euo pipefail
+          for file in test_*.mjs; do
+            # The pre-I-09 CSV test targets the retired v0.9 module graph;
+            # annual CSV regression is covered by test_annual_csv.mjs.
+            if [ "$file" = "test_csv_export.mjs" ]; then
+              continue
+            fi
+            node --test "$file"
+          done
 
       - name: Prevent private files in public repository
         shell: bash

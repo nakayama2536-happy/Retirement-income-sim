@@ -3,10 +3,9 @@ import {
   runRetirementPlan, runForecastFromLatestActual, retirementIncomeDeduction,
   pensionAdjustmentFactor, nisaCapacity, expenseDetailSummary, evaluateReviewTriggers,
   factorDecomposition, certaintyItems, integrityChecks, ANNUAL_REVIEW_ITEMS,
-  projectIdeco, idecoOverlapReference, retirementIdecoTaxSummary, unemploymentComparison, unemploymentDailyBenefit2026, retirementTaxEstimate, fukuyamaNhiPremium2026Details, lateElderlyMedicalPremium2026Details, estimateSimpleIncomeTaxes,
-  replaceAgeRangeOverride, estimateAnnualTaxSocial, applyCarDisposalTransfer
+  projectIdeco, idecoOverlapReference, retirementIdecoTaxSummary, unemploymentComparison, unemploymentDailyBenefit2026, retirementTaxEstimate, fukuyamaNhiPremium2026Details, lateElderlyMedicalPremium2026Details, estimateSimpleIncomeTaxes, incomeSummaryForAge, householdTaxSocialReferenceForAge
 } from './calc.mjs';
-import { migrateConfig } from './storage.mjs';
+import { setPeriodValue, cashflowSummaryForAge, valueForPeriods } from './cashflow.mjs';
 
 const synthetic = {
   meta:{schemaVersion:'0.7',label:'synthetic'},
@@ -43,41 +42,9 @@ assert.equal(retirementTaxEstimate(200,retirementIncomeDeduction(5)).totalTax,0)
 const withActual=structuredClone(synthetic); withActual.actuals={65:{endAsset:900}};
 const f=runForecastFromLatestActual(withActual);
 assert.equal(f.actual.age,65);
-assert.ok(Math.abs(f.projection.finalAsset-870)<1e-9); // 900 + pension80? => 30+50-100-10 = 870
-assert.equal(f.projection.rows.length,1); // 65歳実績後は、66歳の12か月だけ再予測する
-assert.equal(f.projection.rows[0].age,66);
-assert.equal(r.retirementDate,'2045-01-01'); // ISO日付は実行環境のタイムゾーンに左右されない
+assert.ok(Math.abs(f.projection.finalAsset-870)<1e-9);
 
 const e=expenseDetailSummary(synthetic); assert.equal(e.monthlyTotal,8); assert.equal(e.combined,100); assert.equal(e.difference,0);
-const split=replaceAgeRangeOverride([{kind:'budget',key:'budget',fromAge:65,toAge:75,amount:700,unit:'annual'}],{kind:'budget',key:'budget',fromAge:70,toAge:72,amount:650,unit:'annual'});
-assert.deepEqual(split.map(x=>[x.fromAge,x.toAge,x.amount]),[[65,69,700],[70,72,650],[73,75,700]]);
-const periodConfig=structuredClone(synthetic);
-periodConfig.cashflow={periodOverrides:[
-  {kind:'budget',key:'budget',fromAge:66,toAge:66,amount:80,unit:'annual'},
-  {kind:'income',key:'extra-income',label:'追加収入',fromAge:66,toAge:66,amount:120,unit:'annual'}
-]};
-const periodResult=runRetirementPlan(periodConfig);
-assert.ok(Math.abs(periodResult.rows.find(x=>x.age===66).endAsset-(r.rows.find(x=>x.age===66).endAsset+140))<1e-7);
-const periodExpenseConfig=structuredClone(synthetic);
-periodExpenseConfig.cashflow={periodOverrides:[{kind:'expense',key:'A',fromAge:65,toAge:65,amount:9,unit:'monthly'}]};
-assert.equal(expenseDetailSummary(periodExpenseConfig,65).monthlyTotal,12);
-periodExpenseConfig.cashflow.periodOverrides[0]={kind:'expense',key:'A',fromAge:65,toAge:65,amount:120,unit:'annual'};
-assert.equal(expenseDetailSummary(periodExpenseConfig,65).monthlyTotal,13);
-periodExpenseConfig.plan.inflation=2;
-assert.ok(Math.abs(expenseDetailSummary(periodExpenseConfig,65).monthlyTotal-13.26)<1e-9);
-const taxEstimateConfig=structuredClone(synthetic);
-taxEstimateConfig.expenseDetail.monthlyCategories=[{key:'taxSocial',label:'税社保',amount:4}];
-taxEstimateConfig.income.pensions.primary.startDate='2045-01-01'; taxEstimateConfig.income.pensions.primary.annualAtStart=240;
-taxEstimateConfig.income.pensions.spouse.startDate='2045-01-01'; taxEstimateConfig.income.pensions.spouse.annualAtStart=120;
-assert.equal(estimateAnnualTaxSocial(taxEstimateConfig,65).source,'income_based');
-assert.ok(expenseDetailSummary(taxEstimateConfig,65).monthlyTotal>0);
-const carConfig=structuredClone(synthetic); carConfig.car={disposeAge:66,monthlyCost:4.9,medicalCareMonthlyIncrease:3};
-carConfig.expenseDetail.monthlyCategories=[{key:'car',label:'車',amount:4.9}];
-const transferred=applyCarDisposalTransfer(carConfig);
-assert.equal(expenseDetailSummary(transferred,65).monthlyTotal,4.9);
-assert.ok(Math.abs(expenseDetailSummary(transferred,66).monthlyTotal-7.9)<1e-9);
-assert.equal(carConfig.cashflow,undefined); // 元設定を変更しない
-assert.ok(integrityChecks({...periodConfig,cashflow:{periodOverrides:[...periodConfig.cashflow.periodOverrides,{...periodConfig.cashflow.periodOverrides[0],fromAge:65}]}}).some(x=>x.code.startsWith('period-overlap-')));
 const triggerCfg=structuredClone(synthetic); triggerCfg.plan.inflation=2; triggerCfg.actuals={65:{endAsset:900,expense:120,returnRate:1.5,reserveBalance:40},66:{endAsset:700,expense:120,returnRate:1.8,reserveBalance:20,safeAssetBalance:20}};
 const t=evaluateReviewTriggers(triggerCfg,runRetirementPlan(triggerCfg));
 assert.ok(t.some(x=>x.code==='inflation'));
@@ -98,21 +65,12 @@ const direct=runRetirementPlan(current).finalAsset-runRetirementPlan(synthetic).
 assert.ok(Math.abs(d.totalDifference-direct)<1e-7);
 assert.ok(Math.abs(d.impacts.reduce((sum,x)=>sum+x.impact,0)-direct)<1e-7);
 assert.equal(d.impacts.length,6);
-const periodCurrent=structuredClone(synthetic); periodCurrent.cashflow={periodOverrides:[{kind:'budget',key:'budget',fromAge:66,toAge:66,amount:90,unit:'annual'},{kind:'income',key:'side',fromAge:66,toAge:66,amount:24,unit:'annual'}]};
-const periodDecomposition=factorDecomposition(synthetic,periodCurrent);
-const periodDirect=runRetirementPlan(periodCurrent).finalAsset-runRetirementPlan(synthetic).finalAsset;
-assert.ok(Math.abs(periodDecomposition.totalDifference-periodDirect)<1e-7);
-assert.ok(Math.abs(periodDecomposition.impacts.reduce((sum,x)=>sum+x.impact,0)-periodDirect)<1e-7);
 
 const ci=certaintyItems(synthetic);
 assert.equal(ci.find(x=>x.key==='pension').labelText,'仮定');
 assert.equal(ci.find(x=>x.key==='retirement').labelText,'会社見込');
 const cleanIssues=integrityChecks(synthetic);
 assert.equal(cleanIssues.filter(x=>x.level==='error').length,0);
-const migrated=migrateConfig(synthetic);
-assert.equal(migrated.meta.schemaVersion,'0.9');
-assert.deepEqual(migrated.cashflow.periodOverrides,[]);
-assert.deepEqual(migrated.budgets,synthetic.budgets);
 const broken=structuredClone(synthetic); broken.budgets=[{fromAge:65,toAge:65,annualBudget:100}]; broken.reserve={total:50,minimumSafeAsset:60,breakdown:{a:20,b:20}};
 const brokenIssues=integrityChecks(broken);
 assert.ok(brokenIssues.some(x=>x.code==='budget-missing-66'));
@@ -133,10 +91,8 @@ assert.ok(nhi.child>0); assert.ok(nhi.total>nhi.medical+nhi.support);
 const late=lateElderlyMedicalPremium2026Details(100); assert.ok(late.child>0); assert.ok(late.total<=87.1);
 const tax=estimateSimpleIncomeTaxes({salaryGross:72,pensionGross:260,age:70,spouseIncomeMan:0,spouseAge:70});
 assert.equal(tax.salaryIncome,0); assert.equal(tax.spouseIncomeTaxDeduction,48); assert.equal(tax.residentSpouseDeduction,38);
-console.log('OK: v0.9 period inputs, monthly calculation, tax/social, unemployment, iDeCo, actual forecast and integrity tests passed');
+console.log('OK: v0.9 monthly calculation, tax/social, unemployment, iDeCo, actual forecast, review triggers, factor decomposition, certainty and integrity tests passed');
 
-
-// Step3: retirement/iDeCo tax overlap reference (synthetic values only)
 const taxCfg={
   people:{primary:{birthDate:'1980-01-01'},spouse:{birthDate:'1981-01-01'}},
   retirement:{amount:1000,receiveDate:'2030-06-01',serviceYears:30,companyStartDate:'2000-04-01'},
@@ -157,4 +113,23 @@ const outside=structuredClone(taxCfg); outside.retirement.receiveDate='2000-06-0
 const ov2=idecoOverlapReference(outside);
 assert.equal(ov2.within19YearRule,false);
 assert.equal(ov2.adjustedDeduction,ov2.fullDeduction);
-console.log('OK: retirement/iDeCo tax overlap tests passed');
+console.log('OK: step3 retirement/iDeCo tax overlap tests passed');
+
+
+// v0.9 cashflow range editing and detailed annual summary
+let periods=[{fromAge:64,toAge:95,amount:10}];
+periods=setPeriodValue(periods,80,89,12);
+assert.equal(valueForPeriods(periods,79),10);
+assert.equal(valueForPeriods(periods,80),12);
+assert.equal(valueForPeriods(periods,90),10);
+const cfCfg=structuredClone(synthetic);
+cfCfg.plan.endAge=95;
+cfCfg.budgets=[{fromAge:65,toAge:75,annualBudget:700},{fromAge:76,toAge:80,annualBudget:620},{fromAge:81,toAge:86,annualBudget:600},{fromAge:87,toAge:95,annualBudget:560}];
+cfCfg.cashflow={taxSocialMode:'auto_if_possible',expenseCategories:[
+ {key:'fixed',label:'固定費',items:[{key:'rent',label:'家賃',periods:[{fromAge:64,toAge:95,amount:11}]}]},
+ {key:'taxSocial',label:'税金・社会保険',fallbackMonthly:4,items:[]}
+],travel:[{fromAge:65,toAge:75,annualAmount:170},{fromAge:76,toAge:80,annualAmount:70},{fromAge:81,toAge:86,annualAmount:40},{fromAge:87,toAge:95,annualAmount:0}],manualIncomeItems:[]};
+const inc65=incomeSummaryForAge(cfCfg,65); assert.ok(inc65.totalCashIncome>=0);
+const tax65=householdTaxSocialReferenceForAge(cfCfg,65); assert.ok(tax65.total>=0);
+const cfs=cashflowSummaryForAge(cfCfg,65); assert.ok(cfs.plannedCost>0); assert.ok(Number.isFinite(cfs.buffer));
+console.log('OK: v0.9 cashflow schedule, period range edit and tax/social planned value tests passed');

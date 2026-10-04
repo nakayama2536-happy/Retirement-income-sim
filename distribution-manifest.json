@@ -1,0 +1,201 @@
+{
+  "kind": "public-release",
+  "runtime": "v0.9.7-i08-recovery-icon-20261004",
+  "files": [
+    {
+      "name": "annual-cashflow.mjs",
+      "size": 5846,
+      "sha256": "e26bbf4cc6f5efea7607405692d9c573f7b6ba9a1a67a3372243750079d303e2"
+    },
+    {
+      "name": "annual-csv.mjs",
+      "size": 4681,
+      "sha256": "7fb70cc6fbe8487047654feef8e1977d799fad6ab6565b1900d7c5ae10d58c7d"
+    },
+    {
+      "name": "app.mjs",
+      "size": 57435,
+      "sha256": "a25f1d6144cf09c1f9ef34e99cecc322cdeac41f1ecb3517487b20c505360898"
+    },
+    {
+      "name": "backup-compatibility.mjs",
+      "size": 3406,
+      "sha256": "d619b860cd97849e9162f79c1f109027e1027753cf8239e0e2b4eceb7b7d86a9"
+    },
+    {
+      "name": "calc.mjs",
+      "size": 59291,
+      "sha256": "b26fbe449a285e6a3ce083dd4fc8eea67c6a827f1a9b7a65c25cd5bb327d91bb"
+    },
+    {
+      "name": "calendar-mode.mjs",
+      "size": 527,
+      "sha256": "1994732581f03f03d2f157df05bdd902c55732603b931fcb0b739be7df5de070"
+    },
+    {
+      "name": "calendar-ui.mjs",
+      "size": 5234,
+      "sha256": "26fff45dd8c45657337cd9458baac8333425f66dd70bd525dd1d36603039afb5"
+    },
+    {
+      "name": "calendar-workflow.mjs",
+      "size": 5369,
+      "sha256": "3e83db24ec394d2e9c263db314f525b4e4fdb6752082d2a7bfe49b4766286687"
+    },
+    {
+      "name": "cashflow-reconciliation.mjs",
+      "size": 7903,
+      "sha256": "c7c690bc687151b332abf201dbe220865a9af6a8aa944d62274d397784e3f9f2"
+    },
+    {
+      "name": "cashflow-sources.mjs",
+      "size": 26669,
+      "sha256": "12ba0651c582d82f9cf5e0a1bc40dcf3772b05435ae4647e0151e8a9adb53a1c"
+    },
+    {
+      "name": "docs/USER_GUIDE.md",
+      "size": 2828,
+      "sha256": "94f32c26c8f5fbf008a6bfa392d29e140357d4e341b00905c5dc5e9693ccc7ee"
+    },
+    {
+      "name": "expense-display.mjs",
+      "size": 4797,
+      "sha256": "79831c14ad07219a6098a27be24013a60d6524d62b2e14085e929fd44da2d79a"
+    },
+    {
+      "name": "expense-preview.mjs",
+      "size": 9408,
+      "sha256": "fd3b72088413c4b67c296decfbe1e7ed4c9a7d5761e494d458bc323e43c252b6"
+    },
+    {
+      "name": "expense-ui.mjs",
+      "size": 7827,
+      "sha256": "a0e311ddc87aaa29620392384957b7ec181db87bb1a12b91a463a7fe00ac6c8c"
+    },
+    {
+      "name": "expense-workflow.mjs",
+      "size": 7549,
+      "sha256": "d633ec9088c8a2610211365a1dbe8556ba2994f869096745b4fd6311ab07e61d"
+    },
+    {
+      "name": "full-backup.mjs",
+      "size": 1286,
+      "sha256": "21428054e8f31445304cbe7ad1a5f53e47bb60ffac332e72da2d77933ae648f6"
+    },
+    {
+      "name": "icons/icon-192.png",
+      "size": 36192,
+      "sha256": "fc6b3a6c5a5166142433dfe26275e12079e0b4556b2b3eb88b82844d34cb2491"
+    },
+    {
+      "name": "icons/icon-512.png",
+      "size": 212465,
+      "sha256": "c3dfbe3fde9c25ed6a58d57ac7ef44aa0eccc4fbef968c41d852a85459cfd9d4"
+    },
+    {
+      "name": "income-preview.mjs",
+      "size": 7474,
+      "sha256": "fe168674cf3a42d5482fd00208b600e77b717d2787237940d63ecd3a90a4df39"
+    },
+    {
+      "name": "income-ui.mjs",
+      "size": 6366,
+      "sha256": "9edeae251943cb6e58de8736723bc3974bb146c35a906050b9277a6682861afe"
+    },
+    {
+      "name": "income-workflow.mjs",
+      "size": 5597,
+      "sha256": "f8e7f2e6fc42ce0d1cdd75cafa4e71a526fa3bf1cf7697c3c1b866bba4d201cf"
+    },
+    {
+      "name": "index.html",
+      "size": 34598,
+      "sha256": "f674ff931c7bf9edb9f7d05ad1054c0d62ebbd8b2946603ae56b67630dd5ed54"
+    },
+    {
+      "name": "manifest.webmanifest",
+      "size": 320,
+      "sha256": "7f8e6ab72b6848d9d8f030afee8cfeef3b6347fd85e875bf518d0fe857e07a89"
+    },
+    {
+      "name": "migration-ui.mjs",
+      "size": 3169,
+      "sha256": "ac413926fc16d19f83e89dcc9cc874ec6b49c0ec592d2e9c834e1de3ad437c92"
+    },
+    {
+      "name": "migration.mjs",
+      "size": 5645,
+      "sha256": "0fb2c846714f9cce76d75ed9de09773b9eaa200bad80c797ca811af8ab5707bf"
+    },
+    {
+      "name": "pension-ui.mjs",
+      "size": 10388,
+      "sha256": "ea49a0acbf452c937e15949dc6ef739da65eaaa5bbc3c80c03e3a90ea6b888fa"
+    },
+    {
+      "name": "pension.mjs",
+      "size": 7130,
+      "sha256": "f9eee3d9267b25f291c5948ced7e9b97c94e412947a7c8a242cb3cebac2a5921"
+    },
+    {
+      "name": "README.md",
+      "size": 630,
+      "sha256": "cef358d558fbdcacadce478d50494bf8317a2497e64081abc74c2029bac1a775"
+    },
+    {
+      "name": "recovery-ui.mjs",
+      "size": 1907,
+      "sha256": "46b17d0d3bad75e71a0c2d9e56af6f1d8cfca806910a971eaf072ee5f3e0c1c8"
+    },
+    {
+      "name": "rules.mjs",
+      "size": 2766,
+      "sha256": "25ecbeda68013f810285379dcec231516c248efe93009f61e12db77d89dc63e6"
+    },
+    {
+      "name": "salary-life.mjs",
+      "size": 11532,
+      "sha256": "2bbbe3b14846c8afd562a911763d34f1992e533759e865ce5a952ce08d756c4d"
+    },
+    {
+      "name": "salary-ui.mjs",
+      "size": 15048,
+      "sha256": "30440b6cb22ed9ec8eb87f048e69aaa0d04f752e4ae03584208e22fba6b46c6f"
+    },
+    {
+      "name": "salary-workflow.mjs",
+      "size": 8808,
+      "sha256": "159047c65965e7e68110e380ba191484ffedfc7ba6c2725521fadd355acc67be"
+    },
+    {
+      "name": "state.mjs",
+      "size": 1978,
+      "sha256": "982933f9534ff729228e1851f7c82f853678d549d659ec7db4e62b17e7cdb3a5"
+    },
+    {
+      "name": "storage.mjs",
+      "size": 6973,
+      "sha256": "725e31888d1aa7a76ce98771c33254d174d3bb921b86e72a60c0974281fe1542"
+    },
+    {
+      "name": "styles.css",
+      "size": 10927,
+      "sha256": "bf25e2674421793978db7b5e5f8e330123747ec6ce6e7dbc1ba73835f602ce80"
+    },
+    {
+      "name": "sw.js",
+      "size": 3243,
+      "sha256": "a6c7eadf2e2d66249f439c17145a673fa84e0dd2327bd64694671261bf435fe3"
+    },
+    {
+      "name": "tax-social-audit.mjs",
+      "size": 11960,
+      "sha256": "c60a42fc5a224f083db3e1ce3ab4bbed76df58eb03edef7ec9302217c60ee447"
+    },
+    {
+      "name": "write-access.mjs",
+      "size": 1129,
+      "sha256": "572ba2a3213efe5ac80cc39a3c372f11d9a022bb02f400338c161dd0a3ab470c"
+    }
+  ]
+}
