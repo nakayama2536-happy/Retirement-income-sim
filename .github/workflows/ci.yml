@@ -44,6 +44,9 @@ jobs:
       - name: CSV export regression tests
         run: node test_csv_export.mjs
 
+      - name: PWA static asset smoke test
+        run: node test_pwa_assets.mjs
+
       - name: Prevent private files in public repository
         shell: bash
         run: |
