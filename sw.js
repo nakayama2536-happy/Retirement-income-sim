@@ -1,7 +1,7 @@
 // Scope identifies this installation. Never sweep origin-wide or legacy caches.
 const SCOPE=new URL(self.registration.scope);
 const CACHE_PREFIX=`lifeplan-sim:${encodeURIComponent(SCOPE.href)}:`;
-const CACHE=`${CACHE_PREFIX}v0.9.7-i08-recovery-icon-20261004`;
+const CACHE=`${CACHE_PREFIX}v0.9.7-i08-home-branding-20261007`;
 const ASSETS=['./','./index.html','./styles.css','./app.mjs','./calc.mjs','./calendar-mode.mjs','./calendar-workflow.mjs','./calendar-ui.mjs','./salary-life.mjs','./salary-workflow.mjs','./salary-ui.mjs','./storage.mjs','./state.mjs','./migration.mjs','./migration-ui.mjs','./pension.mjs','./pension-ui.mjs','./rules.mjs','./manifest.webmanifest','./icons/icon-192.png','./icons/icon-512.png'];
 ASSETS.push('./expense-display.mjs','./annual-cashflow.mjs','./annual-csv.mjs','./full-backup.mjs','./expense-ui.mjs','./expense-workflow.mjs','./expense-preview.mjs','./cashflow-sources.mjs','./cashflow-reconciliation.mjs');
 ASSETS.push('./income-ui.mjs','./income-workflow.mjs','./income-preview.mjs');

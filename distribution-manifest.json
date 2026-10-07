@@ -1,6 +1,6 @@
 {
   "kind": "public-release",
-  "runtime": "v0.9.7-i08-recovery-icon-20261004",
+  "runtime": "v0.9.7-i08-home-branding-20261007",
   "files": [
     {
       "name": "annual-cashflow.mjs",
@@ -109,13 +109,13 @@
     },
     {
       "name": "index.html",
-      "size": 34598,
-      "sha256": "f674ff931c7bf9edb9f7d05ad1054c0d62ebbd8b2946603ae56b67630dd5ed54"
+      "size": 34689,
+      "sha256": "92219722414a9b13f2ec14ccbee772516a398d6cd142e0dc2db344698955d350"
     },
     {
       "name": "manifest.webmanifest",
-      "size": 320,
-      "sha256": "7f8e6ab72b6848d9d8f030afee8cfeef3b6347fd85e875bf518d0fe857e07a89"
+      "size": 341,
+      "sha256": "ac28361e39af9949b65ab97455c2dc26afc0e073efbeb60283f9a0ddcd8452d4"
     },
     {
       "name": "migration-ui.mjs",
@@ -185,7 +185,7 @@
     {
       "name": "sw.js",
       "size": 3243,
-      "sha256": "a6c7eadf2e2d66249f439c17145a673fa84e0dd2327bd64694671261bf435fe3"
+      "sha256": "df3763ca390dba25f17699be8557054518f68c7dc0e43190d94b65da0daaa175"
     },
     {
       "name": "tax-social-audit.mjs",
