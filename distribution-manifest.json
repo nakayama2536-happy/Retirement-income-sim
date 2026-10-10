@@ -54,8 +54,8 @@
     },
     {
       "name": "docs/USER_GUIDE.md",
-      "size": 5221,
-      "sha256": "ae7fb68388e2c7c141c3052c6499ed00d2319516593b75f3d8010de5606f3a3d"
+      "size": 5661,
+      "sha256": "53e65d9b4ac143cce4a46a193995fb1b0519b1f629c958b2903a4f9a0bf96a4d"
     },
     {
       "name": "expense-display.mjs",
@@ -139,8 +139,8 @@
     },
     {
       "name": "README.md",
-      "size": 1118,
-      "sha256": "9a8d770196d2ccc6f75a49753ece74d74d37415596c7437e6b03599f5cb4b544"
+      "size": 1558,
+      "sha256": "664af12bfbd39694193738c7f63e9d96ecc2b2c1f3802920dd4bb84bb5e6e5d5"
     },
     {
       "name": "recovery-ui.mjs",
