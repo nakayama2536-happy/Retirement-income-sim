@@ -1,0 +1,5 @@
+app/
+manifest.json
+browser-results/
+node_modules/
+package-lock.json
