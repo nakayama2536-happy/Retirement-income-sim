@@ -1,6 +1,6 @@
 {
   "kind": "public-release",
-  "runtime": "v0.9.7-i08-home-branding-20261007",
+  "runtime": "v0.9.7-i08-backup-guidance-20261010",
   "files": [
     {
       "name": "annual-cashflow.mjs",
@@ -54,8 +54,8 @@
     },
     {
       "name": "docs/USER_GUIDE.md",
-      "size": 2828,
-      "sha256": "94f32c26c8f5fbf008a6bfa392d29e140357d4e341b00905c5dc5e9693ccc7ee"
+      "size": 5221,
+      "sha256": "ae7fb68388e2c7c141c3052c6499ed00d2319516593b75f3d8010de5606f3a3d"
     },
     {
       "name": "expense-display.mjs",
@@ -109,8 +109,8 @@
     },
     {
       "name": "index.html",
-      "size": 34689,
-      "sha256": "92219722414a9b13f2ec14ccbee772516a398d6cd142e0dc2db344698955d350"
+      "size": 35268,
+      "sha256": "cfc4a1ff81ec6bdccdaffd62d4299fb543149419af6b9dd04e963f87ef5f2448"
     },
     {
       "name": "manifest.webmanifest",
@@ -139,8 +139,8 @@
     },
     {
       "name": "README.md",
-      "size": 630,
-      "sha256": "cef358d558fbdcacadce478d50494bf8317a2497e64081abc74c2029bac1a775"
+      "size": 1118,
+      "sha256": "9a8d770196d2ccc6f75a49753ece74d74d37415596c7437e6b03599f5cb4b544"
     },
     {
       "name": "recovery-ui.mjs",
@@ -184,8 +184,8 @@
     },
     {
       "name": "sw.js",
-      "size": 3243,
-      "sha256": "df3763ca390dba25f17699be8557054518f68c7dc0e43190d94b65da0daaa175"
+      "size": 3245,
+      "sha256": "2c8a61c5c8cec89c3aad6d79b2c584127227405bb9b88a4370ca32eb80f6755d"
     },
     {
       "name": "tax-social-audit.mjs",
