@@ -25,7 +25,7 @@ async function snapshot(page){
 }
 async function open(context,url){
  const page=await context.newPage();page.setDefaultTimeout(15000);
- await page.goto(url);await page.locator('#importFile').waitFor({state:'attached'});
+ await page.goto(url,{waitUntil:'domcontentloaded',timeout:30000});await page.locator('#importFile').waitFor({state:'attached'});
  return page;
 }
 async function load(page,file){
