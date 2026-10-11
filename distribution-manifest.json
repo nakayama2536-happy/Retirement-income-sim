@@ -1,6 +1,6 @@
 {
   "kind": "public-release",
-  "runtime": "v0.9.7-detail-20261011",
+  "runtime": "v0.9.7-labor-csv-20261012",
   "files": [
     {
       "name": "annual-cashflow.mjs",
@@ -14,8 +14,8 @@
     },
     {
       "name": "app.mjs",
-      "size": 61810,
-      "sha256": "73f2405bc1b2c3c7411411656db297f56c67cc70893dad6c2efbbf9c25fdfe2e"
+      "size": 61833,
+      "sha256": "1c5ea08138bcfa88d8830625e6044a369305800258494e34f891a3f7bea1ec4e"
     },
     {
       "name": "backup-compatibility.mjs",
@@ -24,8 +24,8 @@
     },
     {
       "name": "calc.mjs",
-      "size": 59757,
-      "sha256": "659f3351a94eb68c23d3ae38293dea96b2dfd7bba151ea966b882c4a0e0d6425"
+      "size": 60370,
+      "sha256": "ad5dfd3859bfd77dcd88054c78843bc71994be27901d072dc4130d72bfe21f97"
     },
     {
       "name": "calendar-mode.mjs",
@@ -59,23 +59,23 @@
     },
     {
       "name": "detail-settings.mjs",
-      "size": 15278,
-      "sha256": "7eb071831e779d6dd4cb5741aa10b7a96031d9d58ee384ac2786a521dd9ab098"
+      "size": 15722,
+      "sha256": "a62a10b142052bab2930e7de6e4264bb2779ab70ba5490993c24ee7ad734a815"
     },
     {
       "name": "detail-ui.mjs",
-      "size": 16014,
-      "sha256": "b5be3e0e008f3c2f303c1ae04fbed99be21c6721fc61502f2dff88ea9ab0924d"
+      "size": 19386,
+      "sha256": "72db73cbb6d88aaf34ce5f80719c11e4d9c65ecdd43d02fdc798070965cf564c"
     },
     {
       "name": "detailed-report.mjs",
-      "size": 7015,
-      "sha256": "d26ea05aac0f389d79398b9b8e24fc93952445166352d2028e46739b313758c2"
+      "size": 11180,
+      "sha256": "d160d4ee5fbd8b0bb503e253e24a7a9ae800076a1bf048fbdedaeca2ce98e8ee"
     },
     {
       "name": "docs/USER_GUIDE.md",
-      "size": 16786,
-      "sha256": "5bf93d88c90cdef139b3e375e57bd58ecef26c61a556d5e95476e32c572e91f5"
+      "size": 18809,
+      "sha256": "8e9520e4cf70467fb7eabaea0037d251c60ec751552ba98bebcfecd01432e4c9"
     },
     {
       "name": "expense-display.mjs",
@@ -129,8 +129,8 @@
     },
     {
       "name": "index.html",
-      "size": 47107,
-      "sha256": "b753d8241e7ee1e0b80d3961a64f1c8cb53f4ce9f5d3608367b28afa7acf6067"
+      "size": 48877,
+      "sha256": "7ade1481f8a03a88b5f7adb0344d27ee5800144945ec3e62d0ba4c85b664626c"
     },
     {
       "name": "manifest.webmanifest",
@@ -189,8 +189,8 @@
     },
     {
       "name": "salary-ui.mjs",
-      "size": 15793,
-      "sha256": "4fe9d5aa5cdcc8d552128c1e4606f35d36220cac131282972a62212868d39af2"
+      "size": 16840,
+      "sha256": "f326e562135b7b0f48e7d502df0cfee0b254ca12aed0ac3be6028560f788751f"
     },
     {
       "name": "salary-workflow.mjs",
@@ -209,13 +209,13 @@
     },
     {
       "name": "styles.css",
-      "size": 12786,
-      "sha256": "e0246fb9fab55479fcd57745b11ab1527382f72392cfa81cc742c136af29f2c0"
+      "size": 14650,
+      "sha256": "b63529e31dc2ebf850ee0f141695e34207b0b14b69ae0d1d10c0d2633841b45d"
     },
     {
       "name": "sw.js",
-      "size": 3380,
-      "sha256": "0529d8ad7c60f6acc9c0f371db9fe05c4f56467653bb63857af14aa891f7cb95"
+      "size": 3383,
+      "sha256": "419de96b6170095796d2ab29087c3fc026d6017b3f4a597b814bcbe34b7e6031"
     },
     {
       "name": "tax-social-audit.mjs",

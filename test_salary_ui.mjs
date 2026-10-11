@@ -66,3 +66,10 @@ test('模擬DOM：未反映下書きの再表示は採用設定を変えない',
   const t=setup();t.trial();t.api.reset({forget:false});t.api.render();
   assert.equal(t.node('salary_lastSalaryMonth').value,'2045-06');assert.equal(loadState().config.cashflow.salaryLife,undefined);
 });
+test('模擬DOM：iDeCoタブへ移した入力でも共有試算を無効化し、採用値は保持',()=>{
+ const t=setup();t.trial();const before=structuredClone(t.getState());
+ t.node('salary_receipt_ideco').value='separate';t.node('salaryIdecoInputs').emit('input',t.node('salary_receipt_ideco'));
+ assert.equal(t.node('salaryPreview').hidden,true);assert.equal(t.node('salaryApply').disabled,true);assert.deepEqual(t.getState(),before);
+ t.node('salaryForm').emit('submit');assert.equal(t.node('salaryError').hidden,true);t.node('salaryApply').emit('click');assert.equal(t.getState().config.cashflow.salaryLife.receiptTreatment.ideco,'separate');
+ t.node('salaryUndo').emit('click');assert.deepEqual(t.getState().config.cashflow.salaryLife,before.config.cashflow.salaryLife);
+});

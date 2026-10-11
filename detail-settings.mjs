@@ -88,9 +88,13 @@ function mutate(c,kind,d){
  }
  if(kind==='labor'){
   if(!['primary','spouse'].includes(d.person))throw Error('本人・配偶者を選んでください。');
-  const f=c.cashflow?.salaryLife;if(f&&f.postSalaryLabor?.mode!=='existing_confirmed')throw Error('現在は終了後の夫婦合計額で計算しています。下の給与生活の試算で「既存の就労設定」を明示選択してから個別設定してください。');
+  const f=c.cashflow?.salaryLife;if(f&&f.postSalaryLabor?.mode!=='existing_confirmed'&&d.useIndividualLabor!==true)throw Error('現在は終了後の夫婦合計額で計算しています。下の給与生活の試算で「既存の就労設定」を明示選択してから個別設定してください。');
+  if(f&&d.useIndividualLabor===true)f.postSalaryLabor={mode:'existing_confirmed'};
   const start=date(d.startDate,'開始日'),end=date(d.endDate,'終了日');if(start>=end)throw Error('終了日は開始日の後にしてください（終了月は含みません）。');
-  c.employment[d.person].sideWork={...c.employment[d.person].sideWork,monthlyGross:num(d.monthlyGross,'月額収入'),startDate:start,endDate:end};return;
+  const job=d.job||'sideWork';if(!['regularWork','sideWork'].includes(job))throw Error('正社員・アルバイトを選んでください。');
+  if(start.slice(0,7)>=end.slice(0,7))throw Error('終了月は開始月の翌月以降にしてください。終了月は含みません。');
+  c.employment||={};c.employment[d.person]||={};
+  c.employment[d.person][job]={...c.employment[d.person][job],monthlyGross:num(d.monthlyGross,'月額収入'),startDate:start,endDate:end};return;
  }
  if(kind==='nisa'){
   const marketValue=num(d.marketValue,'開始時点のNISA評価額',0,Number(c.plan.initialAsset));

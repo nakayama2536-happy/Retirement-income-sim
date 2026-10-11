@@ -19,3 +19,17 @@
 .pending-item .link-btn{margin-top:6px;text-align:left}
 /* Detail navigation and tables */
 .tab-groups{display:flex;gap:.4rem;padding:.65rem 1rem 0;max-width:1320px;margin:auto;flex-wrap:wrap}.tab-groups button{background:#e8edf3;color:#273b50;border:0;border-radius:.5rem .5rem 0 0;padding:.8rem 1rem}.tab-groups button.active{background:#243c56;color:white}.tabs [hidden]{display:none!important}.tabs{flex-wrap:wrap}.detail-form .form-grid{align-items:end}.detail-form label{min-width:0}.detail-form input,.detail-form select{max-width:100%;box-sizing:border-box}.detail-preview{border:1px solid #9db9ca;border-radius:8px;padding:1rem;margin-top:1rem;background:#f1f7fa}.detail-preview dl{display:grid;grid-template-columns:1fr 1fr;gap:.3rem}.detail-preview dd{margin:0;overflow-wrap:anywhere}#detailCsvTable{min-width:1150px}#detailCsvTable td{white-space:normal;max-width:300px}#reviewPromptText{width:100%;box-sizing:border-box;margin-top:1rem;font-size:.85rem}.target-line{stroke:#bb6d17;stroke-width:2;stroke-dasharray:7 5;fill:none}.target-point{fill:#fff;stroke:#bb6d17;stroke-width:2}.legend-target{display:inline-block;width:22px;border-top:2px dashed #bb6d17;vertical-align:middle;margin-right:5px}@media(max-width:600px){.tab-groups{padding:.5rem .5rem 0}.tab-groups button{padding:.65rem .55rem;font-size:.85rem}.tabs{gap:.3rem}.tabs button{font-size:.85rem;padding:.6rem}.detail-preview dl{grid-template-columns:1fr}.detail-preview dd{margin-bottom:.4rem}}
+/* Keep both navigation levels visible while scrolling. */
+.navigation-sticky{position:sticky;top:0;z-index:8;background:#f2f5f8;box-shadow:0 2px 5px #162d4420}
+.navigation-sticky .tabs{position:static}
+.labor-columns{grid-template-columns:repeat(2,minmax(0,1fr))}.labor-columns .form-grid{grid-template-columns:1fr}
+.column-selection{min-width:0;border:1px solid var(--line);border-radius:9px;padding:12px;margin:14px 0}
+#detailColumnPicker{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:12px}#detailColumnPicker details{min-width:0;background:#f5f8fb;border-radius:8px;padding:10px}#detailColumnPicker summary{cursor:pointer;font-weight:700}
+.check-label{flex-direction:row;align-items:flex-start;margin:10px 0;overflow-wrap:anywhere}.check-label input{flex:0 0 auto;width:18px;height:18px;margin:0}
+.trend-table-wrap{max-height:65vh;isolation:isolate;border:1px solid var(--line);border-radius:8px}
+#detailCsvTable{min-width:max-content;border-collapse:separate;border-spacing:0}
+#detailCsvTable th{position:sticky;top:0;background:#e8f0f7;z-index:2;white-space:normal;min-width:140px;max-width:220px;text-align:center}
+#detailCsvTable td{white-space:nowrap;min-width:140px;max-width:none;font-variant-numeric:tabular-nums;background:white}
+#detailCsvTable th:first-child,#detailCsvTable td:first-child{position:sticky;left:0;min-width:110px;background:#e8f0f7;z-index:1}#detailCsvTable th:first-child{z-index:3}
+#salaryPreview,#salaryForm,#salaryIdecoInputs,[data-focus-target]{scroll-margin-top:165px}
+@media(max-width:760px){.labor-columns,#detailColumnPicker{grid-template-columns:1fr}.navigation-sticky .tab-groups,.navigation-sticky .tabs{flex-wrap:nowrap;overflow-x:auto;justify-content:flex-start}.navigation-sticky button{flex-shrink:0}.navigation-sticky .tab-groups{padding-bottom:0}.trend-table-wrap{max-height:62vh}}

@@ -242,11 +242,7 @@ export function estimateAnnualTaxSocial(config, age){
   const date=addYears(primary,Number(age));
   const spouseAge=fullAgeOn(date,spouse), pAge=Number(age);
   const annualSalary=person=>{
-    const side=person==='primary'?config?.employment?.primary?.sideWork:config?.employment?.spouse?.sideWork;
-    if(!side)return 0;
-    const start=person==='primary'?defaultPrimarySideWorkStart(config):parseDate(side.startDate);
-    const end=person==='primary'?defaultPrimarySideWorkEnd(config):parseDate(side.endDate);
-    return Array.from({length:12},(_,m)=>addMonths(date,m)).reduce((sum,d)=>sum+(monthInRange(d,start,end)?Number(side.monthlyGross||0):0),0);
+    return Array.from({length:12},(_,m)=>addMonths(date,m)).reduce((sum,d)=>{const work=laborAmountsForMonth(config,person,d);return sum+work.regular+work.side;},0);
   };
   const pSalary=annualSalary('primary'), sSalary=annualSalary('spouse');
   // 年金開始日はage指定より優先。金額は設定済みの nominal fixed-base scenario を用いる。
@@ -491,6 +487,14 @@ function defaultPrimarySideWorkEnd(config){
   return parseDate(config?.employment?.primary?.sideWork?.endDate) || addYears(primaryBirth(config),76);
 }
 
+// Gross labor is observed separately from the amount posted to plan assets.
+export function laborAmountsForMonth(config,person,date){
+  const jobs=config.employment?.[person]||{},side=jobs.sideWork||{},regular=jobs.regularWork;
+  const start=person==='primary'?defaultPrimarySideWorkStart(config):parseDate(side.startDate);
+  const end=person==='primary'?defaultPrimarySideWorkEnd(config):parseDate(side.endDate);
+  return {side:monthInRange(date,start,end)?Number(side.monthlyGross||0):0,
+    regular:regular&&parseDate(regular.startDate)&&parseDate(regular.endDate)&&monthInRange(date,parseDate(regular.startDate),parseDate(regular.endDate))?Number(regular.monthlyGross||0):0};
+}
 function pensionMonthlyForPerson(person,date){
   if(!person) return 0;
   const start=parseDate(person.startDate);
@@ -504,12 +508,15 @@ function incomeForMonth(config,date,idecoProjection, resolvedAge=null){
   const before=funding && salaryLifeIsBefore(funding,date);
   const existingLabor=!funding || (!before && funding.postSalaryLabor?.mode==='existing_confirmed');
   const receiptIncluded=key=>before && funding.receiptTreatment?.[key]==='net_transfer';
-  const pSide=config?.employment?.primary?.sideWork||{};
-  const pStart=defaultPrimarySideWorkStart(config), pEnd=defaultPrimarySideWorkEnd(config);
-  if(existingLabor && monthInRange(date,pStart,pEnd)){ const v=Number(pSide.monthlyGross||0); income.labor+=v; income.primaryLabor=v; if(v)income.detail.push(['本人アルバイト',v]); }
-  const sSide=config?.employment?.spouse?.sideWork||{};
-  const sStart=parseDate(sSide.startDate), sEnd=parseDate(sSide.endDate);
-  if(existingLabor && monthInRange(date,sStart,sEnd)){ const v=Number(sSide.monthlyGross||0); income.labor+=v; income.spouseLabor=v; if(v)income.detail.push(['配偶者アルバイト',v]); }
+  for(const [person,label] of [['primary','本人'],['spouse','配偶者']]){
+    const gross=laborAmountsForMonth(config,person,date);
+    income[person+'RegularGross']=gross.regular;income[person+'SideGross']=gross.side;
+    income[person+'RegularLabor']=existingLabor&&(funding||monthKey(date)>=monthKey(retirementDateFor(config)))?gross.regular:0;income[person+'SideLabor']=existingLabor?gross.side:0;
+    if(existingLabor){income[person+'Labor']=income[person+'RegularLabor']+gross.side;income.labor+=income[person+'Labor'];
+      if(income[person+'RegularLabor'])income.detail.push([label+'正社員',income[person+'RegularLabor']]);
+      if(gross.side)income.detail.push([label+'アルバイト',gross.side]);
+    }
+  }
   if(funding && !before && funding.postSalaryLabor?.mode==='monthly' && monthIndex(date)<=parseMonth(funding.postSalaryLabor.lastMonth)){
     income.labor=funding.postSalaryLabor.monthlyAmount;income.combinedLabor=income.labor;
     if(income.labor)income.detail.push(['終了後の就労収入（夫婦合計）',income.labor]);
@@ -650,6 +657,7 @@ export function runRetirementPlan(config, options = {}) {
       cashflowMode:funding?.mode??'legacy',phase:funding?(before?'salary':'asset-funded'):(monthKey(date)>=monthKey(ret)?'legacy-after-retirement':'legacy-before-retirement'),
       startAsset:startAssetMonth,investmentGain:gain,endAsset:asset,
       primaryLabor:inc.primaryLabor,spouseLabor:inc.spouseLabor,combinedLabor:inc.combinedLabor,idecoLumpReceipt:inc.idecoLumpReceipt,retirementReceipt:inc.retirementReceipt,
+      ...Object.fromEntries(['primary','spouse'].flatMap(person=>['RegularGross','SideGross','RegularLabor','SideLabor'].map(key=>[person+key,inc[person+key]]))),
       labor:inc.labor,pension:inc.pension,primaryPension:inc.primaryPension,spousePension:inc.spousePension,
       idecoAnnuity:inc.idecoAnnuity,unemployment:inc.unemployment,extraIncome:inc.extraIncome,totalIncome:incomeTotal,
       expense,extraExpense,scheduledExtraExpense,budget:budgetObservation,
