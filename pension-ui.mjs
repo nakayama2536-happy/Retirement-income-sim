@@ -1,17 +1,29 @@
 import {CERTAINTY_LABELS,formatMan,runRetirementPlan,expenseDetailSummary,plannedTaxSocialAnnual} from './calc.mjs';
 import {PENSION_PEOPLE,pensionDraftFromConfig,pensionDraftContext,pensionDraftMatches,previewPension,applyPensionPreview,pensionUndoAvailable,undoPensionApply} from './pension.mjs';
 import {configSignature,saveConfigIfUnchanged,savePensionDraft,loadPensionDraft,clearPensionDraft} from './storage.mjs';
+import {dateWithAge} from './date-display.mjs';
+import {estimatePensionAtMonth} from './pension-estimate.mjs';
 
 const names={primary:'本人',spouse:'配偶者'};
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const yen=v=>`${formatMan(v,4)}万円`;
 const el=id=>document.getElementById(id);
-const month=p=>p.startDate?.slice(0,7)||'未設定';
+const month=(p,c,key)=>dateWithAge(p.startDate?.slice(0,7),c,key);
 const dateText=s=>new Date(s).toLocaleString('ja-JP');
 const taxAnnual=(c,age)=>plannedTaxSocialAnnual(c,age)??0;
 
 export function mountPensionSheet({getConfig,onCommit,showNotice}){
   let draft=null, preview=null;
+  function estimate(key){return estimatePensionAtMonth({birthDate:getConfig().people?.[key]?.birthDate,startMonth:el(`${key}PensionMonth`).value,base65:el(`${key}PensionBase65`).value});}
+  function renderEstimate(key){
+    const c=getConfig(),r=estimate(key);
+    el(`${key}PensionMonthAge`).textContent=dateWithAge(el(`${key}PensionMonth`).value,c,key);
+    el(`${key}PensionUseEstimate`).disabled=!r.ok;
+    el(`${key}PensionEstimate`).textContent=r.ok?`修正見込額：${yen(r.annual)}/年（65歳基準額から${r.factor>=1?'+':''}${((r.factor-1)*100).toFixed(1)}%）。請求想定月：${dateWithAge(r.claimMonth,c,key)}。年額欄への入力は下のボタンで行います。`:r.message;
+    const changed=el(`${key}PensionMonth`).value!==(c.income.pensions[key].startDate?.slice(0,7)||'');
+    if(changed)el(`${key}PensionEstimateDetails`).open=true;
+    el(`${key}PensionAmountNote`).textContent=changed?'開始月を変更しています。見込額を年額欄へ入れるか、公式資料の金額を直接入力してください。':'年額は公式資料の金額を直接入力することもできます。';
+  }
   const error=message=>{el('pensionError').textContent=message;el('pensionError').hidden=!message;};
   function readDraft(){
     return Object.fromEntries(PENSION_PEOPLE.map(key=>[key,{
@@ -20,7 +32,7 @@ export function mountPensionSheet({getConfig,onCommit,showNotice}){
     }]));
   }
   function saveDraft(){
-    try{savePensionDraft({context:pensionDraftContext(getConfig()),draft});el('pensionDraftNote').textContent='試算中の入力もこの端末に保存します。集計表の採用値は反映操作まで変わりません。';}
+    try{savePensionDraft({context:pensionDraftContext(getConfig()),draft});el('pensionDraftNote').textContent='開始月・年額などの入力途中の内容は、このブラウザに下書き保存します。「この条件をシミュレーションに反映」を押すまで、ホームや年間収支は変わりません。';}
     catch{el('pensionDraftNote').textContent='試算中の入力を端末に保存できませんでした。画面を閉じると入力が失われます。';}
   }
   function invalidate(){preview=null;el('pensionPreview').hidden=true;}
@@ -38,8 +50,16 @@ export function mountPensionSheet({getConfig,onCommit,showNotice}){
       const options=Object.entries(CERTAINTY_LABELS).map(([value,label])=>`<option value="${value}">${label}</option>`).join('');
       el('pensionInputs').innerHTML=PENSION_PEOPLE.map(key=>`<fieldset class="pension-person"><legend>${names[key]}</legend>
         <p id="${key}PensionAdopted" class="muted"></p><div id="${key}PensionReferences"></div>
-        <label>${names[key]}の受給開始月<input id="${key}PensionMonth" type="month" min="1000-01" max="9999-12"></label>
+        <label>${names[key]}の受給開始月<input id="${key}PensionMonth" type="month" min="1000-01" max="9999-12" aria-describedby="${key}PensionMonthAge"></label>
+        <p id="${key}PensionMonthAge" class="muted" aria-live="polite"></p>
+        <details id="${key}PensionEstimateDetails"><summary>開始月に合わせて年金見込額を計算</summary>
+        <label>65歳から受け取る場合の年額（税引前・万円）<input id="${key}PensionBase65" type="number" min="0" step="0.0001" inputmode="decimal" placeholder="公式見込額などを入力"></label>
+        <p class="muted">登録済みの65歳比較値があれば表示します。金額と根拠を確認してください。この基準欄の編集は画面を閉じると失われ、登録済みの比較値も変更しません。</p>
+        <p id="${key}PensionEstimate" role="status"></p><button id="${key}PensionUseEstimate" class="secondary" type="button">修正見込額を年額欄に入力</button>
+        <p class="muted">65歳に受給権があり、基礎・厚生年金を同じ月から受け取る場合の概算です。受給開始月の前月に請求する想定。加給年金・振替加算・在職による支給停止・障害／遺族年金との調整・加入継続による増額・将来改定・税社保は含みません。該当する場合は公式見込額を直接入力してください。</p>
+        </details>
         <label>${names[key]}の年金年額（税引前・万円）<input id="${key}PensionAmount" type="number" min="0" step="0.0001" required inputmode="decimal"></label>
+        <p id="${key}PensionAmountNote" class="muted"></p>
         <label>${names[key]}の金額の確度<select id="${key}PensionCertainty">${options}</select></label>
         <label>${names[key]}の出典・メモ<input id="${key}PensionSource" type="text" maxlength="160" placeholder="資料名・確認日など"></label>
       </fieldset>`).join('');
@@ -48,12 +68,23 @@ export function mountPensionSheet({getConfig,onCommit,showNotice}){
         el(`${key}PensionAmount`).value=draft[key].annualAtStart??'';
         el(`${key}PensionCertainty`).value=draft[key].certainty||'unknown';
         el(`${key}PensionSource`).value=draft[key].adoptionSource||'';
+        const base=c.income.pensions[key].alternatives?.['65'];
+        el(`${key}PensionBase65`).value=typeof base==='number'&&Number.isFinite(base)&&base>=0?base:'';
+        el(`${key}PensionUseEstimate`).addEventListener('click',()=>{
+          const r=estimate(key);if(!r.ok)return;
+          el(`${key}PensionAmount`).value=String(r.annual);
+          el(`${key}PensionCertainty`).value='scenario';
+          el(`${key}PensionSource`).value=`開始月連動の概算：65歳年額${r.base65}万円、請求想定${r.claimMonth}、増減率${((r.factor-1)*100).toFixed(1)}%。制度確認2026-10-11`;
+          draft=readDraft();invalidate();error('');saveDraft();state();renderEstimate(key);
+          showNotice(`${names[key]}の修正見込額を入力しました。次に「変更後の資産を試算」を押してください。`);
+        });
       }
-      el('pensionDraftNote').textContent='試算中の入力もこの端末に保存します。集計表の採用値は反映操作まで変わりません。';
+      el('pensionDraftNote').textContent='入力途中の内容はこのブラウザに下書き保存します。ホームや年間収支への反映は、試算結果を確認した後に行います。';
     }
     for(const key of PENSION_PEOPLE){
       const p=c.income.pensions[key];
-      el(`${key}PensionAdopted`).textContent=`現在の採用値：${month(p)}から ${yen(p.annualAtStart)}/年（${CERTAINTY_LABELS[p.certainty]||'未確認'}）`;
+      el(`${key}PensionAdopted`).textContent=`現在のシミュレーションで使用中：${month(p,c,key)}から ${yen(p.annualAtStart)}/年（${CERTAINTY_LABELS[p.certainty]||'未確認'}）`;
+      renderEstimate(key);
       const refs=Object.entries(p.alternatives||{}).filter(([age,value])=>/^\d+$/.test(age)&&typeof value==='number'&&Number.isFinite(value));
       el(`${key}PensionReferences`).innerHTML=refs.length?`<details><summary>登録済みの比較値を見る</summary><ul class="pension-reference">${refs.map(([age,value])=>`<li>${esc(age)}歳：${yen(value)}/年</li>`).join('')}</ul><p class="muted">${esc(p.note||'出典・受給条件は元の資料で確認してください。')}<br>比較値は今回の反映では変更しません。</p></details>`:'<p class="muted">比較用の見込額は未登録です。</p>';
     }
@@ -71,7 +102,7 @@ export function mountPensionSheet({getConfig,onCommit,showNotice}){
     const diff=after.finalAsset-before.finalAsset;
     const changes=preview.changedPeople.map(key=>{
       const a=c.income.pensions[key], b=next.income.pensions[key];
-      return `<tr><th>${names[key]}</th><td>${esc(month(a))} → ${esc(month(b))}</td><td>${yen(a.annualAtStart)} → ${yen(b.annualAtStart)}</td><td>${esc(CERTAINTY_LABELS[a.certainty]||'未確認')} → ${esc(CERTAINTY_LABELS[b.certainty]||'未確認')}</td><td>${esc(b.adoptionSource||'未記録')}</td></tr>`;
+      return `<tr><th>${names[key]}</th><td>${esc(month(a,c,key))} → ${esc(month(b,next,key))}</td><td>${yen(a.annualAtStart)} → ${yen(b.annualAtStart)}</td><td>${esc(CERTAINTY_LABELS[a.certainty]||'未確認')} → ${esc(CERTAINTY_LABELS[b.certainty]||'未確認')}</td><td>${esc(b.adoptionSource||'未記録')}</td></tr>`;
     }).join('');
     const yearly=after.rows.map((r,i)=>{
       const old=before.rows[i], oldDetail=expenseDetailSummary(c,r.age), newDetail=expenseDetailSummary(next,r.age);
@@ -79,7 +110,7 @@ export function mountPensionSheet({getConfig,onCommit,showNotice}){
       if(Math.abs(r.pension-old.pension)<1e-8&&Math.abs(newTax-oldTax)<1e-8)return '';
       return `<tr><th>${r.age}歳</th><td>${yen(old.primaryPension)} → ${yen(r.primaryPension)}</td><td>${yen(old.spousePension)} → ${yen(r.spousePension)}</td><td>${oldDetail?`${yen(oldTax)} → ${yen(newTax)}`:'内訳未登録'}</td><td>${oldDetail&&newDetail?`${yen(oldDetail.difference)} → ${yen(newDetail.difference)}`:'内訳未登録'}</td></tr>`;
     }).filter(Boolean).join('');
-    el('pensionPreviewBody').innerHTML=`<p>対象：${esc(c.meta?.label||'現在の計画')}。${preview.changedPeople.length?'次の変更を集計表へ反映します。':'採用中の設定と同じです。'}</p>
+    el('pensionPreviewBody').innerHTML=`<p>対象：${esc(c.meta?.label||'現在の計画')}。${preview.changedPeople.length?'試算結果です。下の反映ボタンを押すと、この条件を使用します。':'現在使用中の設定と同じです。'}</p>
       ${changes?`<div class="table-wrap"><table><thead><tr><th>対象</th><th>開始月</th><th>年額（税引前）</th><th>確度</th><th>反映する出典・メモ</th></tr></thead><tbody>${changes}</tbody></table></div>`:''}
       <div class="pension-impact"><span>${c.plan.endAge}歳末の計画資産</span><strong>${yen(before.finalAsset)} → ${yen(after.finalAsset)}</strong><span>差額 ${diff>=0?'+':''}${yen(diff)}</span></div>
       <details><summary>年齢別の影響を確認</summary><p class="muted">本人の年齢期ごとの年額。税・社保は予定原価に採用する概算額、バッファは管理予算との差です。内訳の期間指定・インフレ設定も反映します。</p>${yearly?`<div class="table-wrap"><table><thead><tr><th>本人年齢</th><th>本人年金</th><th>配偶者年金</th><th>税・社保（概算）</th><th>バッファ</th></tr></thead><tbody>${yearly}</tbody></table></div>`:'<p>期間内の年金収入・税社保に金額の差はありません。</p>'}</details>
@@ -90,11 +121,13 @@ export function mountPensionSheet({getConfig,onCommit,showNotice}){
     el('pensionPreview').scrollIntoView({block:'start',behavior:'smooth'});
   }
   el('pensionForm').addEventListener('input',event=>{
+    const baseKey=PENSION_PEOPLE.find(k=>event.target.id===`${k}PensionBase65`);
+    if(baseKey){invalidate();error('');renderEstimate(baseKey);return;}
     for(const key of PENSION_PEOPLE){
       if([`${key}PensionMonth`,`${key}PensionAmount`].includes(event.target.id)&&['confirmed','official_estimate'].includes(el(`${key}PensionCertainty`).value))
         el(`${key}PensionCertainty`).value='scenario';
     }
-    draft=readDraft();invalidate();error('');saveDraft();state();
+    draft=readDraft();invalidate();error('');saveDraft();state();PENSION_PEOPLE.forEach(renderEstimate);
   });
   el('pensionForm').addEventListener('submit',event=>{
     event.preventDefault();error('');draft=readDraft();saveDraft();

@@ -78,14 +78,16 @@
 <section id="pension" class="panel" hidden>
 <article class="card"><div class="section-title"><h2>年金シート</h2><span id="pensionState" class="pill" role="status">反映済み</span></div>
 <p>本人・配偶者の受給開始月と年額を入力し、試算結果を確認して集計表へ反映します。</p>
-<p class="muted">金額は税引前の年額です（1万円＝10,000円）。開始月から年額の1/12を各月の収入に計上します。実際の振込月ではなく、受給開始月を入力してください。受給なしは年額0で設定できます。</p>
+<p class="muted">金額は税引前の年額です（1万円＝10,000円）。開始月から年額の1/12を各月の収入に計上します。実際の振込月ではなく、支給対象となる最初の月を入力してください。受給なしは年額0で設定できます。</p>
 <form id="pensionForm"><div id="pensionInputs" class="pension-grid"></div>
-<div class="pension-actions"><button class="primary" type="submit">試算する</button><button id="pensionReset" class="secondary" type="button">入力を採用値に戻す</button></div>
+<div class="pension-actions"><button class="primary" type="submit">変更後の資産を試算</button><button id="pensionReset" class="secondary" type="button">入力を現在の設定に戻す</button></div>
+<p class="muted">「試算」は結果の確認だけです。「現在の設定に戻す」は、本人・配偶者の編集中の入力を破棄し、シミュレーションで使用中の開始月・年額などに戻します。</p>
 <p id="pensionDraftNote" class="muted"></p></form>
+<p class="muted">月内に誕生日があるときは「64→65歳」のように表示します。年齢は誕生日基準の表示で、制度上の年齢到達日とは区別します。</p>
 <p class="muted">確定額・公式見込の金額や開始月を編集すると、確度を「シナリオ」に変更します。公式資料に基づく更新の場合は、確度と出典を選び直してください。</p>
 <p id="pensionError" class="inline-error" role="alert" hidden></p>
 </article>
-<article id="pensionPreview" class="card" hidden><h2>反映前の確認</h2><div id="pensionPreviewBody"></div><button id="pensionApply" type="button" class="primary">集計表に反映</button><p class="muted">このボタンで採用値を保存し、年間収支・資産推移・最新実績からの再予測を更新します。</p></article>
+<article id="pensionPreview" class="card" hidden><h2>反映前の確認</h2><div id="pensionPreviewBody"></div><button id="pensionApply" type="button" class="primary">この条件をシミュレーションに反映</button><p class="muted">このボタンで開始月・年額などを保存し、ホーム・年間収支・資産推移を更新します。</p></article>
 <article class="card"><h2>反映履歴と取消</h2><p id="pensionLastApplied" class="muted"></p><button id="pensionUndo" class="secondary" type="button" disabled>直前の反映を取り消す</button><button data-open-tab="cashflow" class="link-btn" type="button">年間収支を確認</button><p class="muted">取消は直前に反映した年金設定を戻します。実績・他の設定・保存済みの基準ケースは保持します。</p></article>
 </section>
 

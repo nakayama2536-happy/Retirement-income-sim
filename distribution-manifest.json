@@ -1,11 +1,11 @@
 {
   "kind": "public-release",
-  "runtime": "v0.9.7-i08-simulation-home-20261011",
+  "runtime": "v0.9.7-i08-age-pension-20261011",
   "files": [
     {
       "name": "annual-cashflow.mjs",
-      "size": 5846,
-      "sha256": "e26bbf4cc6f5efea7607405692d9c573f7b6ba9a1a67a3372243750079d303e2"
+      "size": 5967,
+      "sha256": "be5734da204c5934170f08c035affb5466a35a6deca1aa975ca15744df6cabe9"
     },
     {
       "name": "annual-csv.mjs",
@@ -14,8 +14,8 @@
     },
     {
       "name": "app.mjs",
-      "size": 60754,
-      "sha256": "9e0af5d9b4e60bb585b2795d1125e01aab93384b373ba2e8e577369b7cc871e7"
+      "size": 60741,
+      "sha256": "eb638448bb52709793dcdd401e62174ce0359c6450beee6d0500045135c65282"
     },
     {
       "name": "backup-compatibility.mjs",
@@ -34,8 +34,8 @@
     },
     {
       "name": "calendar-ui.mjs",
-      "size": 5234,
-      "sha256": "26fff45dd8c45657337cd9458baac8333425f66dd70bd525dd1d36603039afb5"
+      "size": 5406,
+      "sha256": "bbbe113673b5d4619e3a4a302eb1263222c55176607637608a511accf12ab136"
     },
     {
       "name": "calendar-workflow.mjs",
@@ -53,14 +53,19 @@
       "sha256": "12ba0651c582d82f9cf5e0a1bc40dcf3772b05435ae4647e0151e8a9adb53a1c"
     },
     {
+      "name": "date-display.mjs",
+      "size": 1202,
+      "sha256": "331eb2aa7691efd9784da2e4d51ad771e89c3f004c67a7686b5cdf0c96200cde"
+    },
+    {
       "name": "docs/USER_GUIDE.md",
-      "size": 7706,
-      "sha256": "2561a37d0d8ccac230f9425848e5efc2d797e2e8964c3fc1001a767dbe3fd9f4"
+      "size": 10245,
+      "sha256": "5ee7c00cddaf45e5380696f09d43464da170dfb44905fa343ba2dabbe1acf3d4"
     },
     {
       "name": "expense-display.mjs",
-      "size": 4797,
-      "sha256": "79831c14ad07219a6098a27be24013a60d6524d62b2e14085e929fd44da2d79a"
+      "size": 4882,
+      "sha256": "3cd333f3f4bae2630891902b3bd351548dd36b4db0138d1dd03b273262c9cdd8"
     },
     {
       "name": "expense-preview.mjs",
@@ -99,8 +104,8 @@
     },
     {
       "name": "income-ui.mjs",
-      "size": 6366,
-      "sha256": "9edeae251943cb6e58de8736723bc3974bb146c35a906050b9277a6682861afe"
+      "size": 6439,
+      "sha256": "1e34171c017f449588ac39ecef0306431bd47ef64ce264805e0936469bc2e429"
     },
     {
       "name": "income-workflow.mjs",
@@ -109,8 +114,8 @@
     },
     {
       "name": "index.html",
-      "size": 37600,
-      "sha256": "dba8000a18d6a7237d57e0b7e1e41ebd4facfd1023e56f9ba2e49f6113184b7a"
+      "size": 38095,
+      "sha256": "b53fb6f309219776c944d67c60ea0d709d7a5b424d87f0d641ed416c95a9324e"
     },
     {
       "name": "manifest.webmanifest",
@@ -128,9 +133,14 @@
       "sha256": "0fb2c846714f9cce76d75ed9de09773b9eaa200bad80c797ca811af8ab5707bf"
     },
     {
+      "name": "pension-estimate.mjs",
+      "size": 2123,
+      "sha256": "18797728e0d8a1820875f82a490f2baad3e280168376d6f6b29187dc50c893db"
+    },
+    {
       "name": "pension-ui.mjs",
-      "size": 10388,
-      "sha256": "ea49a0acbf452c937e15949dc6ef739da65eaaa5bbc3c80c03e3a90ea6b888fa"
+      "size": 14348,
+      "sha256": "1b59e216747411bb4cc55877163875492906a5699b7bbac54fda558ff03713ba"
     },
     {
       "name": "pension.mjs",
@@ -159,8 +169,8 @@
     },
     {
       "name": "salary-ui.mjs",
-      "size": 15048,
-      "sha256": "30440b6cb22ed9ec8eb87f048e69aaa0d04f752e4ae03584208e22fba6b46c6f"
+      "size": 15793,
+      "sha256": "4fe9d5aa5cdcc8d552128c1e4606f35d36220cac131282972a62212868d39af2"
     },
     {
       "name": "salary-workflow.mjs",
@@ -184,8 +194,8 @@
     },
     {
       "name": "sw.js",
-      "size": 3245,
-      "sha256": "5e646a351c84a251606801bf79b2bf23a50f687f1e37233ae9e3d8d3f9eeff41"
+      "size": 3287,
+      "sha256": "e7c2331aaac1a53ec68bd38d26799f1c6c131d90a50e3ccd3c18af80a286b6e2"
     },
     {
       "name": "tax-social-audit.mjs",

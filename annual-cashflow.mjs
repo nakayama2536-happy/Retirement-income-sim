@@ -1,3 +1,4 @@
+import {dateWithAge} from './date-display.mjs';
 // Annual summary derived from the same monthly calculation used for assets.
 import {reconcileCashflow} from './cashflow-reconciliation.mjs';
 import {expenseDisplayProfile} from './expense-display.mjs';
@@ -33,12 +34,12 @@ function summaryFromReconciliation(rec,age,profile){
 }
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const money=n=>n===null||n===undefined||!Number.isFinite(n)?'未確定':`${n.toLocaleString('ja-JP',{maximumFractionDigits:2})}万円`;
-export function annualCashflowHtml(s){
+export function annualCashflowHtml(s,config){
  if(s.status!=='ready')return `<p>${esc(s.message)}</p>`;
  const c=s.components,source=s.sourceProfile==='public-v0.9'?'公開元 v0.9形式':s.sourceProfile==='work-v0.9.7'?'Work v0.9.7形式':'未選択';
  const refs=s.sourceProfile?`参考内訳 ${money(s.referenceDetail)}（確認済み小計 ${money(s.referenceKnownSubtotal)}）／管理予算との差 ${money(s.referenceGap)}／未確定 ${s.unresolvedMonthCount}か月`:'参考内訳は出典未選択のため未表示';
- const events=s.events.length?`<details><summary>臨時イベント ${s.events.length}件</summary><ul>${s.events.map(e=>`<li>${esc(e.date||'日付未設定')}：${esc(e.label||e.type||'イベント')} ${money(Number(e.amount||0))}</li>`).join('')}</ul></details>`:'';
- return `<p>${s.age}歳期（${esc(s.startDate)}～${esc(s.endDate)}、${s.monthCount}か月）</p><dl>
+ const events=s.events.length?`<details><summary>臨時イベント ${s.events.length}件</summary><ul>${s.events.map(e=>`<li>${esc(e.date?dateWithAge(e.date,config):'日付未設定')}：${esc(e.label||e.type||'イベント')} ${money(Number(e.amount||0))}</li>`).join('')}</ul></details>`:'';
+ return `<p>${s.age}歳期（${esc(dateWithAge(s.startDate,config))}～${esc(dateWithAge(s.endDate,config))}、${s.monthCount}か月）</p><dl>
  <div><dt>現金収入合計</dt><dd>${money(s.incomeTotal)}</dd></div><div><dt>労働収入</dt><dd>${money(c.labor)}</dd></div><div><dt>本人公的年金</dt><dd>${money(c.primaryPension)}</dd></div><div><dt>配偶者公的年金</dt><dd>${money(c.spousePension)}</dd></div><div><dt>iDeCo年金</dt><dd>${money(c.idecoAnnuity)}</dd></div><div><dt>雇用保険</dt><dd>${money(c.unemployment)}</dd></div><div><dt>臨時・追加収入</dt><dd>${money(c.extraIncome)}</dd></div>
  <div><dt>管理予算支出</dt><dd>${money(s.managementExpense)}</dd></div><div><dt>臨時・別枠支出</dt><dd>${money(s.extraExpense)}</dd></div><div><dt>支出合計</dt><dd>${money(s.totalExpense)}</dd></div><div><dt>現金収支</dt><dd>${money(s.cashBalance)}</dd></div>
  <div><dt>資産運用益</dt><dd>${money(s.investmentGain)}</dd></div><div><dt>期首 → 期末資産</dt><dd>${money(s.startAsset)} → ${money(s.endAsset)}</dd></div></dl>
