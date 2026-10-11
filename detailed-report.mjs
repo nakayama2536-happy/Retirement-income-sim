@@ -1,3 +1,4 @@
+import {projectNisaWithdrawal} from './withdrawal-plan.mjs';
 import {reconcileCashflow} from './cashflow-reconciliation.mjs';
 import {inspectCashflowSources} from './cashflow-sources.mjs';
 import {expenseDisplayProfile} from './expense-display.mjs';
@@ -6,12 +7,17 @@ const fmt=n=>Number.isFinite(n)?n.toLocaleString('ja-JP',{maximumFractionDigits:
 export const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 export function detailedReport(config,{sourceProfile='',period='annual'}={}){
  const profile=expenseDisplayProfile(config,sourceProfile),rec=reconcileCashflow(config,{sourceProfile:profile||'unknown'}),view=inspectCashflowSources(config,{sourceProfile:profile||'unknown'});
+ const nisa=projectNisaWithdrawal(config,rec.calculation.monthlyDetails);
  const labels=new Map(view.items.map(x=>[x.itemId,x.label||x.itemId]));const rows=[];
  const col=(m,group,category,item,amount,scope='集計',note='',status)=>({period:period==='monthly'?m.month:`${m.annualAge}歳期`,date:m.date,primaryAge:ageOn(m.date,config.people?.primary?.birthDate),spouseAge:ageOn(m.date,config.people?.spouse?.birthDate),group,category,item,amount:Number.isFinite(amount)?amount:null,unit:'万円',scope,status:status||(Number.isFinite(amount)?'確認済み':'未確定'),note});
  for(const m of rec.calculation.monthlyDetails){
   const r=rec.months[m.sequence];
   const add=(...args)=>{const row=col(m,...args);rows.push(row);return row;};
   add('資産','残高','期首資産',m.startAsset,'残高');add('資産','運用','運用益',m.investmentGain);add('資産','残高','期末資産',m.endAsset,'残高');
+  if(nisa.status==='configured'){
+   const n=nisa.rows[m.sequence],note='独立したNISAの参考計画。取崩しは資産内の移動で、収入・支出へ再加算しません。生活費への自動充当・追加売却は未対応。';
+   for(const [key,label,scope] of [['startBalance','NISA期首残高（参考）','期首残高（参考）'],['gain','NISA運用益（参考）','運用参考'],['requested','NISA取崩し指定額（参考）','資金移動参考'],['withdrawal','NISA取崩し可能額（参考）','資金移動参考'],['unmet','NISA指定額に対する不足（参考）','不足参考'],['endBalance','NISA期末残高（参考）','期末残高（参考）']])add('資金移動','NISA',label,n[key],scope,note,n.overTotal?'総資産との整合要確認':n.unmet>0?'取崩し指定額に不足あり':'参考試算');
+  }
   add('収入','合計','現金収入合計',m.totalIncome,'合計');
   for(const [k,label] of [['labor','労働収入'],['primaryPension','本人公的年金'],['spousePension','配偶者公的年金'],['idecoAnnuity','iDeCo年金'],['unemployment','雇用保険'],['extraIncome','一時金・臨時・追加収入']])add('収入','中項目',label,m[k],'内数');
   for(const [k,label] of [['primaryLabor','本人の労働収入'],['spouseLabor','配偶者の労働収入'],['combinedLabor','夫婦合計で指定した労働収入']])add('収入','労働収入の内訳',label,m[k],'内数');
@@ -33,7 +39,7 @@ export function detailedReport(config,{sourceProfile='',period='annual'}={}){
  let output=rows;
  if(period==='annual'){
   const grouped=new Map();
-  for(const r of rows){const key=JSON.stringify([r.period,r.group,r.category,r.item,r.scope,r.itemId]);let out=grouped.get(key);if(!out){out={...r,amount:r.amount,months:1};grouped.set(key,out);}else{out.months++;if(r.item==='期末資産'){out.amount=r.amount;out.date=r.date;out.primaryAge=r.primaryAge;out.spouseAge=r.spouseAge;}else if(r.item!=='期首資産')out.amount=out.amount===null||r.amount===null?null:out.amount+r.amount;if(r.amount===null)out.status='一部未確定';}}
+  for(const r of rows){const key=JSON.stringify([r.period,r.group,r.category,r.item,r.scope,r.itemId]);let out=grouped.get(key);if(!out){out={...r,amount:r.amount,months:1};grouped.set(key,out);}else{out.months++;if(r.item==='期末資産'||r.scope==='期末残高（参考）'){out.amount=r.amount;out.date=r.date;out.primaryAge=r.primaryAge;out.spouseAge=r.spouseAge;}else if(r.item!=='期首資産'&&r.scope!=='期首残高（参考）')out.amount=out.amount===null||r.amount===null?null:out.amount+r.amount;if(r.amount===null)out.status='一部未確定';}}
   output=[...grouped.values()];
  }
  // Saved assumptions are distinguishable from annual cash flows.
@@ -71,9 +77,9 @@ export function wideDetailedReport(config,{sourceProfile='',period='monthly'}={}
  for(const r of long.rows){const id=addColumn(r);
   if(r.period==='設定値'){for(const out of periods.values()){out.values[id]=r.amount;out.statuses[id]=r.amount===null?'未設定':'固定設定値（将来残高ではありません）';}continue;}
   const out=periods.get(monthPeriods.get(r.period));if(!out)continue;
-  if(!Object.hasOwn(out.values,id)||r.item==='期末資産')out.values[id]=r.amount;
-  else if(r.item!=='期首資産')out.values[id]=out.values[id]===null||r.amount===null?null:out.values[id]+r.amount;
-  out.statuses[id]=out.values[id]===null?'未確定':r.status;
+  if(!Object.hasOwn(out.values,id)||r.item==='期末資産'||r.scope==='期末残高（参考）')out.values[id]=r.amount;
+  else if(r.item!=='期首資産'&&r.scope!=='期首残高（参考）')out.values[id]=out.values[id]===null||r.amount===null?null:out.values[id]+r.amount;
+  out.statuses[id]=out.values[id]===null?'未確定':out.statuses[id]==='総資産との整合要確認'||r.status==='総資産との整合要確認'?'総資産との整合要確認':out.statuses[id]==='取崩し指定額に不足あり'||r.status==='取崩し指定額に不足あり'?'取崩し指定額に不足あり':r.status;
  }
  for(const out of periods.values())for(const col of columns.values())if(!Object.hasOwn(out.values,col.id)){
   // Sparse event observations mean no event in that period, not an unknown input.

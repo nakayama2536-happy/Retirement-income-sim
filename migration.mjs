@@ -1,3 +1,4 @@
+import {projectNisaWithdrawal} from './withdrawal-plan.mjs';
 import {STATE_KEY,migrateConfig,configSignature} from './storage.mjs';
 import {calculatePensionCandidate} from './pension.mjs';
 import {assertBackupCompatibility} from './backup-compatibility.mjs';
@@ -35,6 +36,7 @@ export function validateSavedState(state,{allowEmpty=false}={}){
       if(!object(a)||!Number.isInteger(Number(age))||Number(age)<Number(c.plan.startAge)||Number(age)>Number(c.plan.endAge)||a.endAsset==null||a.endAsset===''||!Number.isFinite(Number(a.endAsset)))throw new Error('実績の年齢・年末資産を確認してください。');
     }
     calculatePensionCandidate(c);
+    projectNisaWithdrawal(c);
   }
 }
 

@@ -12,7 +12,7 @@ export async function createTestServer({crossRelease=false}={}){
  const files=new Map(await Promise.all(manifest.files.map(async item=>[item.path,await fs.readFile(path.join(here,'app',item.path))])));
  const sw=files.get('sw.js').toString();
  if(!sw.includes(manifest.cacheVersion))throw Error('Cache version mismatch');
- const base='fc577561da05895d0f14135599dab17a90fd2eca';
+ const base='e886ef99097330ffbc76c1789439b850b05e5fbb';
  const oldManifest=crossRelease?JSON.parse(execFileSync('git',['show',base+':distribution-manifest.json'],{cwd:path.resolve(here,'../..'),encoding:'utf8'})):null;
  const oldFiles=crossRelease?new Map(oldManifest.files.filter(item=>item.name!=='README.md'&&!item.name.startsWith('docs/')).map(item=>[item.name,execFileSync('git',['show',base+':'+item.name],{cwd:path.resolve(here,'../..')})])):files;
  const oldSW=oldFiles.get('sw.js').toString();
