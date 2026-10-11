@@ -107,7 +107,9 @@ async function run(browser,id,mode){
   await page.close();
   if(candidate)await candidate.evaluate(async()=>{
    const end=Date.now()+15000;
-   while(self.registration.active?.state!=='activated'||self.registration.waiting){
+   // The old active worker can still appear in this registration snapshot.
+   // Require the identified candidate's own activation event as well.
+   while(!self.__TEST_ACTIVATION_STARTED||self.registration.active?.state!=='activated'||self.registration.waiting){
     if(Date.now()>end)throw Error('activation timeout');
     await new Promise(r=>setTimeout(r,100));
    }

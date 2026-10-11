@@ -27,7 +27,7 @@ export async function createTestServer({crossRelease=false}={}){
   if(!['GET','HEAD'].includes(req.method)){status=405;body='method rejected';}
   else if(!body){status=404;body='not found';}
   else if(mode==='offline'||(mode==='asset-failure'&&file==='calc.mjs')||(mode==='worker-failure'&&file==='sw.js')){status=503;body='synthetic failure';}
-  else if(file==='sw.js')body=(mode==='old'?oldSW:sw).replace(mode==='old'?oldVersion:manifest.cacheVersion,mode==='old'?'isolated-test-old':'isolated-test-new')+"\nself.addEventListener('message',e=>{if(e.data==='TEST_CACHE_ID')e.ports[0]?.postMessage(CACHE);});";
+  else if(file==='sw.js')body=(mode==='old'?oldSW:sw).replace(mode==='old'?oldVersion:manifest.cacheVersion,mode==='old'?'isolated-test-old':'isolated-test-new')+"\nself.addEventListener('activate',()=>{self.__TEST_ACTIVATION_STARTED=true;});\nself.addEventListener('message',e=>{if(e.data==='TEST_CACHE_ID')e.ports[0]?.postMessage(CACHE);});";
   log.push({method:req.method,path:pathname,status,mode});
   res.writeHead(status,{'Content-Type':mime[path.extname(file)]||'text/plain','Cache-Control':'no-store'});
   res.end(req.method==='HEAD'?undefined:body);
