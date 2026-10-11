@@ -1,11 +1,12 @@
 // Compatibility is evaluated before normalization, calculation or any write.
 export const APP_BUILD='v0.9.7-i08-recovery-1';
-export const CURRENT_FEATURES=['salary-net-transfer-v1','anchored-months-v1','expense-adoption-v1','income-adoption-v1'];
+export const CURRENT_FEATURES=['salary-net-transfer-v1','anchored-months-v1','expense-adoption-v1','income-adoption-v1','nisa-withdrawal-reference-v1'];
 const object=x=>x!==null&&typeof x==='object'&&!Array.isArray(x);
 function requiredFeatures(value){
  const configs=value.config?[value.config,...(Array.isArray(value.scenarios)?value.scenarios.map(s=>s?.config):[])]:[value];
  const features=new Set();
  for(const c of configs){
+  if(c?.nisa?.withdrawal!=null){if(c.nisa.withdrawal.version!==1)throw new Error('未対応のNISA取り崩し形式です。');features.add('nisa-withdrawal-reference-v1');}
   if(c?.cashflow?.salaryLife?.mode==='net-transfer-v1')features.add('salary-net-transfer-v1');
   else if(c?.cashflow?.salaryLife?.mode && c.cashflow.salaryLife.mode!=='legacy')throw new Error('未対応の給与生活方式です。');
   if(c?.plan?.calendarMode==='anchored-months-v1')features.add('anchored-months-v1');
@@ -36,4 +37,9 @@ export function assertBackupCompatibility(value,options){const result=inspectBac
 export function recoveryPair(backup,target){
  const check=inspectBackupCompatibility(backup,target);
  return {...check,action:check.compatible?'この組合せを全体検証してから明示復元':'復元停止。対応版で開くか、旧版と更新前バックアップの組を選ぶ'};
+}
+
+export function createConfigBackup(config){
+ const check=assertBackupCompatibility(config);
+ return {...structuredClone(config),recoveryCompatibility:{protocol:1,producerBuild:APP_BUILD,requiredFeatures:check.requiredFeatures}};
 }

@@ -1,3 +1,4 @@
+import {createConfigBackup} from './backup-compatibility.mjs';
 import {mountDetailUI} from './detail-ui.mjs';
 import {dateWithAge,ageOn} from './date-display.mjs';
 import {mountCalendarSheet} from './calendar-ui.mjs';
@@ -414,7 +415,7 @@ function renderTimeline(){
     [config.plan?.startDate,'老後計画開始'],
     [config.retirement?.receiveDate,'退職金受取'],
     [config.employment?.primary?.mainRetirement?.baseDate,'本業退職（基本）'],
-    [config.ideco?.lumpDate||config.ideco?.contributionEndDate,'iDeCo/DC 50%一時金・年金開始'],
+    [config.ideco?.lumpDate||config.ideco?.contributionEndDate,`iDeCo/DC受取開始（一時金 ${config.ideco?.lumpPercent??'未設定'}%）`],
     [config.income?.pensions?.spouse?.startDate,'配偶者 公的年金開始','spouse'],
     [config.income?.pensions?.primary?.startDate,'本人 公的年金開始'],
     [config.employment?.spouse?.sideWork?.endDate,'配偶者アルバイト終了','spouse'],
@@ -767,7 +768,7 @@ el('saveAnnualReviewBtn').addEventListener('click', saveAnnualReview);
 el('saveScenarioBtn').addEventListener('click', saveCurrentScenario);
 el('importFile').addEventListener('change', e=>{ const f=e.target.files?.[0]; if(f) importConfig(f).catch(err=>showNotice(`読込失敗: ${err.message}`,'error')); });
 el('importFile2').addEventListener('change', e=>{ const f=e.target.files?.[0]; if(f) importConfig(f).catch(err=>showNotice(`読込失敗: ${err.message}`,'error')); });
-el('exportBtn').addEventListener('click',()=>{ if(config) downloadJson(config,`lifeplan-backup-${new Date().toISOString().slice(0,10)}.json`); });
+el('exportBtn').addEventListener('click',()=>{ if(config) downloadJson(createConfigBackup(config),`lifeplan-backup-${new Date().toISOString().slice(0,10)}.json`); });
 el('exportFullBtn').addEventListener('click',()=>{try{const state=loadState();if(!state.config)return;downloadJson(createFullBackup(state),`lifeplan-full-backup-${new Date().toISOString().slice(0,10)}.json`);}catch(e){showNotice(`一括バックアップを作成できません。${e.message}`,'error');}});
 el('pensionToolRun').addEventListener('click',runPensionTool);
 el('nisaToolRun').addEventListener('click',runNisaTool);

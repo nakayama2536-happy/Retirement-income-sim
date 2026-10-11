@@ -1,3 +1,4 @@
+import {projectNisaWithdrawal} from './withdrawal-plan.mjs';
 import {calendarMode} from './calendar-mode.mjs';
 import {assertBackupCompatibility} from './backup-compatibility.mjs';
 import {assertWriteAccess} from './write-access.mjs';
@@ -42,10 +43,12 @@ export const STATE_KEY='lifeplan-sim-state-v1';
 function normalizeState(state){
   assertBackupCompatibility(state);
   if(!state||!Array.isArray(state.scenarios))throw new Error('保存データの形式を確認してください。');
-  return {...structuredClone(state),config:migrateConfig(state.config),scenarios:state.scenarios.map(s=>{
+  const normalized={...structuredClone(state),config:migrateConfig(state.config),scenarios:state.scenarios.map(s=>{
     if(!s||!s.config)throw new Error('シナリオに設定がありません。');
     return {...s,config:migrateConfig(s.config)};
   })};
+  for(const c of [normalized.config,...normalized.scenarios.map(s=>s.config)])if(c)projectNisaWithdrawal(c);
+  return normalized;
 }
 export function loadState(){
   const raw=localStorage.getItem(STATE_KEY);

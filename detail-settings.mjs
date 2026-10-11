@@ -2,6 +2,7 @@
 import {runRetirementPlan,replaceAgeRangeOverride} from './calc.mjs';
 import {reconcileCashflow} from './cashflow-reconciliation.mjs';
 import {configSignature} from './storage.mjs';
+import {projectNisaWithdrawal,IDECO_MODES} from './withdrawal-plan.mjs';
 export const EXPENSE_GROUPS=[['living','生活費'],['insurance','保険'],['taxes','税・社会保険'],['travel','旅行費']];
 export const EXPENSE_EXAMPLES={living:['食費','日用品','住居費','電気・ガス・水道','通信費','交通・車','医療・介護','衣服・理美容','趣味・交際','教育・家族支援','その他生活費'],insurance:['生命保険','医療保険','がん保険','火災・地震保険','自動車保険','その他保険'],taxes:['労働収入の税・社会保険','年金の税・社会保険','その他の税・社会保険'],travel:['旅行費']};
 const profiles=['work-v0.9.7','public-v0.9'];
@@ -76,6 +77,33 @@ function event(c,d){
  return row;
 }
 function mutate(c,kind,d){
+ if(kind==='nisaWithdrawal'){
+  c.nisa||={};
+  const p={...(c.nisa.withdrawal||{}),version:1,mode:d.mode};
+  if(d.mode!=='none'){
+   p.startMonth=d.startMonth;p.endMonth=d.mode==='all'?d.startMonth:d.endMonth;
+   if(d.mode==='fixed')p.monthlyAmount=num(d.monthlyAmount,'毎月の取り崩し額');
+   if(d.mode==='rate')p.monthlyRate=num(d.monthlyRate,'毎月の取り崩し率',0,100);
+  }
+  c.nisa.withdrawal=p;projectNisaWithdrawal(c);return;
+ }
+ if(kind==='idecoWithdrawal'){
+  if(!c.ideco)throw Error('先にiDeCoの残高・積立条件を設定してください。');
+  if(c.plan.initialAssetIncludesIdeco!==false)throw Error('開始資産からiDeCoが除かれているか確認してください。');
+  if(!Object.hasOwn(IDECO_MODES,d.receiptMode))throw Error('iDeCoの受取方法を選択してください。');
+  const i={...c.ideco,lumpDate:date(d.lumpDate,'受取開始日')};
+  if(!i.contributionEndDate||i.lumpDate<i.contributionEndDate)throw Error('受取開始日は掛金終了日以降で指定してください。');
+  const months=runRetirementPlan(c,{includeMonthlyDetails:true}).monthlyDetails;
+  if(!months.some(m=>m.month===i.lumpDate.slice(0,7)))throw Error('受取開始月は計画期間内で指定してください。開始前の受取にはその時点の資産確認が必要です。');
+  i.lumpPercent=d.receiptMode==='lump'?100:d.receiptMode==='annuity'?0:num(d.lumpPercent,'一時金割合',0,100);
+  if(d.receiptMode==='combined'&&(i.lumpPercent<=0||i.lumpPercent>=100))throw Error('併用の場合は一時金割合を0%より大きく100%未満にしてください。');
+  i.annuityPercent=100-i.lumpPercent;
+  if(d.receiptMode!=='lump'){
+   i.annuityYears=num(d.annuityYears,'年金受取年数',5,20);if(!Number.isInteger(i.annuityYears))throw Error('年金受取年数は整数で入力してください。');
+   i.annuityReturn=num(d.annuityReturn,'年金受取中の利回り',-99,100);
+  }
+  c.ideco=i;return;
+ }
  if(kind==='expense')return editExpense(c,d);
  if(kind==='budget')return alignBudget(c,d);
  if(kind==='event')return event(c,d);
@@ -129,6 +157,7 @@ function mutate(c,kind,d){
 }
 export function detailProposal(state,kind,values){
  const c=structuredClone(state.config);mutate(c,kind,values);
+ projectNisaWithdrawal(c);
  const before=runRetirementPlan(state.config),after=runRetirementPlan(c);
  if(!Number.isFinite(after.finalAsset))throw Error('試算結果が数値範囲を超えました。');
  return {kind,baseSignature:configSignature(state),candidate:c,candidateSignature:configSignature(c),values:structuredClone(values),before:before.finalAsset,after:after.finalAsset,rows:after.rows,changed:configSignature(c)!==configSignature(state.config)};

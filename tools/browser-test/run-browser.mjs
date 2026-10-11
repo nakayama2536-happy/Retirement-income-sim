@@ -1,3 +1,4 @@
+import {validateWithdrawalUi} from './withdrawal-case.mjs';
 import {validateDetailUi,validateLaborTrendUi} from './detail-case.mjs';
 // Runs only against fresh, loopback-only fixtures and synthetic input.
 import fs from 'node:fs/promises';
@@ -264,6 +265,7 @@ try{
  await validatePensionUi(browser);
  try{report.cases.push(await validateDetailUi({browser,createTestServer,open,load,openTab,snapshot,here,out,fs,path}));}catch(e){if(e.detailRecord)report.cases.push(e.detailRecord);throw e;}
  try{report.cases.push(await validateLaborTrendUi({browser,createTestServer,open,load,openTab,snapshot,here,out,fs,path}));}catch(e){if(e.detailRecord)report.cases.push(e.detailRecord);throw e;}
+ try{report.cases.push(await validateWithdrawalUi({browser,createTestServer,open,load,openTab,snapshot,here,out,fs,path}));}catch(e){if(e.detailRecord)report.cases.push(e.detailRecord);throw e;}
  report.status='completed';
 }catch(e){report.status=browser?'incomplete':'environment-blocked';report.error=String(e);process.exitCode=2;}
 finally{if(browser)await browser.close();await fs.writeFile(path.join(out,'report.json'),JSON.stringify(report,null,2));console.log(JSON.stringify({status:report.status,cases:report.cases.map(x=>({id:x.id,status:x.status}))}));}
