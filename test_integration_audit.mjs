@@ -47,7 +47,7 @@ test('FIX A: public-format saved detail appears in the shared display',async()=>
  assert.ok(p.months.some(m=>m.detailBefore!==m.detailAfter||m.knownSubtotalBefore!==m.knownSubtotalAfter));
  const n=await applyExpensePreview(state,p,{storage});assert.equal(n.state.config.cashflow.expenseCategories[0].items[0].periods[0].amount,9);
  const display=expenseDisplayModel(n.state.config,65);assert.equal(display.sourceProfile,'public-v0.9');assert.equal(display.rows.find(r=>r.itemId==='expense/key:housing').amount,108);
- const rendered=expenseDisplayHtml(display);assert.match(rendered.detail,/108万円/);assert.match(rendered.detail,/公開元/);
+ const rendered=expenseDisplayHtml(display);assert.match(rendered.detail,/108万円/);assert.match(rendered.detail,/旧形式の生活費内訳/);
 });
 test('FIX B: public-only data is displayed without a Work detail object',()=>{
  const {state}=setup();delete state.config.expenseDetail;assert.equal(expenseDetailSummary(state.config,65),null);

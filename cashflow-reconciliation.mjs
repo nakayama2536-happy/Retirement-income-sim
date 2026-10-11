@@ -48,7 +48,7 @@ export function reconcileCashflow(config,{sourceProfile='unknown',identityBindin
     const factor=m.budget?.priceFactor??null;
     const details=roots.map(item=>detail(item,m.age,factor));
     const knownSubtotal=details.reduce((s,d)=>s+(d.knownSubtotal??d.priced.amount??0),0);
-    const complete=roots.some(i=>i.kind==='expense')&&details.length>0&&details.every(d=>d.priced.status==='resolved')&&!blockers.length&&!comparisonDiagnostics.length&&Number.isFinite(knownSubtotal);
+    const complete=roots.some(i=>i.kind==='expense')&&details.length>0&&details.every(d=>d.priced.status==='resolved')&&!blockers.length&&!comparisonDiagnostics.some(d=>!(d.code==='deferred-tax-calculation'&&d.itemId&&resolve(d.itemId,m.age).status==='resolved'))&&Number.isFinite(knownSubtotal);
     const detailTotal=complete?knownSubtotal:null;
     let budgetBase, budgetCheck;
     if(!m.budget) {

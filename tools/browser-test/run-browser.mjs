@@ -1,3 +1,4 @@
+import {validateDetailUi} from './detail-case.mjs';
 // Runs only against fresh, loopback-only fixtures and synthetic input.
 import fs from 'node:fs/promises';
 import path from 'node:path';
@@ -10,12 +11,16 @@ const out=path.join(here,'browser-results');
 await fs.mkdir(out,{recursive:true});
 const report={date:new Date().toISOString(),scope:'same-build lifecycle and pinned current-main to PR-candidate compatibility',cases:[],status:'not-run'};
 const normalize=x=>{const y=structuredClone(x);delete y.exportedAt;return y;};
+async function openTab(page,id){
+ const button=page.locator(`[data-tab="${id}"]`);const group=await button.getAttribute('data-group-item');
+ if(group)await page.locator(`[data-group="${group}"]`).click();await button.click();
+}
 async function snapshot(page){
  const home=await page.evaluate(()=>Object.fromEntries(['currentAsset','finalAsset','finalThreshold','reserve','afterReserve','safeAssetMinimum','reserveUsedThreshold'].map(id=>[id,document.getElementById(id).textContent])));
- await page.locator('[data-tab="scenarios"]').click();
+ await openTab(page,'scenarios');
  const scenarios=await page.locator('.scenario-check').evaluateAll(nodes=>nodes.map(n=>({id:n.querySelector('input').dataset.scenarioSelect,selected:n.querySelector('input').checked,name:n.querySelector('strong').firstChild.textContent.trim()})));
  const comparison=await page.locator('#scenarioCompare tbody tr').evaluateAll(rows=>rows.map(row=>[...row.querySelectorAll('td')].map(cell=>cell.textContent)));
- await page.locator('[data-tab="settings"]').click();
+ await openTab(page,'settings');
  const pending=page.waitForEvent('download');
  await page.locator('#exportFullBtn').click();
  const download=await pending;
@@ -102,7 +107,9 @@ async function run(browser,id,mode){
   await page.close();
   if(candidate)await candidate.evaluate(async()=>{
    const end=Date.now()+15000;
-   while(self.registration.active?.state!=='activated'||self.registration.waiting){
+   // The old active worker can still appear in this registration snapshot.
+   // Require the identified candidate's own activation event as well.
+   while(!self.__TEST_ACTIVATION_STARTED||self.registration.active?.state!=='activated'||self.registration.waiting){
     if(Date.now()>end)throw Error('activation timeout');
     await new Promise(r=>setTimeout(r,100));
    }
@@ -121,7 +128,7 @@ async function run(browser,id,mode){
   assert(record.controllerCache.endsWith(mode==='new'?'isolated-test-new':'isolated-test-old'));
   await fs.writeFile(path.join(out,id+'-before.json'),JSON.stringify(before,null,2));
   await fs.writeFile(path.join(out,id+'-after.json'),JSON.stringify(after,null,2));
-  await page.locator('[data-tab="home"]').click();await page.screenshot({path:path.join(out,id+'.png'),fullPage:true});
+  await openTab(page,'home');await page.screenshot({path:path.join(out,id+'.png'),fullPage:true});
   if(id==='U1'||id==='C1'){
    await context.setOffline(false);
    const restoreServer=await createTestServer({crossRelease:id==='C1'});const restoreContext=await browser.newContext({acceptDownloads:true});
@@ -133,9 +140,10 @@ async function run(browser,id,mode){
    }finally{await restoreContext.close();await restoreServer.close();}
   }
   if(id==='C1'){
-   await page.locator('[data-tab="settings"]').click();
+   await openTab(page,'settings');
    const backup=page.locator('article').filter({has:page.locator('#exportFullBtn')});
    const recovery=page.locator('article').filter({has:page.locator('#recoveryCheckResult')});
+   await page.locator('#recoveryCheckResult').evaluate(n=>{for(let p=n.parentElement;p;p=p.parentElement)if(p.tagName==='DETAILS')p.open=true;});
    record.layout=[];
    for(const width of [390,1280]){
     await page.setViewportSize({width,height:900});
@@ -169,7 +177,7 @@ async function validateHomeUi(browser){
   const page=await open(context,fixture.url);await load(page,file);
   const before=(await snapshot(page)).data;
   for(const width of [390,1280]){
-   await page.setViewportSize({width,height:900});await page.locator('[data-tab="home"]').click();
+   await page.setViewportSize({width,height:900});await openTab(page,'home');
    assert(!(await page.locator('#migrationPanel').isVisible()));
    assert(!(await page.locator('[data-tab="actuals"]').isVisible()));
    assert(!(await page.locator('.forecast-card').isVisible()));
@@ -182,13 +190,13 @@ async function validateHomeUi(browser){
    await page.screenshot({path:path.join(out,'S1-home-'+width+'.png'),fullPage:true});
   }
   for(const id of ['spousePensionAmount','initialAssetInput','expenseKind','ruleCards']){
-   await page.locator('[data-tab="home"]').click();await page.locator(`[data-focus-target="${id}"]`).click();
+   await openTab(page,'home');await page.locator(`[data-focus-target="${id}"]`).click();
    assert(await page.locator('#'+id).isVisible());assert.equal(await page.evaluate(()=>document.activeElement.id),id);
   }
-  await page.locator('[data-tab="settings"]').click();await page.locator('#showActuals').check();
+  await openTab(page,'settings');await page.locator('#showActuals').check();
   assert(await page.locator('[data-tab="actuals"]').isVisible());
-  await page.locator('[data-tab="home"]').click();assert(await page.locator('.forecast-card').isVisible());
-  await page.locator('[data-tab="settings"]').click();await page.locator('#showActuals').uncheck();
+  await openTab(page,'home');assert(await page.locator('.forecast-card').isVisible());
+  await openTab(page,'settings');await page.locator('#showActuals').uncheck();
   assert.deepEqual((await snapshot(page)).data,before);
   await page.reload({waitUntil:'domcontentloaded'});await page.locator('#dashboard').waitFor({state:'visible'});
   assert(!(await page.locator('[data-tab="actuals"]').isVisible()));
@@ -208,7 +216,7 @@ async function validatePensionUi(browser){
   const page=await open(context,fixture.url);await load(page,file);
   const before=(await snapshot(page)).data;
   for(const width of [390,1280]){
-   await page.setViewportSize({width,height:900});await page.locator('[data-tab="pension"]').click();
+   await page.setViewportSize({width,height:900});await openTab(page,'pension');
    await page.locator('#primaryPensionMonth').fill('2051-01');
    assert((await page.locator('#primaryPensionMonthAge').innerText()).includes('本人71歳'));
    assert((await page.locator('#primaryPensionEstimate').innerText()).includes('180.48'));
@@ -217,7 +225,7 @@ async function validatePensionUi(browser){
    await page.locator('#pensionForm button[type="submit"]').click();
    assert(await page.locator('#pensionPreview').isVisible());
    assert.deepEqual((await snapshot(page)).data,before);
-   await page.locator('[data-tab="pension"]').click();
+   await openTab(page,'pension');
    const card=page.locator('#pensionForm');await card.scrollIntoViewIfNeeded();
    assert(await card.evaluate(n=>n.scrollWidth<=n.clientWidth+1));
    for(const id of ['primaryPensionMonth','primaryPensionUseEstimate','pensionReset']){
@@ -234,7 +242,7 @@ async function validatePensionUi(browser){
   assert.equal(after.config.income.pensions.primary.annualAtStart,180.48);
   assert.equal(after.config.income.pensions.primary.startDate,'2051-01-01');
   assert.deepEqual(after.scenarios,before.scenarios);
-  await page.locator('[data-tab="pension"]').click();await page.locator('#pensionUndo').click();
+  await openTab(page,'pension');await page.locator('#pensionUndo').click();
   const undone=(await snapshot(page)).data;
   assert.equal(undone.config.income.pensions.primary.annualAtStart,170.4);
   assert.deepEqual(undone.scenarios,before.scenarios);
@@ -254,6 +262,7 @@ try{
  for(const [id,mode] of [['U1','new'],['U2','asset-failure'],['U3','worker-failure'],['C1','new']])await run(browser,id,mode);
  await validateHomeUi(browser);
  await validatePensionUi(browser);
+ try{report.cases.push(await validateDetailUi({browser,createTestServer,open,load,openTab,snapshot,here,out,fs,path}));}catch(e){if(e.detailRecord)report.cases.push(e.detailRecord);throw e;}
  report.status='completed';
 }catch(e){report.status=browser?'incomplete':'environment-blocked';report.error=String(e);process.exitCode=2;}
 finally{if(browser)await browser.close();await fs.writeFile(path.join(out,'report.json'),JSON.stringify(report,null,2));console.log(JSON.stringify({status:report.status,cases:report.cases.map(x=>({id:x.id,status:x.status}))}));}

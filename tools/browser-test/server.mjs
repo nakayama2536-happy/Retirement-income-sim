@@ -12,7 +12,7 @@ export async function createTestServer({crossRelease=false}={}){
  const files=new Map(await Promise.all(manifest.files.map(async item=>[item.path,await fs.readFile(path.join(here,'app',item.path))])));
  const sw=files.get('sw.js').toString();
  if(!sw.includes(manifest.cacheVersion))throw Error('Cache version mismatch');
- const base='14b9a3d25458efa00da80e93fac7a35238094e69';
+ const base='cbebc668c321a06b9b08dd38d1f45635866e95cc';
  const oldManifest=crossRelease?JSON.parse(execFileSync('git',['show',base+':distribution-manifest.json'],{cwd:path.resolve(here,'../..'),encoding:'utf8'})):null;
  const oldFiles=crossRelease?new Map(oldManifest.files.filter(item=>item.name!=='README.md'&&!item.name.startsWith('docs/')).map(item=>[item.name,execFileSync('git',['show',base+':'+item.name],{cwd:path.resolve(here,'../..')})])):files;
  const oldSW=oldFiles.get('sw.js').toString();
@@ -27,7 +27,7 @@ export async function createTestServer({crossRelease=false}={}){
   if(!['GET','HEAD'].includes(req.method)){status=405;body='method rejected';}
   else if(!body){status=404;body='not found';}
   else if(mode==='offline'||(mode==='asset-failure'&&file==='calc.mjs')||(mode==='worker-failure'&&file==='sw.js')){status=503;body='synthetic failure';}
-  else if(file==='sw.js')body=(mode==='old'?oldSW:sw).replace(mode==='old'?oldVersion:manifest.cacheVersion,mode==='old'?'isolated-test-old':'isolated-test-new')+"\nself.addEventListener('message',e=>{if(e.data==='TEST_CACHE_ID')e.ports[0]?.postMessage(CACHE);});";
+  else if(file==='sw.js')body=(mode==='old'?oldSW:sw).replace(mode==='old'?oldVersion:manifest.cacheVersion,mode==='old'?'isolated-test-old':'isolated-test-new')+"\nself.addEventListener('activate',()=>{self.__TEST_ACTIVATION_STARTED=true;});\nself.addEventListener('message',e=>{if(e.data==='TEST_CACHE_ID')e.ports[0]?.postMessage(CACHE);});";
   log.push({method:req.method,path:pathname,status,mode});
   res.writeHead(status,{'Content-Type':mime[path.extname(file)]||'text/plain','Cache-Control':'no-store'});
   res.end(req.method==='HEAD'?undefined:body);

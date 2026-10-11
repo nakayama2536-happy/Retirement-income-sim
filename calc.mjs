@@ -499,19 +499,19 @@ function pensionMonthlyForPerson(person,date){
 }
 
 function incomeForMonth(config,date,idecoProjection, resolvedAge=null){
-  const income={labor:0,pension:0,primaryPension:0,spousePension:0,idecoAnnuity:0,unemployment:0,extraIncome:0,detail:[]};
+  const income={primaryLabor:0,spouseLabor:0,combinedLabor:0,idecoLumpReceipt:0,retirementReceipt:0,labor:0,pension:0,primaryPension:0,spousePension:0,idecoAnnuity:0,unemployment:0,extraIncome:0,detail:[]};
   const funding=config.cashflow?.salaryLife;
   const before=funding && salaryLifeIsBefore(funding,date);
   const existingLabor=!funding || (!before && funding.postSalaryLabor?.mode==='existing_confirmed');
   const receiptIncluded=key=>before && funding.receiptTreatment?.[key]==='net_transfer';
   const pSide=config?.employment?.primary?.sideWork||{};
   const pStart=defaultPrimarySideWorkStart(config), pEnd=defaultPrimarySideWorkEnd(config);
-  if(existingLabor && monthInRange(date,pStart,pEnd)){ const v=Number(pSide.monthlyGross||0); income.labor+=v; if(v)income.detail.push(['本人アルバイト',v]); }
+  if(existingLabor && monthInRange(date,pStart,pEnd)){ const v=Number(pSide.monthlyGross||0); income.labor+=v; income.primaryLabor=v; if(v)income.detail.push(['本人アルバイト',v]); }
   const sSide=config?.employment?.spouse?.sideWork||{};
   const sStart=parseDate(sSide.startDate), sEnd=parseDate(sSide.endDate);
-  if(existingLabor && monthInRange(date,sStart,sEnd)){ const v=Number(sSide.monthlyGross||0); income.labor+=v; if(v)income.detail.push(['配偶者アルバイト',v]); }
+  if(existingLabor && monthInRange(date,sStart,sEnd)){ const v=Number(sSide.monthlyGross||0); income.labor+=v; income.spouseLabor=v; if(v)income.detail.push(['配偶者アルバイト',v]); }
   if(funding && !before && funding.postSalaryLabor?.mode==='monthly' && monthIndex(date)<=parseMonth(funding.postSalaryLabor.lastMonth)){
-    income.labor=funding.postSalaryLabor.monthlyAmount;
+    income.labor=funding.postSalaryLabor.monthlyAmount;income.combinedLabor=income.labor;
     if(income.labor)income.detail.push(['終了後の就労収入（夫婦合計）',income.labor]);
   }
   const pPen=receiptIncluded('pension')?0:pensionMonthlyForPerson(config?.income?.pensions?.primary,date); income.pension+=pPen; income.primaryPension=pPen; if(pPen)income.detail.push(['本人公的年金',pPen]);
@@ -537,7 +537,7 @@ function incomeForMonth(config,date,idecoProjection, resolvedAge=null){
         income.detail.push(['iDeCo/DC一時金税額（現行制度参考）',-tax.totalTax]);
       }
     }
-    income.extraIncome+=receipt;
+    income.extraIncome+=receipt;income.idecoLumpReceipt=receipt;
     income.detail.push(['iDeCo/DC一時金（資産計上額）',receipt]);
   }
   if(i && idecoProjection && lumpDate && !receiptIncluded('ideco')){
@@ -550,7 +550,7 @@ function incomeForMonth(config,date,idecoProjection, resolvedAge=null){
   }
   for(const e of config?.events||[]){
     const ed=parseDate(e.date);
-    if(ed && sameMonth(date,ed) && e.type==='income' && !(before && e.fundingTreatment==='net_transfer')){income.extraIncome+=Number(e.amount||0);income.detail.push([e.label||'臨時収入',Number(e.amount||0)]);}
+    if(ed && sameMonth(date,ed) && e.type==='income' && !(before && e.fundingTreatment==='net_transfer')){income.extraIncome+=Number(e.amount||0);if(e.id&&e.id===config.retirement?.receiptEventId)income.retirementReceipt+=Number(e.amount||0);income.detail.push([e.label||'臨時収入',Number(e.amount||0)]);}
   }
   return income;
 }
@@ -649,6 +649,7 @@ export function runRetirementPlan(config, options = {}) {
       annualRowIndex:rows.length,annualAge:agg.age,baseDate:isoDate(baseStart),monthsFromBase:monthsBetween(baseStart,date),
       cashflowMode:funding?.mode??'legacy',phase:funding?(before?'salary':'asset-funded'):(monthKey(date)>=monthKey(ret)?'legacy-after-retirement':'legacy-before-retirement'),
       startAsset:startAssetMonth,investmentGain:gain,endAsset:asset,
+      primaryLabor:inc.primaryLabor,spouseLabor:inc.spouseLabor,combinedLabor:inc.combinedLabor,idecoLumpReceipt:inc.idecoLumpReceipt,retirementReceipt:inc.retirementReceipt,
       labor:inc.labor,pension:inc.pension,primaryPension:inc.primaryPension,spousePension:inc.spousePension,
       idecoAnnuity:inc.idecoAnnuity,unemployment:inc.unemployment,extraIncome:inc.extraIncome,totalIncome:incomeTotal,
       expense,extraExpense,scheduledExtraExpense,budget:budgetObservation,
