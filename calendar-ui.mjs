@@ -1,3 +1,4 @@
+import {dateWithAge} from './date-display.mjs';
 import {calendarMode} from './calendar-mode.mjs';
 import {previewCalendar,applyCalendarPreview,undoCalendarApply,calendarUndoAvailable} from './calendar-workflow.mjs';
 import {configSignature} from './storage.mjs';
@@ -32,7 +33,7 @@ export function mountCalendarSheet({getState,onCommit,showNotice}){
    const lines=[`採用中：${label(calendarMode(getState().config))} → 試す方式：${label(preview.mode)}`,
      `全期間の計算月数：${preview.before.monthlyDetails.length} → ${preview.after.monthlyDetails.length}`,
      `最終資産：${money(preview.before.finalAsset)} → ${money(preview.after.finalAsset)}（差 ${money(preview.after.finalAsset-preview.before.finalAsset)}）`,
-     ...changed.map(d=>`${d.age}歳：${d.beforeMonths} → ${d.afterMonths}か月／開始 ${d.beforeStart} → ${d.afterStart}／最終計算日 ${d.beforeLast} → ${d.afterLast}`),
+     ...changed.map(d=>`${d.age}歳：${d.beforeMonths} → ${d.afterMonths}か月／開始 ${dateWithAge(d.beforeStart,getState().config)} → ${dateWithAge(d.afterStart,getState().config)}／最終計算日 ${dateWithAge(d.beforeLast,getState().config)} → ${dateWithAge(d.afterLast,getState().config)}`),
      changed.length?'上記の年齢期の対象日が変わります。':'年齢期の対象日は変わりません。',
      preview.forecastBefore?`実績反映後の最終資産：${money(preview.forecastBefore.projection.finalAsset)} → ${preview.canApply?money(preview.forecastAfter.projection.finalAsset):'実績期間の確認待ち'}`:'実績なし：再予測の比較なし',
      '年金・iDeCo受取日、給与生活方式、既存の比較案は変更しません。',

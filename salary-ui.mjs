@@ -1,3 +1,4 @@
+import {dateWithAge} from './date-display.mjs';
 import {formatMan} from './calc.mjs';
 import {configSignature,downloadJson} from './storage.mjs';
 import {salaryDraftFromConfig,previewSalary,applySalaryPreview,undoSalaryApply,salaryUndoAvailable,salaryDraftMatches,saveSalaryScenario,saveSalaryDraft,loadSalaryDraft,clearSalaryDraft} from './salary-workflow.mjs';
@@ -33,14 +34,16 @@ export function mountSalarySheet({getState,onCommit,showNotice}){
     el('salaryState').textContent=matches?'反映済み':c.cashflow?.salaryLife?'未反映の変更あり':'旧方式を使用中・新方式は未反映';
     el('salaryState').dataset.dirty=String(!matches);
     el('salaryUndo').disabled=busy||!salaryUndoAvailable(c);
-    el('salary_switchMonth').textContent=nextMonth(draft.settings.lastSalaryMonth);
+    el('salary_switchMonth').textContent=dateWithAge(nextMonth(draft.settings.lastSalaryMonth),c);
+    el('salary_lastSalaryMonthAge').textContent=dateWithAge(draft.settings.lastSalaryMonth,c);
+    el('salary_laborLastMonthAge').textContent=dateWithAge(el('salary_laborLastMonth').value,c);
     el('salary_laborDetail').hidden=el('salary_laborMode').value!=='monthly';
   }
   function buildInputs(c){
     const s=draft.settings;
     el('salaryInputs').innerHTML=`<fieldset class="pension-person"><legend>1. 試す条件</legend>
-      <p>65歳基準案：給与生活は <strong>${esc(draft.baselineMonth)}</strong> まで、資産からの生活費負担は <strong>${esc(nextMonth(draft.baselineMonth))}</strong> から。</p>
-      <label>試す案の給与生活最終月（その月を含む）<input id="salary_lastSalaryMonth" type="month" required></label>
+      <p>65歳基準案：給与生活は <strong>${esc(dateWithAge(draft.baselineMonth,c))}</strong> まで、資産からの生活費負担は <strong>${esc(dateWithAge(nextMonth(draft.baselineMonth),c))}</strong> から。</p>
+      <label>試す案の給与生活最終月（その月を含む）<input id="salary_lastSalaryMonth" type="month" required aria-describedby="salary_lastSalaryMonthAge"></label><p id="salary_lastSalaryMonthAge" class="muted" aria-live="polite"></p>
       <p>資産からの生活費負担開始月：<strong id="salary_switchMonth"></strong></p>
       <label>月の切替の確認<select id="salary_monthsConfirmed">${option('','未確認')+option('yes','上記の最終月・負担開始月で試算する')}</select></label>
       <label>給与生活中の追加投資（万円／月）<input id="salary_monthlyAddition" type="number" min="0" step="any" inputmode="decimal" required></label>
@@ -49,7 +52,7 @@ export function mountSalarySheet({getState,onCommit,showNotice}){
       <label>前倒し終了後～65歳の管理予算（万円／月）<input id="salary_pre65MonthlyBudget" type="number" min="0" step="any" inputmode="decimal"></label>
       <p class="muted">前倒し期間がある場合は必須です。税・社保を含む管理予算を、元の計画開始日時点の価格で入力します。生活費内訳を別に加算しません。</p>
       <label>終了後の就労収入<select id="salary_laborMode">${option('','未確認')+option('none','就労収入なし')+option('existing_confirmed','現在登録されている夫婦の就労条件を使う')+option('monthly','夫婦合計の月額と最終月を指定')}</select></label>
-      <div id="salary_laborDetail"><label>夫婦合計の就労収入（税引前・万円／月）<input id="salary_laborAmount" type="number" min="0" step="any" inputmode="decimal"></label><label>就労収入の最終月（その月を含む）<input id="salary_laborLastMonth" type="month"></label></div>
+      <div id="salary_laborDetail"><label>夫婦合計の就労収入（税引前・万円／月）<input id="salary_laborAmount" type="number" min="0" step="any" inputmode="decimal"></label><label>就労収入の最終月（その月を含む）<input id="salary_laborLastMonth" type="month" aria-describedby="salary_laborLastMonthAge"></label><p id="salary_laborLastMonthAge" class="muted" aria-live="polite"></p></div>
       <p id="salaryExistingLabor" class="muted"></p>
     </fieldset>
     <fieldset class="pension-person"><legend>2. iDeCo・受取・臨時収支</legend>
@@ -60,7 +63,7 @@ export function mountSalarySheet({getState,onCommit,showNotice}){
       <details><summary>給与生活中の受取・臨時収支の計上先</summary>
       ${[['pension','公的年金'],['ideco','iDeCo受取'],['unemployment','失業給付']].map(([key,label])=>`<label>給与生活中の${label}<select id="salary_receipt_${key}">${receiptOptions()}</select></label>`).join('')}
       <p class="muted">該当の受取がある場合に選択します。「追加・取崩しに含む」は上の月額に織り込み済みという指定です。</p>
-      ${(c.events||[]).map((x,i)=>`<label>${esc(x.date)} ${esc(x.label||'臨時収支')} ${money(x.amount)}<select id="salary_event_${i}">${receiptOptions()+ (x.type==='expense'?option('budget','終了後の管理予算に含む'):'')}</select></label>`).join('')}
+      ${(c.events||[]).map((x,i)=>`<label>${esc(dateWithAge(x.date,c))} ${esc(x.label||'臨時収支')} ${money(x.amount)}<select id="salary_event_${i}">${receiptOptions()+ (x.type==='expense'?option('budget','終了後の管理予算に含む'):'')}</select></label>`).join('')}
       ${(c.cashflow?.periodOverrides||[]).map((x,i)=>x.kind==='income'?`<label>${esc(x.label||x.key)}（${esc(x.fromAge)}～${esc(x.toAge)}歳）<select id="salary_period_${i}">${receiptOptions()}</select></label>`:'').join('')}
       </details>
     </fieldset>`;
@@ -77,10 +80,10 @@ export function mountSalarySheet({getState,onCommit,showNotice}){
     const c=getState().config;if(!c)return;
     if(!draft){draft=loadSalaryDraft(c)||salaryDraftFromConfig(c);buildInputs(c);el('salaryDraftNote').textContent='入力は集計表と別に保存します。まだ反映していません。';}
     const adopted=c.cashflow?.salaryLife;
-    el('salaryAdopted').textContent=adopted?`採用中：給与生活 ${adopted.lastSalaryMonth}まで、生活費負担 ${nextMonth(adopted.lastSalaryMonth)}から。追加 ${money(adopted.monthlyAddition)}/月、取崩し ${money(adopted.monthlyWithdrawal)}/月。`:'採用中：旧方式。新方式の試算・比較だけでは現在の計画を変更しません。';
+    el('salaryAdopted').textContent=adopted?`採用中：給与生活 ${dateWithAge(adopted.lastSalaryMonth,c)}まで、生活費負担 ${dateWithAge(nextMonth(adopted.lastSalaryMonth),c)}から。追加 ${money(adopted.monthlyAddition)}/月、取崩し ${money(adopted.monthlyWithdrawal)}/月。`:'採用中：旧方式。新方式の試算・比較だけでは現在の計画を変更しません。';
     const p=c.employment?.primary?.sideWork||{},sp=c.employment?.spouse?.sideWork||{};
-    el('salaryExistingLabor').textContent=`登録済み就労収入：本人 ${money(p.monthlyGross)}/月（${p.startDate||'退職日などから算出'}～${p.endDate||'既定終了日'}）、配偶者 ${money(sp.monthlyGross)}/月（${sp.startDate||'開始指定なし'}～${sp.endDate||'終了指定なし'}）。選んだモードで採用します。`;
-    el('salaryRelated').textContent=`iDeCo掛金 ${money(c.ideco?.monthlyContribution)}/月、拠出終了 ${c.ideco?.contributionEndDate||'未設定'}。年金開始：本人 ${c.income?.pensions?.primary?.startDate||'未設定'}、配偶者 ${c.income?.pensions?.spouse?.startDate||'未設定'}。`;
+    el('salaryExistingLabor').textContent=`登録済み就労収入：本人 ${money(p.monthlyGross)}/月（${p.startDate?dateWithAge(p.startDate,c):'退職日などから算出'}～${p.endDate?dateWithAge(p.endDate,c):'既定終了日'}）、配偶者 ${money(sp.monthlyGross)}/月（${sp.startDate?dateWithAge(sp.startDate,c,'spouse'):'開始指定なし'}～${sp.endDate?dateWithAge(sp.endDate,c,'spouse'):'終了指定なし'}）。選んだモードで採用します。`;
+    el('salaryRelated').textContent=`iDeCo掛金 ${money(c.ideco?.monthlyContribution)}/月、拠出終了 ${dateWithAge(c.ideco?.contributionEndDate,c)}。年金開始：本人 ${dateWithAge(c.income?.pensions?.primary?.startDate,c)}、配偶者 ${dateWithAge(c.income?.pensions?.spouse?.startDate,c,'spouse')}。`;
     if(preview&&preview.baseSignature!==configSignature(getState())){invalidate();error('前提または比較案が変わりました。もう一度試算してください。');}
     const last=c.salaryWorkflow?.history?.at(-1);
     el('salaryHistory').textContent=last?`${new Date(last.at).toLocaleString('ja-JP')}：給与生活の設定を${last.action==='undo'?'取消':'反映'}。`:'反映履歴はありません。';
@@ -89,7 +92,7 @@ export function mountSalarySheet({getState,onCommit,showNotice}){
   function renderPreview(){
     const p=preview,dates=p.candidate.cashflow.salaryLife;
     const tableRows=p.result.rows.map(r=>{const a=p.before.rows.find(x=>x.age===r.age),b=p.baselineResult.rows.find(x=>x.age===r.age);return `<tr><th>${r.age}歳末</th><td>${a?money(a.endAsset):'—'}</td><td>${b?money(b.endAsset):'—'}</td><td>${money(r.endAsset)}</td></tr>`;}).join('');
-    el('salaryPreviewBody').innerHTML=`<p><strong>試す案：${esc(dates.lastSalaryMonth)}まで給与生活、${esc(nextMonth(dates.lastSalaryMonth))}から資産で生活費を負担。</strong></p>
+    el('salaryPreviewBody').innerHTML=`<p><strong>試す案：${esc(dateWithAge(dates.lastSalaryMonth,p.candidate))}まで給与生活、${esc(dateWithAge(nextMonth(dates.lastSalaryMonth),p.candidate))}から資産で生活費を負担。</strong></p>
       <div class="salary-comparison">${[['現在の計画',p.before],['新方式・65歳基準',p.baselineResult],['新方式・試す案',p.result]].map(([label,r])=>`<div><span>${label}</span><strong>${money(r.finalAsset)}</strong><small>${r.endAge}歳末資産</small></div>`).join('')}</div>
       <p>現在計画 → 新方式65歳基準：${money(p.baselineResult.finalAsset-p.before.finalAsset)}<br>新方式65歳基準 → 試す案：${money(p.result.finalAsset-p.baselineResult.finalAsset)}</p>
       <p class="muted">初回は方式変更の影響を分けて確認してください。前倒し比較は同じ新方式の65歳基準との差です。新方式採用後の「現在→基準」は条件差も含みます。</p>

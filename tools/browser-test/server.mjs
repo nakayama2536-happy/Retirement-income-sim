@@ -12,10 +12,11 @@ export async function createTestServer({crossRelease=false}={}){
  const files=new Map(await Promise.all(manifest.files.map(async item=>[item.path,await fs.readFile(path.join(here,'app',item.path))])));
  const sw=files.get('sw.js').toString();
  if(!sw.includes(manifest.cacheVersion))throw Error('Cache version mismatch');
- const base='5da601562bc3ddcdbaff28528843fe007ac26cfc';
- const oldFiles=crossRelease?new Map(manifest.files.map(item=>[item.path,execFileSync('git',['show',base+':'+item.path],{cwd:path.resolve(here,'../..')})])):files;
+ const base='14b9a3d25458efa00da80e93fac7a35238094e69';
+ const oldManifest=crossRelease?JSON.parse(execFileSync('git',['show',base+':distribution-manifest.json'],{cwd:path.resolve(here,'../..'),encoding:'utf8'})):null;
+ const oldFiles=crossRelease?new Map(oldManifest.files.filter(item=>item.name!=='README.md'&&!item.name.startsWith('docs/')).map(item=>[item.name,execFileSync('git',['show',base+':'+item.name],{cwd:path.resolve(here,'../..')})])):files;
  const oldSW=oldFiles.get('sw.js').toString();
- const oldVersion=crossRelease?JSON.parse(execFileSync('git',['show',base+':distribution-manifest.json'],{cwd:path.resolve(here,'../..'),encoding:'utf8'})).runtime:manifest.cacheVersion;
+ const oldVersion=crossRelease?oldManifest.runtime:manifest.cacheVersion;
  if(!oldSW.includes(oldVersion))throw Error('Baseline cache mismatch');
  let mode='old';const log=[];
  const modes=['old','new','asset-failure','worker-failure','offline'];

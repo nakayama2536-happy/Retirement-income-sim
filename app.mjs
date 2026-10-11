@@ -1,3 +1,4 @@
+import {dateWithAge,ageOn} from './date-display.mjs';
 import {mountCalendarSheet} from './calendar-ui.mjs';
 import {mountExpenseSheet} from './expense-ui.mjs';
 import {mountIncomeSheet} from './income-ui.mjs';
@@ -284,9 +285,9 @@ function renderExpenseDetail() {
   try{
     const source=el('expenseDisplaySource');
     source.value=expenseDisplayProfile(config,source.value)||'';
-    const html=expenseDisplayHtml(expenseDisplayModel(config,age,{sourceProfile:source.value}));
+    const html=expenseDisplayHtml(expenseDisplayModel(config,age,{sourceProfile:source.value}),config);
     wrap.innerHTML=html.detail;reconcile.innerHTML=html.summary;
-    annual.innerHTML=annualCashflowHtml(annualCashflowSummary(config,age,{sourceProfile:source.value}));
+    annual.innerHTML=annualCashflowHtml(annualCashflowSummary(config,age,{sourceProfile:source.value}),config);
     if(taxAudit)taxAudit.innerHTML=taxSocialMethodHtml(taxSocialMethodAudit(config,age));
   }catch(e){wrap.textContent='内訳を表示できません。'+e.message;reconcile.textContent='未計算のため予算余裕は判定できません。';annual.textContent='年間収支を表示できません。'+e.message;if(taxAudit)taxAudit.textContent='税・社会保険の方式差を表示できません。'+e.message;}
   renderPeriodOverrides();
@@ -401,20 +402,19 @@ function drawChart() {
 
 function renderTimeline(){
   const list=el('timeline'); list.innerHTML='';
-  const primaryBirth=new Date(`${config.people?.primary?.birthDate}T00:00:00`);
-  const ageAt=d=>{const x=new Date(`${d}T00:00:00`);let a=x.getFullYear()-primaryBirth.getFullYear();if(x.getMonth()<primaryBirth.getMonth()||(x.getMonth()===primaryBirth.getMonth()&&x.getDate()<primaryBirth.getDate()))a--;return a;};
+  const ageAt=d=>ageOn(d,config.people?.primary?.birthDate)??'—';
   const raw=[
     [config.plan?.startDate,'老後計画開始'],
     [config.retirement?.receiveDate,'退職金受取'],
     [config.employment?.primary?.mainRetirement?.baseDate,'本業退職（基本）'],
     [config.ideco?.lumpDate||config.ideco?.contributionEndDate,'iDeCo/DC 50%一時金・年金開始'],
-    [config.income?.pensions?.spouse?.startDate,'配偶者 公的年金開始'],
+    [config.income?.pensions?.spouse?.startDate,'配偶者 公的年金開始','spouse'],
     [config.income?.pensions?.primary?.startDate,'本人 公的年金開始'],
-    [config.employment?.spouse?.sideWork?.endDate,'配偶者アルバイト終了'],
+    [config.employment?.spouse?.sideWork?.endDate,'配偶者アルバイト終了','spouse'],
     [config.employment?.primary?.sideWork?.endDate,'本人アルバイト終了']
-  ].filter(x=>x[0]).map(([date,label])=>({date,label,age:ageAt(date)}));
+  ].filter(x=>x[0]).map(([date,label,person='primary'])=>({date,label,person,age:ageAt(date)}));
   const items=[...raw,...(config.events||[]).filter(e=>e.date).map(e=>({date:e.date,label:e.label,age:ageAt(e.date)}))].sort((a,b)=>a.date.localeCompare(b.date));
-  items.forEach(i=>{ const li=document.createElement('li'); li.innerHTML=`<strong>${i.age}歳</strong><span>${escapeHtml(i.label)} <small>${escapeHtml(i.date.slice(0,7))}</small></span>`; list.appendChild(li); });
+  items.forEach(i=>{ const li=document.createElement('li'); li.innerHTML=`<strong>${i.age}歳</strong><span>${escapeHtml(i.label)} <small>${escapeHtml(dateWithAge(i.date,config,i.person))}</small></span>`; list.appendChild(li); });
 }
 
 function renderActuals() {
@@ -528,11 +528,11 @@ function renderScenarioCompare(){
     ['90歳末資産', x=>x.m.age90Asset==null?'—':money(x.m.age90Asset)],
     ['税引後運用利回り', x=>`${x.s.config.plan.afterTaxReturn}%`],
     ['インフレ率', x=>`${x.s.config.plan.inflation}%`],
-    ['本人バイト終了', x=>x.s.config.employment?.primary?.sideWork?.endDate?.slice(0,7)||'—'],
-    ['本人年金開始', x=>x.s.config.income?.pensions?.primary?.startDate?.slice(0,7)||'—']
+    ['本人バイト終了', x=>dateWithAge(x.s.config.employment?.primary?.sideWork?.endDate?.slice(0,7),x.s.config)],
+    ['本人年金開始', x=>dateWithAge(x.s.config.income?.pensions?.primary?.startDate?.slice(0,7),x.s.config)]
   ];
   let html='<table><thead><tr><th>指標</th>'+metrics.map(x=>`<th>${escapeHtml(x.s.name)}</th>`).join('')+'</tr></thead><tbody>';
-  html+=rows.map(([label,fn])=>`<tr><td>${label}</td>${metrics.map(x=>`<td>${fn(x)}</td>`).join('')}</tr>`).join('');
+  html+=rows.map(([label,fn])=>`<tr><td>${label}</td>${metrics.map(x=>`<td>${escapeHtml(fn(x))}</td>`).join('')}</tr>`).join('');
   html+='</tbody></table>'; el('scenarioCompare').innerHTML=html;
 }
 
@@ -612,9 +612,9 @@ function renderCalculationBasis(){
   const idecoTax=config.ideco?.applyCurrentLawTaxReference ? '現行制度参考を反映' : '税引前で計上';
   box.innerHTML=`<dl>
     <div><dt>計算単位</dt><dd>月次</dd></div>
-    <div><dt>計画開始</dt><dd>${escapeHtml(start)}</dd></div>
-    <div><dt>本業退職・基本日</dt><dd>${escapeHtml(ret)}</dd></div>
-    <div><dt>給与生活の計算方式</dt><dd>${config.cashflow?.salaryLife?'純入出金方式（最終給与月 '+escapeHtml(config.cashflow.salaryLife.lastSalaryMonth)+'）':'旧方式'}</dd></div>
+    <div><dt>計画開始</dt><dd>${escapeHtml(dateWithAge(start,config))}</dd></div>
+    <div><dt>本業退職・基本日</dt><dd>${escapeHtml(dateWithAge(ret,config))}</dd></div>
+    <div><dt>給与生活の計算方式</dt><dd>${config.cashflow?.salaryLife?'純入出金方式（最終給与月 '+escapeHtml(dateWithAge(config.cashflow.salaryLife.lastSalaryMonth,config))+'）':'旧方式'}</dd></div>
     <div><dt>通常運用</dt><dd>税引後 ${Number(config.plan?.afterTaxReturn||0).toFixed(5)}%/年</dd></div>
     <div><dt>インフレ</dt><dd>${Number(config.plan?.inflation||0).toFixed(2)}%/年</dd></div>
     <div><dt>支出の正本</dt><dd>年代別年間予算（税・社保を含む）</dd></div>

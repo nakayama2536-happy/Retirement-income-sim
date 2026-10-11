@@ -4,6 +4,7 @@ import path from 'node:path';
 import {fileURLToPath, pathToFileURL} from 'node:url';
 import assert from 'node:assert/strict';
 import {createTestServer} from './server.mjs';
+import {dateWithAge} from '../../date-display.mjs';
 const here=path.dirname(fileURLToPath(import.meta.url));
 const out=path.join(here,'browser-results');
 await fs.mkdir(out,{recursive:true});
@@ -13,7 +14,7 @@ async function snapshot(page){
  const home=await page.evaluate(()=>Object.fromEntries(['currentAsset','finalAsset','finalThreshold','reserve','afterReserve','safeAssetMinimum','reserveUsedThreshold'].map(id=>[id,document.getElementById(id).textContent])));
  await page.locator('[data-tab="scenarios"]').click();
  const scenarios=await page.locator('.scenario-check').evaluateAll(nodes=>nodes.map(n=>({id:n.querySelector('input').dataset.scenarioSelect,selected:n.querySelector('input').checked,name:n.querySelector('strong').firstChild.textContent.trim()})));
- const comparison=await page.locator('#scenarioCompare').innerText();
+ const comparison=await page.locator('#scenarioCompare tbody tr').evaluateAll(rows=>rows.map(row=>[...row.querySelectorAll('td')].map(cell=>cell.textContent)));
  await page.locator('[data-tab="settings"]').click();
  const pending=page.waitForEvent('download');
  await page.locator('#exportFullBtn').click();
@@ -21,6 +22,17 @@ async function snapshot(page){
  const stream=await download.createReadStream();const chunks=[];
  for await(const chunk of stream)chunks.push(chunk);
  const data=JSON.parse(Buffer.concat(chunks).toString());
+ // Date formatting intentionally changes. Check both expected representations
+ // before canonicalizing only those cells; preserve all amounts and settings.
+ const selected=data.scenarios.filter(s=>s.selected).slice(0,3);
+ for(const row of comparison){
+  if(!['本人バイト終了','本人年金開始'].includes(row[0]))continue;
+  selected.forEach((s,i)=>{
+   const raw=(row[0]==='本人バイト終了'?s.config.employment?.primary?.sideWork?.endDate:s.config.income?.pensions?.primary?.startDate)?.slice(0,7);
+   assert.ok([raw||'—',dateWithAge(raw,s.config)].includes(row[i+1]));
+   row[i+1]=raw||null;
+  });
+ }
  // Missing targets intentionally change from the old implicit 0 to 未設定.
  // Verify that exact display separately, retaining all numeric/storage checks.
  if(!Object.hasOwn(data.config.management?.thresholds??{},data.config.plan.endAge)){
@@ -78,7 +90,15 @@ async function run(browser,id,mode){
   }
   // Probe is outside SW scope, so closing the application releases all clients.
   const probe=await context.newPage();await probe.goto('about:blank');
-  const candidate=mode==='new'?context.serviceWorkers().at(-1):null;
+  // Playwright does not promise serviceWorkers() ordering. Identify the
+  // candidate by the cache token injected by this isolated test server.
+  let candidate=null;
+  if(mode==='new'){
+   for(const worker of context.serviceWorkers()){
+    if((await worker.evaluate(()=>CACHE)).endsWith('isolated-test-new')){candidate=worker;break;}
+   }
+   assert(candidate,'new worker must be identified before closing the old client');
+  }
   await page.close();
   if(candidate)await candidate.evaluate(async()=>{
    const end=Date.now()+15000;
@@ -178,6 +198,51 @@ async function validateHomeUi(browser){
  finally{await context.close();await fixture.close();}
 }
 
+async function validatePensionUi(browser){
+ const fixture=await createTestServer();const context=await browser.newContext({acceptDownloads:true});
+ const record={id:'P1',status:'running',scope:'age labels, pension estimate, draft/reset/apply, synthetic data'};report.cases.push(record);
+ try{
+  const data=JSON.parse(await fs.readFile(path.join(here,'synthetic-full.json'),'utf8'));
+  data.config.income.pensions.primary={startDate:'2050-01-01',annualAtStart:170.4,certainty:'official_estimate',alternatives:{65:120}};
+  const file=path.join(out,'pension-synthetic.json');await fs.writeFile(file,JSON.stringify(data));
+  const page=await open(context,fixture.url);await load(page,file);
+  const before=(await snapshot(page)).data;
+  for(const width of [390,1280]){
+   await page.setViewportSize({width,height:900});await page.locator('[data-tab="pension"]').click();
+   await page.locator('#primaryPensionMonth').fill('2051-01');
+   assert((await page.locator('#primaryPensionMonthAge').innerText()).includes('本人71歳'));
+   assert((await page.locator('#primaryPensionEstimate').innerText()).includes('180.48'));
+   await page.locator('#primaryPensionUseEstimate').click();
+   assert.equal(await page.locator('#primaryPensionAmount').inputValue(),'180.48');
+   await page.locator('#pensionForm button[type="submit"]').click();
+   assert(await page.locator('#pensionPreview').isVisible());
+   assert.deepEqual((await snapshot(page)).data,before);
+   await page.locator('[data-tab="pension"]').click();
+   const card=page.locator('#pensionForm');await card.scrollIntoViewIfNeeded();
+   assert(await card.evaluate(n=>n.scrollWidth<=n.clientWidth+1));
+   for(const id of ['primaryPensionMonth','primaryPensionUseEstimate','pensionReset']){
+    const box=await page.locator('#'+id).boundingBox();assert(box&&box.x>=0&&box.x+box.width<=width+1);
+   }
+   await card.screenshot({path:path.join(out,'P1-pension-'+width+'.png')});
+   await page.locator('#pensionReset').click();
+   assert.equal(await page.locator('#primaryPensionMonth').inputValue(),'2050-01');
+   assert.equal(await page.locator('#primaryPensionAmount').inputValue(),'170.4');
+  }
+  await page.locator('#primaryPensionMonth').fill('2051-01');await page.locator('#primaryPensionUseEstimate').click();
+  await page.locator('#pensionForm button[type="submit"]').click();await page.locator('#pensionApply').click();
+  const after=(await snapshot(page)).data;
+  assert.equal(after.config.income.pensions.primary.annualAtStart,180.48);
+  assert.equal(after.config.income.pensions.primary.startDate,'2051-01-01');
+  assert.deepEqual(after.scenarios,before.scenarios);
+  await page.locator('[data-tab="pension"]').click();await page.locator('#pensionUndo').click();
+  const undone=(await snapshot(page)).data;
+  assert.equal(undone.config.income.pensions.primary.annualAtStart,170.4);
+  assert.deepEqual(undone.scenarios,before.scenarios);
+  record.status='pass';
+ }catch(e){record.status='failed-or-harness-error';record.error=e.stack;throw e;}
+ finally{await context.close();await fixture.close();}
+}
+
 let browser;
 try{
  const modulePath=process.env.CODEX_PRIMARY_RUNTIME_NODE_MODULES;
@@ -188,6 +253,7 @@ try{
  report.browser=browser.version();
  for(const [id,mode] of [['U1','new'],['U2','asset-failure'],['U3','worker-failure'],['C1','new']])await run(browser,id,mode);
  await validateHomeUi(browser);
+ await validatePensionUi(browser);
  report.status='completed';
 }catch(e){report.status=browser?'incomplete':'environment-blocked';report.error=String(e);process.exitCode=2;}
 finally{if(browser)await browser.close();await fs.writeFile(path.join(out,'report.json'),JSON.stringify(report,null,2));console.log(JSON.stringify({status:report.status,cases:report.cases.map(x=>({id:x.id,status:x.status}))}));}
