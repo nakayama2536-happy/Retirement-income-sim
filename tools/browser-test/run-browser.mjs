@@ -90,7 +90,15 @@ async function run(browser,id,mode){
   }
   // Probe is outside SW scope, so closing the application releases all clients.
   const probe=await context.newPage();await probe.goto('about:blank');
-  const candidate=mode==='new'?context.serviceWorkers().at(-1):null;
+  // Playwright does not promise serviceWorkers() ordering. Identify the
+  // candidate by the cache token injected by this isolated test server.
+  let candidate=null;
+  if(mode==='new'){
+   for(const worker of context.serviceWorkers()){
+    if((await worker.evaluate(()=>CACHE)).endsWith('isolated-test-new')){candidate=worker;break;}
+   }
+   assert(candidate,'new worker must be identified before closing the old client');
+  }
   await page.close();
   if(candidate)await candidate.evaluate(async()=>{
    const end=Date.now()+15000;
