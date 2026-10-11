@@ -39,7 +39,8 @@ test('pending actions point at the actual adopted-value inputs and distinguish u
 test('default simulation view retains accessible opt-in and matching actual columns',()=>{
  const {context:c,el}=setup();c.renderYearTable();assert.ok(html.includes('<body class="simulation-only">'));assert.ok(html.includes('id="showActuals"'));assert.ok(html.includes('data-tab="actuals" class="actual-only"'));
  assert.match(el('yearRows').children[0].innerHTML,/<td class="actual-only">/);
- assert.ok(html.indexOf('id="finalThreshold"')<html.indexOf('id="finalAsset"'));
+ const summary=html.match(/<article class="card target-overview">([\s\S]*?)<\/article>/)[1];
+  for(const id of ['status','finalThreshold','finalAsset','finalMargin'])assert.ok(summary.includes('id="'+id+'"'));
 });
 test('pending navigation focuses and scrolls without triggering input events or saving',()=>{
  const target={parentElement:{tagName:'DETAILS',open:false,parentElement:null},classList:{add(){}},matches:()=>true,focus(){this.focused=true;},scrollIntoView(){this.scrolled=true;}};

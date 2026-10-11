@@ -39,3 +39,9 @@
 .current-setting-summary h3{margin-top:0}.current-setting-list{margin:0}.current-setting-list>div{display:grid;grid-template-columns:minmax(120px,1fr) minmax(0,3fr);gap:14px;padding:10px 0;border-top:1px solid #dbe2eb}.current-setting-list dt{font-weight:650}.current-setting-list dd{margin:0;overflow-wrap:anywhere}
 .detail-form label[hidden]{display:none!important}
 @media(max-width:600px){.current-setting-list>div{grid-template-columns:1fr;gap:4px}.current-setting-summary{padding:12px}}
+
+/* Match chart and legend despite the more specific generic legend rule. */
+.legend i.legend-target{border-top:2px dashed #bb6d17}
+.target-overview{grid-column:1/-1}.target-metrics{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;margin:14px 0}
+.target-metrics span{display:block;color:var(--muted);font-size:.85rem}.target-metrics strong{overflow-wrap:anywhere}
+@media(max-width:600px){.target-metrics{grid-template-columns:1fr;gap:10px}}
