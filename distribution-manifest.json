@@ -1,6 +1,6 @@
 {
   "kind": "public-release",
-  "runtime": "v0.9.7-i08-backup-guidance-20261010",
+  "runtime": "v0.9.7-i08-simulation-home-20261011",
   "files": [
     {
       "name": "annual-cashflow.mjs",
@@ -14,8 +14,8 @@
     },
     {
       "name": "app.mjs",
-      "size": 57435,
-      "sha256": "a25f1d6144cf09c1f9ef34e99cecc322cdeac41f1ecb3517487b20c505360898"
+      "size": 60754,
+      "sha256": "9e0af5d9b4e60bb585b2795d1125e01aab93384b373ba2e8e577369b7cc871e7"
     },
     {
       "name": "backup-compatibility.mjs",
@@ -54,8 +54,8 @@
     },
     {
       "name": "docs/USER_GUIDE.md",
-      "size": 5661,
-      "sha256": "53e65d9b4ac143cce4a46a193995fb1b0519b1f629c958b2903a4f9a0bf96a4d"
+      "size": 7394,
+      "sha256": "b6ce630e02ffc4d67666402d43d74e07adbc6e9aeadf481417da729151e9f15f"
     },
     {
       "name": "expense-display.mjs",
@@ -109,8 +109,8 @@
     },
     {
       "name": "index.html",
-      "size": 35268,
-      "sha256": "cfc4a1ff81ec6bdccdaffd62d4299fb543149419af6b9dd04e963f87ef5f2448"
+      "size": 37600,
+      "sha256": "dba8000a18d6a7237d57e0b7e1e41ebd4facfd1023e56f9ba2e49f6113184b7a"
     },
     {
       "name": "manifest.webmanifest",
@@ -119,8 +119,8 @@
     },
     {
       "name": "migration-ui.mjs",
-      "size": 3169,
-      "sha256": "ac413926fc16d19f83e89dcc9cc874ec6b49c0ec592d2e9c834e1de3ad437c92"
+      "size": 3302,
+      "sha256": "9a2b9aa54834bb943f7743d8dc3bb13eaa781913635f5623ec013e03bf4b446a"
     },
     {
       "name": "migration.mjs",
@@ -179,13 +179,13 @@
     },
     {
       "name": "styles.css",
-      "size": 10927,
-      "sha256": "bf25e2674421793978db7b5e5f8e330123747ec6ce6e7dbc1ba73835f602ce80"
+      "size": 11370,
+      "sha256": "0c45673ead1d24b911029a2a63b0692372bad82246a201e7c2dbed6e872a4be2"
     },
     {
       "name": "sw.js",
       "size": 3245,
-      "sha256": "2c8a61c5c8cec89c3aad6d79b2c584127227405bb9b88a4370ca32eb80f6755d"
+      "sha256": "5e646a351c84a251606801bf79b2bf23a50f687f1e37233ae9e3d8d3f9eeff41"
     },
     {
       "name": "tax-social-audit.mjs",

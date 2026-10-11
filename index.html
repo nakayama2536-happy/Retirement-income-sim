@@ -6,17 +6,17 @@
 <meta name="theme-color" content="#1d2733"><title>ライフプランシミュレーター</title>
 <link rel="manifest" href="manifest.webmanifest"><link rel="apple-touch-icon" href="icons/icon-192.png"><link rel="stylesheet" href="styles.css">
 </head>
-<body>
+<body class="simulation-only">
 <header class="topbar"><div><h1>ライフプランシミュレーター</h1><p>計画・制度・実績を一つの計算エンジンで管理</p></div><div class="version"><span id="appVersion"></span><span>制度 <b id="rulesVersion"></b></span></div></header>
 <div id="notice" class="notice" role="status" hidden></div>
 <nav class="tabs" aria-label="画面切替">
-<button data-tab="home" class="active">ホーム</button><button data-tab="cashflow">年間収支</button><button data-tab="pension">年金</button><button data-tab="salary">給与生活</button><button data-tab="actuals">実績</button><button data-tab="scenarios">比較</button><button data-tab="rules">制度</button><button data-tab="settings">設定</button>
+<button data-tab="home" class="active">ホーム</button><button data-tab="cashflow">年間収支</button><button data-tab="pension">年金</button><button data-tab="salary">給与生活</button><button data-tab="actuals" class="actual-only">実績</button><button data-tab="scenarios">比較</button><button data-tab="rules">制度</button><button data-tab="settings">設定</button>
 </nav>
 <main>
 <section id="migrationPanel" class="card" hidden>
-<h2>保存データの引継ぎ</h2>
+<h2>以前のアプリデータを引き継ぐ</h2>
 <p id="migrationStatus" role="status" aria-live="polite"></p>
-<label>保存元<select id="migrationChoice"></select></label>
+<label>このブラウザ内の保存元<select id="migrationChoice"></select></label>
 <label id="migrationConfigOnlyRow" hidden><input id="migrationConfigOnly" type="checkbox">この保存元には比較案がありません。比較案0件で引き継ぎます。</label>
 <p>設定・実績・年次点検・比較案をまとめて保存します。元データは削除しません。</p>
 <button id="migrationApply" disabled>選択した保存元を引き継ぐ</button>
@@ -29,26 +29,28 @@
 </section>
 <div id="dashboard" hidden>
 <section id="home" class="panel">
+<article class="card simulation-context"><strong>表示中：現在の設定によるシミュレーション</strong><p>保存した比較案は「比較」で確認できます。年金・給与生活などの未反映の入力は、この結果に含まれません。</p><small id="simulationPeriod"></small></article>
 <div class="hero-grid">
-<article class="card status-card"><span>計画状態</span><strong id="status"></strong><small>管理基準との比較</small></article>
-<article class="card"><span>64歳開始資産</span><strong id="currentAsset"></strong></article>
-<article class="card"><span>95歳末・当初計画</span><strong id="finalAsset"></strong></article>
-<article class="card forecast-card"><span>95歳末・実績反映後</span><strong id="forecastFinalAsset">未入力</strong><small id="forecastNote">実績入力後に自動更新</small></article>
-<article class="card"><span>95歳管理基準</span><strong id="finalThreshold"></strong></article>
-<article class="card"><span>予備枠</span><strong id="reserve"></strong><small>最低安全資産 <b id="safeAssetMinimum"></b> / 全使用後 <b id="afterReserve"></b> / 95歳最低目安 <b id="reserveUsedThreshold"></b></small></article>
+<article class="card status-card"><span id="targetStatusLabel">最終年齢末の目標</span><strong id="status"></strong><small id="targetStatusNote"></small></article>
+<article class="card"><span id="initialAssetLabel">開始資産</span><strong id="currentAsset"></strong><small>シミュレーション開始時点の設定額</small></article>
+<article class="card"><span id="finalTargetLabel">目標資産額</span><strong id="finalThreshold"></strong><small>設定した資産額の目安</small></article>
+<article class="card"><span id="finalPredictionLabel">予測資産額</span><strong id="finalAsset"></strong><small>現在の条件で計算したシミュレーション値</small></article>
+<article class="card"><span>目標との差額</span><strong id="finalMargin"></strong><small>予測資産額 − 目標資産額</small></article>
+<article class="card"><span>予備枠</span><strong id="reserve"></strong><small>最低安全資産 <b id="safeAssetMinimum"></b> / 予備枠全使用後の最終資産 <b id="afterReserve"></b> / 全使用後の最低目安 <b id="reserveUsedThreshold"></b></small></article>
+<article class="card forecast-card actual-only"><span>実績反映後の最終予測資産額</span><strong id="forecastFinalAsset">未入力</strong><small id="forecastNote">実績入力後に自動更新</small></article>
 </div>
-<article class="card"><div class="section-title"><h2>資産推移</h2><button class="info" data-help="資産推移" data-help-text="当初計画線を保持し、実績が入力されると最新実績から95歳までの再予測線を重ねます。支出のインフレ基準年は64歳のまま維持します。">ⓘ</button></div><svg id="assetChart" role="img" aria-label="64歳から95歳末までの資産推移"></svg><div class="legend"><span><i class="legend-plan"></i>当初計画</span><span><i class="legend-forecast"></i>実績反映後予測</span><span><i class="legend-actual"></i>実績</span></div></article>
+<article class="card"><div class="section-title"><h2>資産推移</h2><button class="info" data-help="資産推移" data-help-text="現在の設定によるシミュレーションを表示します。実績の表示は設定で切り替えられます。表示切替で計算条件や保存データは変わりません。">ⓘ</button></div><svg id="assetChart" role="img" aria-label="64歳から95歳末までの資産推移"></svg><div class="legend"><span><i class="legend-plan"></i>現在のシミュレーション</span><span class="actual-only"><i class="legend-forecast"></i>実績反映後予測</span><span class="actual-only"><i class="legend-actual"></i>実績</span></div></article>
 <div class="two-col">
-<article class="card"><h2>管理基準</h2><div class="table-wrap"><table><thead><tr><th>年齢末</th><th>予測</th><th>基準</th><th>差</th></tr></thead><tbody id="keyAges"></tbody></table></div></article>
+<article class="card"><h2>年齢別の目標と予測</h2><p class="muted">現在の設定による予測です。差額は予測−目標。マイナスは設定した目安を下回ることを示し、資金不足とは区別します。</p><div class="table-wrap"><table><thead><tr><th>年齢末</th><th>目標資産額</th><th>予測資産額</th><th>差額</th></tr></thead><tbody id="keyAges"></tbody></table></div></article>
 <article class="card"><h2>確認事項</h2><ul id="checks" class="checks"></ul><h3>主要イベント</h3><ol id="timeline" class="timeline"></ol></article>
 </div>
 <div class="two-col">
 <article class="card"><div class="section-title"><h2>入力値の確度</h2><button class="info" data-help="入力値の確度" data-help-text="数字の大きさとは別に、その数字が確定値・公式見込・会社見込・計画・仮定・シナリオ・未確認のどれかを表示します。計算結果が精密に見えても、前提が仮定なら将来結果にも幅があることを確認するための機能です。">ⓘ</button></div><div id="certaintySummary"></div></article>
-<article class="card"><div class="section-title"><h2>95歳資産の増減要因</h2><button class="info" data-help="増減要因分解" data-help-text="基準ケースと現在条件の95歳資産差を、開始資産・運用・労働収入・年金・支出条件・DCや転居等のイベントへ配分します。相互作用も配分するため、各要因の合計は総差額と一致します。">ⓘ</button></div><div id="factorSummary"></div></article>
+<article class="card"><div class="section-title"><h2>95歳資産の増減要因</h2><button class="info" data-help="増減要因分解" data-help-text="保存した比較の基準案と現在条件の最終資産差を、開始資産・運用・労働収入・年金・支出条件・DCや転居等のイベントへ配分します。相互作用も配分するため、各要因の合計は総差額と一致します。">ⓘ</button></div><div id="factorSummary"></div></article>
 </div>
 <div class="two-col"><article class="card"><div class="section-title"><h2>データ整合性</h2><button class="info" data-help="データ整合性" data-help-text="年間予算の抜け・重複、予備枠内訳、生活費内訳、臨時イベントなどを自動点検します。計算を続けられる警告と、修正が必要なエラーを区別して表示します。">ⓘ</button></div><div id="integritySummary"></div></article><article class="card"><div class="section-title"><h2>見直し条件</h2><span id="reviewCount" class="pill"></span></div><div id="reviewAlerts" class="pending-list"></div></article></div>
 <div class="two-col"><article class="card"><div class="section-title"><h2>この結果の計算根拠</h2><button class="info" data-help="計算根拠" data-help-text="95歳末資産は月次計算で、運用益・就労収入・公的年金・iDeCo/DC受取・年代別年間予算・臨時イベントを同一時間軸に反映しています。税・社会保険は年代別年間予算に含むため、制度ツールの詳細額を別加算しません。">ⓘ</button></div><div id="calculationBasis" class="summary-box"></div></article><article class="card"><div class="section-title"><h2>制度根拠・更新状態</h2><button class="info" data-help="制度根拠" data-help-text="年金・NISA・iDeCo/DC・退職金・雇用保険・税社会保険について、制度基準日と公式出典を制度タブに保持します。将来時点では現在法を確定値として扱わず、受取・退職前に再確認します。">ⓘ</button></div><div id="sourceStatus"></div></article></div>
-<article class="card"><div class="section-title"><h2>保留事項</h2><span id="pendingCount" class="pill"></span></div><p class="muted">利用者の判断・外部確認が必要な事項だけを残し、その他は自動で進めます。</p><div id="pendingList" class="pending-list"></div></article>
+<article class="card"><div class="section-title"><h2>保留事項</h2><span id="pendingCount" class="pill"></span></div><p class="muted">変更できる項目は入力欄へ移動できます。移動だけでは保存・反映しません。外部確認や未対応項目は区別して表示します。</p><div id="pendingList" class="pending-list"></div></article>
 </section>
 
 <section id="cashflow" class="panel" hidden><div class="two-col"><article class="card"><div class="section-title"><h2>基本生活費内訳</h2><button class="info" data-help="基本生活費内訳" data-help-text="選択した出典の内訳を、年齢期の計算対象月で合計して確認します。年代別年間予算が老後資産計算の正本なので、この内訳を別途加算しません。">ⓘ</button></div><label>内訳の確認年齢<select id="cashflowViewAge"></select></label><label>表示する内訳の出典<select id="expenseDisplaySource"><option value="">出典を確認（単一形式・直前反映時のみ自動表示）</option><option value="public-v0.9">公開元 v0.9形式</option><option value="work-v0.9.7">Work v0.9.7形式</option></select></label><div id="expenseDetail" style="overflow-wrap:anywhere"></div></article><article class="card"><h2>対象期間の予算との整合</h2><div id="expenseReconcile" class="summary-box"></div></article></div>
@@ -71,7 +73,7 @@
 <p class="muted">車費用を0にして同額を介護・通院・移動費へ振り替えます。処分年齢を変えて再設定すると、前の自動設定を置き換えます。</p></details>
 <p class="muted">金額は64歳時点の価格として扱い、内訳・旅行費・管理予算には設定済みインフレ率を反映して表示します。資産推移の支出には管理予算だけを計上し、内訳を二重加算しません。追加収入は設定タブの専用画面で差分確認後に反映します。</p>
 <div id="periodOverrideRows" class="table-wrap"></div></article>
-<article class="card"><div class="section-title"><h2>年次計算表</h2><button class="link-btn" data-open-tab="pension">年金シートで変更</button></div><p class="muted">単位：万円。年金や追加収入を分けて確認できます。支出は年代別管理予算を正本とします。</p><div class="table-wrap"><table><thead><tr><th>年齢期</th><th>期首資産</th><th>運用益</th><th>労働</th><th>本人年金</th><th>配偶者年金</th><th>iDeCo年金</th><th>雇用保険</th><th>臨時・追加収入</th><th>支出</th><th>計画年末</th><th>実績年末</th><th>差</th></tr></thead><tbody id="yearRows"></tbody></table></div></article></section>
+<article class="card"><div class="section-title"><h2>年次計算表</h2><button class="link-btn" data-open-tab="pension">年金シートで変更</button></div><p class="muted">単位：万円。年金や追加収入を分けて確認できます。支出は年代別管理予算を正本とします。</p><div class="table-wrap"><table><thead><tr><th>年齢期</th><th>期首資産</th><th>運用益</th><th>労働</th><th>本人年金</th><th>配偶者年金</th><th>iDeCo年金</th><th>雇用保険</th><th>臨時・追加収入</th><th>支出</th><th>予測年末</th><th class="actual-only">実績年末</th><th class="actual-only">実績−予測</th></tr></thead><tbody id="yearRows"></tbody></table></div></article></section>
 
 <section id="pension" class="panel" hidden>
 <article class="card"><div class="section-title"><h2>年金シート</h2><span id="pensionState" class="pill" role="status">反映済み</span></div>
@@ -123,12 +125,12 @@
 
 <section id="scenarios" class="panel" hidden>
 <div class="two-col">
-<article class="card"><div class="section-title"><h2>シナリオ保存</h2><button class="info" data-help="シナリオ比較" data-help-text="現在の設定を名前付きで保存し、最大3案を同時比較します。実績データはシナリオ条件から除外し、将来条件だけを比較します。">ⓘ</button></div>
-<label>シナリオ名<input id="scenarioName" type="text" value=""></label><button id="saveScenarioBtn" class="primary">現在条件を保存</button><p class="muted">初回は読み込んだ基準条件を「基準ケース」として自動保存します。</p></article>
+<article class="card"><div class="section-title"><h2>比較案を保存</h2><button class="info" data-help="シナリオ比較" data-help-text="現在の設定を名前付きで保存し、最大3案を同時比較します。実績データはシナリオ条件から除外し、将来条件だけを比較します。">ⓘ</button></div>
+<label>比較案の名前<input id="scenarioName" type="text" value=""></label><button id="saveScenarioBtn" class="primary">現在の設定を比較案として保存</button><p class="muted">初回は読み込んだ条件を「基準ケース」という名前の比較の基準案として自動保存します。目標資産額とは別のものです。</p></article>
 <article class="card"><h2>比較ルール</h2><p>最大3案を選択すると、95歳資産、80歳・90歳資産、予備枠全使用後などを同じ計算式で比較します。</p><p class="muted">点数化や「最適案」の自動判定は行いません。判断に必要な数値だけを並べます。</p></article>
 </div>
-<article class="card"><h2>保存済みシナリオ</h2><div id="scenarioList" class="scenario-list"></div></article>
-<article class="card"><h2>3案比較</h2><div id="scenarioCompare" class="table-wrap"></div></article>
+<article class="card"><h2>保存した比較案</h2><div id="scenarioList" class="scenario-list"></div></article>
+<article class="card"><h2>選択した比較案のシミュレーション</h2><p class="muted">各案を保存した時点の条件で計算しています。ホームの現在設定とは異なる場合があります。</p><div id="scenarioCompare" class="table-wrap"></div></article>
 </section>
 
 <section id="rules" class="panel" hidden>
@@ -144,6 +146,7 @@
 </section>
 
 <section id="settings" class="panel" hidden>
+<article class="card"><h2>表示する機能</h2><label class="display-toggle"><input id="showActuals" type="checkbox">実績入力・実績からの再予測も表示する</label><p class="muted">通常はシミュレーションだけを表示します。この切替は表示だけに適用し、保存済みの実績を削除しません。再起動すると通常表示に戻ります。</p><button class="link-btn actual-only" data-open-tab="actuals">実績入力を開く</button></article>
 <article id="expenseSheet" class="card"><h2>支出内訳・管理予算の反映</h2>
 <p>既存項目を1件ずつ変更します。内訳は予算との照合用です。資産推移の支出を変える場合は「管理予算」を選んでください。</p>
 <label>変更するデータの出典<select id="expenseSource"><option value="">選択してください（不明なら反映しない）</option><option value="work-v0.9.7">Work v0.9.7形式</option><option value="public-v0.9">公開元 v0.9形式</option></select></label>
@@ -182,8 +185,8 @@
 <p id="calendarHistory"></p><button id="calendarUndo" type="button" class="secondary" disabled>直前の期間方式の反映を取り消す</button>
 <p class="muted">取消は期間方式だけを戻します。実績の対象期間が変わる場合は、反映・取消を止めて確認を求めます。</p></article>
 
-<div class="two-col"><article class="card"><h2>主要前提</h2><form id="settingsForm" class="form-grid"><label>64歳時点資産（万円）<input name="initialAsset" type="number"></label><label>税引後運用利回り（%）<input name="afterTaxReturn" type="number" step="0.00001"></label><label>インフレ率（%）<input name="inflation" type="number" step="0.1"></label><label>夫婦アルバイト年額（万円・参考）<input name="laborAnnual" type="number"></label><label>予備枠（万円）<input name="reserveTotal" type="number"></label><button class="primary" type="submit">保存して再計算</button></form><p class="muted">年金の開始月・年額は年金シートで変更できます。退職日・iDeCo受取等は個人設定JSONで管理します。夫婦の労働収入配分は現在の比率を維持します。</p></article>
-<article class="card"><h2>復旧用バックアップの事前確認</h2><p>旧本体へ戻す場合は、その旧版で更新前に作成した一括バックアップを使います。新版のデータを旧本体へ直接読み込ませないでください。保存領域やアプリを削除する前に、本体版・バックアップの保存先を確認してください。</p><label>復旧先の版<select id="recoveryTarget"><option value="current">I-08開発版</option><option value="public-v0.9">公開元v0.9の旧本体</option></select></label><label class="file-btn">復旧用JSONの事前確認（保存しません）<input id="recoveryCheckFile" type="file" accept="application/json"></label><p class="muted">この操作は適合性の確認だけです。アプリの版の切替や、バックアップの復元は行いません。</p><p id="recoveryCheckResult" role="status">復旧先の版とバックアップを選択してください。保存は行いません。</p><p class="muted">正常な統合保存状態は保持します。破損状態は旧候補へ自動復帰せず、元の保存状態と候補を残して個別復旧を判断します。Safariとホーム画面の保存領域は別々に確認してください。</p></article><article class="card"><h2>データ管理</h2><p>個人データは端末側へ保存します。</p><label class="file-btn">設定JSON読込<input id="importFile2" type="file" accept="application/json"></label><button id="exportBtn" class="secondary">現在設定だけをバックアップ</button><button id="exportFullBtn" class="secondary">設定＋シナリオを一括バックアップ</button><p class="muted">一括バックアップには、保存済みの現在設定・実績・年次点検・比較案が含まれます。年金・給与生活の未反映の下書きや、入力途中の画面内容は含まれません。下書きを残すためだけに採用値へ反映せず、必要な入力は別途控えてください。出力後はファイルの保存先を確認してください。</p><p class="muted">バックアップJSONは公開リポジトリへ保存しないでください。</p></article></div>
+<div class="two-col"><article class="card"><h2>主要前提</h2><form id="settingsForm" class="form-grid"><label>64歳時点資産（万円）<input id="initialAssetInput" name="initialAsset" type="number"></label><label>税引後運用利回り（%）<input name="afterTaxReturn" type="number" step="0.00001"></label><label>インフレ率（%）<input name="inflation" type="number" step="0.1"></label><label>夫婦アルバイト年額（万円・参考）<input name="laborAnnual" type="number"></label><label>予備枠（万円）<input name="reserveTotal" type="number"></label><button class="primary" type="submit">保存して再計算</button></form><p class="muted">年金の開始月・年額は年金シートで変更できます。退職日・iDeCo受取等は個人設定JSONで管理します。夫婦の労働収入配分は現在の比率を維持します。</p></article>
+<article class="card"><h2>復旧用バックアップの事前確認</h2><p>旧本体へ戻す場合は、その旧版で更新前に作成した一括バックアップを使います。新版のデータを旧本体へ直接読み込ませないでください。保存領域やアプリを削除する前に、本体版・バックアップの保存先を確認してください。</p><label>復旧先の版<select id="recoveryTarget"><option value="current">I-08開発版</option><option value="public-v0.9">公開元v0.9の旧本体</option></select></label><label class="file-btn">復旧用JSONの事前確認（保存しません）<input id="recoveryCheckFile" type="file" accept="application/json"></label><p class="muted">この操作は適合性の確認だけです。アプリの版の切替や、バックアップの復元は行いません。</p><p id="recoveryCheckResult" role="status">復旧先の版とバックアップを選択してください。保存は行いません。</p><p class="muted">正常な統合保存状態は保持します。破損状態は旧候補へ自動復帰せず、元の保存状態と候補を残して個別復旧を判断します。Safariとホーム画面の保存領域は別々に確認してください。</p></article><article class="card"><h2>このブラウザの保存データ・バックアップ</h2><p>現在の設定・実績・年次点検・比較案を、この端末のブラウザ内に保存します。別端末へは自動同期されません。バックアップは下のボタンからファイルとして出力します。</p><label class="file-btn">設定JSON読込<input id="importFile2" type="file" accept="application/json"></label><button id="exportBtn" class="secondary">現在設定だけをバックアップ</button><button id="exportFullBtn" class="secondary">設定＋シナリオを一括バックアップ</button><p class="muted">一括バックアップには、保存済みの現在設定・実績・年次点検・比較案が含まれます。年金・給与生活の未反映の下書きや、入力途中の画面内容は含まれません。下書きを残すためだけに採用値へ反映せず、必要な入力は別途控えてください。出力後はファイルの保存先を確認してください。</p><p class="muted">バックアップJSONは公開リポジトリへ保存しないでください。</p></article></div>
 <article class="card"><div class="section-title"><h2>入力値の確度区分</h2><button class="info" data-help="確度区分の変更" data-help-text="確度は計算値そのものを変更しません。後で公式資料や確定額が得られたときに、前提の信頼性を管理するためのラベルです。">ⓘ</button></div><form id="certaintyForm" class="form-grid"></form></article>
 </section>
 </div>

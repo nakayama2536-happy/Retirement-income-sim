@@ -18,8 +18,8 @@ export function mountMigration({document=globalThis.document,storage=globalThis.
       option.textContent=c.valid?`${c.label}：開始資産 ${c.state.config.plan.initialAsset}万円／比較案 ${c.state.scenarios.length}件${c.configOnly?'（設定のみ）':''}`:`${c.label}：利用不可（${c.error}）`;
       select.append(option);
     }
-    select.value='';panel.hidden=inspection.integrated.status==='absent'&&!inspection.candidates.length;
-    status.textContent=inspection.integrated.status==='valid'?'保存済みの統合状態を保持しています。旧候補は採用しません。':inspection.integrated.status==='invalid'?`統合状態の読込みを停止しました。旧設定には戻しません。${inspection.integrated.error}`:'候補は未採用です。同じ保存元の設定と比較案だけを引き継ぎます。';
+    select.value='';panel.hidden=inspection.integrated.status==='valid'||(inspection.integrated.status==='absent'&&!inspection.candidates.length);
+    status.textContent=inspection.integrated.status==='valid'?'このブラウザに保存した現在の設定・比較案を保持しています。':inspection.integrated.status==='invalid'?`このブラウザの保存データを読み込めません。以前のデータへの自動切替は停止しています。${inspection.integrated.error}`:'このブラウザに以前のデータが見つかりました。保存元を選んで設定・比較案を引き継げます。';
     selection();
   }
   select.addEventListener('change',()=>{accept.checked=false;selection();});
@@ -36,5 +36,5 @@ export function mountMigration({document=globalThis.document,storage=globalThis.
   });
   el('migrationRescan').addEventListener('click',render);
   render();
-  return {invalidate(event){if(event.key===null||MIGRATION_KEYS.includes(event.key)){stale=true;status.textContent='別画面で保存内容が変わりました。再読み込みしてから候補を確認してください。';selection();}},render};
+  return {invalidate(event){if(event.key===null||MIGRATION_KEYS.includes(event.key)){stale=true;panel.hidden=false;status.textContent='別画面で保存内容が変わりました。再読み込みしてから確認してください。';selection();}},render};
 }

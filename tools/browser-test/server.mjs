@@ -12,7 +12,7 @@ export async function createTestServer({crossRelease=false}={}){
  const files=new Map(await Promise.all(manifest.files.map(async item=>[item.path,await fs.readFile(path.join(here,'app',item.path))])));
  const sw=files.get('sw.js').toString();
  if(!sw.includes(manifest.cacheVersion))throw Error('Cache version mismatch');
- const base='0e348f4884377aeeea94b15801f5f0783da21534';
+ const base='5da601562bc3ddcdbaff28528843fe007ac26cfc';
  const oldFiles=crossRelease?new Map(manifest.files.map(item=>[item.path,execFileSync('git',['show',base+':'+item.path],{cwd:path.resolve(here,'../..')})])):files;
  const oldSW=oldFiles.get('sw.js').toString();
  const oldVersion=crossRelease?JSON.parse(execFileSync('git',['show',base+':distribution-manifest.json'],{cwd:path.resolve(here,'../..'),encoding:'utf8'})).runtime:manifest.cacheVersion;
