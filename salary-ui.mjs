@@ -55,18 +55,20 @@ export function mountSalarySheet({getState,onCommit,showNotice}){
       <div id="salary_laborDetail"><label>夫婦合計の就労収入（税引前・万円／月）<input id="salary_laborAmount" type="number" min="0" step="any" inputmode="decimal"></label><label>就労収入の最終月（その月を含む）<input id="salary_laborLastMonth" type="month" aria-describedby="salary_laborLastMonthAge"></label><p id="salary_laborLastMonthAge" class="muted" aria-live="polite"></p></div>
       <p id="salaryExistingLabor" class="muted"></p>
     </fieldset>
-    <fieldset class="pension-person"><legend>2. iDeCo・受取・臨時収支</legend>
+    <fieldset class="pension-person"><legend>2. 受取・臨時収支の計上先</legend>
       <p id="salaryRelated" class="muted"></p>
-      <label>給与生活中のiDeCo掛金原資<select id="salary_funding_before">${option('','未確認／掛金なし')+option('salary','給与から支払う')+option('plan_asset:separate','投資資産から別枠で支払う')+option('plan_asset:withdrawal','上の取崩し額に含める')}</select></label>
-      <label>終了後も掛金が続く場合の原資<select id="salary_funding_after">${option('','未確認／終了後の掛金なし')+option('household','終了後の家計資金から支払う（別途確認済み）')+option('plan_asset:separate','投資資産から別枠で支払う')+option('plan_asset:budget','管理予算に含める')}</select></label>
-      <p class="muted">掛金終了月・受取月は変えません。前倒し後の加入資格や支払原資は別途確認が必要です。</p>
+      <p>iDeCoの掛金原資・給与生活中の受取は、iDeCoタブで入力します。</p><button type="button" class="link-btn" data-open-tab="ideco" data-focus-target="salaryIdecoInputs">iDeCoの計上方法を入力</button>
       <details><summary>給与生活中の受取・臨時収支の計上先</summary>
-      ${[['pension','公的年金'],['ideco','iDeCo受取'],['unemployment','失業給付']].map(([key,label])=>`<label>給与生活中の${label}<select id="salary_receipt_${key}">${receiptOptions()}</select></label>`).join('')}
+      ${[['pension','公的年金'],['unemployment','失業給付']].map(([key,label])=>`<label>給与生活中の${label}<select id="salary_receipt_${key}">${receiptOptions()}</select></label>`).join('')}
       <p class="muted">該当の受取がある場合に選択します。「追加・取崩しに含む」は上の月額に織り込み済みという指定です。</p>
       ${(c.events||[]).map((x,i)=>`<label>${esc(dateWithAge(x.date,c))} ${esc(x.label||'臨時収支')} ${money(x.amount)}<select id="salary_event_${i}">${receiptOptions()+ (x.type==='expense'?option('budget','終了後の管理予算に含む'):'')}</select></label>`).join('')}
       ${(c.cashflow?.periodOverrides||[]).map((x,i)=>x.kind==='income'?`<label>${esc(x.label||x.key)}（${esc(x.fromAge)}～${esc(x.toAge)}歳）<select id="salary_period_${i}">${receiptOptions()}</select></label>`:'').join('')}
       </details>
     </fieldset>`;
+    el('salaryIdecoInputs').innerHTML=`<h2>掛金原資・給与生活中の受取</h2><p class="muted">この欄は給与生活シートと共通の試算条件です。入力後は「給与生活の条件と合わせて試算」へ進み、差分を確認して反映してください。</p>      <label>給与生活中のiDeCo掛金原資<select form="salaryForm" id="salary_funding_before">${option('','未確認／掛金なし')+option('salary','給与から支払う')+option('plan_asset:separate','投資資産から別枠で支払う')+option('plan_asset:withdrawal','上の取崩し額に含める')}</select></label>
+      <label>終了後も掛金が続く場合の原資<select form="salaryForm" id="salary_funding_after">${option('','未確認／終了後の掛金なし')+option('household','終了後の家計資金から支払う（別途確認済み）')+option('plan_asset:separate','投資資産から別枠で支払う')+option('plan_asset:budget','管理予算に含める')}</select></label>
+      <p class="muted">掛金終了月・受取月は変えません。前倒し後の加入資格や支払原資は別途確認が必要です。</p>
+<label>給与生活中のiDeCo受取<select form="salaryForm" id="salary_receipt_ideco">${receiptOptions()}</select></label><p class="muted">「追加・取崩しに含む」は家計と資産の入出金に織り込み済みという指定です。別枠で再加算しません。</p><button type="submit" form="salaryForm" class="primary" data-open-tab="salary">給与生活の条件と合わせて試算</button><button type="button" class="link-btn" data-open-tab="salary" data-focus-target="salaryForm">給与生活の入力条件を確認</button>`;
     for(const k of ['lastSalaryMonth','monthlyAddition','monthlyWithdrawal','pre65MonthlyBudget'])el('salary_'+k).value=s[k]??'';
     el('salary_monthsConfirmed').value=draft.monthsConfirmed||'';
     el('salary_laborMode').value=s.postSalaryLabor?.mode||'';
@@ -81,8 +83,7 @@ export function mountSalarySheet({getState,onCommit,showNotice}){
     if(!draft){draft=loadSalaryDraft(c)||salaryDraftFromConfig(c);buildInputs(c);el('salaryDraftNote').textContent='入力は集計表と別に保存します。まだ反映していません。';}
     const adopted=c.cashflow?.salaryLife;
     el('salaryAdopted').textContent=adopted?`採用中：給与生活 ${dateWithAge(adopted.lastSalaryMonth,c)}まで、生活費負担 ${dateWithAge(nextMonth(adopted.lastSalaryMonth),c)}から。追加 ${money(adopted.monthlyAddition)}/月、取崩し ${money(adopted.monthlyWithdrawal)}/月。`:'採用中：旧方式。新方式の試算・比較だけでは現在の計画を変更しません。';
-    const p=c.employment?.primary?.sideWork||{},sp=c.employment?.spouse?.sideWork||{};
-    el('salaryExistingLabor').textContent=`登録済み就労収入：本人 ${money(p.monthlyGross)}/月（${p.startDate?dateWithAge(p.startDate,c):'退職日などから算出'}～${p.endDate?dateWithAge(p.endDate,c):'既定終了日'}）、配偶者 ${money(sp.monthlyGross)}/月（${sp.startDate?dateWithAge(sp.startDate,c,'spouse'):'開始指定なし'}～${sp.endDate?dateWithAge(sp.endDate,c,'spouse'):'終了指定なし'}）。選んだモードで採用します。`;
+    el('salaryExistingLabor').textContent='登録済み就労収入：'+[['primary','本人'],['spouse','配偶者']].flatMap(([person,label])=>[['regularWork','正社員'],['sideWork','アルバイト']].map(([job,title])=>{const v=c.employment?.[person]?.[job];return `${label}${title} ${v?money(v.monthlyGross)+'/月':'未設定'}`;})).join('、')+'。個別設定を選ぶと、上の開始月・終了月に従って計上します。';
     el('salaryRelated').textContent=`iDeCo掛金 ${money(c.ideco?.monthlyContribution)}/月、拠出終了 ${dateWithAge(c.ideco?.contributionEndDate,c)}。年金開始：本人 ${dateWithAge(c.income?.pensions?.primary?.startDate,c)}、配偶者 ${dateWithAge(c.income?.pensions?.spouse?.startDate,c,'spouse')}。`;
     if(preview&&preview.baseSignature!==configSignature(getState())){invalidate();error('前提または比較案が変わりました。もう一度試算してください。');}
     const last=c.salaryWorkflow?.history?.at(-1);
@@ -105,6 +106,7 @@ export function mountSalarySheet({getState,onCommit,showNotice}){
   function changed(){draft=read();invalidate();error('');persist();state();}
   function reset({forget=true}={}){invalidate();draft=null;error('');if(forget){try{clearSalaryDraft();}catch{}}}
   el('salaryForm').addEventListener('input',event=>{if(event.target.id==='salary_lastSalaryMonth')el('salary_monthsConfirmed').value='';changed();});
+  el('salaryIdecoInputs').addEventListener('input',()=>changed());
   el('salaryForm').addEventListener('submit',event=>{event.preventDefault();error('');draft=read();persist();try{preview=previewSalary(getState(),draft);renderPreview();}catch(e){invalidate();error(e.message);}});
   el('salaryReset').addEventListener('click',()=>{reset();render();});
   function action(kind){
