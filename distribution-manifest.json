@@ -59,8 +59,8 @@
     },
     {
       "name": "docs/USER_GUIDE.md",
-      "size": 10245,
-      "sha256": "5ee7c00cddaf45e5380696f09d43464da170dfb44905fa343ba2dabbe1acf3d4"
+      "size": 10518,
+      "sha256": "fd02ae04042bf9bb8219a31d8f6eff6942b8b428324192db8ef564deae675b8d"
     },
     {
       "name": "expense-display.mjs",
