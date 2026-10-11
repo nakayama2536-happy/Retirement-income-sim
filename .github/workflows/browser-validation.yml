@@ -1,0 +1,39 @@
+name: Isolated browser validation
+on:
+  pull_request:
+    branches: [main]
+permissions:
+  contents: read
+concurrency:
+  group: browser-validation-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install pinned test dependency
+        working-directory: tools/browser-test
+        run: npm install --no-save --package-lock=false --ignore-scripts playwright@1.62.1
+      - name: Install test browser
+        working-directory: tools/browser-test
+        run: npx --no-install playwright install --with-deps chromium
+      - name: Prepare public application fixture
+        run: node tools/browser-test/prepare.mjs
+      - name: Exercise update failures and corresponding backup restore
+        run: node tools/browser-test/run-browser.mjs
+      - name: Keep synthetic test evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: isolated-browser-evidence
+          path: tools/browser-test/browser-results/
+          if-no-files-found: warn
+          retention-days: 7
