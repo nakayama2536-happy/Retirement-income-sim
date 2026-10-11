@@ -31,7 +31,7 @@ test('simulation graph excludes saved actuals without changing them; display swi
 test('pending actions point at the actual adopted-value inputs and distinguish unsupported editing',()=>{
  const {context:c}=setup();c.config.income.pensions.spouse.certainty='unknown';c.config.nisa={accountBreakdownStatus:'pending'};c.config.retirement={majorSpendDetailStatus:'pending'};c.config.care={};c.config.taxPolicy={rulesAsOf:'2026-01-01'};c.config.pendingDecisions=['<script>fictional</script>'];
  const before=JSON.stringify(c.config),items=c.derivePending();assert.equal(items.find(i=>i.title==='配偶者の公的年金額').action.target,'spousePensionAmount');
- assert.ok(items.find(i=>i.title.includes('NISA')).limitation);assert.ok(!items.find(i=>i.title.includes('NISA')).action);
+ assert.ok(items.find(i=>i.title.includes('NISA')).limitation);assert.equal(items.find(i=>i.title.includes('NISA')).action.target,'detail-nisa');
  assert.equal(items.find(i=>i.title.includes('大型支出')).action.target,'initialAssetInput');assert.equal(items.find(i=>i.title.includes('介護費')).action.target,'expenseKind');
  for(const i of items.filter(i=>i.action)){assert.ok(html.includes(`id="${i.action.tab}"`));if(i.action.target!=='spousePensionAmount')assert.ok(html.includes(`id="${i.action.target}"`));}
  vm.runInContext(fn('renderPending'),c);c.renderPending();assert.ok(!c.el('pendingList').innerHTML.includes('<script>'));assert.equal(JSON.stringify(c.config),before);
@@ -50,3 +50,5 @@ test('pending navigation focuses and scrolls without triggering input events or 
  listeners.click({target:{closest:s=>s==='[data-open-tab]'?{dataset:{openTab:'pension',focusTarget:'spousePensionAmount'}}:null}});
  assert.equal(active,'pension');assert.equal(target.parentElement.open,true);assert.equal(target.focused,true);assert.equal(target.scrolled,true);
 });
+
+test('target guide follows age-end positions and preserves configured thresholds',()=>{const {context:c,el}=setup();c.config.management.thresholds={'80':1234,'95':500};c.result=runRetirementPlan(c.config);const before=JSON.stringify(c.config);c.drawChart();assert.ok(el('assetChart').children.some(n=>n.attrs.class==='target-line'));assert.equal(el('assetChart').children.filter(n=>n.attrs.class==='target-point').length,2);assert.equal(JSON.stringify(c.config),before);});

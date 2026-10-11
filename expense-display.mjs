@@ -6,6 +6,7 @@ const profiles=['public-v0.9','work-v0.9.7'];
 export function expenseDisplayProfile(config,requested=''){
  if(profiles.includes(requested))return requested;
  if(requested)return null;
+ const selected=config.cashflow?.detailSourceProfile;if(profiles.includes(selected))return selected;
  const applied=config.expenseWorkflow?.lastApply?.sourceProfile;
  if(profiles.includes(applied))return applied;
  const present=[];
@@ -37,7 +38,7 @@ const escape=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>'
 const money=n=>n===null||n===undefined||!Number.isFinite(n)?'未確定':`${n.toLocaleString('ja-JP',{maximumFractionDigits:2})}万円`;
 export function expenseDisplayHtml(model,config){
  if(model.status!=='ready')return {detail:`<p>${escape(model.message)}</p>`,summary:'<p>未選択・未計算の値を0円として扱いません。</p>'};
- const label=model.sourceProfile==='public-v0.9'?'公開元 v0.9形式':'Work v0.9.7形式';
+ const label=model.sourceProfile==='public-v0.9'?'旧形式の生活費内訳':'標準の生活費内訳';
  function row(r){return `<details><summary>${escape(r.label)}：${money(r.amount)}（この年齢期の合計）</summary><p>内部ID：${escape(r.itemId)}</p>${r.children.map(row).join('')}<p>参照元：${escape(r.sourceRefs.join('、'))}</p>${r.unresolvedReasons.length?'<p>一部の月・価格基準等が未確定です。子項目と親項目は二重加算しません。</p>':''}</details>`;}
  const p=model.period;
  return {detail:`<p>表示出典：${label}／${model.age}歳期・${p.monthCount}か月。月額ではなく、計算対象月を合計しています。</p>${model.rows.map(row).join('')}`,

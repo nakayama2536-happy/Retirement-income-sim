@@ -36,7 +36,7 @@ const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&
 const money=n=>n===null||n===undefined||!Number.isFinite(n)?'未確定':`${n.toLocaleString('ja-JP',{maximumFractionDigits:2})}万円`;
 export function annualCashflowHtml(s,config){
  if(s.status!=='ready')return `<p>${esc(s.message)}</p>`;
- const c=s.components,source=s.sourceProfile==='public-v0.9'?'公開元 v0.9形式':s.sourceProfile==='work-v0.9.7'?'Work v0.9.7形式':'未選択';
+ const c=s.components,source=s.sourceProfile==='public-v0.9'?'旧形式の生活費内訳':s.sourceProfile==='work-v0.9.7'?'標準の生活費内訳':'未選択';
  const refs=s.sourceProfile?`参考内訳 ${money(s.referenceDetail)}（確認済み小計 ${money(s.referenceKnownSubtotal)}）／管理予算との差 ${money(s.referenceGap)}／未確定 ${s.unresolvedMonthCount}か月`:'参考内訳は出典未選択のため未表示';
  const events=s.events.length?`<details><summary>臨時イベント ${s.events.length}件</summary><ul>${s.events.map(e=>`<li>${esc(e.date?dateWithAge(e.date,config):'日付未設定')}：${esc(e.label||e.type||'イベント')} ${money(Number(e.amount||0))}</li>`).join('')}</ul></details>`:'';
  return `<p>${s.age}歳期（${esc(dateWithAge(s.startDate,config))}～${esc(dateWithAge(s.endDate,config))}、${s.monthCount}か月）</p><dl>

@@ -1,3 +1,4 @@
+import {mountDetailUI} from './detail-ui.mjs';
 import {dateWithAge,ageOn} from './date-display.mjs';
 import {mountCalendarSheet} from './calendar-ui.mjs';
 import {mountExpenseSheet} from './expense-ui.mjs';
@@ -41,7 +42,7 @@ let renderedInputValues=new Map();
 
 function inputValues(){
   return new Map([...document.querySelectorAll('#dashboard input, #dashboard select, #dashboard textarea')]
-    .filter(input=>input.id!=='expenseDisplaySource'&&!input.closest('#pension, #salary, #calendarSheet, #expenseSheet, #incomeSheet'))
+    .filter(input=>input.id!=='expenseDisplaySource'&&!input.closest('#pension, #salary, #calendarSheet, #expenseSheet, #incomeSheet, .detail-form'))
     .map(input=>[input.id||(input.dataset.reviewKey?`review/${input.dataset.reviewKey}`:input.form?.id&&input.name?`${input.form.id}/${input.name}`:''),{input,value:input.type==='checkbox'?input.checked:input.value}])
     .filter(([key])=>key));
 }
@@ -93,6 +94,8 @@ const incomeSheet=mountIncomeSheet({getState:()=>({config,scenarios}),showNotice
     for(const [key,{value}] of pending){const input=now.get(key)?.input;if(!input)continue;if(input.type==='checkbox')input.checked=value;else if(input.tagName!=='SELECT'||[...input.options].some(o=>o.value===value))input.value=value;}
   }
 }});
+
+const detailUI=mountDetailUI({getState:()=>({config,scenarios}),commit:next=>commitState(next),notice:showNotice});
 
 function showNotice(msg, type='info') {
   const n = el('notice'); n.textContent = msg; n.dataset.type = type; n.hidden = false;
@@ -156,6 +159,7 @@ function refresh({calculated=null}={}) {
   calendarSheet.render();
   expenseSheet.render();
   incomeSheet.render();
+  detailUI.render();
   renderedInputValues=new Map([...inputValues()].map(([key,{value}])=>[key,value]));
   migrationPanel.render();
 }
@@ -328,9 +332,9 @@ function savePeriodOverride(ev){
 function derivePending() {
   const items = [];
   if (config.income?.pensions?.spouse?.certainty === 'unknown') items.push({type:'要確認', title:'配偶者の公的年金額', action:{tab:'pension',target:'spousePensionAmount',label:'配偶者年金を編集'}, reason:`設定中の配偶者年金 ${formatMan(config.income?.pensions?.spouse?.annualAtStart||0,1)}万円/年は暫定値です。ねんきん定期便等で確認後に更新します。`});
-  if (config.nisa?.accountBreakdownStatus === 'pending') items.push({type:'要判断', title:`NISA・課税口座・現金の${config.plan.startAge}歳時点内訳`, limitation:'口座別内訳のアプリ内編集は未対応です。制度タブのNISA枠確認は、この内訳を変更する機能ではありません。', reason:'総資産試算は継続できます。取崩し順序と税引後精度を高める段階で確定します。'});
-  if (config.retirement?.majorSpendDetailStatus === 'pending') items.push({type:'要判断', title:'退職金の大型支出内訳と開始資産の時点整合', action:{tab:'settings',target:'initialAssetInput',label:'開始資産を確認・編集'}, limitation:'大型支出の個別内訳はアプリ内編集未対応です。', reason:`社宅退去を本業退職の約6か月前に検討するため、大型支出枠 ${formatMan(config.retirement?.majorSpendPlanned||0)}万円と開始資産の関係を詳細内訳確定時に照合します。`});
-  if (!config.care?.facilityRoomType) items.push({type:'要判断', title:'特養の個室／多床室など介護費の詳細条件', action:{tab:'settings',target:'expenseKind',label:'年間予算の編集欄へ'}, limitation:'部屋種別の編集は未対応です。予算を変更する場合は変更の種類で「管理予算」を選んでください。', reason:'現状は年代別年間予算で包含しています。施設費を個別積上げする際に必要です。'});
+  if (config.nisa?.accountBreakdownStatus === 'pending') items.push({type:'要判断', title:`NISA・課税口座・現金の${config.plan.startAge}歳時点内訳`, action:{tab:'nisa',target:'detail-nisa',label:'NISAの内訳を確認'}, limitation:'NISAの開始時評価額を入力できます。口座別の運用・売却税は未対応です。', reason:'総資産試算は継続できます。取崩し順序と税引後精度を高める段階で確定します。'});
+  if (config.retirement?.majorSpendDetailStatus === 'pending') items.push({type:'要判断', title:'退職金の大型支出内訳と開始資産の時点整合', action:{tab:'settings',target:'initialAssetInput',label:'開始資産を確認・編集'}, limitation:'計画期間内の個別支出は「臨時・追加収支」で登録できます。開始前の支出は開始資産との照合が必要です。', reason:`社宅退去を本業退職の約6か月前に検討するため、大型支出枠 ${formatMan(config.retirement?.majorSpendPlanned||0)}万円と開始資産の関係を詳細内訳確定時に照合します。`});
+  if (!config.care?.facilityRoomType) items.push({type:'要判断', title:'特養の個室／多床室など介護費の詳細条件', action:{tab:'expenses',target:'expenseKind',label:'年間予算の編集欄へ'}, limitation:'部屋種別の編集は未対応です。予算を変更する場合は変更の種類で「管理予算」を選んでください。', reason:'現状は年代別年間予算で包含しています。施設費を個別積上げする際に必要です。'});
   if (config.taxPolicy?.rulesAsOf) items.push({type:'要更新', title:'退職前の制度再確認', action:{tab:'rules',target:'ruleCards',label:'制度・出典を確認'}, reason:`税・社会保険・雇用保険は現在 ${config.taxPolicy.rulesAsOf} 制度による参考計算です。退職前に最新制度で更新します。`});
   for (const title of config.pendingDecisions || []) {
     if (!items.some(i=>i.title===title)) items.push({type:'保留',title,limitation:'この項目に対応する入力欄は未設定です。',reason:'判断または外部確認が必要なため、計算を止めず保留管理しています。'});
@@ -371,7 +375,8 @@ function drawChart() {
   const planPoints = [{age:config.plan.startAge, endAsset:config.plan.initialAsset}, ...result.rows.map(r=>({age:r.age+1,endAsset:r.endAsset}))];
   const actualPoints = Object.entries(showActuals ? (config.actuals || {}) : {}).map(([age,a])=>({age:+age,endAsset:+a.endAsset})).filter(p=>Number.isFinite(p.endAsset)).sort((a,b)=>a.age-b.age);
   const forecastPoints = showActuals && forecast ? [{age:forecast.actual.age+1,endAsset:+forecast.actual.endAsset}, ...forecast.projection.rows.map(r=>({age:r.age+1,endAsset:r.endAsset}))] : [];
-  const all = [...planPoints, ...actualPoints, ...forecastPoints];
+  const targetPoints=result.keyAges.map(k=>({age:k.age+1,endAsset:k.threshold}));
+  const all = [...planPoints, ...actualPoints, ...forecastPoints, ...targetPoints];
   const maxY = Math.max(...all.map(p=>p.endAsset), 1000) * 1.08;
   const minAge = config.plan.startAge, maxAge = config.plan.endAge + 1;
   const x = age => pad.l + (age-minAge)/(maxAge-minAge)*(w-pad.l-pad.r);
@@ -385,10 +390,12 @@ function drawChart() {
     const gy=document.createElementNS(ns,'line'); gy.setAttribute('x1',pad.l);gy.setAttribute('x2',w-pad.r);gy.setAttribute('y1',y(v));gy.setAttribute('y2',y(v));gy.setAttribute('class','grid');svg.appendChild(gy);
     const t=document.createElementNS(ns,'text');t.textContent=`${formatMan(v)}`;t.setAttribute('x',pad.l-8);t.setAttribute('y',y(v)+4);t.setAttribute('text-anchor','end');t.setAttribute('class','axis');svg.appendChild(t);
   }
-  [65,70,75,80,85,90,95,96].forEach(a=>{
+  [minAge,...Array.from({length:Math.max(0,Math.floor((maxAge-minAge)/5))},(_,i)=>Math.ceil((minAge+1)/5)*5+i*5),maxAge].filter((a,i,arr)=>a>=minAge&&a<=maxAge&&arr.indexOf(a)===i).forEach(a=>{
     const t=document.createElementNS(ns,'text');t.textContent=`${a}`;t.setAttribute('x',x(a));t.setAttribute('y',h-12);t.setAttribute('text-anchor','middle');t.setAttribute('class','axis');svg.appendChild(t);
   });
 
+  drawPolyline(svg, targetPoints, x, y, 'target-line');
+  targetPoints.forEach(p=>{const dot=document.createElementNS(ns,'circle');dot.setAttribute('cx',x(p.age));dot.setAttribute('cy',y(p.endAsset));dot.setAttribute('r','4');dot.setAttribute('class','target-point');const title=document.createElementNS(ns,'title');title.textContent=`${p.age-1}歳末の目標 ${money(p.endAsset)}`;dot.appendChild(title);svg.appendChild(dot);});
   drawPolyline(svg, planPoints, x, y, 'asset-line');
   if (forecastPoints.length) drawPolyline(svg, forecastPoints, x, y, 'forecast-line');
 
@@ -592,13 +599,6 @@ function applySettings(ev){
   const config=structuredClone(currentConfig());
   ev.preventDefault(); const f=ev.currentTarget;
   config.plan.initialAsset=+f.initialAsset.value; config.plan.afterTaxReturn=+f.afterTaxReturn.value; config.plan.inflation=+f.inflation.value;
-  const householdAnnual=+f.laborAnnual.value;
-  const pMonthly=Number(config.employment?.primary?.sideWork?.monthlyGross||0),sMonthly=Number(config.employment?.spouse?.sideWork?.monthlyGross||0);
-  if(Math.abs(householdAnnual-(pMonthly+sMonthly)*12)>1e-8){
-    const share=pMonthly+sMonthly>0?pMonthly/(pMonthly+sMonthly):0.5;
-    if(config.employment?.primary?.sideWork)config.employment.primary.sideWork.monthlyGross=householdAnnual/12*share;
-    if(config.employment?.spouse?.sideWork)config.employment.spouse.sideWork.monthlyGross=householdAnnual/12*(1-share);
-  }
   config.reserve.total=+f.reserveTotal.value;
   if(!commitState(config))return; showNotice('設定を保存し、月次計算で95歳まで再計算しました。');
 }
@@ -651,7 +651,7 @@ function runIdecoTool(){
   const annual=years>0?balance/years:0;
   const summary=retirementIdecoTaxSummary(config);
   const plan=summary?.plan, overlap=summary?.overlap, lumpTax=summary?.idecoLumpTax;
-  const detail=plan?` / 現行計画の65歳見込 約${formatMan(plan.balance,1)}万円、50%一時金 約${formatMan(plan.lumpGross,1)}万円、5年年金 約${formatMan(plan.annuityAnnual,1)}万円/年`:'';
+  const detail=plan?` / 現在設定の受取時見込 約${formatMan(plan.balance,1)}万円、一時金 約${formatMan(plan.lumpGross,1)}万円、年金 約${formatMan(plan.annuityAnnual,1)}万円/年`:'';
   const warn=overlap?.within19YearRule
     ?` / 19年ルール該当・調整後控除 約${formatMan(overlap.adjustedDeduction,0)}万円`
     :' / 19年ルール非該当参考';
@@ -661,9 +661,9 @@ function runIdecoTool(){
   if(basis && plan){
     let taxText='重複調整に必要な加入日・退職金情報が不足しています。';
     if(overlap?.adjustedDeduction!=null && lumpTax){
-      taxText=`iDeCo加入期間参考 ${overlap.serviceYears}年、通常の退職所得控除 ${formatMan(overlap.fullDeduction,0)}万円。60歳退職金との年差 ${overlap.yearGap ?? '—'}年、${overlap.within19YearRule?'現行19年ルールの対象':'現行19年ルールの対象外'}。前の退職金が控除額未満のため前職期間を ${overlap.deemedYears}年相当として扱う参考計算を行い、重複期間 ${overlap.overlapYears}年、調整後控除 ${formatMan(overlap.adjustedDeduction,0)}万円。一時金の課税退職所得 約${formatMan(lumpTax.taxable,1)}万円、所得税等 約${formatMan(lumpTax.incomeTax,1)}万円、住民税 約${formatMan(lumpTax.residentTax,1)}万円、手取参考 約${formatMan(lumpTax.net,1)}万円。5年年金は公的年金等として扱い、満額1年換算では年額約${formatMan(summary.pensionGross,1)}万円、公的年金等控除後の雑所得参考 約${formatMan(summary.pensionIncome,1)}万円。`;
+      taxText=`iDeCo加入期間参考 ${overlap.serviceYears}年、通常の退職所得控除 ${formatMan(overlap.fullDeduction,0)}万円。60歳退職金との年差 ${overlap.yearGap ?? '—'}年、${overlap.within19YearRule?'現行19年ルールの対象':'現行19年ルールの対象外'}。前の退職金が控除額未満のため前職期間を ${overlap.deemedYears}年相当として扱う参考計算を行い、重複期間 ${overlap.overlapYears}年、調整後控除 ${formatMan(overlap.adjustedDeduction,0)}万円。一時金の課税退職所得 約${formatMan(lumpTax.taxable,1)}万円、所得税等 約${formatMan(lumpTax.incomeTax,1)}万円、住民税 約${formatMan(lumpTax.residentTax,1)}万円、手取参考 約${formatMan(lumpTax.net,1)}万円。年金受取は公的年金等として扱い、満額1年換算では年額約${formatMan(summary.pensionGross,1)}万円、公的年金等控除後の雑所得参考 約${formatMan(summary.pensionIncome,1)}万円。`;
     }
-    basis.textContent=`現在残高から拠出終了月まで月次複利で推計。年金受取は設定利回りで元利均等取崩し。${taxText} 50%一時金＋50%年金の併用可否・比率指定は運営管理機関によって異なるため受取前に確認します。税制は2026年現行法を将来へ仮適用した参考で、受取時点に再確認します。`;
+    basis.textContent=`現在残高から拠出終了月まで月次複利で推計。年金受取は設定利回りで元利均等取崩し。${taxText} 一時金と年金の併用可否・比率指定は運営管理機関によって異なるため受取前に確認します。税制は2026年現行法を将来へ仮適用した参考で、受取時点に再確認します。`;
   }
 }
 
@@ -721,7 +721,7 @@ async function importConfig(file){
   if(full){
     const committed=restoreFullBackup(expected,parsed);
     config=committed.config;scenarios=committed.scenarios;
-    pensionSheet.reset();salarySheet.reset();calendarSheet.reset();expenseSheet.reset();incomeSheet.reset();el('expenseDisplaySource').value='';delete el('carTransferForm').dataset.initialized;
+    detailUI.reset();pensionSheet.reset();salarySheet.reset();calendarSheet.reset();expenseSheet.reset();incomeSheet.reset();el('expenseDisplaySource').value='';delete el('carTransferForm').dataset.initialized;
     refresh({calculated:committed});showNotice('設定・シナリオ・付帯データをまとめて復元しました。');return;
   }
   validateSavedState({config:parsed,scenarios:[]});
@@ -734,7 +734,7 @@ async function importConfig(file){
     nextScenarios.push({id:crypto.randomUUID(),name:next.meta?.label||'基準ケース',role:'baseline',savedAt:new Date().toISOString(),selected:true,config:scenarioSnapshot(next)});
   }
   if(!commitState(next,nextScenarios,false))return;
-  pensionSheet.reset();salarySheet.reset();calendarSheet.reset();expenseSheet.reset();incomeSheet.reset();el('expenseDisplaySource').value='';delete el('carTransferForm').dataset.initialized;
+  detailUI.reset();pensionSheet.reset();salarySheet.reset();calendarSheet.reset();expenseSheet.reset();incomeSheet.reset();el('expenseDisplaySource').value='';delete el('carTransferForm').dataset.initialized;
   refresh();showNotice(full?'設定とシナリオをまとめて復元しました。':'設定JSONを新しい基準ケースとして読み込みました。');
 }
 
@@ -804,16 +804,20 @@ el('showActuals').addEventListener('change',e=>{
 });
 
 function switchTab(id){
+  if(['salary','pension'].includes(id)&&el('sharedTaxTool'))el(id).appendChild(el('sharedTaxTool'));
+  const group=document.querySelector(`[data-tab="${id}"]`)?.dataset.groupItem;
+  if(group){document.querySelectorAll('[data-group]').forEach(b=>b.classList.toggle('active',b.dataset.group===group));document.querySelectorAll('[data-group-item]').forEach(b=>b.hidden=b.dataset.groupItem!==group);}
   document.querySelectorAll('[data-tab]').forEach(b=>b.classList.toggle('active',b.dataset.tab===id));
   document.querySelectorAll('.panel').forEach(p=>p.hidden=p.id!==id);
 }
+document.querySelectorAll('[data-group]').forEach(btn=>btn.addEventListener('click',()=>{const first=document.querySelector(`[data-group-item="${btn.dataset.group}"]`);if(first)switchTab(first.dataset.tab);}));
 document.querySelectorAll('[data-tab]').forEach(btn=>btn.addEventListener('click',()=>switchTab(btn.dataset.tab)));
 const migrationPanel=mountMigration({onCommit:()=>{const saved=loadState();config=saved.config;scenarios=saved.scenarios;refresh();}});
 mountRecoveryCheck();
 window.addEventListener('storage',event=>{
   migrationPanel.invalidate(event);
   if(event.key===null||MIGRATION_KEYS.includes(event.key)){
-    pensionSheet.invalidate();salarySheet.invalidate();calendarSheet.invalidate();expenseSheet.invalidate();incomeSheet.invalidate();showNotice('別画面で設定が更新されました。再読み込みしてから編集してください。','error');
+    detailUI.invalidate();pensionSheet.invalidate();salarySheet.invalidate();calendarSheet.invalidate();expenseSheet.invalidate();incomeSheet.invalidate();showNotice('別画面で設定が更新されました。再読み込みしてから編集してください。','error');
   }
 });
 
@@ -824,7 +828,7 @@ document.querySelectorAll('[data-help]').forEach(btn=>btn.addEventListener('clic
 }));
 el('helpClose').addEventListener('click',()=>el('helpDialog').close());
 
-el('appVersion').textContent='v0.9.7 / I-08 開発検証版'; el('rulesVersion').textContent=RULES_VERSION;
+el('appVersion').textContent='収支詳細設定・検証候補'; el('rulesVersion').textContent=RULES_VERSION;
 if(startupError){setEmptyState();showNotice(`保存データを読み込めません。復元用バックアップを確認してください。${startupError}`,'error');}
 else refresh();
 if(!writeAccess.writable)showNotice('この画面は読み取り専用です。別の編集画面を閉じて再読み込みしてください。同時更新制御が利用できない場合も保存を停止します。','error');

@@ -7,10 +7,14 @@
 <link rel="manifest" href="manifest.webmanifest"><link rel="apple-touch-icon" href="icons/icon-192.png"><link rel="stylesheet" href="styles.css">
 </head>
 <body class="simulation-only">
-<header class="topbar"><div><h1>ライフプランシミュレーター</h1><p>計画・制度・実績を一つの計算エンジンで管理</p></div><div class="version"><span id="appVersion"></span><span>制度 <b id="rulesVersion"></b></span></div></header>
+<header class="topbar"><div><h1>ライフプランシミュレーター</h1><p>条件を設定し、収支と資産の変化を確認</p></div><div class="version"><span id="appVersion"></span><span>制度 <b id="rulesVersion"></b></span></div></header>
 <div id="notice" class="notice" role="status" hidden></div>
-<nav class="tabs" aria-label="画面切替">
-<button data-tab="home" class="active">ホーム</button><button data-tab="cashflow">年間収支</button><button data-tab="pension">年金</button><button data-tab="salary">給与生活</button><button data-tab="actuals" class="actual-only">実績</button><button data-tab="scenarios">比較</button><button data-tab="rules">制度</button><button data-tab="settings">設定</button>
+<nav class="tab-groups" aria-label="大項目"><button data-group="results" class="active">結果を見る</button><button data-group="income">収入を設定</button><button data-group="expense">支出を設定</button><button data-group="manage">データ・設定</button></nav>
+<nav class="tabs" aria-label="中項目">
+<button data-group-item="results" data-tab="home" class="active">ホーム</button><button data-group-item="results" data-tab="cashflow">年次計算表</button><button data-group-item="results" data-tab="scenarios">比較案</button><button data-group-item="results" data-tab="allcsv">全期間・全項目CSV</button>
+<button data-group-item="income" data-tab="nisa" hidden>NISA</button><button data-group-item="income" data-tab="salary" hidden>労働収入</button><button data-group-item="income" data-tab="pension" hidden>年金</button><button data-group-item="income" data-tab="ideco" hidden>iDeCo</button><button data-group-item="income" data-tab="retirement" hidden>退職金</button>
+<button data-group-item="expense" data-tab="expenses" hidden>生活費・保険</button><button data-group-item="expense" data-tab="events" hidden>臨時・追加収支</button>
+<button data-group-item="manage" data-tab="rules" hidden>制度の説明</button><button data-group-item="manage" data-tab="settings" hidden>全般設定・バックアップ</button><button data-group-item="manage" data-tab="actuals" class="actual-only" hidden>実績</button>
 </nav>
 <main>
 <section id="migrationPanel" class="card" hidden>
@@ -23,7 +27,7 @@
 <button id="migrationRescan" type="button">候補を再確認</button>
 </section>
 <section id="emptyState" class="empty card" hidden>
-<h2>個人設定を読み込んで開始</h2><p>資産額などの個人データはアプリ本体へ埋め込んでいません。「設定JSON読込」から専用設定ファイルを読み込むと計算を開始します。</p>
+<h2>個人設定を読み込んで開始</h2><p>資産額などの個人データはアプリ本体へ埋め込んでいません。「保存済み設定・バックアップを読み込む」から専用設定ファイルを読み込むと計算を開始します。</p>
 <label class="file-btn">設定JSONを選択<input id="importFile" type="file" accept="application/json"></label>
 <p class="muted">設定はこの端末のブラウザ内に保存されます。個人設定JSONを公開GitHubへ置かない運用を推奨します。</p>
 </section>
@@ -39,7 +43,7 @@
 <article class="card"><span>予備枠</span><strong id="reserve"></strong><small>最低安全資産 <b id="safeAssetMinimum"></b> / 予備枠全使用後の最終資産 <b id="afterReserve"></b> / 全使用後の最低目安 <b id="reserveUsedThreshold"></b></small></article>
 <article class="card forecast-card actual-only"><span>実績反映後の最終予測資産額</span><strong id="forecastFinalAsset">未入力</strong><small id="forecastNote">実績入力後に自動更新</small></article>
 </div>
-<article class="card"><div class="section-title"><h2>資産推移</h2><button class="info" data-help="資産推移" data-help-text="現在の設定によるシミュレーションを表示します。実績の表示は設定で切り替えられます。表示切替で計算条件や保存データは変わりません。">ⓘ</button></div><svg id="assetChart" role="img" aria-label="64歳から95歳末までの資産推移"></svg><div class="legend"><span><i class="legend-plan"></i>現在のシミュレーション</span><span class="actual-only"><i class="legend-forecast"></i>実績反映後予測</span><span class="actual-only"><i class="legend-actual"></i>実績</span></div></article>
+<article class="card"><div class="section-title"><h2>資産推移</h2><button class="info" data-help="資産推移" data-help-text="現在の設定によるシミュレーションを表示します。実績の表示は設定で切り替えられます。表示切替で計算条件や保存データは変わりません。">ⓘ</button></div><svg id="assetChart" role="img" aria-label="64歳から95歳末までの資産推移"></svg><p class="muted">点線は各年齢末の目標を結んだ補助線です。途中の目標額を自動設定するものではありません。</p><div class="legend"><span><i class="legend-plan"></i>現在のシミュレーション</span><span><i class="legend-target"></i>設定した目標資産額</span><span class="actual-only"><i class="legend-forecast"></i>実績反映後予測</span><span class="actual-only"><i class="legend-actual"></i>実績</span></div></article>
 <div class="two-col">
 <article class="card"><h2>年齢別の目標と予測</h2><p class="muted">現在の設定による予測です。差額は予測−目標。マイナスは設定した目安を下回ることを示し、資金不足とは区別します。</p><div class="table-wrap"><table><thead><tr><th>年齢末</th><th>目標資産額</th><th>予測資産額</th><th>差額</th></tr></thead><tbody id="keyAges"></tbody></table></div></article>
 <article class="card"><h2>確認事項</h2><ul id="checks" class="checks"></ul><h3>主要イベント</h3><ol id="timeline" class="timeline"></ol></article>
@@ -53,27 +57,11 @@
 <article class="card"><div class="section-title"><h2>保留事項</h2><span id="pendingCount" class="pill"></span></div><p class="muted">変更できる項目は入力欄へ移動できます。移動だけでは保存・反映しません。外部確認や未対応項目は区別して表示します。</p><div id="pendingList" class="pending-list"></div></article>
 </section>
 
-<section id="cashflow" class="panel" hidden><div class="two-col"><article class="card"><div class="section-title"><h2>基本生活費内訳</h2><button class="info" data-help="基本生活費内訳" data-help-text="選択した出典の内訳を、年齢期の計算対象月で合計して確認します。年代別年間予算が老後資産計算の正本なので、この内訳を別途加算しません。">ⓘ</button></div><label>内訳の確認年齢<select id="cashflowViewAge"></select></label><label>表示する内訳の出典<select id="expenseDisplaySource"><option value="">出典を確認（単一形式・直前反映時のみ自動表示）</option><option value="public-v0.9">公開元 v0.9形式</option><option value="work-v0.9.7">Work v0.9.7形式</option></select></label><div id="expenseDetail" style="overflow-wrap:anywhere"></div></article><article class="card"><h2>対象期間の予算との整合</h2><div id="expenseReconcile" class="summary-box"></div></article></div>
-<article class="card"><div class="section-title"><h2>年間収支サマリー</h2><button class="info" data-help="年間収支サマリー" data-help-text="資産推移と同じ月次計算を年齢期ごとに集計します。管理予算が支出の正本です。生活費内訳、家計内振替、税社会保険参考額、iDeCo掛金を合計へ重ねません。">ⓘ</button></div><div id="annualCashflowSummary" class="summary-box"></div><button id="exportAnnualCsvBtn" type="button" class="secondary">全期間・全項目CSVを保存</button><p class="muted">現在設定を年齢期ごとに出力します。未確定値は0円にせず空欄にし、状態列と未確定月数を残します。</p></article>
-<article class="card"><div class="section-title"><h2>税・社会保険の方式差</h2><button class="info" data-help="税・社会保険の方式差" data-help-text="資産推移、Work予定原価、公開元v0.9、制度ツール、年次実績を区別します。採用中の管理予算以外は資産推移へ加算しません。">ⓘ</button></div><div id="taxSocialMethodAudit"></div><p><button class="link-btn" data-open-tab="rules">制度タブの手取参考を開く</button></p></article>
-<article class="card"><div class="section-title"><h2>年齢範囲を指定して一括更新</h2><button class="info" data-help="期間一括更新" data-help-text="項目ごとに適用する年齢範囲・金額・月額または年額を保存します。同じ種類と項目名の期間が重なると、既存期間を前後に分割して置き換えます。生活費内訳は予定原価の確認用、年代別年間予算は資産計算の支出正本です。">ⓘ</button></div><form id="periodEditForm" class="form-grid">
-<label>種類<select name="kind"><option value="expense">生活費の内訳</option><option value="travel">旅行費</option><option value="budget">管理予算</option></select></label>
-<label>項目名<input name="key" type="text" maxlength="50" placeholder="例：食費、車関連、追加収入" required></label>
-<label>表示名<input name="label" type="text" maxlength="50" placeholder="未入力時は項目名"></label>
-<label>開始年齢<input name="fromAge" type="number" min="0" max="120" required></label>
-<label>終了年齢<input name="toAge" type="number" min="0" max="120" required></label>
-<label>金額（万円）<input name="amount" type="number" min="0" step="0.1" required></label>
-<label>単位<select name="unit"><option value="monthly">月額</option><option value="annual">年額</option></select></label>
-<button class="primary" type="submit">期間設定を保存して再計算</button></form>
-<details class="car-transfer"><summary>車処分後の費用振替</summary><form id="carTransferForm" class="form-grid">
-<label>車処分年齢<input name="disposeAge" type="number" min="0" step="1" required></label>
-<label>振り替える車費用（万円/月）<input name="monthlyCost" type="number" min="0" step="0.01" required></label>
-<label>追加の医療・介護費（万円/月）<input name="medicalCareMonthlyIncrease" type="number" min="0" step="0.01" placeholder="追加なしは0" required></label>
-<button id="applyCarTransferBtn" class="secondary" type="submit">車処分後の費用振替を設定</button></form>
-<p class="muted">車費用を0にして同額を介護・通院・移動費へ振り替えます。処分年齢を変えて再設定すると、前の自動設定を置き換えます。</p></details>
-<p class="muted">金額は64歳時点の価格として扱い、内訳・旅行費・管理予算には設定済みインフレ率を反映して表示します。資産推移の支出には管理予算だけを計上し、内訳を二重加算しません。追加収入は設定タブの専用画面で差分確認後に反映します。</p>
-<div id="periodOverrideRows" class="table-wrap"></div></article>
-<article class="card"><div class="section-title"><h2>年次計算表</h2><button class="link-btn" data-open-tab="pension">年金シートで変更</button></div><p class="muted">単位：万円。年金や追加収入を分けて確認できます。支出は年代別管理予算を正本とします。</p><div class="table-wrap"><table><thead><tr><th>年齢期</th><th>期首資産</th><th>運用益</th><th>労働</th><th>本人年金</th><th>配偶者年金</th><th>iDeCo年金</th><th>雇用保険</th><th>臨時・追加収入</th><th>支出</th><th>予測年末</th><th class="actual-only">実績年末</th><th class="actual-only">実績−予測</th></tr></thead><tbody id="yearRows"></tbody></table></div></article></section>
+<section id="cashflow" class="panel" hidden>
+<article class="card"><div class="section-title"><h2>年間収支サマリー</h2><button class="info" data-help="年間収支サマリー" data-help-text="資産推移と同じ月次計算を年齢期ごとに集計します。管理予算が支出の正本です。生活費内訳、家計内振替、税社会保険参考額、iDeCo掛金を合計へ重ねません。">ⓘ</button></div><div id="annualCashflowSummary" class="summary-box"></div><button id="exportAnnualCsvBtn" type="button" class="secondary">年次サマリーCSVを保存</button><p class="muted">全項目の詳細は「全期間・全項目CSV」タブへ。ここでは現在設定を年齢期ごとに出力します。未確定値は0円にせず空欄にし、状態列と未確定月数を残します。</p></article>
+
+
+<article class="card"><div class="section-title"><h2>年次計算表</h2><label>表示する項目<select id="yearViewMode"><option value="summary">大項目：収入・支出・資産</option><option value="income">収入の中項目</option><option value="expense">支出の中項目</option></select></label><button class="link-btn" data-open-tab="pension">年金シートで変更</button></div><p class="muted">単位：万円。大項目で全体を確認し、収入・支出の中項目へ切り替えられます。保険・生活費などの小項目は「全期間・全項目CSV」で確認できます。</p><div class="table-wrap"><table><thead id="yearHead"></thead><tbody id="yearRows"></tbody></table></div></article></section>
 
 <section id="pension" class="panel" hidden>
 <article class="card"><div class="section-title"><h2>年金シート</h2><span id="pensionState" class="pill" role="status">反映済み</span></div>
@@ -89,9 +77,11 @@
 </article>
 <article id="pensionPreview" class="card" hidden><h2>反映前の確認</h2><div id="pensionPreviewBody"></div><button id="pensionApply" type="button" class="primary">この条件をシミュレーションに反映</button><p class="muted">このボタンで開始月・年額などを保存し、ホーム・年間収支・資産推移を更新します。</p></article>
 <article class="card"><h2>反映履歴と取消</h2><p id="pensionLastApplied" class="muted"></p><button id="pensionUndo" class="secondary" type="button" disabled>直前の反映を取り消す</button><button data-open-tab="cashflow" class="link-btn" type="button">年間収支を確認</button><p class="muted">取消は直前に反映した年金設定を戻します。実績・他の設定・保存済みの基準ケースは保持します。</p></article>
+<article class="card"><h2>年金受給開始比較</h2><label>65歳基準年額（万円）<input id="pensionBase65" type="number" value="0" step="1"></label><label>受給開始年齢<input id="pensionToolAge" type="number" value="65" min="60" max="75" step="1"></label><button id="pensionToolRun" class="primary">試算</button><p id="pensionToolResult" class="result"></p><small>簡易計算。加給年金・在職支給停止等は未反映。</small><p><button class="link-btn" data-open-tab="pension">採用する条件を年金シートに入力</button></p></article><article id="sharedTaxTool" class="card"><h2>税・社会保険 手取参考</h2><label>年齢<input id="taxToolAge" type="number" value="70" min="60" max="95"></label><label>給与年額（万円）<input id="taxToolSalary" type="number" value="0"></label><label>年金年額（万円）<input id="taxToolPension" type="number" value="0"></label><label>配偶者の合計所得（万円・任意）<input id="taxToolSpouseIncome" type="number" value="" placeholder="未入力"></label><label>配偶者年齢<input id="taxToolSpouseAge" type="number" value="70" min="0" max="110"></label><button id="taxToolRun" class="primary">概算</button><p id="taxToolResult" class="result"></p><details><summary>計算根拠</summary><p id="taxToolBasis" class="muted">入力後に給与所得・年金所得・控除・保険料内訳を表示します。</p></details><small>所得税・住民税は2026年制度参考、国保・介護保険・後期高齢者医療は福山市2026年度参考。軽減判定・個別控除など未入力条件は概算です。年代別年間予算には税・社保を含むため、資産計算へ別加算しません。</small></article><p><button class="link-btn" data-open-tab="expenses" data-focus-target="detail-expense">税・社会保険の予算内訳を入力</button></p>
 </section>
 
 <section id="salary" class="panel" hidden>
+<article class="card"><h2>労働収入</h2><p>給与生活中は家計と資産の間の純入出金を使い、給与全額を二重に加算しません。本人・配偶者の個別就労収入は、終了後の収入方式が「既存の就労設定」の場合に使います。</p></article><article id="detail-labor" class="card"></article>
 <article class="card"><div class="section-title"><h2>給与生活シート</h2><span id="salaryState" class="pill" role="status"></span></div>
 <p id="salaryAdopted"></p><p class="muted">給与で生活する期間と、資産で生活費を賄う期間を切り替えます。実際の退職日や年金受取日を変更する機能ではありません。</p>
 <form id="salaryForm"><div id="salaryInputs" class="pension-grid"></div><div class="pension-actions"><button class="primary" type="submit">試算する</button><button id="salaryReset" type="button" class="secondary">入力を採用値に戻す</button></div><p id="salaryDraftNote" class="muted"></p></form>
@@ -101,6 +91,7 @@
 <p class="muted">初回はバックアップを保存してから反映してください。新方式のデータを旧アプリへ戻すことは保証できません。旧版へ戻す場合は更新前のバックアップを使います。</p>
 <label>比較案の名前<input id="salaryScenarioName" type="text" maxlength="80" placeholder="例：給与生活を半年短縮"></label><button id="salarySaveScenario" class="secondary" type="button" disabled>比較案として保存</button><p class="muted">比較案の保存だけでは現在の採用値を変えません。既存の比較案は保持します。</p></article>
 <article class="card"><h2>反映日時と取消</h2><p id="salaryHistory" class="muted"></p><button id="salaryUndo" class="secondary" type="button" disabled>直前の反映を取り消す</button><button data-open-tab="cashflow" class="link-btn" type="button">年間収支を確認</button><p class="muted">取消は給与生活の設定と、この反映で変更した計上先だけを戻します。実績・年金・保存済み比較案を保持します。</p></article>
+<article class="card"><h2>雇用保険 65歳前後比較</h2><button id="unemploymentToolRun" class="primary">現在条件で比較</button><p id="unemploymentToolResult" class="result"></p><details><summary>計算根拠</summary><p id="unemploymentToolBasis" class="muted">2026/8/1制度を基準に計算します。</p></details><small>退職時点では制度・離職理由・離職前6か月賃金を再確認してください。</small></article><p><button class="link-btn" data-open-tab="expenses" data-focus-target="detail-expense">税・社会保険の予算内訳を入力</button></p>
 </section>
 
 <section id="actuals" class="panel" hidden>
@@ -112,7 +103,7 @@
 <label>年間支出（万円）<input name="expense" type="number" step="1"></label>
 <label>労働収入（万円）<input name="labor" type="number" step="1"></label>
 <label>年金収入（万円）<input name="pension" type="number" step="1"></label>
-<label>税引後運用利回り（%）<input name="returnRate" type="number" step="0.01"></label>
+<label>資産全体の税引後利回り（年率%）<input name="returnRate" type="number" step="0.01"></label>
 <label>予備枠残高（万円）<input name="reserveBalance" type="number" step="1"></label>
 <label>安全資産残高（万円）<input name="safeAssetBalance" type="number" step="1"></label>
 <label>税・社会保険実額（万円/年）<input name="taxSocial" type="number" step="1"></label>
@@ -125,7 +116,7 @@
 <article class="card"><h2>登録済み実績</h2><div class="table-wrap"><table><thead><tr><th>年齢</th><th>計画資産</th><th>実績資産</th><th>差</th><th>支出</th><th>税社保</th><th>安全資産</th><th>メモ</th><th></th></tr></thead><tbody id="actualRows"></tbody></table></div></article>
 </section>
 
-<section id="scenarios" class="panel" hidden>
+<section id="scenarios" class="panel" hidden><article class="card"><h2>比較の進め方</h2><ol><li>変更前の現在設定を「基本案」などの名前で保存します。</li><li>各入力タブで条件を試し、使う条件をシミュレーションに反映します。</li><li>戻って「退職を1年早める案」など別名で保存します。</li><li>下のチェックで最大3案を選び、保存時点の条件・結果を比較します。</li></ol><p>比較案を選んでもホームの現在設定は変わりません。現在設定へ戻す機能とは異なります。変更前の条件を残すには、手順1を先に行ってください。</p></article>
 <div class="two-col">
 <article class="card"><div class="section-title"><h2>比較案を保存</h2><button class="info" data-help="シナリオ比較" data-help-text="現在の設定を名前付きで保存し、最大3案を同時比較します。実績データはシナリオ条件から除外し、将来条件だけを比較します。">ⓘ</button></div>
 <label>比較案の名前<input id="scenarioName" type="text" value=""></label><button id="saveScenarioBtn" class="primary">現在の設定を比較案として保存</button><p class="muted">初回は読み込んだ条件を「基準ケース」という名前の比較の基準案として自動保存します。目標資産額とは別のものです。</p></article>
@@ -135,23 +126,12 @@
 <article class="card"><h2>選択した比較案のシミュレーション</h2><p class="muted">各案を保存した時点の条件で計算しています。ホームの現在設定とは異なる場合があります。</p><div id="scenarioCompare" class="table-wrap"></div></article>
 </section>
 
-<section id="rules" class="panel" hidden>
-<article class="card"><div class="section-title"><h2>制度ルール</h2><span class="pill">基準日 <b id="rulesAsOf"></b></span></div><div id="ruleCards" class="rule-grid"></div></article>
-<div class="tool-grid">
-<article class="card"><h2>年金受給開始比較</h2><label>65歳基準年額（万円）<input id="pensionBase65" type="number" value="0" step="1"></label><label>受給開始年齢<input id="pensionToolAge" type="number" value="65" min="60" max="75" step="1"></label><button id="pensionToolRun" class="primary">試算</button><p id="pensionToolResult" class="result"></p><small>簡易計算。加給年金・在職支給停止等は未反映。</small><p><button class="link-btn" data-open-tab="pension">採用する条件を年金シートに入力</button></p></article>
-<article class="card"><h2>NISA枠確認</h2><label>今年のつみたて枠使用（万円）<input id="nisaTsumitate" type="number" value="0"></label><label>今年の成長枠使用（万円）<input id="nisaGrowth" type="number" value="0"></label><label>生涯枠の使用簿価（万円）<input id="nisaLifetime" type="number" value="0"></label><button id="nisaToolRun" class="primary">確認</button><p id="nisaToolResult" class="result"></p></article>
-<article class="card"><h2>iDeCo / DC受取</h2><label>受取時残高（万円）<input id="idecoBalance" type="number" value="0"></label><label>受取開始年齢<input id="idecoStartAge" type="number" value="60" min="60" max="75"></label><label>年金受取年数<input id="idecoYears" type="number" value="10" min="5" max="20"></label><button id="idecoToolRun" class="primary">比較</button><p id="idecoToolResult" class="result"></p><details><summary>税務・重複調整の計算根拠</summary><p id="idecoToolBasis" class="muted">個人設定を読み込むと加入期間・退職金との重複調整参考を表示します。</p></details><small>入力残高の単純均等割りに加え、個人設定がある場合は65歳見込・50%一時金・5年年金・退職所得控除の19年内重複調整・一時金手取参考を併記します。併用可否・比率指定は運営管理機関へ確認し、将来税制は受取前に再確認します。</small></article>
-<article class="card"><h2>退職金控除</h2><label>退職金（万円）<input id="retirementAmount" type="number" value="0"></label><label>勤続年数<input id="serviceYears" type="number" value="0"></label><button id="retirementToolRun" class="primary">試算</button><p id="retirementToolResult" class="result"></p><details><summary>計算根拠</summary><p id="retirementToolBasis" class="muted">勤続年数から退職所得控除を計算します。</p></details><small>iDeCo/DC一時金との重複調整は現行ルール参考を別表示します。</small></article>
-<article class="card"><h2>雇用保険 65歳前後比較</h2><button id="unemploymentToolRun" class="primary">現在条件で比較</button><p id="unemploymentToolResult" class="result"></p><details><summary>計算根拠</summary><p id="unemploymentToolBasis" class="muted">2026/8/1制度を基準に計算します。</p></details><small>退職時点では制度・離職理由・離職前6か月賃金を再確認してください。</small></article>
-<article class="card"><h2>税・社会保険 手取参考</h2><label>年齢<input id="taxToolAge" type="number" value="70" min="60" max="95"></label><label>給与年額（万円）<input id="taxToolSalary" type="number" value="0"></label><label>年金年額（万円）<input id="taxToolPension" type="number" value="0"></label><label>配偶者の合計所得（万円・任意）<input id="taxToolSpouseIncome" type="number" value="" placeholder="未入力"></label><label>配偶者年齢<input id="taxToolSpouseAge" type="number" value="70" min="0" max="110"></label><button id="taxToolRun" class="primary">概算</button><p id="taxToolResult" class="result"></p><details><summary>計算根拠</summary><p id="taxToolBasis" class="muted">入力後に給与所得・年金所得・控除・保険料内訳を表示します。</p></details><small>所得税・住民税は2026年制度参考、国保・介護保険・後期高齢者医療は福山市2026年度参考。軽減判定・個別控除など未入力条件は概算です。年代別年間予算には税・社保を含むため、資産計算へ別加算しません。</small></article>
-</div>
-</section>
-
-<section id="settings" class="panel" hidden>
-<article class="card"><h2>表示する機能</h2><label class="display-toggle"><input id="showActuals" type="checkbox">実績入力・実績からの再予測も表示する</label><p class="muted">通常はシミュレーションだけを表示します。この切替は表示だけに適用し、保存済みの実績を削除しません。再起動すると通常表示に戻ります。</p><button class="link-btn actual-only" data-open-tab="actuals">実績入力を開く</button></article>
-<article id="expenseSheet" class="card"><h2>支出内訳・管理予算の反映</h2>
+<section id="nisa" class="panel" hidden><article class="card"><h2>NISA</h2><p id="nisaCurrentSummary"></p><p>NISAの評価額は開始資産の内数です。入力しても収入・資産へ重ねて加算しません。資産全体に共通の税引後利回りで運用します。口座別の売却・税・将来残高は未対応です。</p></article><article id="detail-nisa" class="card"></article><article class="card"><h2>参考：NISAの残り枠を確認</h2><p class="muted">この参考欄は保存されません。保存する値は上の個別設定に入力してください。</p><label>今年のつみたて枠使用（万円）<input id="nisaTsumitate" type="number" value="0"></label><label>今年の成長枠使用（万円）<input id="nisaGrowth" type="number" value="0"></label><label>生涯枠の使用簿価（万円）<input id="nisaLifetime" type="number" value="0"></label><button id="nisaToolRun" class="primary">確認</button><p id="nisaToolResult" class="result"></p></article></section>
+<section id="ideco" class="panel" hidden><article class="card"><h2>iDeCo</h2><p id="idecoCurrentSummary"></p><p>開始資産に含まれないiDeCoからの受取を計上します。掛金の原資・計上方法と一時金の税参考の適用設定は、現在の設定を維持します。</p><button class="link-btn" data-open-tab="salary">掛金原資を労働収入タブで確認</button></article><article id="detail-ideco" class="card"></article><article class="card"><h2>参考：iDeCoの税額・年金年額</h2><p class="muted">この参考欄は保存されません。条件の変更は上の個別設定で試算してください。</p><label>受取時残高（万円）<input id="idecoBalance" type="number" value="0"></label><label>年金受取年数<input id="idecoYears" type="number" value="10" min="5" max="20"></label><button id="idecoToolRun" class="primary">比較</button><p id="idecoToolResult" class="result"></p><details><summary>税務・重複調整の計算根拠</summary><p id="idecoToolBasis" class="muted">個人設定を読み込むと加入期間・退職金との重複調整参考を表示します。</p></details><small>入力残高の単純均等割りに加え、個人設定がある場合は現在の受取時見込・設定した一時金割合・年金受取年数・退職所得控除の19年内重複調整・一時金手取参考を併記します。併用可否・比率指定は運営管理機関へ確認し、将来税制は受取前に再確認します。</small></article><p><button class="link-btn" data-open-tab="expenses" data-focus-target="detail-expense">税・社会保険の予算内訳を入力</button></p></section>
+<section id="retirement" class="panel" hidden><article class="card"><h2>退職金</h2><p>入社日・勤続年数・税引前額は税の参考条件です。計画期間内の受取は、受取額と既存の臨時収入行を確認して明示的に計上します。退職金受取にチェックを入れた場合は、下の税参考を確認した税引後額を手入力してください。開始前の受取を将来へ二重加算しません。</p></article><article id="detail-retirement" class="card"></article><article class="card"><h2>退職金控除</h2><label>退職金（万円）<input id="retirementAmount" type="number" value="0"></label><label>勤続年数<input id="serviceYears" type="number" value="0"></label><button id="retirementToolRun" class="primary">試算</button><p id="retirementToolResult" class="result"></p><details><summary>計算根拠</summary><p id="retirementToolBasis" class="muted">勤続年数から退職所得控除を計算します。</p></details><small>iDeCo/DC一時金との重複調整は現行ルール参考を別表示します。</small></article></section>
+<section id="expenses" class="panel" hidden><article class="card"><h2>生活費・保険・年間予算</h2><p>①項目と適用年齢を入力 → ②内訳・予算との差を確認 → ③必要な場合に内訳合計を年間予算へ反映。食費・住居費などは候補から選べます。保険は商品ごとに登録できます。内訳を変えただけでは資産推移は変わりません。</p><p>金額はシミュレーション開始時点の価格です。月次計算の物価上昇率を適用します。参考内訳と年間予算は重ねて加算しません。</p></article><article id="detail-expense" class="card"></article><div class="two-col"><article class="card"><div class="section-title"><h2>基本生活費内訳</h2><button class="info" data-help="基本生活費内訳" data-help-text="選択した出典の内訳を、年齢期の計算対象月で合計して確認します。年代別年間予算が老後資産計算の正本なので、この内訳を別途加算しません。">ⓘ</button></div><label>内訳の確認年齢<select id="cashflowViewAge"></select></label><label>表示する内訳の出典<select id="expenseDisplaySource"><option value="">出典を確認（単一形式・直前反映時のみ自動表示）</option><option value="public-v0.9">旧形式の生活費内訳</option><option value="work-v0.9.7">標準の生活費内訳</option></select></label><div id="expenseDetail" style="overflow-wrap:anywhere"></div></article><article class="card"><h2>対象期間の予算との整合</h2><div id="expenseReconcile" class="summary-box"></div></article></div><article id="detail-budget" class="card"></article><details class="card"><summary>既存項目の金額・年間予算を個別に変更</summary><article id="expenseSheet" class="card"><h2>支出内訳・管理予算の反映</h2>
 <p>既存項目を1件ずつ変更します。内訳は予算との照合用です。資産推移の支出を変える場合は「管理予算」を選んでください。</p>
-<label>変更するデータの出典<select id="expenseSource"><option value="">選択してください（不明なら反映しない）</option><option value="work-v0.9.7">Work v0.9.7形式</option><option value="public-v0.9">公開元 v0.9形式</option></select></label>
+<label>変更するデータの出典<select id="expenseSource"><option value="">選択してください（不明なら反映しない）</option><option value="work-v0.9.7">標準の生活費内訳</option><option value="public-v0.9">旧形式の生活費内訳</option></select></label>
 <label>変更の種類<select id="expenseKind"><option value="detail">内訳のみ更新（資産推移は不変）</option><option value="budget">管理予算を変更（資産推移に使用）</option></select></label>
 <label>項目・期間<select id="expenseRule"></select></label>
 <p id="expenseAdopted" style="white-space:pre-wrap;overflow-wrap:anywhere"></p>
@@ -162,8 +142,24 @@
 <label><input id="expenseReviewed" type="checkbox">出典・単位・期間・差分と未計算部分を確認しました</label>
 <button id="expenseApply" type="button" class="primary" disabled>集計表に反映</button></div>
 <p id="expenseHistory"></p><button id="expenseUndo" type="button" class="secondary" disabled>直前の内訳・予算反映を取り消す</button>
-<p class="muted">入力・試算だけでは保存しません。未反映の入力はこの画面内だけに保持し、再読み込みで失われます。取消は変更金額だけを戻します。項目や期間の追加は未対応です。</p></article>
-<article id="incomeSheet" class="card"><h2>追加収入の反映</h2>
+<p class="muted">入力・試算だけでは保存しません。未反映の入力はこの画面内だけに保持し、再読み込みで失われます。取消は変更金額だけを戻します。項目や期間の追加は未対応です。</p></article><article class="card"><div class="section-title"><h2>年齢範囲を指定して一括更新</h2><button class="info" data-help="期間一括更新" data-help-text="項目ごとに適用する年齢範囲・金額・月額または年額を保存します。同じ種類と項目名の期間が重なると、既存期間を前後に分割して置き換えます。生活費内訳は予定原価の確認用、年代別年間予算は資産計算の支出正本です。">ⓘ</button></div><form id="periodEditForm" class="form-grid">
+<label>種類<select name="kind"><option value="expense">生活費の内訳</option><option value="travel">旅行費</option><option value="budget">管理予算</option></select></label>
+<label>項目名<input name="key" type="text" maxlength="50" placeholder="例：食費、車関連、追加収入" required></label>
+<label>表示名<input name="label" type="text" maxlength="50" placeholder="未入力時は項目名"></label>
+<label>開始年齢<input name="fromAge" type="number" min="0" max="120" required></label>
+<label>終了年齢<input name="toAge" type="number" min="0" max="120" required></label>
+<label>金額（万円）<input name="amount" type="number" min="0" step="0.1" required></label>
+<label>単位<select name="unit"><option value="monthly">月額</option><option value="annual">年額</option></select></label>
+<button class="primary" type="submit">期間設定を保存して再計算</button></form>
+<details class="car-transfer"><summary>車処分後の費用振替</summary><form id="carTransferForm" class="form-grid">
+<label>車処分年齢<input name="disposeAge" type="number" min="0" step="1" required></label>
+<label>振り替える車費用（万円/月）<input name="monthlyCost" type="number" min="0" step="0.01" required></label>
+<label>追加の医療・介護費（万円/月）<input name="medicalCareMonthlyIncrease" type="number" min="0" step="0.01" placeholder="追加なしは0" required></label>
+<button id="applyCarTransferBtn" class="secondary" type="submit">車処分後の費用振替を設定</button></form>
+<p class="muted">車費用を0にして同額を介護・通院・移動費へ振り替えます。処分年齢を変えて再設定すると、前の自動設定を置き換えます。</p></details>
+<p class="muted">金額は64歳時点の価格として扱い、内訳・旅行費・管理予算には設定済みインフレ率を反映して表示します。資産推移の支出には管理予算だけを計上し、内訳を二重加算しません。追加収入は設定タブの専用画面で差分確認後に反映します。</p>
+<div id="periodOverrideRows" class="table-wrap"></div></article></details><details class="card"><summary>税・社会保険の現在の計算方法を確認</summary><article class="card"><div class="section-title"><h2>税・社会保険の方式差</h2><button class="info" data-help="税・社会保険の方式差" data-help-text="資産推移、Work予定原価、公開元v0.9、制度ツール、年次実績を区別します。採用中の管理予算以外は資産推移へ加算しません。">ⓘ</button></div><div id="taxSocialMethodAudit"></div><p><button class="link-btn" data-open-tab="pension">年金タブの税・社会保険参考を開く</button></p></article></details></section>
+<section id="events" class="panel" hidden><article class="card"><h2>臨時・追加収支</h2><p>臨時収入・修繕・買替え・追加請求など、1回限りの予定を登録します。既存の予定を変更するときは対象行を選んでください。毎年・毎月の生活費は「生活費・保険」で設定します。</p><p>「家計の入出金に含む」は資産へ重ねて計上しない指定です。支出は年間予算へ含めるか別枠にするかを先に確認してください。</p></article><article id="detail-event" class="card"></article><article id="detail-extra" class="card"></article><details class="card"><summary>以前の参考収入を確認・反映</summary><article id="incomeSheet" class="card"><h2>追加収入の反映</h2>
 <p>参考用に登録されている追加収入を1件ずつ確認し、資産計算へ明示的に採用します。画面を開いたり選択しただけでは反映しません。</p>
 <label>参考項目・期間<select id="incomeRule"></select></label>
 <p id="incomeAdopted" style="white-space:pre-wrap;overflow-wrap:anywhere"></p>
@@ -175,8 +171,24 @@
 <label><input id="incomeReviewed" type="checkbox">出典・期間・単位・計上先・資産差を確認しました</label>
 <button id="incomeApply" type="button" class="primary" disabled>集計表に反映</button></div>
 <p id="incomeHistory"></p><button id="incomeUndo" type="button" class="secondary" disabled>直前の追加収入反映を取り消す</button>
-<p class="muted">参考値は自動採用しません。再反映は同じ採用行を更新し、二重登録しません。給与・年金・雇用保険・iDeCo受取、管理予算、支出内訳は変更しません。</p></article>
-<article id="calendarSheet" class="card"><h2>計算期間の方式</h2><p id="calendarAdopted"></p><p id="calendarState" role="status"></p>
+<p class="muted">参考値は自動採用しません。再反映は同じ採用行を更新し、二重登録しません。給与・年金・雇用保険・iDeCo受取、管理予算、支出内訳は変更しません。</p></article></details></section>
+<section id="allcsv" class="panel" hidden><article class="card"><h2>全期間・全項目CSV</h2><p>表示対象は保存済みの現在設定です。合計・中項目・参考内訳を分けた一覧です。子項目や税の参考値を合計へ重ねません。未反映の入力は含みません。</p><div class="form-grid"><label>集計単位<select id="detailCsvPeriod"><option value="annual">年齢期ごと</option><option value="monthly">月ごと</option></select></label><label>表示する大項目<select id="detailCsvGroup"><option value="">全項目</option><option>資産</option><option>収入</option><option>支出</option><option>収支</option><option>資金移動</option><option>明細</option><option>支出内訳</option><option>設定</option></select></label><label>画面に表示する期間<select id="detailCsvAge"><option value="">全期間</option></select></label><label>支出内訳の保存元<select id="detailCsvSource"><option value="">現在の選択を使用</option><option value="work-v0.9.7">標準の生活費内訳</option><option value="public-v0.9">旧形式の生活費内訳</option></select></label></div><button id="downloadDetailedCsv" class="primary">全期間・全項目CSVを保存</button><p id="detailCsvStatus"></p><p id="detailCsvLimit" class="muted"></p><div class="table-wrap"><table id="detailCsvTable"></table></div></article>
+<article class="card"><h2>ChatGPTへ妥当性・助言を確認する</h2><p>保存済みの現在設定・実績・年次点検・比較案と、全期間の年次集計・明細を含む確認依頼文を作ります。入力途中の下書きは含みません。自動送信はしません。</p><p>資産額・生年月日などが含まれます。内容を確認し、必要に応じて個人情報を除いてからChatGPTへ貼り付けるか、テキストファイルを添付してください。</p><button id="makeReviewPrompt" class="primary">確認依頼文を作成</button><button id="downloadReviewPrompt" class="secondary" disabled>確認依頼文をテキストで保存</button><textarea id="reviewPromptText" rows="14" readonly hidden aria-label="ChatGPT確認依頼文"></textarea></article></section>
+<section id="rules" class="panel" hidden>
+<article class="card"><div class="section-title"><h2>制度ルール</h2><span class="pill">基準日 <b id="rulesAsOf"></b></span></div><div id="ruleCards" class="rule-grid"></div></article>
+
+</section>
+
+<section id="settings" class="panel" hidden>
+<article class="card"><h2>表示する機能</h2><label class="display-toggle"><input id="showActuals" type="checkbox">実績入力・実績からの再予測も表示する</label><p class="muted">通常はシミュレーションだけを表示します。この切替は表示だけに適用し、保存済みの実績を削除しません。再起動すると通常表示に戻ります。</p><button class="link-btn actual-only" data-open-tab="actuals">実績入力を開く</button></article>
+
+
+
+
+<div class="two-col"><article class="card"><h2>シミュレーション全体の条件</h2><form id="settingsForm" class="form-grid"><label>開始時点の対象資産（万円）<input id="initialAssetInput" name="initialAsset" type="number"></label><label>資産全体の税引後利回り（年率%）<input name="afterTaxReturn" type="number" step="0.00001"></label><label>物価上昇率（年率%）<input name="inflation" type="number" step="0.1"></label><label hidden>夫婦アルバイト年額（万円・参考）<input name="laborAnnual" type="number"></label><label>予定外の支出に備える予備枠（万円）<input name="reserveTotal" type="number"></label><button class="primary" type="submit">保存して再計算</button></form><p class="muted">収入・支出は各専用タブで設定します。ここでは対象資産・利回り・物価・予備枠を設定します。NISAは対象資産の内数で、iDeCoは別枠です。</p></article>
+<article class="card"><h2>このブラウザの保存データ・バックアップ</h2><p>現在の設定・実績・年次点検・比較案を、この端末のブラウザ内に保存します。別端末へは自動同期されません。バックアップは下のボタンからファイルとして出力します。</p><label class="file-btn">保存済み設定・バックアップを読み込む<input id="importFile2" type="file" accept="application/json"></label><button id="exportBtn" class="secondary">現在の設定だけをファイルに保存</button><button id="exportFullBtn" class="secondary">設定・比較案などをまとめてバックアップ</button><p class="muted">一括バックアップには、保存済みの現在設定・実績・年次点検・比較案が含まれます。年金・給与生活の未反映の下書きや、入力途中の画面内容は含まれません。下書きを残すためだけに採用値へ反映せず、必要な入力は別途控えてください。出力後はファイルの保存先を確認してください。</p><p class="muted">バックアップJSONは公開リポジトリへ保存しないでください。</p></article></div>
+<article class="card"><div class="section-title"><h2>入力した数値の確かさ</h2><button class="info" data-help="確度区分の変更" data-help-text="確度は計算値そのものを変更しません。後で公式資料や確定額が得られたときに、前提の信頼性を管理するためのラベルです。">ⓘ</button></div><form id="certaintyForm" class="form-grid"></form></article>
+<details class="card"><summary>詳細設定：計算期間・旧版への復旧</summary><article id="calendarSheet" class="card"><h2>計算期間の方式</h2><p id="calendarAdopted"></p><p id="calendarState" role="status"></p>
 <p class="muted">月末・閏日の計算日を調整する比較用機能です。方式を選んだだけでは集計表は変わりません。</p>
 <label>試す方式<select id="calendarMode"><option value="legacy">従来方式</option><option value="anchored-months-v1">月末・閏日を元の計画日にそろえる方式</option></select></label>
 <button id="calendarTrial" type="button" class="secondary">差分を試算する</button>
@@ -185,11 +197,7 @@
 <label><input id="calendarReviewed" type="checkbox">対象期間と資産差、未対応部分を確認しました</label>
 <button id="calendarApply" type="button" class="primary" disabled>集計表に反映</button></div>
 <p id="calendarHistory"></p><button id="calendarUndo" type="button" class="secondary" disabled>直前の期間方式の反映を取り消す</button>
-<p class="muted">取消は期間方式だけを戻します。実績の対象期間が変わる場合は、反映・取消を止めて確認を求めます。</p></article>
-
-<div class="two-col"><article class="card"><h2>主要前提</h2><form id="settingsForm" class="form-grid"><label>64歳時点資産（万円）<input id="initialAssetInput" name="initialAsset" type="number"></label><label>税引後運用利回り（%）<input name="afterTaxReturn" type="number" step="0.00001"></label><label>インフレ率（%）<input name="inflation" type="number" step="0.1"></label><label>夫婦アルバイト年額（万円・参考）<input name="laborAnnual" type="number"></label><label>予備枠（万円）<input name="reserveTotal" type="number"></label><button class="primary" type="submit">保存して再計算</button></form><p class="muted">年金の開始月・年額は年金シートで変更できます。退職日・iDeCo受取等は個人設定JSONで管理します。夫婦の労働収入配分は現在の比率を維持します。</p></article>
-<article class="card"><h2>復旧用バックアップの事前確認</h2><p>旧本体へ戻す場合は、その旧版で更新前に作成した一括バックアップを使います。新版のデータを旧本体へ直接読み込ませないでください。保存領域やアプリを削除する前に、本体版・バックアップの保存先を確認してください。</p><label>復旧先の版<select id="recoveryTarget"><option value="current">I-08開発版</option><option value="public-v0.9">公開元v0.9の旧本体</option></select></label><label class="file-btn">復旧用JSONの事前確認（保存しません）<input id="recoveryCheckFile" type="file" accept="application/json"></label><p class="muted">この操作は適合性の確認だけです。アプリの版の切替や、バックアップの復元は行いません。</p><p id="recoveryCheckResult" role="status">復旧先の版とバックアップを選択してください。保存は行いません。</p><p class="muted">正常な統合保存状態は保持します。破損状態は旧候補へ自動復帰せず、元の保存状態と候補を残して個別復旧を判断します。Safariとホーム画面の保存領域は別々に確認してください。</p></article><article class="card"><h2>このブラウザの保存データ・バックアップ</h2><p>現在の設定・実績・年次点検・比較案を、この端末のブラウザ内に保存します。別端末へは自動同期されません。バックアップは下のボタンからファイルとして出力します。</p><label class="file-btn">設定JSON読込<input id="importFile2" type="file" accept="application/json"></label><button id="exportBtn" class="secondary">現在設定だけをバックアップ</button><button id="exportFullBtn" class="secondary">設定＋シナリオを一括バックアップ</button><p class="muted">一括バックアップには、保存済みの現在設定・実績・年次点検・比較案が含まれます。年金・給与生活の未反映の下書きや、入力途中の画面内容は含まれません。下書きを残すためだけに採用値へ反映せず、必要な入力は別途控えてください。出力後はファイルの保存先を確認してください。</p><p class="muted">バックアップJSONは公開リポジトリへ保存しないでください。</p></article></div>
-<article class="card"><div class="section-title"><h2>入力値の確度区分</h2><button class="info" data-help="確度区分の変更" data-help-text="確度は計算値そのものを変更しません。後で公式資料や確定額が得られたときに、前提の信頼性を管理するためのラベルです。">ⓘ</button></div><form id="certaintyForm" class="form-grid"></form></article>
+<p class="muted">取消は期間方式だけを戻します。実績の対象期間が変わる場合は、反映・取消を止めて確認を求めます。</p></article><article class="card"><h2>復旧用バックアップの事前確認</h2><p>旧本体へ戻す場合は、その旧版で更新前に作成した一括バックアップを使います。新版のデータを旧本体へ直接読み込ませないでください。保存領域やアプリを削除する前に、本体版・バックアップの保存先を確認してください。</p><label>復旧先の版<select id="recoveryTarget"><option value="current">現在のアプリ</option><option value="public-v0.9">公開元v0.9の旧本体</option></select></label><label class="file-btn">復旧用JSONの事前確認（保存しません）<input id="recoveryCheckFile" type="file" accept="application/json"></label><p class="muted">この操作は適合性の確認だけです。アプリの版の切替や、バックアップの復元は行いません。</p><p id="recoveryCheckResult" role="status">復旧先の版とバックアップを選択してください。保存は行いません。</p><p class="muted">正常な保存内容は保持します。読み込めない場合は古いデータに自動で戻さず、復旧方法を確認します。Safariとホーム画面の保存領域は別々に確認してください。</p></article></details><article class="card"><h2>直前の詳細設定を取り消す</h2><button id="detailUndo" type="button" disabled>この画面で直前に反映した詳細設定を元に戻す</button><p>今回追加した個別入力の反映だけが対象です。後で同じ項目を変更した場合は取消を停止します。再起動後はバックアップで確認してください。</p></article>
 </section>
 </div>
 </main>
