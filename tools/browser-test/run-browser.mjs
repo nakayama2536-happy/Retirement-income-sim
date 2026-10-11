@@ -10,9 +10,9 @@ await fs.mkdir(out,{recursive:true});
 const report={date:new Date().toISOString(),scope:'same-build lifecycle and pinned current-main to PR-candidate compatibility',cases:[],status:'not-run'};
 const normalize=x=>{const y=structuredClone(x);delete y.exportedAt;return y;};
 async function snapshot(page){
- const home=await page.locator('#home .hero-grid').innerText();
+ const home=await page.evaluate(()=>Object.fromEntries(['currentAsset','finalAsset','finalThreshold','reserve','afterReserve','safeAssetMinimum','reserveUsedThreshold'].map(id=>[id,document.getElementById(id).textContent])));
  await page.locator('[data-tab="scenarios"]').click();
- const scenarios=await page.locator('#scenarioList').innerText();
+ const scenarios=await page.locator('.scenario-check').evaluateAll(nodes=>nodes.map(n=>({id:n.querySelector('input').dataset.scenarioSelect,selected:n.querySelector('input').checked,name:n.querySelector('strong').firstChild.textContent.trim()})));
  const comparison=await page.locator('#scenarioCompare').innerText();
  await page.locator('[data-tab="settings"]').click();
  const pending=page.waitForEvent('download');
@@ -21,6 +21,13 @@ async function snapshot(page){
  const stream=await download.createReadStream();const chunks=[];
  for await(const chunk of stream)chunks.push(chunk);
  const data=JSON.parse(Buffer.concat(chunks).toString());
+ // Missing targets intentionally change from the old implicit 0 to 未設定.
+ // Verify that exact display separately, retaining all numeric/storage checks.
+ if(!Object.hasOwn(data.config.management?.thresholds??{},data.config.plan.endAge)){
+  const candidate=await page.locator('#finalTargetLabel').count();
+  assert.equal(home.finalThreshold,candidate?'未設定':'0万円');
+  home.finalThreshold=null;
+ }
  return {home,scenarios,comparison,data:normalize(data)};
 }
 async function open(context,url){
@@ -126,6 +133,51 @@ async function run(browser,id,mode){
  }catch(e){record.status='failed-or-harness-error';record.error=e.stack;throw e;}
  finally{record.serverLog=fixture.log;await context.close();await fixture.close();}
 }
+
+async function validateHomeUi(browser){
+ const fixture=await createTestServer();const context=await browser.newContext({acceptDownloads:true});
+ const record={id:'S1',status:'running',scope:'simulation home, pending navigation and storage preservation'};report.cases.push(record);
+ try{
+  const data=JSON.parse(await fs.readFile(path.join(here,'synthetic-full.json'),'utf8'));
+  data.config.income.pensions.spouse.certainty='unknown';
+  data.config.retirement={...data.config.retirement,majorSpendDetailStatus:'pending'};
+  data.config.care={...data.config.care,facilityRoomType:''};
+  data.config.taxPolicy={...data.config.taxPolicy,rulesAsOf:'2026-01-01'};
+  data.config.management.thresholds={'80':900,'95':500};
+  data.config.actuals={'70':{endAsset:920}};
+  const file=path.join(out,'home-synthetic.json');await fs.writeFile(file,JSON.stringify(data));
+  const page=await open(context,fixture.url);await load(page,file);
+  const before=(await snapshot(page)).data;
+  for(const width of [390,1280]){
+   await page.setViewportSize({width,height:900});await page.locator('[data-tab="home"]').click();
+   assert(!(await page.locator('#migrationPanel').isVisible()));
+   assert(!(await page.locator('[data-tab="actuals"]').isVisible()));
+   assert(!(await page.locator('.forecast-card').isVisible()));
+   assert.deepEqual(await page.locator('#keyAges').locator('xpath=../thead/tr/th').allTextContents(),['年齢末','目標資産額','予測資産額','差額']);
+   assert((await page.locator('.simulation-context').innerText()).includes('現在の設定によるシミュレーション'));
+   assert.equal(await page.locator('#finalThreshold').innerText(),'500万円');
+   assert.equal(await page.locator('#status').innerText(),'達成');
+   assert((await page.locator('#targetStatusNote').innerText()).includes('80歳末'));
+   const card=page.locator('.simulation-context');const box=await card.boundingBox();assert(box&&box.x>=0&&box.x+box.width<=width+1);
+   await page.screenshot({path:path.join(out,'S1-home-'+width+'.png'),fullPage:true});
+  }
+  for(const id of ['spousePensionAmount','initialAssetInput','expenseKind','ruleCards']){
+   await page.locator('[data-tab="home"]').click();await page.locator(`[data-focus-target="${id}"]`).click();
+   assert(await page.locator('#'+id).isVisible());assert.equal(await page.evaluate(()=>document.activeElement.id),id);
+  }
+  await page.locator('[data-tab="settings"]').click();await page.locator('#showActuals').check();
+  assert(await page.locator('[data-tab="actuals"]').isVisible());
+  await page.locator('[data-tab="home"]').click();assert(await page.locator('.forecast-card').isVisible());
+  await page.locator('[data-tab="settings"]').click();await page.locator('#showActuals').uncheck();
+  assert.deepEqual((await snapshot(page)).data,before);
+  await page.reload({waitUntil:'domcontentloaded'});await page.locator('#dashboard').waitFor({state:'visible'});
+  assert(!(await page.locator('[data-tab="actuals"]').isVisible()));
+  assert.deepEqual((await snapshot(page)).data,before);
+  record.status='pass';
+ }catch(e){record.status='failed-or-harness-error';record.error=e.stack;throw e;}
+ finally{await context.close();await fixture.close();}
+}
+
 let browser;
 try{
  const modulePath=process.env.CODEX_PRIMARY_RUNTIME_NODE_MODULES;
@@ -135,6 +187,7 @@ try{
  browser=await chromium.launch({headless:true,...(executablePath?{executablePath}:{})});
  report.browser=browser.version();
  for(const [id,mode] of [['U1','new'],['U2','asset-failure'],['U3','worker-failure'],['C1','new']])await run(browser,id,mode);
+ await validateHomeUi(browser);
  report.status='completed';
 }catch(e){report.status=browser?'incomplete':'environment-blocked';report.error=String(e);process.exitCode=2;}
 finally{if(browser)await browser.close();await fs.writeFile(path.join(out,'report.json'),JSON.stringify(report,null,2));console.log(JSON.stringify({status:report.status,cases:report.cases.map(x=>({id:x.id,status:x.status}))}));}

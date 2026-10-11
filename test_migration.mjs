@@ -146,3 +146,15 @@ test('UI storage event and clear event disable the stale selection',()=>{
 test('UI never allows adopting a legacy candidate after integrated state appears',()=>{
   const t=ui();t.storage.setItem(STATE_KEY,JSON.stringify(fixture()));t.node('Rescan').emit('click');t.choose();assert.equal(t.node('Apply').disabled,true);assert.match(t.node('Status').textContent,/保持/);
 });
+
+test('normal saved state hides migration without deleting old candidates',()=>{
+ const t=ui();t.storage.setItem(STATE_KEY,JSON.stringify(t.state));const before=[...t.storage.data],writes=t.storage.writes;t.api.render();
+ assert.equal(t.node('Panel').hidden,true);assert.deepEqual([...t.storage.data],before);assert.equal(t.storage.writes,writes);
+ t.api.invalidate({key:STATE_KEY});assert.equal(t.node('Panel').hidden,false);assert.equal(t.node('Apply').disabled,true);
+});
+test('legacy-only, damaged, and unreadable storage remain visible without writes',()=>{
+ const t=ui();assert.equal(t.node('Panel').hidden,false);
+ t.storage.setItem(STATE_KEY,'{broken');const writes=t.storage.writes;t.api.render();
+ assert.equal(t.node('Panel').hidden,false);assert.equal(t.node('Apply').disabled,true);assert.equal(t.storage.writes,writes);
+ t.storage.getItem=()=>{throw Error('blocked');};t.api.render();assert.equal(t.node('Panel').hidden,false);assert.equal(t.node('Apply').disabled,true);
+});

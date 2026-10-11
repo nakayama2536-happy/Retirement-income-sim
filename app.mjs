@@ -35,6 +35,7 @@ const currentConfig=()=>config;
 const currentScenarios=()=>scenarios;
 let result = null;
 let forecast = null;
+let showActuals = false;
 let renderedInputValues=new Map();
 
 function inputValues(){
@@ -155,14 +156,28 @@ function refresh({calculated=null}={}) {
   expenseSheet.render();
   incomeSheet.render();
   renderedInputValues=new Map([...inputValues()].map(([key,{value}])=>[key,value]));
+  migrationPanel.render();
 }
 
 function renderHome() {
-  el('status').textContent = result.status;
-  el('status').dataset.status = result.status;
+  const end=result.endAge, start=result.startAge;
+  const target=result.keyAges.find(k=>k.age===end);
+  el('targetStatusLabel').textContent=`${end}歳末の目標`;
+  el('status').textContent = target ? (result.finalAsset>=target.threshold?'達成':'未達') : '未設定';
+  const below=result.keyAges.filter(k=>k.age!==end&&k.margin<0);
+  el('targetStatusNote').textContent=below.length?`途中の目標未達：${below.map(k=>k.age+'歳末').join('・')}`:'最終年齢末だけの判定です';
+  el('initialAssetLabel').textContent=`${start}歳の開始資産`;
+  el('finalTargetLabel').textContent=`${end}歳末の目標資産額`;
+  el('finalPredictionLabel').textContent=`${end}歳末の予測資産額`;
+  el('simulationPeriod').textContent=`対象：${start}歳から${end}歳末。「年齢末」は計算上の各年齢期の終了時点です。実績による再予測は含みません。`;
+  el('assetChart').setAttribute('aria-label',`${start}歳から${end}歳末までの資産推移`);
+  const margin=target?result.finalAsset-target.threshold:null;
+  el('finalMargin').textContent=margin===null?'—':`${margin>=0?'+':''}${money(margin)}`;
+  el('finalMargin').className=margin===null?'':margin<0?'neg':'pos';
+  el('status').dataset.status = target ? result.status : '';
   el('currentAsset').textContent = money(config.plan.initialAsset);
   el('finalAsset').textContent = money(result.finalAsset);
-  el('finalThreshold').textContent = money(result.finalThreshold);
+  el('finalThreshold').textContent = target ? money(target.threshold) : '未設定';
   el('reserve').textContent = money(result.reserve);
   el('afterReserve').textContent = money(result.finalAfterReserveUse);
   el('reserveUsedThreshold').textContent = money(result.reserveUsedThreshold);
@@ -172,7 +187,7 @@ function renderHome() {
     el('forecastFinalAsset').textContent = money(forecast.projection.finalAsset);
     const delta = forecast.projection.finalAsset - result.finalAsset;
     el('forecastFinalAsset').className = delta < 0 ? 'neg' : delta > 0 ? 'pos' : '';
-    el('forecastNote').textContent = `${forecast.actual.age}歳実績から再予測（当初比 ${delta>=0?'+':''}${money(delta)}）`;
+    el('forecastNote').textContent = `${forecast.actual.age}歳実績から再予測（現在のシミュレーションとの差 ${delta>=0?'+':''}${money(delta)}）`;
   } else {
     el('forecastFinalAsset').textContent = '未入力';
     el('forecastFinalAsset').className = '';
@@ -182,7 +197,7 @@ function renderHome() {
   const key = el('keyAges'); key.innerHTML = '';
   result.keyAges.forEach(k => {
     const tr = document.createElement('tr');
-    tr.innerHTML = `<td>${k.age}歳末</td><td>${money(k.asset)}</td><td>${money(k.threshold)}</td><td class="${k.margin<0?'neg':'pos'}">${k.margin>=0?'+':''}${money(k.margin)}</td>`;
+    tr.innerHTML = `<td>${k.age}歳末</td><td>${money(k.threshold)}</td><td>${money(k.asset)}</td><td class="${k.margin<0?'neg':'pos'}">${k.margin>=0?'+':''}${money(k.margin)}</td>`;
     key.appendChild(tr);
   });
 
@@ -191,7 +206,7 @@ function renderHome() {
   if (ideco) check.push(`65歳iDeCo/DC見込は運用前提による試算です（約${formatMan(ideco.balance)}万円）`);
   if (!config.income?.pensions?.spouse?.annualAtStart || ['unknown','assumption'].includes(config.income?.pensions?.spouse?.certainty)) check.push('配偶者の公的年金額は未確認または仮定です');
   if (config.reserve.total > 0 && result.finalAfterReserveUse < result.reserveUsedThreshold) check.push('予備枠全使用時は95歳の最低目安を下回ります');
-  if (forecast && forecast.projection.finalAsset < result.finalThreshold) check.push('最新実績からの再予測が95歳管理基準を下回っています');
+  if (showActuals && forecast && forecast.projection.finalAsset < result.finalThreshold) check.push('最新実績からの再予測が95歳管理基準を下回っています');
   el('checks').innerHTML = check.length ? check.map(x=>`<li>${x}</li>`).join('') : '<li>主要な未確認事項はありません。</li>';
 
   renderReviewAlerts();
@@ -217,7 +232,7 @@ function renderCertainty(){
 function renderFactors(){
   const baseline=scenarios.find(s=>s.role==='baseline') || scenarios[0];
   const box=el('factorSummary');
-  if(!baseline){ box.innerHTML='<p class="muted">基準ケースがありません。</p>'; return; }
+  if(!baseline){ box.innerHTML='<p class="muted">比較の基準案がありません。</p>'; return; }
   let d;
   try { d=factorDecomposition(baseline.config, config); }
   catch(e){ box.innerHTML=`<p class="muted">要因分解できませんでした: ${escapeHtml(e.message)}</p>`; return; }
@@ -228,7 +243,7 @@ function renderFactors(){
     return `<div class="factor-row"><div class="factor-label"><span>${escapeHtml(x.label)}</span><strong class="${x.impact<0?'neg':x.impact>0?'pos':''}">${x.impact>=0?'+':''}${formatMan(x.impact,0)}万円</strong></div><div class="factor-track"><i class="${x.impact<0?'factor-neg':'factor-pos'}" style="width:${width}%"></i></div></div>`;
   }).join('');
   const actualImpact=forecast ? forecast.projection.finalAsset-result.finalAsset : null;
-  box.innerHTML=`<p class="muted">比較基準：${escapeHtml(baseline.name)}。現在条件との差額を配分しています。</p><div class="factor-total"><span>基準比</span><strong class="${d.totalDifference<0?'neg':d.totalDifference>0?'pos':''}">${d.totalDifference>=0?'+':''}${formatMan(d.totalDifference,0)}万円</strong></div>${rows}${actualImpact==null?'':`<div class="actual-impact"><span>最新実績を反映した追加影響</span><strong class="${actualImpact<0?'neg':actualImpact>0?'pos':''}">${actualImpact>=0?'+':''}${formatMan(actualImpact,0)}万円</strong></div>`}<p class="muted">要因分解は条件変更の相互作用を各項目へ配分する方式です。最新実績の影響は条件変更とは分けて表示します。</p>`;
+  box.innerHTML=`<p class="muted">比較の基準案：${escapeHtml(baseline.name)}。現在条件との差額を配分しています。</p><div class="factor-total"><span>比較の基準案との差</span><strong class="${d.totalDifference<0?'neg':d.totalDifference>0?'pos':''}">${d.totalDifference>=0?'+':''}${formatMan(d.totalDifference,0)}万円</strong></div>${rows}${actualImpact==null?'':`<div class="actual-impact actual-only"><span>最新実績を反映した追加影響</span><strong class="${actualImpact<0?'neg':actualImpact>0?'pos':''}">${actualImpact>=0?'+':''}${formatMan(actualImpact,0)}万円</strong></div>`}<p class="muted">要因分解は条件変更の相互作用を各項目へ配分する方式です。実績の表示を有効にした場合は、その影響を別に表示します。</p>`;
 }
 
 
@@ -246,7 +261,7 @@ function renderIntegrity(){
 }
 
 function renderReviewAlerts() {
-  const triggers = evaluateReviewTriggers(config, result);
+  const triggers = evaluateReviewTriggers(showActuals ? config : {...config,actuals:{},reviews:{}}, result);
   el('reviewCount').textContent = triggers.length ? `${triggers.length}件` : '該当なし';
   el('reviewAlerts').innerHTML = triggers.length
     ? triggers.map(t=>`<article class="pending-item"><span class="pending-type ${t.level==='review'?'review-type':''}">${t.level==='review'?'見直し':'注意'}</span><div><strong>${t.title}</strong><p>${t.detail}</p></div></article>`).join('')
@@ -311,13 +326,13 @@ function savePeriodOverride(ev){
 
 function derivePending() {
   const items = [];
-  if (config.income?.pensions?.spouse?.certainty === 'unknown') items.push({type:'要確認', title:'配偶者の公的年金額', reason:`設定中の配偶者年金 ${formatMan(config.income?.pensions?.spouse?.annualAtStart||0,1)}万円/年は暫定値です。ねんきん定期便等で確認後に更新します。`});
-  if (config.nisa?.accountBreakdownStatus === 'pending') items.push({type:'要判断', title:'NISA・課税口座・現金の64歳時点内訳', reason:'総資産試算は継続できます。取崩し順序と税引後精度を高める段階で確定します。'});
-  if (config.retirement?.majorSpendDetailStatus === 'pending') items.push({type:'要判断', title:'退職金の大型支出内訳と開始資産の時点整合', reason:`社宅退去を本業退職の約6か月前に検討するため、大型支出枠 ${formatMan(config.retirement?.majorSpendPlanned||0)}万円と開始資産の関係を詳細内訳確定時に照合します。`});
-  if (!config.care?.facilityRoomType) items.push({type:'要判断', title:'特養の個室／多床室など介護費の詳細条件', reason:'現状は年代別年間予算で包含しています。施設費を個別積上げする際に必要です。'});
-  if (config.taxPolicy?.rulesAsOf) items.push({type:'要更新', title:'退職前の制度再確認', reason:`税・社会保険・雇用保険は現在 ${config.taxPolicy.rulesAsOf} 制度による参考計算です。退職前に最新制度で更新します。`});
+  if (config.income?.pensions?.spouse?.certainty === 'unknown') items.push({type:'要確認', title:'配偶者の公的年金額', action:{tab:'pension',target:'spousePensionAmount',label:'配偶者年金を編集'}, reason:`設定中の配偶者年金 ${formatMan(config.income?.pensions?.spouse?.annualAtStart||0,1)}万円/年は暫定値です。ねんきん定期便等で確認後に更新します。`});
+  if (config.nisa?.accountBreakdownStatus === 'pending') items.push({type:'要判断', title:`NISA・課税口座・現金の${config.plan.startAge}歳時点内訳`, limitation:'口座別内訳のアプリ内編集は未対応です。制度タブのNISA枠確認は、この内訳を変更する機能ではありません。', reason:'総資産試算は継続できます。取崩し順序と税引後精度を高める段階で確定します。'});
+  if (config.retirement?.majorSpendDetailStatus === 'pending') items.push({type:'要判断', title:'退職金の大型支出内訳と開始資産の時点整合', action:{tab:'settings',target:'initialAssetInput',label:'開始資産を確認・編集'}, limitation:'大型支出の個別内訳はアプリ内編集未対応です。', reason:`社宅退去を本業退職の約6か月前に検討するため、大型支出枠 ${formatMan(config.retirement?.majorSpendPlanned||0)}万円と開始資産の関係を詳細内訳確定時に照合します。`});
+  if (!config.care?.facilityRoomType) items.push({type:'要判断', title:'特養の個室／多床室など介護費の詳細条件', action:{tab:'settings',target:'expenseKind',label:'年間予算の編集欄へ'}, limitation:'部屋種別の編集は未対応です。予算を変更する場合は変更の種類で「管理予算」を選んでください。', reason:'現状は年代別年間予算で包含しています。施設費を個別積上げする際に必要です。'});
+  if (config.taxPolicy?.rulesAsOf) items.push({type:'要更新', title:'退職前の制度再確認', action:{tab:'rules',target:'ruleCards',label:'制度・出典を確認'}, reason:`税・社会保険・雇用保険は現在 ${config.taxPolicy.rulesAsOf} 制度による参考計算です。退職前に最新制度で更新します。`});
   for (const title of config.pendingDecisions || []) {
-    if (!items.some(i=>i.title===title)) items.push({type:'保留',title,reason:'判断または外部確認が必要なため、計算を止めず保留管理しています。'});
+    if (!items.some(i=>i.title===title)) items.push({type:'保留',title,limitation:'この項目に対応する入力欄は未設定です。',reason:'判断または外部確認が必要なため、計算を止めず保留管理しています。'});
   }
   return items;
 }
@@ -325,7 +340,7 @@ function derivePending() {
 function renderPending() {
   const items = derivePending();
   el('pendingCount').textContent = `${items.length}件`;
-  el('pendingList').innerHTML = items.map(i=>`<article class="pending-item"><span class="pending-type">${i.type}</span><div><strong>${i.title}</strong><p>${i.reason}</p></div></article>`).join('') || '<p>現在、保留事項はありません。</p>';
+  el('pendingList').innerHTML = items.map(i=>`<article class="pending-item"><span class="pending-type">${escapeHtml(i.type)}</span><div><strong>${escapeHtml(i.title)}</strong><p>${escapeHtml(i.reason)}</p>${i.limitation?`<p>${escapeHtml(i.limitation)}</p>`:''}${i.action?`<button type="button" class="link-btn" data-open-tab="${i.action.tab}" data-focus-target="${i.action.target}">${i.action.label}</button>`:''}</div></article>`).join('') || '<p>現在、保留事項はありません。</p>';
 }
 
 function renderYearTable() {
@@ -335,7 +350,7 @@ function renderYearTable() {
     const actualAsset = a?.endAsset;
     const diff = actualAsset === undefined || actualAsset === null ? null : Number(actualAsset) - r.endAsset;
     const tr = document.createElement('tr');
-    tr.innerHTML = `<td>${r.age}</td><td>${formatMan(r.startAsset)}</td><td>${formatMan(r.investmentGain)}</td><td>${formatMan(r.labor)}</td><td>${formatMan(r.primaryPension)}</td><td>${formatMan(r.spousePension)}</td><td>${formatMan(r.idecoAnnuity)}</td><td>${formatMan(r.unemployment)}</td><td>${formatMan(r.extraIncome)}</td><td>${formatMan(r.expense+r.extraExpense)}</td><td>${formatMan(r.endAsset)}</td><td>${actualAsset==null?'—':formatMan(actualAsset)}</td><td class="${diff==null?'':diff<0?'neg':'pos'}">${diff==null?'—':`${diff>=0?'+':''}${formatMan(diff)}`}</td>`;
+    tr.innerHTML = `<td>${r.age}</td><td>${formatMan(r.startAsset)}</td><td>${formatMan(r.investmentGain)}</td><td>${formatMan(r.labor)}</td><td>${formatMan(r.primaryPension)}</td><td>${formatMan(r.spousePension)}</td><td>${formatMan(r.idecoAnnuity)}</td><td>${formatMan(r.unemployment)}</td><td>${formatMan(r.extraIncome)}</td><td>${formatMan(r.expense+r.extraExpense)}</td><td>${formatMan(r.endAsset)}</td><td class="actual-only">${actualAsset==null?'—':formatMan(actualAsset)}</td><td class="actual-only ${diff==null?'':diff<0?'neg':'pos'}">${diff==null?'—':`${diff>=0?'+':''}${formatMan(diff)}`}</td>`;
     body.appendChild(tr);
   });
 }
@@ -353,8 +368,8 @@ function drawChart() {
   const w = 820, h = 300, pad = {l:54,r:18,t:18,b:36};
   svg.setAttribute('viewBox', `0 0 ${w} ${h}`); svg.innerHTML = '';
   const planPoints = [{age:config.plan.startAge, endAsset:config.plan.initialAsset}, ...result.rows.map(r=>({age:r.age+1,endAsset:r.endAsset}))];
-  const actualPoints = Object.entries(config.actuals || {}).map(([age,a])=>({age:+age,endAsset:+a.endAsset})).filter(p=>Number.isFinite(p.endAsset)).sort((a,b)=>a.age-b.age);
-  const forecastPoints = forecast ? [{age:forecast.actual.age+1,endAsset:+forecast.actual.endAsset}, ...forecast.projection.rows.map(r=>({age:r.age+1,endAsset:r.endAsset}))] : [];
+  const actualPoints = Object.entries(showActuals ? (config.actuals || {}) : {}).map(([age,a])=>({age:+age,endAsset:+a.endAsset})).filter(p=>Number.isFinite(p.endAsset)).sort((a,b)=>a.age-b.age);
+  const forecastPoints = showActuals && forecast ? [{age:forecast.actual.age+1,endAsset:+forecast.actual.endAsset}, ...forecast.projection.rows.map(r=>({age:r.age+1,endAsset:r.endAsset}))] : [];
   const all = [...planPoints, ...actualPoints, ...forecastPoints];
   const maxY = Math.max(...all.map(p=>p.endAsset), 1000) * 1.08;
   const minAge = config.plan.startAge, maxAge = config.plan.endAge + 1;
@@ -496,7 +511,7 @@ function renderScenarios(){
     const m=scenarioMetrics(s.config);
     const article=document.createElement('article'); article.className='scenario-item';
     const baseline=s.role==='baseline';
-    article.innerHTML=`<label class="scenario-check"><input type="checkbox" data-scenario-select="${s.id}" ${s.selected?'checked':''}><span><strong>${escapeHtml(s.name)} ${baseline?'<em class="baseline-badge">基準</em>':''}</strong><small>95歳 ${money(m.finalAsset)} / 80歳 ${m.age80Asset==null?'—':money(m.age80Asset)}</small></span></label>${baseline?'<span class="muted">固定</span>':`<button class="link-btn" data-scenario-delete="${s.id}">削除</button>`}`;
+    article.innerHTML=`<label class="scenario-check"><input type="checkbox" data-scenario-select="${s.id}" ${s.selected?'checked':''}><span><strong>${escapeHtml(s.name)} ${baseline?'<em class="baseline-badge">比較の基準案</em>':''}</strong><small>95歳 ${money(m.finalAsset)} / 80歳 ${m.age80Asset==null?'—':money(m.age80Asset)}</small></span></label>${baseline?'<span class="muted">固定</span>':`<button class="link-btn" data-scenario-delete="${s.id}">削除</button>`}`;
     wrap.appendChild(article);
   });
   renderScenarioCompare();
@@ -504,7 +519,7 @@ function renderScenarios(){
 
 function renderScenarioCompare(){
   const selected=scenarios.filter(s=>s.selected).slice(0,3);
-  if(!selected.length){ el('scenarioCompare').innerHTML='<p class="muted">比較するシナリオを選択してください。</p>'; return; }
+  if(!selected.length){ el('scenarioCompare').innerHTML='<p class="muted">比較する保存済みの案を選択してください。</p>'; return; }
   const metrics=selected.map(s=>({s,m:scenarioMetrics(s.config)}));
   const rows=[
     ['95歳末資産', x=>money(x.m.finalAsset)],
@@ -762,7 +777,17 @@ el('unemploymentToolRun').addEventListener('click',runUnemploymentTool);
 el('taxToolRun').addEventListener('click',runTaxSocialTool);
 
 document.addEventListener('click', e=>{
-  const navigation=e.target.closest('[data-open-tab]');if(navigation)switchTab(navigation.dataset.openTab);
+  const navigation=e.target.closest('[data-open-tab]');
+  if(navigation){
+    switchTab(navigation.dataset.openTab);
+    const target=el(navigation.dataset.focusTarget);
+    if(target){
+      document.querySelectorAll('.input-destination').forEach(n=>n.classList.remove('input-destination'));
+      for(let parent=target.parentElement;parent;parent=parent.parentElement)if(parent.tagName==='DETAILS')parent.open=true;
+      if(!target.matches('input,select,textarea,button,a'))target.setAttribute('tabindex','-1');
+      target.classList.add('input-destination');target.focus({preventScroll:true});target.scrollIntoView({block:'center',behavior:'auto'});
+    }
+  }
   const da=e.target.closest('[data-delete-actual]'); if(da) deleteActual(Number(da.dataset.deleteActual));
   const ds=e.target.closest('[data-scenario-delete]'); if(ds) deleteScenario(ds.dataset.scenarioDelete);
   const dp=e.target.closest('[data-delete-period]');
@@ -770,6 +795,12 @@ document.addEventListener('click', e=>{
 });
 document.addEventListener('change', e=>{
   if(e.target.matches('[data-scenario-select]')) toggleScenario(e.target.dataset.scenarioSelect,e.target.checked);
+});
+
+el('showActuals').addEventListener('change',e=>{
+  showActuals=e.target.checked;
+  document.body.classList.toggle('simulation-only',!showActuals);
+  if(config){renderHome();drawChart();}
 });
 
 function switchTab(id){
