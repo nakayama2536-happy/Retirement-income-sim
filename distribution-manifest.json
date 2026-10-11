@@ -1,6 +1,6 @@
 {
   "kind": "public-release",
-  "runtime": "v0.9.7-withdrawal-20261012",
+  "runtime": "v0.9.7-goals-20261012",
   "files": [
     {
       "name": "annual-cashflow.mjs",
@@ -14,8 +14,8 @@
     },
     {
       "name": "app.mjs",
-      "size": 61959,
-      "sha256": "269eefc07cb16add94888af1eb7889612b29d8f08837ceb8b41bc2e4d4f0490f"
+      "size": 62034,
+      "sha256": "5aa47315751dabaeda0836196ccaedb41bb3b9fab08ed904b7ffee05c5f70d9a"
     },
     {
       "name": "backup-compatibility.mjs",
@@ -64,13 +64,13 @@
     },
     {
       "name": "detail-settings.mjs",
-      "size": 17789,
-      "sha256": "ee6216c05a60162c2b0c58ffc8d0612e9950d8a6e68d4b2bea892d0983d8a1d2"
+      "size": 18213,
+      "sha256": "70cf56d8eb11e7411c37cbf66254dd434c7f2d1151caa0f205b5c213b8d8d79b"
     },
     {
       "name": "detail-ui.mjs",
-      "size": 22658,
-      "sha256": "f410d7a59b10d60f3314c52ac6d7e29e84099c3e46d49f48fdeb5762aa61ec12"
+      "size": 24968,
+      "sha256": "d7a159c7e35c80a26791c803c588cd4291413f2172639e13e797ff6f79efa1f4"
     },
     {
       "name": "detailed-report.mjs",
@@ -79,8 +79,8 @@
     },
     {
       "name": "docs/USER_GUIDE.md",
-      "size": 21081,
-      "sha256": "92534b5e3458ef518a25c947ce94c3e244e16ca157531698cc3de361d234243b"
+      "size": 21076,
+      "sha256": "6c4be0d8e819abccdc9a88c90a85366c02e70ab2cf89872f8b8e8c9d5aa634c5"
     },
     {
       "name": "expense-display.mjs",
@@ -134,8 +134,8 @@
     },
     {
       "name": "index.html",
-      "size": 50514,
-      "sha256": "243a608c38222a4922d14c8de284795ec79a405f5364bc5018da17c6bb2e31b6"
+      "size": 50576,
+      "sha256": "a5bf5be48bb667ff12cb08d7bda55a6d26c04e4d0886849bceb605d189c1e657"
     },
     {
       "name": "manifest.webmanifest",
@@ -169,8 +169,8 @@
     },
     {
       "name": "README.md",
-      "size": 1924,
-      "sha256": "aec609444e87d457c496f079d213acd94a9c1f09c9f742f37a026a7ce5743027"
+      "size": 1919,
+      "sha256": "27c012d1260442fd2ef66847f9f97e481dbdf1f8c0ce54dcf013b7c955e0072a"
     },
     {
       "name": "recovery-ui.mjs",
@@ -214,13 +214,13 @@
     },
     {
       "name": "styles.css",
-      "size": 15344,
-      "sha256": "c3a89daf5b60642d62c504650c960fffc90187d24c3ac11493b53b57b5ac201f"
+      "size": 15804,
+      "sha256": "40f0124d7705432d8536081f1a2fa2d96b04570606b3268ca2e7170feabb7cfe"
     },
     {
       "name": "sw.js",
-      "size": 3446,
-      "sha256": "233ccf0d655e26f1ea4434c0e33f305dfbfb2ca1d37bd123021b77b0884a9d58"
+      "size": 3441,
+      "sha256": "15dc9a0c1e05058eac584d5c78752a8cdf48a6a569d206df568dda1a4ee96526"
     },
     {
       "name": "tax-social-audit.mjs",

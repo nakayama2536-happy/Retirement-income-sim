@@ -35,11 +35,8 @@
 <section id="home" class="panel">
 <article class="card simulation-context"><strong>表示中：現在の設定によるシミュレーション</strong><p>保存した比較案は「比較」で確認できます。年金・給与生活などの未反映の入力は、この結果に含まれません。</p><small id="simulationPeriod"></small></article>
 <div class="hero-grid">
-<article class="card status-card"><span id="targetStatusLabel">最終年齢末の目標</span><strong id="status"></strong><small id="targetStatusNote"></small></article>
+<article class="card target-overview"><h2 id="targetStatusLabel">最終年齢末の目標</h2><strong id="status"></strong><div class="target-metrics"><div><span id="finalPredictionLabel">予測資産額</span><strong id="finalAsset"></strong></div><div><span id="finalTargetLabel">目標資産額</span><strong id="finalThreshold"></strong></div><div><span>目標との差額</span><strong id="finalMargin"></strong></div></div><small>差額＝予測資産額 − 目標資産額。目標は参考の目安です。</small><small id="targetStatusNote"></small><button class="link-btn" data-open-tab="settings">目標額を再設定する</button></article>
 <article class="card"><span id="initialAssetLabel">開始資産</span><strong id="currentAsset"></strong><small>シミュレーション開始時点の設定額</small></article>
-<article class="card"><span id="finalTargetLabel">目標資産額</span><strong id="finalThreshold"></strong><small>設定した資産額の目安</small></article>
-<article class="card"><span id="finalPredictionLabel">予測資産額</span><strong id="finalAsset"></strong><small>現在の条件で計算したシミュレーション値</small></article>
-<article class="card"><span>目標との差額</span><strong id="finalMargin"></strong><small>予測資産額 − 目標資産額</small></article>
 <article class="card"><span>予備枠</span><strong id="reserve"></strong><small>最低安全資産 <b id="safeAssetMinimum"></b> / 予備枠全使用後の最終資産 <b id="afterReserve"></b> / 全使用後の最低目安 <b id="reserveUsedThreshold"></b></small></article>
 <article class="card forecast-card actual-only"><span>実績反映後の最終予測資産額</span><strong id="forecastFinalAsset">未入力</strong><small id="forecastNote">実績入力後に自動更新</small></article>
 </div>
@@ -50,7 +47,7 @@
 </div>
 <div class="two-col">
 <article class="card"><div class="section-title"><h2>入力値の確度</h2><button class="info" data-help="入力値の確度" data-help-text="数字の大きさとは別に、その数字が確定値・公式見込・会社見込・計画・仮定・シナリオ・未確認のどれかを表示します。計算結果が精密に見えても、前提が仮定なら将来結果にも幅があることを確認するための機能です。">ⓘ</button></div><div id="certaintySummary"></div></article>
-<article class="card"><div class="section-title"><h2>95歳資産の増減要因</h2><button class="info" data-help="増減要因分解" data-help-text="保存した比較の基準案と現在条件の最終資産差を、開始資産・運用・労働収入・年金・支出条件・DCや転居等のイベントへ配分します。相互作用も配分するため、各要因の合計は総差額と一致します。">ⓘ</button></div><div id="factorSummary"></div></article>
+
 </div>
 <div class="two-col"><article class="card"><div class="section-title"><h2>データ整合性</h2><button class="info" data-help="データ整合性" data-help-text="年間予算の抜け・重複、予備枠内訳、生活費内訳、臨時イベントなどを自動点検します。計算を続けられる警告と、修正が必要なエラーを区別して表示します。">ⓘ</button></div><div id="integritySummary"></div></article><article class="card"><div class="section-title"><h2>見直し条件</h2><span id="reviewCount" class="pill"></span></div><div id="reviewAlerts" class="pending-list"></div></article></div>
 <div class="two-col"><article class="card"><div class="section-title"><h2>この結果の計算根拠</h2><button class="info" data-help="計算根拠" data-help-text="95歳末資産は月次計算で、運用益・就労収入・公的年金・iDeCo/DC受取・年代別年間予算・臨時イベントを同一時間軸に反映しています。税・社会保険は年代別年間予算に含むため、制度ツールの詳細額を別加算しません。">ⓘ</button></div><div id="calculationBasis" class="summary-box"></div></article><article class="card"><div class="section-title"><h2>制度根拠・更新状態</h2><button class="info" data-help="制度根拠" data-help-text="年金・NISA・iDeCo/DC・退職金・雇用保険・税社会保険について、制度基準日と公式出典を制度タブに保持します。将来時点では現在法を確定値として扱わず、受取・退職前に再確認します。">ⓘ</button></div><div id="sourceStatus"></div></article></div>
@@ -124,7 +121,7 @@
 </div>
 <article class="card"><h2>保存した比較案</h2><div id="scenarioList" class="scenario-list"></div></article>
 <article class="card"><h2>選択した比較案のシミュレーション</h2><p class="muted">各案を保存した時点の条件で計算しています。ホームの現在設定とは異なる場合があります。</p><div id="scenarioCompare" class="table-wrap"></div></article>
-</section>
+<details class="card"><summary>補足：最終資産の増減要因</summary><p class="muted">対応する計算方式だけで、保存した基準案と現在設定の差を分析します。普段の確認は上の比較表をご利用ください。</p><div id="factorSummary"></div></details></section>
 
 <section id="nisa" class="panel" hidden><article class="card"><h2>NISA</h2><p>NISAの評価額は開始資産の内数です。入力しても収入・資産へ重ねて加算しません。取り崩しはNISAから他の資金への移動として参考試算します。総資産には共通の税引後利回りを使い、取り崩し先の現金利回りや生活費への自動充当は計算しません。</p><div id="nisaCurrentSummary" class="current-setting-summary"></div></article><p class="muted">取り崩しプランは開始・終了月を含みます。積立・買増し・生活費不足への自動追加売却・売却後の利用枠回復は含みません。指定額に足りない月は不足額を表示します。</p><article id="detail-nisaWithdrawal" class="card"></article><article id="detail-nisa" class="card"></article><article class="card"><h2>参考：NISAの残り枠を確認</h2><p class="muted">この参考欄は保存されません。保存する値は上の個別設定に入力してください。</p><label>今年のつみたて枠使用（万円）<input id="nisaTsumitate" type="number" value="0"></label><label>今年の成長枠使用（万円）<input id="nisaGrowth" type="number" value="0"></label><label>生涯枠の使用簿価（万円）<input id="nisaLifetime" type="number" value="0"></label><button id="nisaToolRun" class="primary">確認</button><p id="nisaToolResult" class="result"></p></article></section>
 <section id="ideco" class="panel" hidden><article class="card"><h2>iDeCo</h2><p>開始資産に含まれないiDeCoからの受取を計上します。掛金の原資・計上方法と一時金の税参考の適用設定は、現在の設定を維持します。</p><p class="muted">掛金原資・給与生活中の受取は、このタブの下の欄で確認・入力できます。</p><div id="idecoCurrentSummary" class="current-setting-summary"></div></article><p class="muted">受取方法・期間・支払回数・併用可否は運営管理機関の規約によります。試算では年金を毎月均等額として受取開始月から計上します。掛金終了後から受取開始までの運用益や、年金受取への税・社会保険の精密計算は未対応です。</p><article id="detail-idecoWithdrawal" class="card"></article><details class="card"><summary>iDeCoの残高・積立など基本条件を変更</summary><article id="detail-ideco" class="card"></article></details><article id="salaryIdecoInputs" class="card"></article><article class="card"><h2>参考：iDeCoの税額・年金年額</h2><p class="muted">この参考欄は保存されません。条件の変更は上の個別設定で試算してください。</p><label>受取時残高（万円）<input id="idecoBalance" type="number" value="0"></label><label>年金受取年数<input id="idecoYears" type="number" value="10" min="5" max="20"></label><button id="idecoToolRun" class="primary">比較</button><p id="idecoToolResult" class="result"></p><details><summary>税務・重複調整の計算根拠</summary><p id="idecoToolBasis" class="muted">個人設定を読み込むと加入期間・退職金との重複調整参考を表示します。</p></details><small>入力残高の単純均等割りに加え、個人設定がある場合は現在の受取時見込・設定した一時金割合・年金受取年数・退職所得控除の19年内重複調整・一時金手取参考を併記します。併用可否・比率指定は運営管理機関へ確認し、将来税制は受取前に再確認します。</small></article><p><button class="link-btn" data-open-tab="expenses" data-focus-target="detail-expense">税・社会保険の予算内訳を入力</button></p></section>
@@ -181,6 +178,7 @@
 
 <section id="settings" class="panel" hidden>
 <article class="card"><h2>全般設定・バックアップ</h2><p>シミュレーション全体の条件と、この端末に保存したデータを確認・変更します。</p><div id="settingsCurrentSummary" class="current-setting-summary"></div></article>
+<article class="card"><div id="goalCurrentSummary"></div><div id="detail-goal"></div><p class="muted">直前の反映を取り消す場合は、画面下部の「この画面で直前に反映した詳細設定を元に戻す」を使用します。</p></article>
 <article class="card"><h2>表示する機能</h2><label class="display-toggle"><input id="showActuals" type="checkbox">実績入力・実績からの再予測も表示する</label><p class="muted">通常はシミュレーションだけを表示します。この切替は表示だけに適用し、保存済みの実績を削除しません。再起動すると通常表示に戻ります。</p><button class="link-btn actual-only" data-open-tab="actuals">実績入力を開く</button></article>
 
 

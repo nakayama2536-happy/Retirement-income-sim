@@ -241,7 +241,7 @@ function renderFactors(){
   if(!baseline){ box.innerHTML='<p class="muted">比較の基準案がありません。</p>'; return; }
   let d;
   try { d=factorDecomposition(baseline.config, config); }
-  catch(e){ box.innerHTML=`<p class="muted">要因分解できませんでした: ${escapeHtml(e.message)}</p>`; return; }
+  catch(e){ box.innerHTML=`<p class="muted">この条件の要因別分析は未対応です。比較表で計画全体の差をご確認ください。詳細： ${escapeHtml(e.message)}</p>`; return; }
   const max=Math.max(...d.impacts.map(x=>Math.abs(x.impact)),1);
   const sorted=[...d.impacts].sort((a,b)=>Math.abs(b.impact)-Math.abs(a.impact));
   const rows=sorted.map(x=>{
@@ -829,7 +829,7 @@ document.querySelectorAll('[data-help]').forEach(btn=>btn.addEventListener('clic
 }));
 el('helpClose').addEventListener('click',()=>el('helpDialog').close());
 
-el('appVersion').textContent='v0.9.7-withdrawal-20261012'; el('rulesVersion').textContent=RULES_VERSION;
+el('appVersion').textContent='v0.9.7-goals-20261012'; el('rulesVersion').textContent=RULES_VERSION;
 if(startupError){setEmptyState();showNotice(`保存データを読み込めません。復元用バックアップを確認してください。${startupError}`,'error');}
 else refresh();
 if(!writeAccess.writable)showNotice('この画面は読み取り専用です。別の編集画面を閉じて再読み込みしてください。同時更新制御が利用できない場合も保存を停止します。','error');

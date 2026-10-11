@@ -7,7 +7,7 @@ export async function validateWithdrawalUi({browser,createTestServer,open,load,o
   data.config.nisa={marketValue:100,usageYear:2044,tsumitateUsed:0,growthUsed:0,lifetimeBookUsed:80};
   data.config.ideco={asOfDate:'2044-01-01',contributionEndDate:'2045-01-01',joinDate:'2010-01-01',lumpDate:'2045-01-01',currentBalance:120,monthlyContribution:0,accumulationReturn:0,lumpPercent:50,annuityPercent:50,annuityYears:10,annuityReturn:0};
   const file=path.join(out,'withdrawal-synthetic.json');await fs.writeFile(file,JSON.stringify(data));
-  const page=await open(context,fixture.url),errors=[];page.on('pageerror',e=>errors.push(e.message));await load(page,file);assert.equal(await page.locator('#appVersion').innerText(),'v0.9.7-withdrawal-20261012');const before=await snapshot(page);
+  const page=await open(context,fixture.url),errors=[];page.on('pageerror',e=>errors.push(e.message));await load(page,file);assert.equal(await page.locator('#appVersion').innerText(),'v0.9.7-goals-20261012');const before=await snapshot(page);
   for(const width of [390,1280]){
    await page.setViewportSize({width,height:900});
    for(const id of ['salary','nisa','ideco','pension','retirement','expenses','events','settings']){
@@ -32,7 +32,29 @@ export async function validateWithdrawalUi({browser,createTestServer,open,load,o
   await openTab(page,'ideco');assert((await page.locator('#idecoCurrentSummary').innerText()).includes('全額を年金'));await page.screenshot({path:path.join(out,'W1-ideco.png'),fullPage:true});
   await openTab(page,'settings');await page.locator('#detailUndo').click();assert.deepEqual((await snapshot(page)).data,before.data);
   await openTab(page,'nisa');const nf=page.locator('#detail-nisaWithdrawal form');await nf.locator('[name=mode]').selectOption('all');await nf.locator('[name=startMonth]').fill(month);await nf.locator('[type=submit]').click();await page.locator('#detail-nisaWithdrawal [data-apply]').click();const saved=await snapshot(page);
-  await page.reload();await page.locator('#dashboard').waitFor({state:'visible'});assert.deepEqual((await snapshot(page)).data,saved.data);assert.deepEqual(errors,[]);record.status='pass';
+  await page.reload();await page.locator('#dashboard').waitFor({state:'visible'});assert.deepEqual((await snapshot(page)).data,saved.data);assert.deepEqual(errors,[]);
+  const goalBefore=await snapshot(page);
+  await openTab(page,'settings');const g=page.locator('#detail-goal form');
+  await g.locator('[name=amount]').fill('4321');await g.locator('[type=submit]').click();
+  assert.deepEqual((await snapshot(page)).data,goalBefore.data);
+  await page.locator('#detail-goal [data-apply]').click();
+  const goalAfter=await snapshot(page);assert.equal(goalAfter.data.config.management.thresholds[goalAfter.data.config.plan.endAge],4321);
+  assert.equal(goalAfter.home.finalAsset,goalBefore.home.finalAsset);assert.deepEqual(goalAfter.data.scenarios,goalBefore.data.scenarios);
+  await openTab(page,'home');
+  for(const width of [390,1280]){
+   await page.setViewportSize({width,height:900});
+   assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));
+   for(const id of ['status','finalAsset','finalThreshold','finalMargin'])assert(await page.locator('.target-overview #'+id).isVisible());
+  }
+  const colors=await page.evaluate(()=>({legend:getComputedStyle(document.querySelector('.legend-target')).borderTopColor,line:getComputedStyle(document.querySelector('.target-line')).stroke,style:getComputedStyle(document.querySelector('.legend-target')).borderTopStyle}));
+  assert.equal(colors.legend,colors.line);assert.equal(colors.style,'dashed');
+  assert.equal(await page.locator('#home #factorSummary').count(),0);
+  await openTab(page,'settings');await page.locator('#detailUndo').click();
+  assert.deepEqual((await snapshot(page)).data,goalBefore.data);
+  await g.locator('[name=amount]').fill('4321');await g.locator('[type=submit]').click();await page.locator('#detail-goal [data-apply]').click();
+  await page.reload();await page.locator('#dashboard').waitFor({state:'visible'});
+  assert.equal((await snapshot(page)).data.config.management.thresholds[goalAfter.data.config.plan.endAge],4321);
+  assert.deepEqual(errors,[]);record.status='pass';
  }catch(e){record.status='failed-or-harness-error';record.error=e.stack;throw Object.assign(e,{detailRecord:record});}
  finally{await context.close();await fixture.close();}
  return record;

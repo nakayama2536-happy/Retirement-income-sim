@@ -77,6 +77,14 @@ function event(c,d){
  return row;
 }
 function mutate(c,kind,d){
+ if(kind==='goal'){
+  const age=num(d.age,'目標年齢',Number(c.plan.startAge),Number(c.plan.endAge));
+  if(!Number.isInteger(age))throw Error('目標年齢は整数で入力してください。');
+  c.management||={};c.management.thresholds={...(c.management.thresholds||{})};
+  if(d.clearGoal===true)delete c.management.thresholds[age];
+  else c.management.thresholds[age]=num(d.amount,'目標資産額');
+  return;
+ }
  if(kind==='nisaWithdrawal'){
   c.nisa||={};
   const p={...(c.nisa.withdrawal||{}),version:1,mode:d.mode};
