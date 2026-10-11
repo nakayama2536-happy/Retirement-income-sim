@@ -21,6 +21,13 @@ async function snapshot(page){
  const stream=await download.createReadStream();const chunks=[];
  for await(const chunk of stream)chunks.push(chunk);
  const data=JSON.parse(Buffer.concat(chunks).toString());
+ // Missing targets intentionally change from the old implicit 0 to 未設定.
+ // Verify that exact display separately, retaining all numeric/storage checks.
+ if(!Object.hasOwn(data.config.management?.thresholds??{},data.config.plan.endAge)){
+  const candidate=await page.locator('#finalTargetLabel').count();
+  assert.equal(home.finalThreshold,candidate?'未設定':'0万円');
+  home.finalThreshold=null;
+ }
  return {home,scenarios,comparison,data:normalize(data)};
 }
 async function open(context,url){
@@ -136,6 +143,8 @@ async function validateHomeUi(browser){
   data.config.retirement={...data.config.retirement,majorSpendDetailStatus:'pending'};
   data.config.care={...data.config.care,facilityRoomType:''};
   data.config.taxPolicy={...data.config.taxPolicy,rulesAsOf:'2026-01-01'};
+  data.config.management.thresholds={'80':900,'95':500};
+  data.config.actuals={'70':{endAsset:920}};
   const file=path.join(out,'home-synthetic.json');await fs.writeFile(file,JSON.stringify(data));
   const page=await open(context,fixture.url);await load(page,file);
   const before=(await snapshot(page)).data;
@@ -146,6 +155,9 @@ async function validateHomeUi(browser){
    assert(!(await page.locator('.forecast-card').isVisible()));
    assert.deepEqual(await page.locator('#keyAges').locator('xpath=../thead/tr/th').allTextContents(),['年齢末','目標資産額','予測資産額','差額']);
    assert((await page.locator('.simulation-context').innerText()).includes('現在の設定によるシミュレーション'));
+   assert.equal(await page.locator('#finalThreshold').innerText(),'500万円');
+   assert.equal(await page.locator('#status').innerText(),'達成');
+   assert((await page.locator('#targetStatusNote').innerText()).includes('80歳末'));
    const card=page.locator('.simulation-context');const box=await card.boundingBox();assert(box&&box.x>=0&&box.x+box.width<=width+1);
    await page.screenshot({path:path.join(out,'S1-home-'+width+'.png'),fullPage:true});
   }
