@@ -1,6 +1,6 @@
 {
   "kind": "public-release",
-  "runtime": "v0.9.7-budget-table-20261012",
+  "runtime": "v0.9.7-ui-simple-20261012",
   "files": [
     {
       "name": "annual-cashflow.mjs",
@@ -14,8 +14,8 @@
     },
     {
       "name": "app.mjs",
-      "size": 61879,
-      "sha256": "a3f106300c0741c151e906517acdc8d61cf03ac7711c78ebe06fd3cd2464d1e7"
+      "size": 61997,
+      "sha256": "4e24cc792e1cf3c39eeba4fdbd87b12bf2de81e10b40f160913c0e7dc1017497"
     },
     {
       "name": "backup-compatibility.mjs",
@@ -169,8 +169,8 @@
     },
     {
       "name": "README.md",
-      "size": 1909,
-      "sha256": "812c6a205e5617461d2e455d737fcf334277559c1113aea53833bbfad0a77e0c"
+      "size": 1945,
+      "sha256": "bf0c69af0f262eb380956baf366575ee9a98cfabc6e188222b2a4eabae838df9"
     },
     {
       "name": "recovery-ui.mjs",
@@ -203,6 +203,11 @@
       "sha256": "159047c65965e7e68110e380ba191484ffedfc7ba6c2725521fadd355acc67be"
     },
     {
+      "name": "simple-layout.mjs",
+      "size": 4869,
+      "sha256": "29ba92721ab717e812e4e46f649d672af4404b2e367aa48df85fc038824d9e8e"
+    },
+    {
       "name": "state.mjs",
       "size": 1978,
       "sha256": "982933f9534ff729228e1851f7c82f853678d549d659ec7db4e62b17e7cdb3a5"
@@ -219,8 +224,8 @@
     },
     {
       "name": "sw.js",
-      "size": 3488,
-      "sha256": "d1591ac46a73e5e7e5aa48b2e3b804c7264b00bb292bbf5fd0d63c0776cec162"
+      "size": 3521,
+      "sha256": "deb31e6a1f0bba2a8819c2220ce37b47cbb04bb837446736ff4c8754a7f7cf61"
     },
     {
       "name": "tax-social-audit.mjs",
