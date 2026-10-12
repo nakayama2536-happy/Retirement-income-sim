@@ -91,8 +91,8 @@ export function selectTrendColumns(report,selectedIds){
  if(selectedIds===undefined)return report.columns;
  const ids=new Set(selectedIds);return report.columns.filter(c=>ids.has(c.id));
 }
-export function trendCsv(report,selectedIds){
+export function trendCsv(report,selectedIds,{includeStatus=false}={}){
  const columns=selectTrendColumns(report,selectedIds);if(!columns.length)throw Error('出力する項目を1つ以上選択してください。');
- const header=[...TREND_KEYS.map(([,label])=>label),...columns.flatMap(c=>[c.label,`${c.label} 状態`])];
- return '\uFEFF'+[header,...report.rows.map(r=>[...TREND_KEYS.map(([key])=>r[key]),...columns.flatMap(c=>[r.values[c.id],r.statuses[c.id]])])].map(row=>row.map(cell).join(',')).join('\r\n')+'\r\n';
+ const header=[...TREND_KEYS.map(([,label])=>label),...columns.flatMap(c=>includeStatus?[c.label,`${c.label} 状態`]:[c.label])];
+ return '\uFEFF'+[header,...report.rows.map(r=>[...TREND_KEYS.map(([key])=>r[key]),...columns.flatMap(c=>includeStatus?[r.values[c.id],r.statuses[c.id]]:[r.values[c.id]])])].map(row=>row.map(cell).join(',')).join('\r\n')+'\r\n';
 }

@@ -24,3 +24,10 @@ test('全未確定・一部未確定は年次の空欄を維持、イベント�
 test('選択列のCSVは式・引用符・改行を安全に扱う',()=>{const s=fixture();s.config.expenseDetail.monthlyCategories[0].label='=HYPERLINK("x")\n支出';const r=wideDetailedReport(s.config),csv=trendCsv(r);assert.ok(csv.includes('""x""'));assert.ok(csv.includes('支出'));});
 test('集計・選択は設定や比較案を書き換えない',()=>{const s=fixture(),before=structuredClone(s);for(const period of ['monthly','annual','calendar'])trendCsv(wideDetailedReport(s.config,{period}));assert.deepEqual(s,before);});
 test('画面に独立タブ、4収入入力、iDeCo移設先と2段固定ナビを用意',()=>{const h=fs.readFileSync(new URL('./index.html',import.meta.url),'utf8'),css=fs.readFileSync(new URL('./styles.css',import.meta.url),'utf8');const ids=[...h.matchAll(/\bid="([^"]+)"/g)].map(x=>x[1]);assert.equal(new Set(ids).size,ids.length);for(const id of ['review','salaryIdecoInputs','detail-laborPrimaryRegular','detail-laborPrimarySide','detail-laborSpouseRegular','detail-laborSpouseSide','detailColumnPicker','detailSelectAll'])assert.ok(ids.includes(id));assert.match(h,/<section id="review"/);assert.match(css,/\.navigation-sticky\{position:sticky/);const tabs=[...h.matchAll(/data-group-item="income" data-tab="([^"]+)"/g)].map(x=>x[1]);assert.deepEqual(tabs,['salary','nisa','ideco','retirement','pension','unemployment']);});
+test('状態列は既定で省略し、指定時だけ追加。未確定値と期間は保持',()=>{
+ const r={columns:[{id:'a',label:'金額'}],rows:[{period:'2044-08',values:{a:null},statuses:{a:'未確定'}}]};
+ const off=trendCsv(r),on=trendCsv(r,undefined,{includeStatus:true});
+ assert.ok(!off.includes('状態'));assert.ok(!off.includes('未確定'));assert.ok(on.includes('金額 状態'));assert.ok(on.includes('未確定'));
+ assert.equal(off.split('\r\n').length,on.split('\r\n').length);
+ assert.ok(off.split('\r\n')[1].endsWith(','));
+});

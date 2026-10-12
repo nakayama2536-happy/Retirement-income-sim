@@ -50,3 +50,11 @@
 
 .date-age-hint{display:block;font-size:.85rem;font-weight:400;line-height:1.6;overflow-wrap:anywhere;margin-top:.25rem;}
 .date-age-hint[hidden]{display:none;}
+
+/* Home amounts share the same hierarchy on desktop and smaller screens. */
+.hero-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+.hero-grid .card{min-width:0}
+.hero-grid .card>strong,.target-metrics strong{display:block;font-size:1.55rem;line-height:1.35;font-weight:700;font-variant-numeric:tabular-nums;margin-top:4px;overflow-wrap:anywhere}
+.target-overview>strong#status{font-size:1rem}
+.target-metrics>div{min-width:0}
+@media(max-width:760px){.hero-grid .card>strong,.target-metrics strong{font-size:1.3rem}.target-overview>strong#status{font-size:1rem}}
