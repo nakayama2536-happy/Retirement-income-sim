@@ -150,7 +150,7 @@ export function mountDetailUI({getState,commit,notice}){
   el('detailCsvLimit').textContent='縦に期間、横に項目を確認できます。CSVは画面の期間絞込みに関係なく、チェックした項目の全期間を出力します。年次は収支を合計し、期首・期末残高は最初・最後の値を使います。';
   el('downloadDetailedCsv').disabled=!columns.length;
  }
- function renderAnnual(){const c=getState().config;if(!c)return;const table=groupedYearHtml(runRetirementPlan(c,{includeMonthlyDetails:true}),el('yearViewMode').value);el('yearHead').innerHTML=table.head;el('yearRows').innerHTML=table.body;}
+ function renderAnnual(){const c=getState().config;if(!c)return;const table=groupedYearHtml(runRetirementPlan(c,{includeMonthlyDetails:true}),el('yearViewMode').value,c);el('yearHead').innerHTML=table.head;el('yearRows').innerHTML=table.body;}
  function download(content,filename,type='text/plain;charset=utf-8'){const url=URL.createObjectURL(new Blob([content],{type}));const a=document.createElement('a');a.href=url;a.download=filename;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}
  el('detailUndo').addEventListener('click',()=>{try{if(!undo)return;if(commit(undoDetail(getState().config,undo))){undo=null;el('detailUndo').disabled=true;notice('今回の対象設定だけを元に戻しました。');}}catch(e){notice(e.message,'error');}});
  for(const id of ['detailCsvSource','detailCsvPeriod','detailCsvAge'])el(id).addEventListener('change',()=>{renderReport();if(id==='detailCsvSource'){el('reviewPromptText').value='';el('reviewPromptText').hidden=true;el('downloadReviewPrompt').disabled=true;}});

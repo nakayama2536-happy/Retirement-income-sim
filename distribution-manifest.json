@@ -1,6 +1,6 @@
 {
   "kind": "public-release",
-  "runtime": "v0.9.7-budget-nisa-20261012",
+  "runtime": "v0.9.7-annual-nisa-20261012",
   "files": [
     {
       "name": "annual-cashflow.mjs",
@@ -15,7 +15,7 @@
     {
       "name": "app.mjs",
       "size": 61878,
-      "sha256": "8826b6ae10b370fd2982f6b32b829171b0920cefcc155112e7972eafba3f3c45"
+      "sha256": "92e8203b7a8437252a9d566bcec8809b837cd6a8cc5aa1994fded281ec9f956e"
     },
     {
       "name": "backup-compatibility.mjs",
@@ -69,18 +69,18 @@
     },
     {
       "name": "detail-ui.mjs",
-      "size": 31494,
-      "sha256": "d464b35d82d0bad10797ec5d0c65f987f8ab5977bfc165f0e7cfd213c9109828"
+      "size": 31496,
+      "sha256": "b0c627f9fa8ec901a15e88493dd39a2b52b2081ff05a1bc07971ce81492d630b"
     },
     {
       "name": "detailed-report.mjs",
-      "size": 16099,
-      "sha256": "8b44fc1de0a5f181210068e8ef7b2977ee4246318b81c8bc6d338be09f31036b"
+      "size": 16554,
+      "sha256": "e87541975e88446759ec42e77b0e8246ed3de5c18c97655af06678831409688b"
     },
     {
       "name": "docs/USER_GUIDE.md",
-      "size": 27515,
-      "sha256": "e1e32412bad89ec0c43d65ef69f04fc419354b05eeeeab851386aaddf9b6e124"
+      "size": 27917,
+      "sha256": "ae88e8b77ca7a491d982c30718fa02c7897204bdd0c4abd166e8a3828f0f1ffc"
     },
     {
       "name": "expense-display.mjs",
@@ -134,8 +134,8 @@
     },
     {
       "name": "index.html",
-      "size": 56690,
-      "sha256": "acae44731e2c5ef79fc72740033b76ee21390a69d1dcc9ab0d135504a2a045cf"
+      "size": 56956,
+      "sha256": "f2776b3887937b5fbc0f8ae97f847caecb1abb766e894c2455e42b4e9b1126a8"
     },
     {
       "name": "manifest.webmanifest",
@@ -170,7 +170,7 @@
     {
       "name": "README.md",
       "size": 1921,
-      "sha256": "14a623123c394295e203f9b2b308ae912d16b218e2a82d4bc6f658b68bec2666"
+      "sha256": "45f3db3dfccb1efcdef907f391c959d5445ba8cf63d401268b227b627081e75a"
     },
     {
       "name": "recovery-ui.mjs",
@@ -220,7 +220,7 @@
     {
       "name": "sw.js",
       "size": 3487,
-      "sha256": "d362eaf6cb2708b8935a3d8357b971cf2e5a351157214732a76a29472574a804"
+      "sha256": "ced954eb112f468d2fab955fca3643fea148d02fd60d27c5fa0cc7176ce736aa"
     },
     {
       "name": "tax-social-audit.mjs",
