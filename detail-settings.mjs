@@ -142,8 +142,7 @@ function mutate(c,kind,d){
  }
  if(kind==='nisa'){
   const marketValue=num(d.marketValue,'開始時点のNISA評価額',0,Number(c.plan.initialAsset));
-  const usageYear=num(d.usageYear??new Date().getFullYear(),'利用枠の確認年',2024,2200);if(!Number.isInteger(usageYear))throw Error('確認年は整数で入力してください。');
-  c.nisa={...(c.nisa||{}),usageYear,marketValue,tsumitateUsed:num(d.tsumitateUsed,'つみたて枠使用額',0,120),growthUsed:num(d.growthUsed,'成長枠使用額',0,240),lifetimeBookUsed:num(d.lifetimeBookUsed,'保有分の取得価額',0,1800)};return;
+  c.nisa={...(c.nisa||{}),marketValue};return;
  }
  if(kind==='ideco'){
   if(c.plan.initialAssetIncludesIdeco!==false)throw Error('開始資産からiDeCoが除かれているか未確認です。重複計上を避けるため、確認してから設定してください。');

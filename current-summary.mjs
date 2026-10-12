@@ -24,7 +24,7 @@ export function currentSummaryRows(c,tab){
  }
  if(tab==='nisa'){
   const n=c.nisa||{},w=n.withdrawal,p=projectNisaWithdrawal(c);
-  const rows=[['開始資産の内訳',`全体 ${amount(c.plan.initialAsset)} ／ NISA ${amount(n.marketValue)}`],['利用枠の確認年',amount(n.usageYear,'年')],['使用枠・簿価',`つみたて ${amount(n.tsumitateUsed)} ／ 成長 ${amount(n.growthUsed)} ／ 保有簿価 ${amount(n.lifetimeBookUsed)}`],['取り崩し方法',w?NISA_MODES[w.mode]:'未設定']];
+  const rows=[['開始資産の内訳',`全体 ${amount(c.plan.initialAsset)} ／ NISA ${amount(n.marketValue)}`],['取り崩し方法',w?NISA_MODES[w.mode]:'未設定']];
   if(p.status==='configured')rows.push(['取り崩し期間',`${date(w.startMonth)} ～ ${date(w.endMonth)}（開始・終了月を含む）`],['取り崩し指定',w.mode==='fixed'?`${amount(w.monthlyAmount)}／月`:w.mode==='rate'?`運用後残高の ${amount(w.monthlyRate,'%')}／月`:'開始月に全額'],['参考試算',`期間内の取崩し計 ${amount(p.total)} ／ 最終NISA残高 ${amount(p.endBalance)} ／ 指定額に対する不足 ${amount(p.shortfall)}`]);
   rows.push(['計算への反映','NISA内の参考計画。資産内の移動のため収入・支出に重ねず、総資産推移は変えません。']);
   if(p.conflictMonth)rows.push(['要確認',`${date(p.conflictMonth)}から参考NISA残高が総資産を上回ります。他の資金で支出を賄えない可能性があり、取り崩し・予算の見直しが必要です。`]);
