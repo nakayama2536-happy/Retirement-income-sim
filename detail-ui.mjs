@@ -2,7 +2,7 @@ import {unemploymentPlan,laborDateRecommendation,UNEMPLOYMENT_MODES} from './une
 import {renderCurrentSummaries,currentSummaryHtml} from './current-summary.mjs';
 import {projectNisaWithdrawal,idecoMode,NISA_MODES,IDECO_MODES} from './withdrawal-plan.mjs';
 import {detailProposal,verifyDetailProposal,expenseEntries,EXPENSE_GROUPS,EXPENSE_EXAMPLES,changedPaths,undoDetail} from './detail-settings.mjs';
-import {wideDetailedReport,visibleTrendColumns,trendCsv,TREND_KEYS,esc,groupedYearHtml} from './detailed-report.mjs';
+import {wideDetailedReport,trendPickerItemsHtml,visibleTrendColumns,trendCsv,TREND_KEYS,esc,groupedYearHtml} from './detailed-report.mjs';
 import {configSignature} from './storage.mjs';
 import {dateWithAge,updateDateInputHints} from './date-display.mjs';
 import {expenseDisplayProfile} from './expense-display.mjs';
@@ -136,7 +136,7 @@ export function mountDetailUI({getState,commit,notice}){
  function selectedColumns(){return report?availableColumns().filter(c=>!excluded.has(c.id)):[];}
  function renderColumnPicker(){
   const groups=[...new Set(availableColumns().map(c=>c.section))];
-  el('detailColumnPicker').innerHTML=groups.map(section=>{const cols=availableColumns().filter(c=>c.section===section),checked=cols.filter(c=>!excluded.has(c.id)).length;return `<details><summary>${esc(section)}（${checked}/${cols.length}項目）</summary><label class="check-label"><input type="checkbox" data-column-section="${esc(section)}" ${checked===cols.length?'checked':''}>${esc(section)}をまとめて選択</label>${cols.map(c=>`<label class="check-label"><input type="checkbox" data-column-id="${esc(c.id)}" ${excluded.has(c.id)?'':'checked'}>${esc(c.label)}</label>`).join('')}</details>`;}).join('');
+  el('detailColumnPicker').innerHTML=groups.map(section=>{const cols=availableColumns().filter(c=>c.section===section),checked=cols.filter(c=>!excluded.has(c.id)).length;return `<details><summary>${esc(section)}（${checked}/${cols.length}項目）</summary><label class="check-label"><input type="checkbox" data-column-section="${esc(section)}" ${checked===cols.length?'checked':''}>${esc(section)}をまとめて選択</label>${trendPickerItemsHtml(cols,excluded)}</details>`;}).join('');
   for(const box of el('detailColumnPicker').querySelectorAll('[data-column-section]')){const cols=availableColumns().filter(c=>c.section===box.dataset.columnSection),n=cols.filter(c=>!excluded.has(c.id)).length;box.indeterminate=n>0&&n<cols.length;}
   const all=el('detailSelectAll');all.checked=selectedColumns().length===availableColumns().length;all.indeterminate=selectedColumns().length>0&&!all.checked;
  }

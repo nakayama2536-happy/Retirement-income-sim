@@ -42,6 +42,12 @@ export async function validateLaborTrendUi({browser,createTestServer,open,load,o
    await page.setViewportSize({width,height:900});await openTab(page,'salary');
    for(const id of ['laborPrimaryRegular','laborPrimarySide','laborSpouseRegular','laborSpouseSide'])assert(await page.locator('#detail-'+id+' form').isVisible());
    assert.equal(await page.locator('#salary #salary_receipt_ideco').count(),0);
+   assert.deepEqual(await page.locator('#salaryInputs > fieldset > legend').allTextContents(),['1. 生活費の負担を切り替える月','2. 給与生活中の家計と資産の入出金','3. 切替後の生活費・労働収入','4. 年金・iDeCo・臨時収支の扱い']);
+   assert((await page.locator('#salaryExistingLabor').innerText()).includes('最終計上月'));
+   assert((await page.locator('#salaryInputs').innerText()).includes('比較専用'));
+   assert(await page.locator('#salaryForm').evaluate(n=>n.scrollWidth<=n.clientWidth+1));
+   await page.locator('#salaryForm').screenshot({path:path.join(out,`L1-salary-form-${width}.png`)});
+
    await page.evaluate(()=>window.scrollTo(0,800));
    const rect=await page.locator('.navigation-sticky').boundingBox();assert(rect.y>=-1&&rect.y<=1);assert(await page.locator('[data-group="income"]').isVisible());
    assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));
@@ -58,6 +64,15 @@ export async function validateLaborTrendUi({browser,createTestServer,open,load,o
   assert(normalHeaders.includes('iDeCo一時金の資産計上額'));assert(normalHeaders.includes('その他の臨時・追加収入'));
   assert(!normalHeaders.includes('一時金・臨時・追加収入'));assert(!normalHeaders.includes('本人の労働収入'));
   const normalCount=await page.locator('[data-column-id]').count();
+  const incomeGroup=page.locator('#detailColumnPicker details').filter({has:page.locator('[data-column-section="収入"]')});
+  await incomeGroup.locator('summary').click();
+  assert.equal(await incomeGroup.locator('.trend-picker-total').count(),1);
+  assert(await incomeGroup.locator('.trend-picker-child').count()>0);
+  assert(!(await incomeGroup.innerText()).includes('中項目'));
+  const firstIncome=incomeGroup.locator('[data-column-id]').first();
+  await firstIncome.uncheck();assert(!(await firstIncome.isChecked()));await firstIncome.check();
+  await incomeGroup.screenshot({path:path.join(out,'L1-income-hierarchy.png')});
+
   await page.locator('#detailCsvIncludeDetails').check();
   assert(await page.locator('[data-column-id]').count()>normalCount);
   assert((await page.locator('#detailCsvTable thead').innerText()).includes('本人の労働収入'));

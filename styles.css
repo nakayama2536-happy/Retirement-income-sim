@@ -58,3 +58,14 @@
 .target-overview>strong#status{font-size:1rem}
 .target-metrics>div{min-width:0}
 @media(max-width:760px){.hero-grid .card>strong,.target-metrics strong{font-size:1.3rem}.target-overview>strong#status{font-size:1rem}}
+
+/* Income column selection: totals and component rows have distinct levels. */
+#detailColumnPicker .trend-picker-total{border-bottom:2px solid #c4d4e3;font-weight:700}
+#detailColumnPicker .trend-picker-group{min-width:0;margin:14px 0 0;padding:0 10px 6px;border:1px solid #c4d4e3;border-radius:6px}
+#detailColumnPicker .trend-picker-group legend{font-weight:700;padding:0 6px}
+#detailColumnPicker .trend-picker-child{margin-left:20px;border-left:2px solid #c4d4e3;padding-left:10px}
+#detailColumnPicker .trend-picker-row small{display:block;color:#53677b;font-weight:400}
+#detailColumnPicker .trend-picker-help{line-height:1.6}
+
+/* Salary inputs follow the reading order rather than unrelated columns. */
+#salaryInputs{grid-template-columns:1fr}#salaryInputs .pension-person{max-width:100%}.salary-labor-reference{background:#f3f6f9;border-radius:8px;padding:12px;margin-top:14px}.salary-labor-reference li{margin:8px 0;overflow-wrap:anywhere}

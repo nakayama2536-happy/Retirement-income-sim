@@ -76,7 +76,7 @@ export function wideDetailedReport(config,{sourceProfile='',period='monthly'}={}
  }
  const addColumn=r=>{const id=seriesKey(r);if(!columns.has(id)){
   const section=/NISA/i.test(r.item+' '+r.category)?'NISA':/iDeCo|DC/i.test(r.item+' '+r.category)?'iDeCo':r.group;
-  columns.set(id,{id,group:r.group,section,label:`${r.group} / ${r.category} / ${r.item}${r.itemId?' ［'+r.itemId+'］':''} ［${r.scope}・${r.unit}］`,item:r.item,scope:r.scope,note:r.note,unit:r.unit,detailOnly:isDetailColumn(r,config)});
+  columns.set(id,{id,group:r.group,category:r.category,itemId:r.itemId,section,label:`${r.group} / ${r.category} / ${r.item}${r.itemId?' ［'+r.itemId+'］':''} ［${r.scope}・${r.unit}］`,item:r.item,scope:r.scope,note:r.note,unit:r.unit,detailOnly:isDetailColumn(r,config)});
  }return id;};
  for(const r of long.rows){const id=addColumn(r);
   if(r.period==='設定値'){for(const out of periods.values()){out.values[id]=r.amount;out.statuses[id]=r.amount===null?'未設定':'固定設定値（将来残高ではありません）';}continue;}
@@ -113,3 +113,16 @@ function isDetailColumn(r,config){
  return false;
 }
 export function visibleTrendColumns(report,includeDetails=false){return report.columns.filter(c=>includeDetails||!c.detailOnly);}
+
+// Picker presentation only: preserve column IDs, CSV labels and calculation order.
+export function trendPickerItemsHtml(columns,excluded=new Set()){
+ const row=(c,child=false)=>`<label class="check-label trend-picker-row${child?' trend-picker-child':''}" title="${esc(c.note)}"><input type="checkbox" data-column-id="${esc(c.id)}" ${excluded.has(c.id)?'':'checked'}><span>${esc(c.item)}${c.itemId?' ［'+esc(c.itemId)+'］':''} <small>${esc(c.scope)}・${esc(c.unit)}</small></span></label>`;
+ if(!columns.length)return '';
+ if(columns[0].section!=='収入')return columns.map(c=>`<label class="check-label"><input type="checkbox" data-column-id="${esc(c.id)}" ${excluded.has(c.id)?'':'checked'}>${esc(c.label)}</label>`).join('');
+ const groups=new Map();
+ for(const c of columns){
+  const key=c.scope==='合計'?'合計':c.item==='労働収入'||c.category==='労働収入の内訳'?'労働収入':c.item.includes('公的年金')?'公的年金':'その他の受取・入金';
+  if(!groups.has(key))groups.set(key,[]);groups.get(key).push(c);
+ }
+ return '<p class="muted trend-picker-help">資産に計上する収入です。別枠のiDeCo一時金・年金も収入合計に含みます。合計と内訳は重ねて足しません。</p>'+['合計','労働収入','公的年金','その他の受取・入金'].filter(k=>groups.has(k)).map(k=>k==='合計'?'<div class="trend-picker-total">'+groups.get(k).map(c=>row(c)).join('')+'</div>':'<fieldset class="trend-picker-group"><legend>'+k+'</legend>'+groups.get(k).map(c=>row(c,k==='労働収入'&&c.item!=='労働収入')).join('')+(k==='労働収入'?'<p class="muted">字下げした項目は労働収入の内訳です。詳細表示では小計も含みます。</p>':'')+'</fieldset>').join('');
+}
