@@ -69,6 +69,8 @@ export async function validateLaborTrendUi({browser,createTestServer,open,load,o
   const normalDownload=await normalPending,normalChunks=[];for await(const chunk of await normalDownload.createReadStream())normalChunks.push(chunk);
   const normalCsv=Buffer.concat(normalChunks).toString();assert(!normalCsv.split('\r\n')[0].includes('本人の労働収入'));assert(normalCsv.includes('iDeCo一時金の資産計上額'));
 
+  // This fixture has only fixed NISA settings, which belong to opt-in details.
+  await page.locator('#detailCsvIncludeDetails').check();
   await page.locator('#detailSelectAll').uncheck();assert(await page.locator('#downloadDetailedCsv').isDisabled());
   for(const section of ['NISA','iDeCo']){
    const group=page.locator('#detailColumnPicker details').filter({has:page.locator(`[data-column-section="${section}"]`)});await group.locator('summary').click();await group.locator('[data-column-section]').check();
