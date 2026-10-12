@@ -16,7 +16,12 @@ export async function validateUnemploymentUi({browser,createTestServer,open,load
   const input=side.locator('[name=monthlyGross]'),old=await input.inputValue();await input.fill('9');
   await side.locator('[data-reset]').click();assert.equal(await side.locator('[name=monthlyGross]').inputValue(),old);
   assert.deepEqual((await snapshot(page)).data,adopted.data);
-  await side.locator('[name=monthlyGross]').fill('9');await side.locator('[type=submit]').click();
+  // snapshot exports from Settings; return to the editor before interacting.
+  await openTab(page,'salary');
+  await side.locator('[name=monthlyGross]').fill('9');
+  await side.locator('[name=startDate]').fill('2045-04-01');
+  await side.locator('[name=endDate]').fill('2056-02-01');
+  await side.locator('[type=submit]').click();
   assert(await side.locator('.detail-preview').isVisible());assert((await side.locator('.detail-preview h3').innerText()).includes('まだ反映'));
   assert.equal(await side.locator('[data-apply]').innerText(),'全体シミュレーションに反映');
   assert.deepEqual((await snapshot(page)).data,adopted.data);
