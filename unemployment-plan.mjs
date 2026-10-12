@@ -35,3 +35,19 @@ export function unemploymentPlan(c){
  return {status:'configured',rows,total:dailyYen*days/10000,dailyYen,days,mode:p.mode,retirementDate:retirement,amountStatus:p.amountStatus};
 }
 export function unemploymentEvents(c){return unemploymentPlan(c).rows.map(r=>({date:r.month+'-01',label:`${r.label} ${r.amount.toLocaleString('ja-JP',{maximumFractionDigits:2})}万円（受取月・日付未確定）`}));}
+
+// Advisory only: never mutates employment, receipt plans or saved conditions.
+export function laborDateRecommendation(c,endAge=76){
+ const birth=dateParts(c.people?.primary?.birthDate),retirement=c.employment?.primary?.mainRetirement?.baseDate;
+ const endMonth=birth&&Number.isInteger(endAge)?`${birth.y+endAge}-${String(birth.month).padStart(2,'0')}`:null;
+ let startMonth=null,reason='退職日と失業給付の受取予定を保存すると表示します。';
+ try{
+  const p=unemploymentPlan(c);
+  if(dateParts(retirement)?.day&&p.status!=='legacy'){
+   const last=p.status==='configured'?p.rows.at(-1).month:retirement.slice(0,7);
+   startMonth=monthString(Math.max(monthIndex(retirement.slice(0,7)),monthIndex(last))+1);
+   reason=p.status==='configured'?'退職月と給付受取終了月の遅い方の翌月。':'給付を計上しない設定のため、退職月の翌月。';
+  }
+ }catch{reason='退職日・失業給付設定に不整合があるため、開始の参考値は表示できません。';}
+ return {startMonth,endMonth,startDate:startMonth?startMonth+'-01':null,endDate:endMonth?monthString(monthIndex(endMonth)+1)+'-01':null,reason};
+}

@@ -1,6 +1,6 @@
 {
   "kind": "public-release",
-  "runtime": "v0.9.7-unemployment-20261012",
+  "runtime": "v0.9.7-guidance-20261012",
   "files": [
     {
       "name": "annual-cashflow.mjs",
@@ -14,8 +14,8 @@
     },
     {
       "name": "app.mjs",
-      "size": 62166,
-      "sha256": "abca4fea58cf14cabe31f0e98176447c61f56f8e33be266ccfaa9164fef66d8d"
+      "size": 62162,
+      "sha256": "6e84639a3bc55a7c475a86de0c7da24b2e505449acd89ad66b2f212e33cba8bb"
     },
     {
       "name": "backup-compatibility.mjs",
@@ -69,8 +69,8 @@
     },
     {
       "name": "detail-ui.mjs",
-      "size": 27681,
-      "sha256": "33657a846a0e8c62c927e119359fe1871f604ceec1e6721d6953d96b6d13bd50"
+      "size": 29064,
+      "sha256": "1f9bfb58cc6881580246d2a5f908124c77d1405d9b214a2973fff8346ea6edd1"
     },
     {
       "name": "detailed-report.mjs",
@@ -79,8 +79,8 @@
     },
     {
       "name": "docs/USER_GUIDE.md",
-      "size": 23362,
-      "sha256": "6a03318e3259156bfece20cbe42cbea114ef038cbdf47ad84756de649d0d780e"
+      "size": 23358,
+      "sha256": "87c403033dd174012338eebdebff9e5fe87eeaa53676fce274d409a70d1ef27e"
     },
     {
       "name": "expense-display.mjs",
@@ -134,8 +134,8 @@
     },
     {
       "name": "index.html",
-      "size": 52990,
-      "sha256": "1a013e8237384c71e0ad726fff0260782ccb59e822b97131cfc588fd2a283c56"
+      "size": 53179,
+      "sha256": "c5a500cf4036f9f0aa3d0c9952742682c05ca2f842da2170e331b122888e94ff"
     },
     {
       "name": "manifest.webmanifest",
@@ -159,8 +159,8 @@
     },
     {
       "name": "pension-ui.mjs",
-      "size": 14348,
-      "sha256": "1b59e216747411bb4cc55877163875492906a5699b7bbac54fda558ff03713ba"
+      "size": 14354,
+      "sha256": "2bfb37f745d06c0b534046d1b83ca854c353818f86c829c28491471c502ac02d"
     },
     {
       "name": "pension.mjs",
@@ -169,8 +169,8 @@
     },
     {
       "name": "README.md",
-      "size": 1945,
-      "sha256": "adfbd046d97d86dc21676587d59b3fac1b762f8e6207f811f9375e9ad1f468ee"
+      "size": 1968,
+      "sha256": "7472e664b810d7583391739ea7fc98dc7d99bf72a2abe7e307be1dff138227b9"
     },
     {
       "name": "recovery-ui.mjs",
@@ -219,8 +219,8 @@
     },
     {
       "name": "sw.js",
-      "size": 3488,
-      "sha256": "aa9b2884b197fd84a2042313c4e0903abaca82a90f4e2530ca0c05a6adfa8990"
+      "size": 3484,
+      "sha256": "fa5834c6567031edde525eabd944d3f2164fcfadebca61a307e2e1c78db98675"
     },
     {
       "name": "tax-social-audit.mjs",
@@ -229,8 +229,8 @@
     },
     {
       "name": "unemployment-plan.mjs",
-      "size": 4422,
-      "sha256": "1440284f01b81e55cdbf9dd3235022e26de9d31bb3decdcd1df8258fa6527de3"
+      "size": 5590,
+      "sha256": "297107c1c4667412e46ed3ac9638deb72c72cb563d59ce31cde07b99c59ea446"
     },
     {
       "name": "withdrawal-plan.mjs",

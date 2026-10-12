@@ -11,6 +11,16 @@ export async function validateUnemploymentUi({browser,createTestServer,open,load
   await form.locator('[type=submit]').click();assert.deepEqual((await snapshot(page)).data,before.data);
   await openTab(page,'unemployment');await page.locator('#detail-unemployment [data-apply]').click();const adopted=await snapshot(page);assert.equal(adopted.data.config.unemployment.receiptPlan.dailyYen,'6000');assert.deepEqual(adopted.data.scenarios,before.data.scenarios);
   await openTab(page,'home');assert((await page.locator('#timeline').innerText()).includes('高年齢求職者給付金'));
+  await openTab(page,'salary');const side=page.locator('#detail-laborPrimarySide');
+  assert((await side.locator('.labor-date-recommendation').innerText()).includes('2045-04'));
+  const input=side.locator('[name=monthlyGross]'),old=await input.inputValue();await input.fill('9');
+  await side.locator('[data-reset]').click();assert.equal(await side.locator('[name=monthlyGross]').inputValue(),old);
+  assert.deepEqual((await snapshot(page)).data,adopted.data);
+  await side.locator('[name=monthlyGross]').fill('9');await side.locator('[type=submit]').click();
+  assert(await side.locator('.detail-preview').isVisible());assert((await side.locator('.detail-preview h3').innerText()).includes('まだ反映'));
+  assert.equal(await side.locator('[data-apply]').innerText(),'全体シミュレーションに反映');
+  assert.deepEqual((await snapshot(page)).data,adopted.data);
+
   await openTab(page,'settings');await page.locator('#detailUndo').click();assert.deepEqual((await snapshot(page)).data,before.data);
   await openTab(page,'unemployment');await form.locator('[data-reset]').click();await page.locator('#detail-unemployment [name=mode]').selectOption('none');await page.locator('#detail-unemployment [type=submit]').click();await page.locator('#detail-unemployment [data-apply]').click();
   await page.reload();await page.locator('#dashboard').waitFor({state:'visible'});assert.equal((await snapshot(page)).data.config.unemployment.receiptPlan.mode,'none');assert.deepEqual(errors,[]);record.status='pass';

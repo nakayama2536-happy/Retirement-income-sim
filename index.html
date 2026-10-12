@@ -65,14 +65,14 @@
 <p>本人・配偶者の受給開始月と年額を入力し、試算結果を確認して集計表へ反映します。</p>
 <p class="muted">金額は税引前の年額です（1万円＝10,000円）。開始月から年額の1/12を各月の収入に計上します。実際の振込月ではなく、支給対象となる最初の月を入力してください。受給なしは年額0で設定できます。</p>
 <div id="pensionCurrentSummary" class="current-setting-summary"></div><form id="pensionForm"><div id="pensionInputs" class="pension-grid"></div>
-<div class="pension-actions"><button class="primary" type="submit">変更後の資産を試算</button><button id="pensionReset" class="secondary" type="button">入力を現在の設定に戻す</button></div>
+<div class="pension-actions"><button class="primary" type="submit">変更後の結果を確認（未反映）</button><button id="pensionReset" class="secondary" type="button">未反映の入力を取り消す</button></div>
 <p class="muted">「試算」は結果の確認だけです。「現在の設定に戻す」は、本人・配偶者の編集中の入力を破棄し、シミュレーションで使用中の開始月・年額などに戻します。</p>
 <p id="pensionDraftNote" class="muted"></p></form>
 <p class="muted">月内に誕生日があるときは「64→65歳」のように表示します。年齢は誕生日基準の表示で、制度上の年齢到達日とは区別します。</p>
 <p class="muted">確定額・公式見込の金額や開始月を編集すると、確度を「シナリオ」に変更します。公式資料に基づく更新の場合は、確度と出典を選び直してください。</p>
 <p id="pensionError" class="inline-error" role="alert" hidden></p>
 </article>
-<article id="pensionPreview" class="card" hidden><h2>反映前の確認</h2><div id="pensionPreviewBody"></div><button id="pensionApply" type="button" class="primary">この条件をシミュレーションに反映</button><p class="muted">このボタンで開始月・年額などを保存し、ホーム・年間収支・資産推移を更新します。</p></article>
+<article id="pensionPreview" class="card" hidden><h2>反映前の確認</h2><div id="pensionPreviewBody"></div><button id="pensionApply" type="button" class="primary">全体シミュレーションに反映</button><p class="muted">このボタンで開始月・年額などを保存し、ホーム・年間収支・資産推移を更新します。</p></article>
 <article class="card"><h2>反映履歴と取消</h2><p id="pensionLastApplied" class="muted"></p><button id="pensionUndo" class="secondary" type="button" disabled>直前の反映を取り消す</button><button data-open-tab="cashflow" class="link-btn" type="button">年間収支を確認</button><p class="muted">取消は直前に反映した年金設定を戻します。実績・他の設定・保存済みの基準ケースは保持します。</p></article>
 <article class="card"><h2>年金受給開始比較</h2><label>65歳基準年額（万円）<input id="pensionBase65" type="number" value="0" step="1"></label><label>受給開始年齢<input id="pensionToolAge" type="number" value="65" min="60" max="75" step="1"></label><button id="pensionToolRun" class="primary">試算</button><p id="pensionToolResult" class="result"></p><small>簡易計算。加給年金・在職支給停止等は未反映。</small><p><button class="link-btn" data-open-tab="pension">採用する条件を年金シートに入力</button></p></article><article id="sharedTaxTool" class="card"><h2>税・社会保険 手取参考</h2><label>年齢<input id="taxToolAge" type="number" value="70" min="60" max="95"></label><label>給与年額（万円）<input id="taxToolSalary" type="number" value="0"></label><label>年金年額（万円）<input id="taxToolPension" type="number" value="0"></label><label>配偶者の合計所得（万円・任意）<input id="taxToolSpouseIncome" type="number" value="" placeholder="未入力"></label><label>配偶者年齢<input id="taxToolSpouseAge" type="number" value="70" min="0" max="110"></label><button id="taxToolRun" class="primary">概算</button><p id="taxToolResult" class="result"></p><details><summary>計算根拠</summary><p id="taxToolBasis" class="muted">入力後に給与所得・年金所得・控除・保険料内訳を表示します。</p></details><small>所得税・住民税は2026年制度参考、国保・介護保険・後期高齢者医療は福山市2026年度参考。軽減判定・個別控除など未入力条件は概算です。年代別年間予算には税・社保を含むため、資産計算へ別加算しません。</small></article><p><button class="link-btn" data-open-tab="expenses" data-focus-target="detail-expense">税・社会保険の予算内訳を入力</button></p>
 </section>
@@ -81,10 +81,10 @@
 <article class="card"><h2>労働収入</h2><p>給与生活中は家計と資産の間の純入出金を使い、給与全額を二重に加算しません。本人・配偶者の正社員・アルバイトの収入を別々に入力します。給与生活終了後は「現在登録されている夫婦の就労条件を使う」を選択した場合に資産へ計上します。旧方式の退職前も、正社員の登録額は家計参考として表示します。CSVでは登録額と資産計上額を区別します。</p><div id="salaryCurrentSummary" class="current-setting-summary"></div></article><div class="two-col labor-columns"><div><h2>本人の労働収入</h2><article id="detail-laborPrimaryRegular" class="card"></article><article id="detail-laborPrimarySide" class="card"></article></div><div><h2>配偶者の労働収入</h2><article id="detail-laborSpouseRegular" class="card"></article><article id="detail-laborSpouseSide" class="card"></article></div></div><p class="muted">登録のない正社員収入は空欄です。登録済みのアルバイト額を正社員へ移し替えたり、夫婦合計を自動で分割したりしません。入力は開始月を含み、終了月を含みません。</p>
 <article class="card"><div class="section-title"><h2>給与生活シート：生活費を資産で賄う時期・入出金</h2><span id="salaryState" class="pill" role="status"></span></div>
 <p id="salaryAdopted"></p><p class="muted">給与で生活する期間と、資産で生活費を賄う期間を切り替えます。実際の退職日や年金受取日を変更する機能ではありません。</p>
-<form id="salaryForm"><div id="salaryInputs" class="pension-grid"></div><div class="pension-actions"><button class="primary" type="submit">試算する</button><button id="salaryReset" type="button" class="secondary">入力を採用値に戻す</button></div><p id="salaryDraftNote" class="muted"></p></form>
+<form id="salaryForm"><div id="salaryInputs" class="pension-grid"></div><div class="pension-actions"><button class="primary" type="submit">変更後の結果を確認（未反映）</button><button id="salaryReset" type="button" class="secondary">未反映の入力を取り消す</button></div><p id="salaryDraftNote" class="muted"></p></form>
 <p id="salaryError" class="inline-error" role="alert" hidden></p></article>
 <article id="salaryPreview" class="card" hidden><h2>反映前の差分確認</h2><div id="salaryPreviewBody"></div>
-<div class="pension-actions"><button id="salaryBackup" class="secondary" type="button">反映前のバックアップを保存</button><button id="salaryApply" class="primary" type="button" disabled>集計表に反映</button></div>
+<div class="pension-actions"><button id="salaryBackup" class="secondary" type="button">反映前のバックアップを保存</button><button id="salaryApply" class="primary" type="button" disabled>全体シミュレーションに反映</button></div>
 <p class="muted">初回はバックアップを保存してから反映してください。新方式のデータを旧アプリへ戻すことは保証できません。旧版へ戻す場合は更新前のバックアップを使います。</p>
 <label>比較案の名前<input id="salaryScenarioName" type="text" maxlength="80" placeholder="例：給与生活を半年短縮"></label><button id="salarySaveScenario" class="secondary" type="button" disabled>比較案として保存</button><p class="muted">比較案の保存だけでは現在の採用値を変えません。既存の比較案は保持します。</p></article>
 <article class="card"><h2>反映日時と取消</h2><p id="salaryHistory" class="muted"></p><button id="salaryUndo" class="secondary" type="button" disabled>直前の反映を取り消す</button><button data-open-tab="cashflow" class="link-btn" type="button">年間収支を確認</button><p class="muted">取消は給与生活の設定と、この反映で変更した計上先だけを戻します。実績・年金・保存済み比較案を保持します。</p></article>
@@ -134,11 +134,11 @@
 <label>項目・期間<select id="expenseRule"></select></label>
 <p id="expenseAdopted" style="white-space:pre-wrap;overflow-wrap:anywhere"></p>
 <label>試す金額（万円、月額／年額は上記を確認）<input id="expenseAmount" type="number" min="0" step="any" inputmode="decimal"></label>
-<p id="expenseStatus" role="status"></p><button id="expenseTrial" type="button" class="secondary">差分を試算する</button>
+<p id="expenseStatus" role="status"></p><button id="expenseTrial" type="button" class="secondary">変更後の結果を確認（未反映）</button>
 <p id="expenseError" role="alert" class="inline-error" hidden></p>
 <div id="expensePreview" hidden><h3>反映前の差分確認</h3><details open><summary>金額・対象月・予算超過・未計算の確認</summary><p id="expensePreviewBody" style="white-space:pre-wrap;overflow-wrap:anywhere"></p></details>
 <label><input id="expenseReviewed" type="checkbox">出典・単位・期間・差分と未計算部分を確認しました</label>
-<button id="expenseApply" type="button" class="primary" disabled>集計表に反映</button></div>
+<button id="expenseApply" type="button" class="primary" disabled>全体シミュレーションに反映</button></div>
 <p id="expenseHistory"></p><button id="expenseUndo" type="button" class="secondary" disabled>直前の内訳・予算反映を取り消す</button>
 <p class="muted">入力・試算だけでは保存しません。未反映の入力はこの画面内だけに保持し、再読み込みで失われます。取消は変更金額だけを戻します。項目や期間の追加は未対応です。</p></article><article class="card"><div class="section-title"><h2>年齢範囲を指定して一括更新</h2><button class="info" data-help="期間一括更新" data-help-text="項目ごとに適用する年齢範囲・金額・月額または年額を保存します。同じ種類と項目名の期間が重なると、既存期間を前後に分割して置き換えます。生活費内訳は予定原価の確認用、年代別年間予算は資産計算の支出正本です。">ⓘ</button></div><form id="periodEditForm" class="form-grid">
 <label>種類<select name="kind"><option value="expense">生活費の内訳</option><option value="travel">旅行費</option><option value="budget">管理予算</option></select></label>
@@ -163,11 +163,11 @@
 <p id="incomeAdopted" style="white-space:pre-wrap;overflow-wrap:anywhere"></p>
 <label>試す金額（万円、単位は上記を確認）<input id="incomeAmount" type="number" min="0" step="any" inputmode="decimal"></label>
 <label>計上先<select id="incomeTreatment"><option value="separate">計画資産へ別枠の追加収入として計上</option><option value="net_transfer">給与生活中は家計内振替（資産へ重ねて加算しない）</option></select></label>
-<p id="incomeState" role="status"></p><button id="incomeTrial" type="button" class="secondary">差分を試算する</button>
+<p id="incomeState" role="status"></p><button id="incomeTrial" type="button" class="secondary">変更後の結果を確認（未反映）</button>
 <p id="incomeError" role="alert" class="inline-error" hidden></p>
 <div id="incomePreview" hidden><h3>反映前の差分確認</h3><details open><summary>出典・計上先・対象月・資産差の確認</summary><p id="incomePreviewBody" style="white-space:pre-wrap;overflow-wrap:anywhere"></p></details>
 <label><input id="incomeReviewed" type="checkbox">出典・期間・単位・計上先・資産差を確認しました</label>
-<button id="incomeApply" type="button" class="primary" disabled>集計表に反映</button></div>
+<button id="incomeApply" type="button" class="primary" disabled>全体シミュレーションに反映</button></div>
 <p id="incomeHistory"></p><button id="incomeUndo" type="button" class="secondary" disabled>直前の追加収入反映を取り消す</button>
 <p class="muted">参考値は自動採用しません。再反映は同じ採用行を更新し、二重登録しません。給与・年金・雇用保険・iDeCo受取、管理予算、支出内訳は変更しません。</p></article></details></section>
 <section id="allcsv" class="panel" hidden><article class="card"><h2>全期間・全項目CSV</h2><p>表示対象は保存済みの現在設定です。年月を縦に、全項目を横に並べます。年次は本人の年齢期または暦年で集計できます。子項目や税の参考値を合計へ重ねません。未反映の入力は含みません。</p><div class="form-grid"><label>集計単位<select id="detailCsvPeriod"><option value="monthly">月次（1行＝1か月）</option><option value="annual">年次（本人の年齢期）</option><option value="calendar">年次（暦年1～12月）</option></select></label><label>画面に表示する期間<select id="detailCsvAge"><option value="">全期間</option></select></label><label>支出内訳の保存元<select id="detailCsvSource"><option value="">現在の選択を使用</option><option value="work-v0.9.7">標準の生活費内訳</option><option value="public-v0.9">旧形式の生活費内訳</option></select></label></div><fieldset class="column-selection"><legend>画面・CSVに表示する項目</legend><label class="check-label"><input id="detailSelectAll" type="checkbox" checked>すべての項目を選択</label><p class="muted">NISA・iDeCoなどのグループ、または食費・保険など個別項目を選べます。選択は画面とCSVに共通です。期間は全期間を出力します。</p><div id="detailColumnPicker"></div></fieldset><p class="muted">NISAは開始時評価額・利用枠の固定設定値と、取り崩しプランを反映した参考残高・取崩し額を分けて表示します。参考取崩し額は収入合計へ加えません。未登録の正社員収入は未設定と表示します。</p><button id="downloadDetailedCsv" class="primary">選択した項目の全期間CSVを保存</button><p id="detailCsvStatus"></p><p id="detailCsvLimit" class="muted"></p><div class="table-wrap trend-table-wrap" tabindex="0" role="region" aria-label="全期間の収支トレンド・縦横にスクロール"><table id="detailCsvTable"></table></div></article>
@@ -191,11 +191,11 @@
 <details class="card"><summary>詳細設定：計算期間・旧版への復旧</summary><article id="calendarSheet" class="card"><h2>計算期間の方式</h2><p id="calendarAdopted"></p><p id="calendarState" role="status"></p>
 <p class="muted">月末・閏日の計算日を調整する比較用機能です。方式を選んだだけでは集計表は変わりません。</p>
 <label>試す方式<select id="calendarMode"><option value="legacy">従来方式</option><option value="anchored-months-v1">月末・閏日を元の計画日にそろえる方式</option></select></label>
-<button id="calendarTrial" type="button" class="secondary">差分を試算する</button>
+<button id="calendarTrial" type="button" class="secondary">変更後の結果を確認（未反映）</button>
 <p id="calendarError" class="inline-error" role="alert" hidden></p>
 <div id="calendarPreview" hidden><h3>反映前の差分確認</h3><p id="calendarPreviewBody" style="white-space:pre-line"></p>
 <label><input id="calendarReviewed" type="checkbox">対象期間と資産差、未対応部分を確認しました</label>
-<button id="calendarApply" type="button" class="primary" disabled>集計表に反映</button></div>
+<button id="calendarApply" type="button" class="primary" disabled>全体シミュレーションに反映</button></div>
 <p id="calendarHistory"></p><button id="calendarUndo" type="button" class="secondary" disabled>直前の期間方式の反映を取り消す</button>
 <p class="muted">取消は期間方式だけを戻します。実績の対象期間が変わる場合は、反映・取消を止めて確認を求めます。</p></article><article class="card"><h2>復旧用バックアップの事前確認</h2><p>旧本体へ戻す場合は、その旧版で更新前に作成した一括バックアップを使います。新版のデータを旧本体へ直接読み込ませないでください。保存領域やアプリを削除する前に、本体版・バックアップの保存先を確認してください。</p><label>復旧先の版<select id="recoveryTarget"><option value="current">現在のアプリ</option><option value="public-v0.9">公開元v0.9の旧本体</option></select></label><label class="file-btn">復旧用JSONの事前確認（保存しません）<input id="recoveryCheckFile" type="file" accept="application/json"></label><p class="muted">この操作は適合性の確認だけです。アプリの版の切替や、バックアップの復元は行いません。</p><p id="recoveryCheckResult" role="status">復旧先の版とバックアップを選択してください。保存は行いません。</p><p class="muted">正常な保存内容は保持します。読み込めない場合は古いデータに自動で戻さず、復旧方法を確認します。Safariとホーム画面の保存領域は別々に確認してください。</p></article></details><article class="card"><h2>直前の詳細設定を取り消す</h2><button id="detailUndo" type="button" disabled>この画面で直前に反映した詳細設定を元に戻す</button><p>今回追加した個別入力の反映だけが対象です。後で同じ項目を変更した場合は取消を停止します。再起動後はバックアップで確認してください。</p></article>
 </section>
