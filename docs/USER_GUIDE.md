@@ -1,6 +1,6 @@
 # 収支の詳細設定
 
-対象：v0.9.7-unemployment-20261012。版ごとの検証・公開状況は[GitHubの変更記録](https://github.com/nakayama2536-happy/Retirement-income-sim/pulls?q=is%3Apr)で確認できます。
+対象：v0.9.7-guidance-20261012。版ごとの検証・公開状況は[GitHubの変更記録](https://github.com/nakayama2536-happy/Retirement-income-sim/pulls?q=is%3Apr)で確認できます。
 
 ## 操作の入口
 

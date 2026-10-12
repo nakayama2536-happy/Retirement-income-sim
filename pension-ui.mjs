@@ -32,7 +32,7 @@ export function mountPensionSheet({getConfig,onCommit,showNotice}){
     }]));
   }
   function saveDraft(){
-    try{savePensionDraft({context:pensionDraftContext(getConfig()),draft});el('pensionDraftNote').textContent='開始月・年額などの入力途中の内容は、このブラウザに下書き保存します。「この条件をシミュレーションに反映」を押すまで、ホームや年間収支は変わりません。';}
+    try{savePensionDraft({context:pensionDraftContext(getConfig()),draft});el('pensionDraftNote').textContent='開始月・年額などの入力途中の内容は、このブラウザに下書き保存します。「全体シミュレーションに反映」を押すまで、ホームや年間収支は変わりません。';}
     catch{el('pensionDraftNote').textContent='試算中の入力を端末に保存できませんでした。画面を閉じると入力が失われます。';}
   }
   function invalidate(){preview=null;el('pensionPreview').hidden=true;}
@@ -76,7 +76,7 @@ export function mountPensionSheet({getConfig,onCommit,showNotice}){
           el(`${key}PensionCertainty`).value='scenario';
           el(`${key}PensionSource`).value=`開始月連動の概算：65歳年額${r.base65}万円、請求想定${r.claimMonth}、増減率${((r.factor-1)*100).toFixed(1)}%。制度確認2026-10-11`;
           draft=readDraft();invalidate();error('');saveDraft();state();renderEstimate(key);
-          showNotice(`${names[key]}の修正見込額を入力しました。次に「変更後の資産を試算」を押してください。`);
+          showNotice(`${names[key]}の修正見込額を入力しました。次に「変更後の結果を確認（未反映）」を押してください。`);
         });
       }
       el('pensionDraftNote').textContent='入力途中の内容はこのブラウザに下書き保存します。ホームや年間収支への反映は、試算結果を確認した後に行います。';
