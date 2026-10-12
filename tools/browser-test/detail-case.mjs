@@ -53,6 +53,24 @@ export async function validateLaborTrendUi({browser,createTestServer,open,load,o
   await openTab(page,'salary');await page.locator('#salaryReset').click();
   await openTab(page,'allcsv');assert.equal(await page.locator('#detailCsvPeriod').inputValue(),'monthly');
   const rowCount=await page.locator('#detailCsvTable tbody tr').count();assert(rowCount>12);
+  assert.equal(await page.locator('#detailCsvIncludeDetails').isChecked(),false);
+  const normalHeaders=await page.locator('#detailCsvTable thead').innerText();
+  assert(normalHeaders.includes('iDeCo一時金の資産計上額'));assert(normalHeaders.includes('その他の臨時・追加収入'));
+  assert(!normalHeaders.includes('一時金・臨時・追加収入'));assert(!normalHeaders.includes('本人の労働収入'));
+  const normalCount=await page.locator('[data-column-id]').count();
+  await page.locator('#detailCsvIncludeDetails').check();
+  assert(await page.locator('[data-column-id]').count()>normalCount);
+  assert((await page.locator('#detailCsvTable thead').innerText()).includes('本人の労働収入'));
+  const detailPending=page.waitForEvent('download');await page.locator('#downloadDetailedCsv').click();
+  const detailDownload=await detailPending,detailChunks=[];for await(const chunk of await detailDownload.createReadStream())detailChunks.push(chunk);
+  assert(Buffer.concat(detailChunks).toString().split('\r\n')[0].includes('本人の労働収入'));
+  await page.locator('#detailCsvIncludeDetails').uncheck();assert.equal(await page.locator('[data-column-id]').count(),normalCount);
+  const normalPending=page.waitForEvent('download');await page.locator('#downloadDetailedCsv').click();
+  const normalDownload=await normalPending,normalChunks=[];for await(const chunk of await normalDownload.createReadStream())normalChunks.push(chunk);
+  const normalCsv=Buffer.concat(normalChunks).toString();assert(!normalCsv.split('\r\n')[0].includes('本人の労働収入'));assert(normalCsv.includes('iDeCo一時金の資産計上額'));
+
+  // This fixture has only fixed NISA settings, which belong to opt-in details.
+  await page.locator('#detailCsvIncludeDetails').check();
   await page.locator('#detailSelectAll').uncheck();assert(await page.locator('#downloadDetailedCsv').isDisabled());
   for(const section of ['NISA','iDeCo']){
    const group=page.locator('#detailColumnPicker details').filter({has:page.locator(`[data-column-section="${section}"]`)});await group.locator('summary').click();await group.locator('[data-column-section]').check();

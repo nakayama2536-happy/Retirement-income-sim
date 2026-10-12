@@ -1,8 +1,10 @@
+import {annualCsvRows} from './annual-csv.mjs';
+import {annualCashflowSummaries} from './annual-cashflow.mjs';
 import test from 'node:test';import assert from 'node:assert/strict';import fs from 'node:fs';
 import {runRetirementPlan} from './calc.mjs';
 import {migrateConfig} from './storage.mjs';
 import {detailProposal,changedPaths,undoDetail} from './detail-settings.mjs';
-import {wideDetailedReport,trendCsv,selectTrendColumns} from './detailed-report.mjs';
+import {wideDetailedReport,visibleTrendColumns,trendCsv,selectTrendColumns} from './detailed-report.mjs';
 import {createFullBackup,restoreFullBackup} from './full-backup.mjs';
 function fixture(){return {config:migrateConfig({people:{primary:{birthDate:'1980-08-27'},spouse:{birthDate:'1981-05-01'}},plan:{startAge:64,endAge:66,startDate:'2044-08-27',initialAsset:2000,initialAssetIncludesIdeco:false,afterTaxReturn:0,inflation:0},employment:{primary:{mainRetirement:{baseDate:'2045-08-27'},sideWork:{monthlyGross:2,startDate:'2045-08-01',endDate:'2047-08-01'}},spouse:{sideWork:{monthlyGross:3,startDate:'2045-08-01',endDate:'2047-08-01'}}},income:{pensions:{primary:{startDate:'2050-08-01',annualAtStart:120},spouse:{startDate:'2051-05-01',annualAtStart:60}}},budgets:[{fromAge:65,toAge:95,annualBudget:120}],unemployment:{baselineMode:'none'},expenseDetail:{monthlyCategories:[{key:'food',label:'食費',amount:2},{key:'insurance',label:'架空保険',amount:1}],travelAnnualBase:0},cashflow:{periodOverrides:[]},events:[],nisa:{marketValue:400,usageYear:2044,tsumitateUsed:20,growthUsed:0,lifetimeBookUsed:200},future:{keep:true}}),scenarios:[]};}
 const labor=(person='primary',job='regularWork',extras={})=>({person,job,monthlyGross:10,startDate:'2044-08-01',endDate:'2046-08-01',...extras});
@@ -31,3 +33,19 @@ test('状態列は既定で省略し、指定時だけ追加。未確定値と�
  assert.equal(off.split('\r\n').length,on.split('\r\n').length);
  assert.ok(off.split('\r\n')[1].endsWith(','));
 });
+
+function mixedIncome(){const s=fixture();s.config.ideco={asOfDate:'2044-08-27',contributionEndDate:'2045-08-27',lumpDate:'2045-08-27',currentBalance:600,monthlyContribution:0,accumulationReturn:0,lumpPercent:50,annuityPercent:50,annuityYears:5,annuityReturn:0,applyCurrentLawTaxReference:false};s.config.events=[{id:'ret',type:'income',date:'2045-08-01',amount:80,label:'架空退職金'},{type:'income',date:'2045-08-01',amount:7,label:'iDeCoという名前だけの未連動収入'}];s.config.retirement={receiptEventId:'ret'};return s.config;}
+for(const period of ['monthly','annual','calendar'])test('混在収入を出所別に分解し全期間の収入合計へ一致 '+period,()=>{
+ const c=mixedIncome(),before=structuredClone(c),r=wideDetailedReport(c,{period});
+ assert.ok(!r.columns.some(x=>x.item==='一時金・臨時・追加収入'));
+ for(const row of r.rows){const parts=['労働収入','本人公的年金','配偶者公的年金','iDeCo年金','雇用保険','iDeCo一時金の資産計上額','連動設定した退職金受取','家計から資産への追加','その他の臨時・追加収入'];assert.ok(Math.abs(parts.reduce((a,k)=>a+amount(r,row,k),0)-amount(r,row,'現金収入合計'))<1e-8);}
+ assert.equal(r.rows.reduce((a,row)=>a+amount(r,row,'iDeCo一時金の資産計上額'),0),300);
+ assert.equal(r.rows.reduce((a,row)=>a+amount(r,row,'連動設定した退職金受取'),0),80);
+ assert.equal(r.rows.reduce((a,row)=>a+amount(r,row,'その他の臨時・追加収入'),0),7);
+ const ic=r.columns.filter(x=>x.section==='iDeCo'&&!x.detailOnly);assert.deepEqual(ic.filter(x=>x.group==='収入').map(x=>x.item).sort(),['iDeCo一時金の資産計上額','iDeCo年金'].sort());assert.deepEqual(c,before);
+});
+test('給与生活中の追加投資はその他収入に残さず一度だけ表示',()=>{const s=individual(fixture());s.config.cashflow.salaryLife.monthlyAddition=4;const r=wideDetailedReport(s.config);assert.equal(amount(r,r.rows[0],'家計から資産への追加'),4);assert.equal(amount(r,r.rows[0],'その他の臨時・追加収入'),0);assert.equal(r.columns.filter(x=>x.item==='家計から資産への追加').length,1);});
+test('通常表示は重複明細と固定設定を除き、詳細表示で復帰',()=>{const r=wideDetailedReport(mixedIncome()),normal=visibleTrendColumns(r),full=visibleTrendColumns(r,true);assert.ok(normal.length<full.length);for(const x of normal){assert.ok(!['明細','設定','労働収入の登録額'].includes(x.group));assert.ok(!['本人の労働収入','配偶者の労働収入','本人正社員の資産計上額','配偶者正社員の資産計上額','夫婦合計で指定した労働収入'].includes(x.item));}assert.ok(normal.some(x=>x.item==='本人アルバイトの資産計上額'));const csv=trendCsv(r,normal.map(x=>x.id));assert.ok(!csv.includes('iDeCoという名前だけ'));assert.ok(!csv.includes(' 状態'));assert.equal(full.length,r.columns.length);});
+test('使用中の夫婦合計方式と登録済み正社員収入を通常表示から落とさない',()=>{const s=individual(fixture());s.config.cashflow.salaryLife.postSalaryLabor={mode:'monthly',monthlyAmount:10,lastMonth:'2047-07'};assert.ok(visibleTrendColumns(wideDetailedReport(s.config)).some(x=>x.item==='夫婦合計で指定した労働収入'));s.config.cashflow.salaryLife.postSalaryLabor={mode:'existing_confirmed'};s.config.employment.primary.regularWork={monthlyGross:10,startDate:'2045-08-01',endDate:'2046-08-01'};assert.ok(visibleTrendColumns(wideDetailedReport(s.config)).some(x=>x.item==='本人正社員の資産計上額'));});
+
+test('年間CSVと年次サマリーも同じ分解額・収入合計を保持',()=>{const c=mixedIncome(),csv=annualCsvRows(c),summaries=annualCashflowSummaries(c),report=wideDetailedReport(c,{period:'annual'});csv.forEach((r,i)=>{assert.equal(r.idecoLumpReceipt,amount(report,report.rows[i],'iDeCo一時金の資産計上額'));assert.equal(r.retirementReceipt,amount(report,report.rows[i],'連動設定した退職金受取'));assert.equal(r.otherExtraIncome,amount(report,report.rows[i],'その他の臨時・追加収入'));assert.equal(r.idecoLumpReceipt,summaries[i].components.idecoLumpReceipt);assert.ok(Math.abs(r.labor+r.primaryPension+r.spousePension+r.idecoAnnuity+r.unemployment+r.idecoLumpReceipt+r.retirementReceipt+r.householdAddition+r.otherExtraIncome-r.incomeTotal)<1e-8);});});
