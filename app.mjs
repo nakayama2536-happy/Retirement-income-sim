@@ -419,11 +419,11 @@ function renderTimeline(){
     [config.ideco?.lumpDate||config.ideco?.contributionEndDate,`iDeCo/DC受取開始（一時金 ${config.ideco?.lumpPercent??'未設定'}%）`],
     [config.income?.pensions?.spouse?.startDate,'配偶者 公的年金開始','spouse'],
     [config.income?.pensions?.primary?.startDate,'本人 公的年金開始'],
-    [config.employment?.spouse?.sideWork?.endDate,'配偶者アルバイト終了','spouse'],
-    [config.employment?.primary?.sideWork?.endDate,'本人アルバイト終了']
+    [config.employment?.spouse?.sideWork?.endDate,'配偶者アルバイト収入の計上終了（この月から計上なし）','spouse'],
+    [config.employment?.primary?.sideWork?.endDate,'本人アルバイト収入の計上終了（この月から計上なし）']
   ].filter(x=>x[0]).map(([date,label,person='primary'])=>({date,label,person,age:ageAt(date)}));
   const items=[...raw,...unemploymentEvents(config).map(e=>({...e,age:ageAt(e.date)})),...(config.events||[]).filter(e=>e.date).map(e=>({date:e.date,label:e.label,age:ageAt(e.date)}))].sort((a,b)=>a.date.localeCompare(b.date));
-  items.forEach(i=>{ const li=document.createElement('li'); li.innerHTML=`<strong>${i.age}歳</strong><span>${escapeHtml(i.label)} <small>${escapeHtml(dateWithAge(i.date,config,i.person))}</small></span>`; list.appendChild(li); });
+  items.forEach(i=>{ const li=document.createElement('li'); li.innerHTML=`<strong>本人${i.age}歳</strong><span>${escapeHtml(i.label)} <small>${escapeHtml(dateWithAge(i.date,config,i.person))}</small></span>`; list.appendChild(li); });
 }
 
 function renderActuals() {
@@ -830,7 +830,7 @@ document.querySelectorAll('[data-help]').forEach(btn=>btn.addEventListener('clic
 }));
 el('helpClose').addEventListener('click',()=>el('helpDialog').close());
 
-el('appVersion').textContent='v0.9.7-guidance-20261012'; el('rulesVersion').textContent=RULES_VERSION;
+el('appVersion').textContent='v0.9.7-age-audit-20261012'; el('rulesVersion').textContent=RULES_VERSION;
 if(startupError){setEmptyState();showNotice(`保存データを読み込めません。復元用バックアップを確認してください。${startupError}`,'error');}
 else refresh();
 if(!writeAccess.writable)showNotice('この画面は読み取り専用です。別の編集画面を閉じて再読み込みしてください。同時更新制御が利用できない場合も保存を停止します。','error');

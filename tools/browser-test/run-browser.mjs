@@ -1,3 +1,4 @@
+import {validateAgeInputUi} from './age-input-case.mjs';
 import {validateUnemploymentUi} from './unemployment-case.mjs';
 import {validateWithdrawalUi} from './withdrawal-case.mjs';
 import {validateDetailUi,validateLaborTrendUi} from './detail-case.mjs';
@@ -265,6 +266,7 @@ try{
  await validateHomeUi(browser);
  await validatePensionUi(browser);
  try{report.cases.push(await validateDetailUi({browser,createTestServer,open,load,openTab,snapshot,here,out,fs,path}));}catch(e){if(e.detailRecord)report.cases.push(e.detailRecord);throw e;}
+ try{report.cases.push(await validateAgeInputUi({browser,createTestServer,open,load,openTab,snapshot,here,out,fs,path}));}catch(e){if(e.detailRecord)report.cases.push(e.detailRecord);throw e;}
  try{report.cases.push(await validateLaborTrendUi({browser,createTestServer,open,load,openTab,snapshot,here,out,fs,path}));}catch(e){if(e.detailRecord)report.cases.push(e.detailRecord);throw e;}
  try{report.cases.push(await validateUnemploymentUi({browser,createTestServer,open,load,openTab,snapshot,here,out,fs,path}));}catch(e){if(e.detailRecord)report.cases.push(e.detailRecord);throw e;}
  try{report.cases.push(await validateWithdrawalUi({browser,createTestServer,open,load,openTab,snapshot,here,out,fs,path}));}catch(e){if(e.detailRecord)report.cases.push(e.detailRecord);throw e;}
