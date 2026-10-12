@@ -60,6 +60,12 @@ export async function validateLaborTrendUi({browser,createTestServer,open,load,o
   const headers=await page.locator('#detailCsvTable thead').innerText();assert(headers.includes('NISA'));assert(headers.includes('iDeCo'));assert(!headers.includes('食費'));
   const pending=page.waitForEvent('download');await page.locator('#downloadDetailedCsv').click();const download=await pending;const stream=await download.createReadStream(),chunks=[];for await(const chunk of stream)chunks.push(chunk);const csv=Buffer.concat(chunks).toString();
   assert(csv.includes('NISA'));assert(csv.includes('iDeCo'));assert(!csv.includes('食費'));assert.equal(csv.split('\r\n').length,rowCount+2);
+  assert.equal(await page.locator('#detailCsvIncludeStatus').isChecked(),false);assert(!csv.split('\r\n')[0].includes(' 状態'));
+  await page.locator('#detailCsvIncludeStatus').check();
+  const statusPending=page.waitForEvent('download');await page.locator('#downloadDetailedCsv').click();const statusDownload=await statusPending;
+  const statusChunks=[];for await(const chunk of await statusDownload.createReadStream())statusChunks.push(chunk);
+  const statusCsv=Buffer.concat(statusChunks).toString();assert(statusCsv.split('\r\n')[0].includes(' 状態'));assert.equal(statusCsv.split('\r\n').length,csv.split('\r\n').length);
+  await page.locator('#detailCsvIncludeStatus').uncheck();
   for(const period of ['annual','calendar']){await page.locator('#detailCsvPeriod').selectOption(period);assert(await page.locator('#detailCsvTable tbody tr').count()<rowCount);assert((await page.locator('#detailCsvTable thead').innerText()).includes('NISA'));}
   await page.screenshot({path:path.join(out,'L1-selected-trend.png')});
   await openTab(page,'review');await page.locator('#makeReviewPrompt').click();assert((await page.locator('#reviewPromptText').inputValue()).includes('保存済み'));

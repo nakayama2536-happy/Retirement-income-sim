@@ -190,6 +190,9 @@ async function validateHomeUi(browser){
    assert.equal(await page.locator('#status').innerText(),'達成');
    assert((await page.locator('#targetStatusNote').innerText()).includes('80歳末'));
    const card=page.locator('.simulation-context');const box=await card.boundingBox();assert(box&&box.x>=0&&box.x+box.width<=width+1);
+   const amounts=await page.locator('#finalAsset,#finalThreshold,#finalMargin,#currentAsset,#reserve').evaluateAll(nodes=>nodes.map(n=>({size:getComputedStyle(n).fontSize,width:n.clientWidth,scroll:n.scrollWidth})));
+   assert.equal(new Set(amounts.map(n=>n.size)).size,1);assert(amounts.every(n=>n.scroll<=n.width+1));
+   const cards=await page.locator('#currentAsset,#reserve').evaluateAll(nodes=>nodes.map(n=>n.parentElement.getBoundingClientRect().width));assert(Math.abs(cards[0]-cards[1])<1);
    await page.screenshot({path:path.join(out,'S1-home-'+width+'.png'),fullPage:true});
   }
   for(const id of ['spousePensionAmount','initialAssetInput','expenseKind','ruleCards']){
