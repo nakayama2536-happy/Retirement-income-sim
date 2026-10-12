@@ -1,3 +1,4 @@
+import {unemploymentEvents} from './unemployment-plan.mjs';
 import {createConfigBackup} from './backup-compatibility.mjs';
 import {mountDetailUI} from './detail-ui.mjs';
 import {dateWithAge,ageOn} from './date-display.mjs';
@@ -421,7 +422,7 @@ function renderTimeline(){
     [config.employment?.spouse?.sideWork?.endDate,'配偶者アルバイト終了','spouse'],
     [config.employment?.primary?.sideWork?.endDate,'本人アルバイト終了']
   ].filter(x=>x[0]).map(([date,label,person='primary'])=>({date,label,person,age:ageAt(date)}));
-  const items=[...raw,...(config.events||[]).filter(e=>e.date).map(e=>({date:e.date,label:e.label,age:ageAt(e.date)}))].sort((a,b)=>a.date.localeCompare(b.date));
+  const items=[...raw,...unemploymentEvents(config).map(e=>({...e,age:ageAt(e.date)})),...(config.events||[]).filter(e=>e.date).map(e=>({date:e.date,label:e.label,age:ageAt(e.date)}))].sort((a,b)=>a.date.localeCompare(b.date));
   items.forEach(i=>{ const li=document.createElement('li'); li.innerHTML=`<strong>${i.age}歳</strong><span>${escapeHtml(i.label)} <small>${escapeHtml(dateWithAge(i.date,config,i.person))}</small></span>`; list.appendChild(li); });
 }
 
@@ -829,7 +830,7 @@ document.querySelectorAll('[data-help]').forEach(btn=>btn.addEventListener('clic
 }));
 el('helpClose').addEventListener('click',()=>el('helpDialog').close());
 
-el('appVersion').textContent='v0.9.7-goals-20261012'; el('rulesVersion').textContent=RULES_VERSION;
+el('appVersion').textContent='v0.9.7-unemployment-20261012'; el('rulesVersion').textContent=RULES_VERSION;
 if(startupError){setEmptyState();showNotice(`保存データを読み込めません。復元用バックアップを確認してください。${startupError}`,'error');}
 else refresh();
 if(!writeAccess.writable)showNotice('この画面は読み取り専用です。別の編集画面を閉じて再読み込みしてください。同時更新制御が利用できない場合も保存を停止します。','error');

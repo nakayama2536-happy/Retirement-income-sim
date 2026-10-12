@@ -1,3 +1,4 @@
+import {unemploymentPlan} from './unemployment-plan.mjs';
 import {calendarMode} from './calendar-mode.mjs';
 const TERMINAL_FORECAST=Symbol('terminal-forecast');
 import {salaryLifeIssues, SalaryLifeValidationError, salaryLifeIsBefore, salaryLifeContribution, parseMonth, monthIndex} from './salary-life.mjs';
@@ -502,7 +503,7 @@ function pensionMonthlyForPerson(person,date){
   return Number(person.annualAtStart||0)/12;
 }
 
-function incomeForMonth(config,date,idecoProjection, resolvedAge=null){
+function incomeForMonth(config,date,idecoProjection, resolvedAge=null, unemploymentSchedule=null){
   const income={primaryLabor:0,spouseLabor:0,combinedLabor:0,idecoLumpReceipt:0,retirementReceipt:0,labor:0,pension:0,primaryPension:0,spousePension:0,idecoAnnuity:0,unemployment:0,extraIncome:0,detail:[]};
   const funding=config.cashflow?.salaryLife;
   const before=funding && salaryLifeIsBefore(funding,date);
@@ -552,9 +553,10 @@ function incomeForMonth(config,date,idecoProjection, resolvedAge=null){
     if(m>=0 && m<idecoProjection.annuityMonths){ income.idecoAnnuity+=idecoProjection.annuityMonthly; income.detail.push(['iDeCo/DC年金',idecoProjection.annuityMonthly]); }
   }
   const u=config?.unemployment;
-  if(u?.baselineMode==='retire_at_65' && sameMonth(date,retirementDateFor(config)) && !receiptIncluded('unemployment')){
+  if(u?.receiptPlan==null && u?.baselineMode==='retire_at_65' && sameMonth(date,retirementDateFor(config)) && !receiptIncluded('unemployment')){
     const comp=unemploymentComparison(config); income.unemployment+=comp.at65.amount; income.detail.push(['高年齢求職者給付金（2026制度参考）',comp.at65.amount]);
   }
+  if(unemploymentSchedule && !receiptIncluded('unemployment')){const receipt=unemploymentSchedule.rows.find(r=>r.month===isoDate(date).slice(0,7));if(receipt){income.unemployment+=receipt.amount;income.detail.push([receipt.label,receipt.amount]);}}
   for(const e of config?.events||[]){
     const ed=parseDate(e.date);
     if(ed && sameMonth(date,ed) && e.type==='income' && !(before && e.fundingTreatment==='net_transfer')){income.extraIncome+=Number(e.amount||0);if(e.id&&e.id===config.retirement?.receiptEventId)income.retirementReceipt+=Number(e.amount||0);income.detail.push([e.label||'臨時収入',Number(e.amount||0)]);}
@@ -573,6 +575,7 @@ export function runRetirementPlan(config, options = {}) {
   const includeMonthlyDetails=options.includeMonthlyDetails===true;
   const monthlyDetails=includeMonthlyDetails?[]:null;
   const c=structuredClone(config);
+  const unemploymentSchedule=unemploymentPlan(c);const unemploymentCoverage=new Set();
   const fundingIssues=validateSalaryLife(c);
   if(fundingIssues.length)throw new SalaryLifeValidationError(fundingIssues);
   const funding=c.cashflow?.salaryLife;
@@ -604,7 +607,8 @@ export function runRetirementPlan(config, options = {}) {
     let budgetObservation=null, contributionObservation=null;
     const startAssetMonth=asset;
     const gain=startAssetMonth*monthlyReturn; asset+=gain; agg.investmentGain+=gain;
-    const inc=incomeForMonth(c,date,idecoProjection,anchoredCalendar?age:null);
+    unemploymentCoverage.add(isoDate(date).slice(0,7));
+    const inc=incomeForMonth(c,date,idecoProjection,anchoredCalendar?age:null,unemploymentSchedule);
     agg.labor+=inc.labor; agg.pension+=inc.pension; agg.primaryPension+=inc.primaryPension; agg.spousePension+=inc.spousePension; agg.idecoAnnuity+=inc.idecoAnnuity; agg.unemployment+=inc.unemployment; agg.extraIncome+=inc.extraIncome;
     if(inc.detail.length) agg.events.push(...inc.detail.map(([label,amount])=>({label,amount,date:isoDate(date)})));
 
@@ -690,6 +694,7 @@ export function runRetirementPlan(config, options = {}) {
   const finalThreshold=Number(thresholds[c.plan?.endAge||95]||0);
   const reserveUsedThreshold=Number(c.management?.reserveUsedFinalThreshold||1000);
   const status=finalAsset>=finalThreshold?'正常':finalAsset>=finalThreshold*0.9?'注意':'要見直し';
+  if(!options.startDate&&unemploymentSchedule.rows.some(r=>!unemploymentCoverage.has(r.month)))throw Error('失業給付の受取予定に計画範囲外の月があります。');
   return {rows,keyAges,finalAsset,reserve,finalAfterReserveUse,finalThreshold,reserveUsedThreshold,status,startAge:Number(c.plan?.startAge||64),endAge:Number(c.plan?.endAge||95),idecoProjection,retirementDate:isoDate(ret),...(anchoredCalendar?{calendarMode:'anchored-months-v1'}:{}),...(includeMonthlyDetails?{monthlyDetails}:{}),...(funding?{cashflowMode:funding.mode,limitations:['税・社会保険は既存の簡略概算。新方式の税額・加入資格の判定は未対応。','給与生活終了月は実退職日・年金・iDeCo受取日を変更しません。']}: {})};
 }
 
