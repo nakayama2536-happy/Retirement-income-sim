@@ -42,3 +42,16 @@ test('確認依頼文は全保存案を含み送信せず元データを保持',
 test('同じ臨時予定の二重登録を止める',()=>{const s=fixture(),d={target:'',label:'架空臨時',date:'2046-09-01',amount:50,type:'expense',fundingTreatment:'separate'};s.config=propose(s,'event',d).candidate;assert.throws(()=>propose(s,'event',d),/登録済み/);});
 test('退職金と連動中の行を臨時タブで分離変更しない',()=>{const s=fixture();s.config=propose(s,'retirement',retirement).candidate;assert.throws(()=>propose(s,'event',{target:'0',label:'退職金',date:retirement.receiveDate,amount:80,type:'income',fundingTreatment:'separate'}),/連動/);});
 test('試算候補が変更された場合は反映を停止',()=>{const s=fixture(),p=propose(s,'expense',expense());p.candidate.plan.initialAsset=999;assert.throws(()=>verifyDetailProposal(s,p),/再試算/);});
+
+test('NISA残高だけの変更で旧利用枠・未知情報・取崩し設定を保持',()=>{
+ const s=fixture();s.config.nisa={marketValue:100,usageYear:2045,tsumitateUsed:10,growthUsed:20,lifetimeBookUsed:90,future:{keep:true}};
+ const before=structuredClone(s.config.nisa),p=propose(s,'nisa',{marketValue:200});
+ assert.deepEqual(p.candidate.nisa,{...before,marketValue:200});assert.equal(p.before,p.after);assert.deepEqual(s.config.nisa,before);
+ const patch=changedPaths(s.config,p.candidate);assert.deepEqual(undoDetail(p.candidate,patch),s.config);
+ const b=createFullBackup({...s,config:p.candidate});assert.deepEqual(b.config.nisa,p.candidate.nisa);
+});
+test('NISA利用枠が未入力でも残高を設定でき、空欄や超過額は拒否',()=>{
+ const s=fixture();delete s.config.nisa;
+ assert.deepEqual(propose(s,'nisa',{marketValue:200}).candidate.nisa,{marketValue:200});
+ assert.throws(()=>propose(s,'nisa',{marketValue:''}));assert.throws(()=>propose(s,'nisa',{marketValue:2001}));
+});

@@ -7,7 +7,7 @@ export async function validateWithdrawalUi({browser,createTestServer,open,load,o
   data.config.nisa={marketValue:100,usageYear:2044,tsumitateUsed:0,growthUsed:0,lifetimeBookUsed:80};
   data.config.ideco={asOfDate:'2044-01-01',contributionEndDate:'2045-01-01',joinDate:'2010-01-01',lumpDate:'2045-01-01',currentBalance:120,monthlyContribution:0,accumulationReturn:0,lumpPercent:50,annuityPercent:50,annuityYears:10,annuityReturn:0};
   const file=path.join(out,'withdrawal-synthetic.json');await fs.writeFile(file,JSON.stringify(data));
-  const page=await open(context,fixture.url),errors=[];page.on('pageerror',e=>errors.push(e.message));await load(page,file);assert.equal(await page.locator('#appVersion').innerText(),'v0.9.7-salary-guide-20261012');const before=await snapshot(page);
+  const page=await open(context,fixture.url),errors=[];page.on('pageerror',e=>errors.push(e.message));await load(page,file);assert.equal(await page.locator('#appVersion').innerText(),'v0.9.7-nisa-simple-20261012');const before=await snapshot(page);
   for(const width of [390,1280]){
    await page.setViewportSize({width,height:900});
    for(const id of ['salary','nisa','ideco','pension','retirement','expenses','events','settings']){
@@ -18,6 +18,10 @@ export async function validateWithdrawalUi({browser,createTestServer,open,load,o
    await openTab(page,'salary');await page.screenshot({path:path.join(out,`W1-overview-${width}.png`),fullPage:true});
   }
   await openTab(page,'nisa');const f=page.locator('#detail-nisaWithdrawal form');
+  assert.equal(await page.locator('#nisaToolRun').count(),0);
+  assert.equal(await page.locator('#detail-nisa input').count(),1);
+  assert.equal(await page.locator('#detail-nisa input[name=marketValue]').count(),1);
+  assert(!/使用枠・簿価|利用枠の確認年/.test(await page.locator('#nisaCurrentSummary').innerText()));
   const month=data.config.plan.startDate.slice(0,7);
   await f.locator('[name=mode]').selectOption('fixed');await f.locator('[name=startMonth]').fill(month);await f.locator('[name=endMonth]').fill(month);await f.locator('[name=monthlyAmount]').fill('10');await f.locator('[type=submit]').click();
   assert(await page.locator('#detail-nisaWithdrawal [data-apply]').isVisible());assert((await page.locator('#nisaCurrentSummary').innerText()).includes('未設定'));assert.deepEqual((await snapshot(page)).data,before.data);

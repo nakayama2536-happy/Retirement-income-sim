@@ -16,7 +16,7 @@ import {mountRecoveryCheck} from './recovery-ui.mjs';
 import {
   runRetirementPlan, runForecastFromLatestActual, latestActual, planRowAtAge, scenarioMetrics,
   formatMan, pensionAnnualFromBase65, pensionAdjustmentFactor,
-  retirementIncomeDeduction, taxableRetirementIncome, nisaCapacity, expenseDetailSummary, evaluateReviewTriggers,
+  retirementIncomeDeduction, taxableRetirementIncome, expenseDetailSummary, evaluateReviewTriggers,
   factorDecomposition, certaintyItems, CERTAINTY_LABELS, integrityChecks, ANNUAL_REVIEW_ITEMS, RULES_VERSION,
   projectIdeco, unemploymentComparison, idecoOverlapReference, retirementIdecoTaxSummary, estimateSimpleIncomeTaxes, retirementTaxEstimate,
   fukuyamaCarePremium2026, lateElderlyMedicalPremium2026, lateElderlyMedicalPremium2026Details, fukuyamaNhiPremium2026, fukuyamaNhiPremium2026Details,
@@ -644,10 +644,6 @@ function runPensionTool(){
   const factor=pensionAdjustmentFactor(age,birthYear), annual=pensionAnnualFromBase65(base,age,birthYear);
   el('pensionToolResult').textContent=`増減率 ${(factor-1)*100>=0?'+':''}${((factor-1)*100).toFixed(1)}% → 年額 約${formatMan(annual,1)}万円`;
 }
-function runNisaTool(){
-  const r=nisaCapacity({tsumitateUsed:+el('nisaTsumitate').value,growthUsed:+el('nisaGrowth').value,lifetimeBookUsed:+el('nisaLifetime').value});
-  el('nisaToolResult').textContent=`今年残り ${formatMan(r.annualRemaining)}万円 / 生涯残り ${formatMan(r.lifetimeRemaining)}万円`;
-}
 function runIdecoTool(){
   const balance=+el('idecoBalance').value, years=+el('idecoYears').value;
   const annual=years>0?balance/years:0;
@@ -772,7 +768,6 @@ el('importFile2').addEventListener('change', e=>{ const f=e.target.files?.[0]; i
 el('exportBtn').addEventListener('click',()=>{ if(config) downloadJson(createConfigBackup(config),`lifeplan-backup-${new Date().toISOString().slice(0,10)}.json`); });
 el('exportFullBtn').addEventListener('click',()=>{try{const state=loadState();if(!state.config)return;downloadJson(createFullBackup(state),`lifeplan-full-backup-${new Date().toISOString().slice(0,10)}.json`);}catch(e){showNotice(`一括バックアップを作成できません。${e.message}`,'error');}});
 el('pensionToolRun').addEventListener('click',runPensionTool);
-el('nisaToolRun').addEventListener('click',runNisaTool);
 el('idecoToolRun').addEventListener('click',runIdecoTool);
 el('retirementToolRun').addEventListener('click',runRetirementTool);
 el('unemploymentToolRun').addEventListener('click',runUnemploymentTool);
@@ -830,7 +825,7 @@ document.querySelectorAll('[data-help]').forEach(btn=>btn.addEventListener('clic
 }));
 el('helpClose').addEventListener('click',()=>el('helpDialog').close());
 
-el('appVersion').textContent='v0.9.7-salary-guide-20261012'; el('rulesVersion').textContent=RULES_VERSION;
+el('appVersion').textContent='v0.9.7-nisa-simple-20261012'; el('rulesVersion').textContent=RULES_VERSION;
 if(startupError){setEmptyState();showNotice(`保存データを読み込めません。復元用バックアップを確認してください。${startupError}`,'error');}
 else refresh();
 if(!writeAccess.writable)showNotice('この画面は読み取り専用です。別の編集画面を閉じて再読み込みしてください。同時更新制御が利用できない場合も保存を停止します。','error');
