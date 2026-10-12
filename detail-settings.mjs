@@ -1,3 +1,4 @@
+import {unemploymentPlan} from './unemployment-plan.mjs';
 // Explicit proposals on native settings; never writes storage or changes a mode.
 import {runRetirementPlan,replaceAgeRangeOverride} from './calc.mjs';
 import {reconcileCashflow} from './cashflow-reconciliation.mjs';
@@ -77,6 +78,13 @@ function event(c,d){
  return row;
 }
 function mutate(c,kind,d){
+ if(kind==='unemployment'){
+  c.unemployment||={};c.unemployment.receiptPlan={...(c.unemployment.receiptPlan||{}),...d,version:1};
+  const p=unemploymentPlan(c),trace=runRetirementPlan(c,{includeMonthlyDetails:true}).monthlyDetails;
+  if(p.rows.some(r=>!trace.some(m=>m.month===r.month)))throw Error('受取期間を計画の対象月内に指定してください。');
+  return;
+ }
+
  if(kind==='goal'){
   const age=num(d.age,'目標年齢',Number(c.plan.startAge),Number(c.plan.endAge));
   if(!Number.isInteger(age))throw Error('目標年齢は整数で入力してください。');

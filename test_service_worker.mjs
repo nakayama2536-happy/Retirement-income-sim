@@ -78,11 +78,11 @@ test('インストール済みの画面・全モジュールをオフライン�
   assert.equal(h.takeovers(),0);assert.deepEqual(h.network,[]);
 });
 test('HTTPキャッシュを再利用せず全ファイルを取得、配布ファイルの不足なし',async()=>{
-  const h=harness();await h.run('install');assert.equal(h.requests.length,45);
+  const h=harness();await h.run('install');assert.equal(h.requests.length,46);
   assert.ok(h.requests.some(r=>r.url===h.scope+'annual-cashflow.mjs'));
   assert.ok(h.requests.some(r=>r.url===h.scope+'annual-csv.mjs'));
   assert.ok(h.requests.some(r=>r.url===h.scope+'full-backup.mjs'));
-  for(const module of ['income-preview.mjs','income-workflow.mjs','income-ui.mjs','withdrawal-plan.mjs','current-summary.mjs'])assert.ok(h.requests.some(r=>r.url===h.scope+module));
+  for(const module of ['income-preview.mjs','income-workflow.mjs','income-ui.mjs','withdrawal-plan.mjs','current-summary.mjs','unemployment-plan.mjs'])assert.ok(h.requests.some(r=>r.url===h.scope+module));
   assert.ok(h.requests.some(r=>r.url===h.scope+'tax-social-audit.mjs'));
   for(const module of ['calendar-mode.mjs','calendar-workflow.mjs','calendar-ui.mjs','salary-life.mjs','salary-workflow.mjs','salary-ui.mjs','state.mjs','migration.mjs','migration-ui.mjs'])assert.ok(h.requests.some(r=>r.url===h.scope+module));
   for(const request of h.requests){assert.equal(request.cache,'reload');const relative=request.url.slice(h.scope.length)||'index.html';assert.ok(fs.existsSync(new URL('./'+relative,import.meta.url)),relative);}

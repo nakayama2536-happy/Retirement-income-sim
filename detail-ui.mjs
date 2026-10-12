@@ -1,3 +1,4 @@
+import {unemploymentPlan,UNEMPLOYMENT_MODES} from './unemployment-plan.mjs';
 import {renderCurrentSummaries,currentSummaryHtml} from './current-summary.mjs';
 import {projectNisaWithdrawal,idecoMode,NISA_MODES,IDECO_MODES} from './withdrawal-plan.mjs';
 import {detailProposal,verifyDetailProposal,expenseEntries,EXPENSE_GROUPS,EXPENSE_EXAMPLES,changedPaths,undoDetail} from './detail-settings.mjs';
@@ -16,11 +17,13 @@ const dates=(c)=>num('fromAge','本人の開始年齢',c.plan.startAge)+num('toA
 const treatment=()=>select('fundingTreatment','給与生活中の扱い',[['separate','資産へ別枠計上'],['net_transfer','家計の入出金に含む（重ねて計上しない）']]);
 const profile=()=>select('profile','編集・集計する内訳',[['','保存元を選択'],['work-v0.9.7','標準の生活費内訳'],['public-v0.9','旧形式の生活費内訳']]);
 const laborEditors={laborPrimaryRegular:['primary','regularWork'],laborPrimarySide:['primary','sideWork'],laborSpouseRegular:['spouse','regularWork'],laborSpouseSide:['spouse','sideWork']};
-const fname={goal:'年齢別の目標資産額を再設定',laborPrimaryRegular:'本人：正社員収入',laborPrimarySide:'本人：アルバイト収入',laborSpouseRegular:'配偶者：正社員収入',laborSpouseSide:'配偶者：アルバイト収入',nisa:'NISAの内訳・利用枠',nisaWithdrawal:'NISAの取り崩しプラン',ideco:'iDeCoの残高・積立と基本条件',idecoWithdrawal:'iDeCoの取り崩し・受取プラン',retirement:'退職金の条件と受取',expense:'生活費・保険を項目ごとに設定',budget:'内訳合計を年間予算にする',event:'臨時収入・追加請求を設定',extra:'継続する追加収入を設定'};
+const fname={unemployment:'失業給付の受取予定を設定',goal:'年齢別の目標資産額を再設定',laborPrimaryRegular:'本人：正社員収入',laborPrimarySide:'本人：アルバイト収入',laborSpouseRegular:'配偶者：正社員収入',laborSpouseSide:'配偶者：アルバイト収入',nisa:'NISAの内訳・利用枠',nisaWithdrawal:'NISAの取り崩しプラン',ideco:'iDeCoの残高・積立と基本条件',idecoWithdrawal:'iDeCoの取り崩し・受取プラン',retirement:'退職金の条件と受取',expense:'生活費・保険を項目ごとに設定',budget:'内訳合計を年間予算にする',event:'臨時収入・追加請求を設定',extra:'継続する追加収入を設定'};
 export function mountDetailUI({getState,commit,notice}){
  const forms=new Map();let undo=null,report=null,renderedSignature='',reportSignature='';const excluded=new Set();
  const el=id=>document.getElementById(id);
  function fields(kind,c){
+  if(kind==='unemployment'){const p=c.unemployment?.receiptPlan||{};return select('mode','給付種類',[['','選択してください'],...Object.entries(UNEMPLOYMENT_MODES)])+input('retirementDate','離職日（本業退職の保存日と一致）','date',p.retirementDate||c.employment?.primary?.mainRetirement?.baseDate)+num('dailyYen','給付日額（円／日・確認額または仮置き）',p.dailyYen)+num('days','支給予定日数（高年齢は30日または50日）',p.days)+input('startMonth','受取開始月（離職月の翌月以降）','month',p.startMonth)+input('endMonth','受取終了月（この月を含む・一時金は開始月と同じ）','month',p.endMonth)+select('amountStatus','日額・日数の確度',[['','選択してください'],['estimate','仮置き'],['confirmed','確認済み']])+input('basis','根拠・確認日（例：確認した資料・窓口回答、仮置きの理由）','text',p.basis,'maxlength="300"')+'<label class="check-label"><input type="checkbox" name="seekingWork">退職後に就職する意思・能力があり、求職する予定</label><label class="check-label"><input type="checkbox" name="eligibilityChecked">加入期間・離職理由等の条件を確認した（仮置きなら上の根拠に記載）</label><p class="muted">基本手当は日数を指定月数で均等配分し、端数日を最終月に配分します。実際の認定・振込日とは異なります。待期7日・該当する給付制限・認定後の振込を見込んだ月を入力してください。</p>';}
+
   if(kind==='goal')return select('age','目標を設定する本人年齢（年齢期末）',Array.from({length:c.plan.endAge-c.plan.startAge+1},(_,i)=>{const a=Number(c.plan.startAge)+i;return [a,a+'歳末'];}))+num('amount','残したい資産額（万円）')+'<label class="check-label"><input type="checkbox" name="clearGoal">この年齢の目標を未設定にする</label><p class="muted">目標は各年齢期末の名目額です。空欄は0円として保存しません。参考目標の変更で、収支・資産予測や保存済み比較案は変わりません。</p>';
 
   if(kind==='nisa'){const n=c.nisa||{};return num('usageYear','利用枠を確認する年（西暦）',n.usageYear??new Date().getFullYear())+num('marketValue','開始資産のうちNISA評価額（万円）',n.marketValue)+num('tsumitateUsed','確認年のつみたて投資枠使用額（万円）',n.tsumitateUsed)+num('growthUsed','確認年の成長投資枠使用額（万円）',n.growthUsed)+num('lifetimeBookUsed','保有分の取得価額・簿価（万円）',n.lifetimeBookUsed);}
@@ -38,6 +41,7 @@ export function mountDetailUI({getState,commit,notice}){
  function fill(form,obj){for(const [key,v] of Object.entries(obj||{})){const i=form.elements.namedItem(key);if(!i)continue;if(i.type==='checkbox')i.checked=Boolean(v);else i.value=v??'';}}
  function hint(form,c){let span=form.querySelector('.date-hints');if(!span){span=document.createElement('p');span.className='date-hints muted';form.append(span);}span.textContent=[...form.querySelectorAll('input[type=date],input[type=month]')].filter(i=>i.value&&!i.disabled).map(i=>dateWithAge(i.value,c,form.dataset.person||'primary')).join(' / ');}
  function populate(kind,form,c){
+  if(kind==='unemployment')fill(form,c.unemployment?.receiptPlan||{});
   if(kind==='goal'){form.elements.age.value=String(c.plan.endAge);fill(form,{amount:c.management?.thresholds?.[c.plan.endAge]??''});}
 
   if(['expense','budget'].includes(kind)){form.elements.profile.value=expenseDisplayProfile(c)||'';}
@@ -53,10 +57,13 @@ export function mountDetailUI({getState,commit,notice}){
   if(kind==='goal'){form.elements.amount.disabled=form.elements.clearGoal.checked;form.elements.amount.required=!form.elements.clearGoal.checked;}
 
   const toggle=(name,show)=>{const node=form.elements.namedItem(name);node.disabled=!show;node.required=show;node.closest('label').hidden=!show;};
+  if(kind==='unemployment'){const active=!!form.elements.mode.value&&form.elements.mode.value!=='none';for(const name of ['retirementDate','dailyYen','days','startMonth','endMonth','amountStatus','basis','seekingWork','eligibilityChecked'])toggle(name,active);form.elements.mode.required=true;}
   if(kind==='nisaWithdrawal'){const mode=form.elements.mode.value;toggle('startMonth',!!mode&&mode!=='none');toggle('endMonth',['fixed','rate'].includes(mode));toggle('monthlyAmount',mode==='fixed');toggle('monthlyRate',mode==='rate');form.elements.mode.required=true;form.elements.monthlyRate.max='100';}
   if(kind==='idecoWithdrawal'){const mode=form.elements.receiptMode.value;toggle('lumpPercent',mode==='combined');toggle('annuityYears',['annuity','combined'].includes(mode));toggle('annuityReturn',['annuity','combined'].includes(mode));form.elements.receiptMode.required=true;form.elements.annuityYears.min='5';form.elements.annuityYears.max='20';form.elements.annuityYears.step='1';form.elements.lumpPercent.max='100';}
  }
  function withdrawalPreview(c,kind){
+  if(kind==='unemployment'){const p=unemploymentPlan(c);return currentSummaryHtml(c,'unemployment').replace('現在の設定の概要','今回の試算プラン').replace('保存済みの条件です。入力途中・未反映の試算は含みません。','まだ保存していない候補です。')+'<ul>'+p.rows.map(r=>'<li>'+esc(r.month)+'：'+r.days+'日分 / '+r.amount.toLocaleString('ja-JP')+'万円</li>').join('')+'</ul><p>給付額は非課税収入として扱い、旧自動計上を置き換えます。受取予定と実際の振込は異なり得ます。就労・年金との調整は別途確認してください。</p>';}
+
   if(kind==='goal'){const old=getState().config.management?.thresholds||{},next=c.management?.thresholds||{},r=runRetirementPlan(c);
    const ages=[...new Set([...Object.keys(old),...Object.keys(next)])].map(Number).sort((a,b)=>a-b);
    const fmt=v=>v==null?'未設定':v.toLocaleString('ja-JP',{maximumFractionDigits:2})+'万円';

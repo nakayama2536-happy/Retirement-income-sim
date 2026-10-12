@@ -1,6 +1,6 @@
 {
   "kind": "public-release",
-  "runtime": "v0.9.7-goals-20261012",
+  "runtime": "v0.9.7-unemployment-20261012",
   "files": [
     {
       "name": "annual-cashflow.mjs",
@@ -14,18 +14,18 @@
     },
     {
       "name": "app.mjs",
-      "size": 62034,
-      "sha256": "5aa47315751dabaeda0836196ccaedb41bb3b9fab08ed904b7ffee05c5f70d9a"
+      "size": 62166,
+      "sha256": "abca4fea58cf14cabe31f0e98176447c61f56f8e33be266ccfaa9164fef66d8d"
     },
     {
       "name": "backup-compatibility.mjs",
-      "size": 3844,
-      "sha256": "06d090f0e3e7372af1b3fec3148c0c11f4d35618b19d85091ce23d4ca4649335"
+      "size": 4064,
+      "sha256": "c919c2075f87c2d2d2e58cc261f3a9bee5fc57960cc60046260f2a7427195d48"
     },
     {
       "name": "calc.mjs",
-      "size": 60370,
-      "sha256": "ad5dfd3859bfd77dcd88054c78843bc71994be27901d072dc4130d72bfe21f97"
+      "size": 61073,
+      "sha256": "5afd976deaebde6139ce0df956666c11422fa4e30c60aa0a9ad6465a03e284ae"
     },
     {
       "name": "calendar-mode.mjs",
@@ -54,8 +54,8 @@
     },
     {
       "name": "current-summary.mjs",
-      "size": 7761,
-      "sha256": "213c4cc69a6384faf78a4139561a3f30482c5db9dd134abe0088f410c4c0b370"
+      "size": 9221,
+      "sha256": "8259d11f93b9f8f127eb47ee7749145cee616ed271004a4c7c2cc3fa2b53963b"
     },
     {
       "name": "date-display.mjs",
@@ -64,13 +64,13 @@
     },
     {
       "name": "detail-settings.mjs",
-      "size": 18213,
-      "sha256": "70cf56d8eb11e7411c37cbf66254dd434c7f2d1151caa0f205b5c213b8d8d79b"
+      "size": 18656,
+      "sha256": "3c400ee28c8402e93da13223b8ca5adc336e36f9b80fe9127d2f4ef66fbea58d"
     },
     {
       "name": "detail-ui.mjs",
-      "size": 24968,
-      "sha256": "d7a159c7e35c80a26791c803c588cd4291413f2172639e13e797ff6f79efa1f4"
+      "size": 27681,
+      "sha256": "33657a846a0e8c62c927e119359fe1871f604ceec1e6721d6953d96b6d13bd50"
     },
     {
       "name": "detailed-report.mjs",
@@ -79,8 +79,8 @@
     },
     {
       "name": "docs/USER_GUIDE.md",
-      "size": 21076,
-      "sha256": "6c4be0d8e819abccdc9a88c90a85366c02e70ab2cf89872f8b8e8c9d5aa634c5"
+      "size": 23362,
+      "sha256": "6a03318e3259156bfece20cbe42cbea114ef038cbdf47ad84756de649d0d780e"
     },
     {
       "name": "expense-display.mjs",
@@ -134,8 +134,8 @@
     },
     {
       "name": "index.html",
-      "size": 50576,
-      "sha256": "a5bf5be48bb667ff12cb08d7bda55a6d26c04e4d0886849bceb605d189c1e657"
+      "size": 52990,
+      "sha256": "1a013e8237384c71e0ad726fff0260782ccb59e822b97131cfc588fd2a283c56"
     },
     {
       "name": "manifest.webmanifest",
@@ -169,8 +169,8 @@
     },
     {
       "name": "README.md",
-      "size": 1919,
-      "sha256": "27c012d1260442fd2ef66847f9f97e481dbdf1f8c0ce54dcf013b7c955e0072a"
+      "size": 1945,
+      "sha256": "adfbd046d97d86dc21676587d59b3fac1b762f8e6207f811f9375e9ad1f468ee"
     },
     {
       "name": "recovery-ui.mjs",
@@ -209,23 +209,28 @@
     },
     {
       "name": "storage.mjs",
-      "size": 7174,
-      "sha256": "60756bc3cce41ab8e599e23f48539c3f552407a5f4d1b703ceb080f71b92a3f1"
+      "size": 7254,
+      "sha256": "2fa750aab262e3fb710b6cb1672e709446ab735133e51dac53553cc28f168c66"
     },
     {
       "name": "styles.css",
-      "size": 15804,
-      "sha256": "40f0124d7705432d8536081f1a2fa2d96b04570606b3268ca2e7170feabb7cfe"
+      "size": 15847,
+      "sha256": "bbfa76f2c0c2ae36f7c296e27c01577a53ff000ea24c10e69098369d072a60a4"
     },
     {
       "name": "sw.js",
-      "size": 3441,
-      "sha256": "15dc9a0c1e05058eac584d5c78752a8cdf48a6a569d206df568dda1a4ee96526"
+      "size": 3488,
+      "sha256": "aa9b2884b197fd84a2042313c4e0903abaca82a90f4e2530ca0c05a6adfa8990"
     },
     {
       "name": "tax-social-audit.mjs",
       "size": 11960,
       "sha256": "c60a42fc5a224f083db3e1ce3ab4bbed76df58eb03edef7ec9302217c60ee447"
+    },
+    {
+      "name": "unemployment-plan.mjs",
+      "size": 4422,
+      "sha256": "1440284f01b81e55cdbf9dd3235022e26de9d31bb3decdcd1df8258fa6527de3"
     },
     {
       "name": "withdrawal-plan.mjs",

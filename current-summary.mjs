@@ -1,3 +1,4 @@
+import {unemploymentPlan,UNEMPLOYMENT_MODES} from './unemployment-plan.mjs';
 import {dateWithAge} from './date-display.mjs';
 import {projectNisaWithdrawal,idecoReceiptSummary,NISA_MODES,IDECO_MODES} from './withdrawal-plan.mjs';
 import {expenseDisplayProfile} from './expense-display.mjs';
@@ -14,6 +15,12 @@ export function currentSummaryRows(c,tab){
   rows.push(['給与生活の計上方法',s?`給与生活最終月 ${date(s.lastSalaryMonth)}、追加 ${amount(s.monthlyAddition)}／月、取崩し ${amount(s.monthlyWithdrawal)}／月`:'従来方式（正社員の退職前登録額は家計参考）']);
   if(s)rows.push(['給与生活終了後',s.postSalaryLabor?.mode==='monthly'?`夫婦合計 ${amount(s.postSalaryLabor.monthlyAmount)}／月、${date(s.postSalaryLabor.lastMonth)}まで`:s.postSalaryLabor?.mode==='none'?'就労収入なし':s.postSalaryLabor?.mode==='existing_confirmed'?'本人・配偶者の個別就労条件を使用':'未設定']);
   return rows;
+ }
+ if(tab==='unemployment'){
+  const p=unemploymentPlan(c),u=c.unemployment||{},v=u.receiptPlan;
+  if(p.status==='legacy')return [['専用プラン','未設定（旧設定を維持）'],['従来の計上',u.baselineMode==='retire_at_65'?'本業退職月に高年齢給付を一括計上。実際の受取月・資格は未確認。':'従来設定に従う'],['確認事項','退職後の求職予定、加入期間、離職理由、日額・日数、受取予定月を確認してください。']];
+  if(p.status==='disabled')return [['失業給付','専用プランで計上なし。旧自動給付も停止。']];
+  return [['種類',UNEMPLOYMENT_MODES[v.mode]],['離職日',date(v.retirementDate)],['受取期間',date(v.startMonth)+' ～ '+date(v.endMonth)],['給付条件',amount(p.dailyYen,'円／日')+' × '+p.days+'日分、合計 '+amount(p.total)],['金額の確度',v.amountStatus==='confirmed'?'確認済み入力（将来の給付を保証しません）':'仮置き'],['根拠',v.basis],['計上', '旧自動給付を置換し、月次の失業給付欄へ計上。臨時収入への再登録は不要。'],['給与生活中',receipt(s?.receiptTreatment?.unemployment)],['制限','月別配分は計画上の概算。待期・給付制限・認定・振込時期、就労による減額・受給資格、年金停止は自動判定しません。']];
  }
  if(tab==='nisa'){
   const n=c.nisa||{},w=n.withdrawal,p=projectNisaWithdrawal(c);
@@ -52,4 +59,4 @@ export function currentSummaryRows(c,tab){
  return [];
 }
 export function currentSummaryHtml(c,tab){return `<h3>現在の設定の概要</h3><p class="muted">保存済みの条件です。入力途中・未反映の試算は含みません。</p><dl class="current-setting-list">${currentSummaryRows(c,tab).map(([k,v])=>`<div><dt>${esc(k)}</dt><dd>${esc(v)}</dd></div>`).join('')}</dl>`;}
-export function renderCurrentSummaries(c){for(const tab of ['salary','nisa','ideco','pension','retirement','expenses','events','settings']){const node=document.getElementById(`${tab}CurrentSummary`);if(node)node.innerHTML=currentSummaryHtml(c,tab);}}
+export function renderCurrentSummaries(c){for(const tab of ['salary','nisa','ideco','unemployment','pension','retirement','expenses','events','settings']){const node=document.getElementById(`${tab}CurrentSummary`);if(node)node.innerHTML=currentSummaryHtml(c,tab);}}

@@ -1,4 +1,5 @@
 import {projectNisaWithdrawal} from './withdrawal-plan.mjs';
+import {unemploymentPlan} from './unemployment-plan.mjs';
 import {calendarMode} from './calendar-mode.mjs';
 import {assertBackupCompatibility} from './backup-compatibility.mjs';
 import {assertWriteAccess} from './write-access.mjs';
@@ -47,7 +48,7 @@ function normalizeState(state){
     if(!s||!s.config)throw new Error('シナリオに設定がありません。');
     return {...s,config:migrateConfig(s.config)};
   })};
-  for(const c of [normalized.config,...normalized.scenarios.map(s=>s.config)])if(c)projectNisaWithdrawal(c);
+  for(const c of [normalized.config,...normalized.scenarios.map(s=>s.config)])if(c){projectNisaWithdrawal(c);unemploymentPlan(c);}
   return normalized;
 }
 export function loadState(){
