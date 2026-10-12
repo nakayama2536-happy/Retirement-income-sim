@@ -6,7 +6,8 @@ import {mountCalendarSheet} from './calendar-ui.mjs';
 import {mountExpenseSheet} from './expense-ui.mjs';
 import {mountIncomeSheet} from './income-ui.mjs';
 import {expenseDisplayModel,expenseDisplayHtml,expenseDisplayProfile} from './expense-display.mjs';
-import {annualCashflowSummary,annualCashflowHtml} from './annual-cashflow.mjs';
+import {annualCashflowSummaries} from './annual-cashflow.mjs';
+import {simplifyLayout,annualCheckText} from './simple-layout.mjs';
 import {taxSocialMethodAudit,taxSocialMethodHtml} from './tax-social-audit.mjs';
 import {downloadAnnualCsv} from './annual-csv.mjs';
 import {createFullBackup,restoreFullBackup,isFullBackup} from './full-backup.mjs';
@@ -30,6 +31,7 @@ import { mountSalarySheet } from './salary-ui.mjs';
 import { inspectMigration, MIGRATION_KEYS, validateSavedState } from './migration.mjs';
 import { mountMigration } from './migration-ui.mjs';
 
+simplifyLayout(document);
 const writeAccess=await acquireWriteAccess();
 let initialState, startupError;
 try{const check=inspectMigration();if(check.integrated.status==='invalid')throw new Error(check.integrated.error);initialState=loadState();}catch(e){initialState={config:null,scenarios:[]};startupError=e.message;}
@@ -293,7 +295,7 @@ function renderExpenseDetail() {
     source.value=expenseDisplayProfile(config,source.value)||'';
     const html=expenseDisplayHtml(expenseDisplayModel(config,age,{sourceProfile:source.value}),config);
     wrap.innerHTML=html.detail;reconcile.innerHTML=html.summary;
-    annual.innerHTML=annualCashflowHtml(annualCashflowSummary(config,age,{sourceProfile:source.value}),config);
+    annual.textContent=annualCheckText(annualCashflowSummaries(config,{sourceProfile:source.value}));
     if(taxAudit)taxAudit.innerHTML=taxSocialMethodHtml(taxSocialMethodAudit(config,age));
   }catch(e){wrap.textContent='内訳を表示できません。'+e.message;reconcile.textContent='未計算のため予算余裕は判定できません。';annual.textContent='年間収支を表示できません。'+e.message;if(taxAudit)taxAudit.textContent='税・社会保険の方式差を表示できません。'+e.message;}
   renderPeriodOverrides();
@@ -801,7 +803,7 @@ el('showActuals').addEventListener('change',e=>{
 });
 
 function switchTab(id){
-  if(['salary','pension'].includes(id)&&el('sharedTaxTool'))el(id).appendChild(el('sharedTaxTool'));
+  if(['salary','pension'].includes(id)&&el('sharedTaxTool'))el(id).appendChild(el('sharedTaxTool').closest('details.supplementary')||el('sharedTaxTool'));
   const group=document.querySelector(`[data-tab="${id}"]`)?.dataset.groupItem;
   if(group){document.querySelectorAll('[data-group]').forEach(b=>b.classList.toggle('active',b.dataset.group===group));document.querySelectorAll('[data-group-item]').forEach(b=>b.hidden=b.dataset.groupItem!==group);}
   document.querySelectorAll('[data-tab]').forEach(b=>b.classList.toggle('active',b.dataset.tab===id));
@@ -825,7 +827,7 @@ document.querySelectorAll('[data-help]').forEach(btn=>btn.addEventListener('clic
 }));
 el('helpClose').addEventListener('click',()=>el('helpDialog').close());
 
-el('appVersion').textContent='v0.9.7-budget-table-20261012'; el('rulesVersion').textContent=RULES_VERSION;
+el('appVersion').textContent='v0.9.7-ui-simple-20261012'; el('rulesVersion').textContent=RULES_VERSION;
 if(startupError){setEmptyState();showNotice(`保存データを読み込めません。復元用バックアップを確認してください。${startupError}`,'error');}
 else refresh();
 if(!writeAccess.writable)showNotice('この画面は読み取り専用です。別の編集画面を閉じて再読み込みしてください。同時更新制御が利用できない場合も保存を停止します。','error');
