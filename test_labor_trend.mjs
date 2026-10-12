@@ -4,7 +4,7 @@ import test from 'node:test';import assert from 'node:assert/strict';import fs f
 import {runRetirementPlan} from './calc.mjs';
 import {migrateConfig} from './storage.mjs';
 import {detailProposal,changedPaths,undoDetail} from './detail-settings.mjs';
-import {wideDetailedReport,visibleTrendColumns,trendCsv,selectTrendColumns} from './detailed-report.mjs';
+import {wideDetailedReport,trendPickerItemsHtml,visibleTrendColumns,trendCsv,selectTrendColumns} from './detailed-report.mjs';
 import {createFullBackup,restoreFullBackup} from './full-backup.mjs';
 function fixture(){return {config:migrateConfig({people:{primary:{birthDate:'1980-08-27'},spouse:{birthDate:'1981-05-01'}},plan:{startAge:64,endAge:66,startDate:'2044-08-27',initialAsset:2000,initialAssetIncludesIdeco:false,afterTaxReturn:0,inflation:0},employment:{primary:{mainRetirement:{baseDate:'2045-08-27'},sideWork:{monthlyGross:2,startDate:'2045-08-01',endDate:'2047-08-01'}},spouse:{sideWork:{monthlyGross:3,startDate:'2045-08-01',endDate:'2047-08-01'}}},income:{pensions:{primary:{startDate:'2050-08-01',annualAtStart:120},spouse:{startDate:'2051-05-01',annualAtStart:60}}},budgets:[{fromAge:65,toAge:95,annualBudget:120}],unemployment:{baselineMode:'none'},expenseDetail:{monthlyCategories:[{key:'food',label:'食費',amount:2},{key:'insurance',label:'架空保険',amount:1}],travelAnnualBase:0},cashflow:{periodOverrides:[]},events:[],nisa:{marketValue:400,usageYear:2044,tsumitateUsed:20,growthUsed:0,lifetimeBookUsed:200},future:{keep:true}}),scenarios:[]};}
 const labor=(person='primary',job='regularWork',extras={})=>({person,job,monthlyGross:10,startDate:'2044-08-01',endDate:'2046-08-01',...extras});
@@ -49,3 +49,21 @@ test('通常表示は重複明細と固定設定を除き、詳細表示で復�
 test('使用中の夫婦合計方式と登録済み正社員収入を通常表示から落とさない',()=>{const s=individual(fixture());s.config.cashflow.salaryLife.postSalaryLabor={mode:'monthly',monthlyAmount:10,lastMonth:'2047-07'};assert.ok(visibleTrendColumns(wideDetailedReport(s.config)).some(x=>x.item==='夫婦合計で指定した労働収入'));s.config.cashflow.salaryLife.postSalaryLabor={mode:'existing_confirmed'};s.config.employment.primary.regularWork={monthlyGross:10,startDate:'2045-08-01',endDate:'2046-08-01'};assert.ok(visibleTrendColumns(wideDetailedReport(s.config)).some(x=>x.item==='本人正社員の資産計上額'));});
 
 test('年間CSVと年次サマリーも同じ分解額・収入合計を保持',()=>{const c=mixedIncome(),csv=annualCsvRows(c),summaries=annualCashflowSummaries(c),report=wideDetailedReport(c,{period:'annual'});csv.forEach((r,i)=>{assert.equal(r.idecoLumpReceipt,amount(report,report.rows[i],'iDeCo一時金の資産計上額'));assert.equal(r.retirementReceipt,amount(report,report.rows[i],'連動設定した退職金受取'));assert.equal(r.otherExtraIncome,amount(report,report.rows[i],'その他の臨時・追加収入'));assert.equal(r.idecoLumpReceipt,summaries[i].components.idecoLumpReceipt);assert.ok(Math.abs(r.labor+r.primaryPension+r.spousePension+r.idecoAnnuity+r.unemployment+r.idecoLumpReceipt+r.retirementReceipt+r.householdAddition+r.otherExtraIncome-r.incomeTotal)<1e-8);});});
+
+test('収入選択は合計・分類・労働内訳を階層化し、通常と詳細の全IDを一度だけ保持',()=>{
+ const report=wideDetailedReport(fixture().config),before=structuredClone(report);
+ for(const detail of [false,true]){
+  const cols=visibleTrendColumns(report,detail).filter(c=>c.section==='収入'),excluded=new Set([cols[0].id]),html=trendPickerItemsHtml(cols,excluded);
+  assert.equal((html.match(/data-column-id=/g)||[]).length,cols.length);
+  for(const c of cols){const encoded=c.id.replace(/[&<>"']/g,x=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[x]));assert.equal(html.split(`data-column-id="${encoded}"`).length-1,1);}
+  assert.match(html,/legend>労働収入/);assert.match(html,/legend>公的年金/);assert.match(html,/trend-picker-child/);assert.match(html,/iDeCo一時金・年金も収入合計に含みます/);assert.doesNotMatch(html,/収入 \/ 中項目/);
+  assert.equal((html.match(/ checked/g)||[]).length,cols.length-1);
+ }
+ assert.deepEqual(report,before);
+});
+test('収入以外の選択肢と未登録・特殊文字を安全に表示',()=>{
+ assert.equal(trendPickerItemsHtml([]),'');
+ const columns=[{id:'"<x>',section:'収入',item:'<script>収入',category:'中項目',scope:'内数',unit:'万円',note:'"<x>'}];
+ const html=trendPickerItemsHtml(columns);assert.doesNotMatch(html,/<script>/);assert.match(html,/&lt;script&gt;/);
+ const report=wideDetailedReport(fixture().config);for(const section of ['NISA','iDeCo','支出']){const cols=report.columns.filter(c=>c.section===section),html=trendPickerItemsHtml(cols);assert.equal((html.match(/data-column-id=/g)||[]).length,cols.length);}
+});

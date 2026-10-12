@@ -39,7 +39,7 @@ function setup(){
 }
 test('模擬DOM：入力→試算→反映→取消、ボタンが対応する処理へ接続',()=>{
   const t=setup();t.trial();assert.equal(t.node('salaryError').hidden,true);assert.equal(t.node('salaryPreview').hidden,false);assert.equal(t.node('salaryApply').disabled,false);
-  assert.match(t.node('salaryPreviewBody').innerHTML,/新方式・65歳基準/);
+  assert.match(t.node('salaryPreviewBody').innerHTML,/比較専用・65歳到達月から資産負担/);
   t.node('salaryApply').emit('click');assert.equal(t.getState().config.cashflow.salaryLife.lastSalaryMonth,'2045-06');assert.equal(t.node('salaryState').textContent,'反映済み');assert.equal(t.node('salaryUndo').disabled,false);
   t.node('salaryUndo').emit('click');assert.equal(t.getState().config.cashflow.salaryLife,undefined);assert.equal(t.node('salaryUndo').disabled,true);
 });

@@ -1,6 +1,6 @@
 {
   "kind": "public-release",
-  "runtime": "v0.9.7-csv-classification-20261012",
+  "runtime": "v0.9.7-salary-guide-20261012",
   "files": [
     {
       "name": "annual-cashflow.mjs",
@@ -14,8 +14,8 @@
     },
     {
       "name": "app.mjs",
-      "size": 62274,
-      "sha256": "27c48a9cec9ab045c62642a72155326f538539d9047ef5c92a64e0dbbf360ffe"
+      "size": 62268,
+      "sha256": "9e4c4c03bbaa6280cfbd5f075411a8be9adf1841ffe2703e06c13677064f925d"
     },
     {
       "name": "backup-compatibility.mjs",
@@ -69,18 +69,18 @@
     },
     {
       "name": "detail-ui.mjs",
-      "size": 31630,
-      "sha256": "ef1eebecc975ac22e754ef837eaa54e440757e326902b7790f4c09636fdd238a"
+      "size": 31524,
+      "sha256": "2db1d20540128e8736c954505fb73be8258622a807cd237a8516361f6c9ba95f"
     },
     {
       "name": "detailed-report.mjs",
-      "size": 14305,
-      "sha256": "4d1b7b4aebc89923f0c0be312e5e14a1ccab323c767ea8e6e8a553dbc9922598"
+      "size": 16099,
+      "sha256": "8b44fc1de0a5f181210068e8ef7b2977ee4246318b81c8bc6d338be09f31036b"
     },
     {
       "name": "docs/USER_GUIDE.md",
-      "size": 24417,
-      "sha256": "448fb2defb76cb7423246180484312f0b3bad4233ef34e884e9028784946d1ca"
+      "size": 25444,
+      "sha256": "7d8ea774a1a62dbe4bda5dd6809e889ca512f92d321a7789cd44ed49399a05f6"
     },
     {
       "name": "expense-display.mjs",
@@ -134,8 +134,8 @@
     },
     {
       "name": "index.html",
-      "size": 54307,
-      "sha256": "282e8699b9329de6890069880e240a827c6f8d02692cb3ed1559f9e2f8c3e69d"
+      "size": 54736,
+      "sha256": "d5322ffea093e172547d3c92bf0d067d88bcbafd389a62c273024497ff8ed7af"
     },
     {
       "name": "manifest.webmanifest",
@@ -169,8 +169,8 @@
     },
     {
       "name": "README.md",
-      "size": 1873,
-      "sha256": "321bbdc371d04b6bf0fd5c725ed24c1c8bb95dfed0394a1b0fb1f1ddab06796c"
+      "size": 1858,
+      "sha256": "2ede99d6eeb9e9531707da4c266ad97bf525f9e1e7f759e8fb12b1c38a3e0fcf"
     },
     {
       "name": "recovery-ui.mjs",
@@ -194,8 +194,8 @@
     },
     {
       "name": "salary-ui.mjs",
-      "size": 16852,
-      "sha256": "c1e6c096f2ed7c946bd83c79b8d0ba92eddaf754db25b4bf407458763661d3d0"
+      "size": 18263,
+      "sha256": "0520a755cff59bc78fb6adcebafb15100d434c75cff7db0ffa401c1a2f830ac9"
     },
     {
       "name": "salary-workflow.mjs",
@@ -214,13 +214,13 @@
     },
     {
       "name": "styles.css",
-      "size": 16573,
-      "sha256": "1e332e3ac3cea5b13cc91dd4934a8d80ec9dd89c40de1bba6715da1a94128922"
+      "size": 17518,
+      "sha256": "9b26c948a698913b146ad2b283497743d6f39ebf3b9c518bff1d9c34a073fb5c"
     },
     {
       "name": "sw.js",
-      "size": 3494,
-      "sha256": "db5cc1ad40635703634fae0cfd67f089c8f2fe94fe7a826d8e7dfa241c2dcc44"
+      "size": 3488,
+      "sha256": "34d65e3771ec9af79e28f3849dd4cebe11dfaaadb120a18fd38e5e2c1db73009"
     },
     {
       "name": "tax-social-audit.mjs",
