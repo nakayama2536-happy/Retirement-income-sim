@@ -20,6 +20,7 @@ export async function validateAgeInputUi({browser,createTestServer,open,load,ope
   assert.match(await f.locator('[name=endDate]').locator('..').locator('.date-age-hint').innerText(),/配偶者.*収入の最終月：2057年1月/);
   await f.locator('[data-reset]').click();assert.deepEqual((await snapshot(page)).data,before);
   await openTab(page,'ideco');const basic=page.locator('#detail-ideco form'),withdraw=page.locator('#detail-idecoWithdrawal form');
+  await page.locator('#ideco details').filter({has:basic}).locator('summary').click();
   await basic.locator('[name=currentBalance]').fill('101');
   await withdraw.locator('[name=receiptMode]').selectOption('annuity');await withdraw.locator('[name=annuityYears]').fill('10');
   await withdraw.locator('[type=submit]').click();await page.locator('#detail-idecoWithdrawal [data-apply]').click();
