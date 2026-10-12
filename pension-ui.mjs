@@ -1,7 +1,7 @@
 import {CERTAINTY_LABELS,formatMan,runRetirementPlan,expenseDetailSummary,plannedTaxSocialAnnual} from './calc.mjs';
 import {PENSION_PEOPLE,pensionDraftFromConfig,pensionDraftContext,pensionDraftMatches,previewPension,applyPensionPreview,pensionUndoAvailable,undoPensionApply} from './pension.mjs';
 import {configSignature,saveConfigIfUnchanged,savePensionDraft,loadPensionDraft,clearPensionDraft} from './storage.mjs';
-import {dateWithAge} from './date-display.mjs';
+import {dateWithAge,dateAgeHint} from './date-display.mjs';
 import {estimatePensionAtMonth} from './pension-estimate.mjs';
 
 const names={primary:'本人',spouse:'配偶者'};
@@ -17,7 +17,7 @@ export function mountPensionSheet({getConfig,onCommit,showNotice}){
   function estimate(key){return estimatePensionAtMonth({birthDate:getConfig().people?.[key]?.birthDate,startMonth:el(`${key}PensionMonth`).value,base65:el(`${key}PensionBase65`).value});}
   function renderEstimate(key){
     const c=getConfig(),r=estimate(key);
-    el(`${key}PensionMonthAge`).textContent=dateWithAge(el(`${key}PensionMonth`).value,c,key);
+    el(`${key}PensionMonthAge`).textContent=dateAgeHint(el(`${key}PensionMonth`).value,c,key);
     el(`${key}PensionUseEstimate`).disabled=!r.ok;
     el(`${key}PensionEstimate`).textContent=r.ok?`修正見込額：${yen(r.annual)}/年（65歳基準額から${r.factor>=1?'+':''}${((r.factor-1)*100).toFixed(1)}%）。請求想定月：${dateWithAge(r.claimMonth,c,key)}。年額欄への入力は下のボタンで行います。`:r.message;
     const changed=el(`${key}PensionMonth`).value!==(c.income.pensions[key].startDate?.slice(0,7)||'');

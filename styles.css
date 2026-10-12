@@ -47,3 +47,6 @@
 @media(max-width:600px){.target-metrics{grid-template-columns:1fr;gap:10px}}
 
 #unemployment p {overflow-wrap:anywhere;}
+
+.date-age-hint{display:block;font-size:.85rem;font-weight:400;line-height:1.6;overflow-wrap:anywhere;margin-top:.25rem;}
+.date-age-hint[hidden]{display:none;}

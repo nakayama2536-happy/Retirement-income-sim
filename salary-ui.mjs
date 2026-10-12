@@ -1,4 +1,4 @@
-import {dateWithAge} from './date-display.mjs';
+import {dateWithAge,dateAgeHint} from './date-display.mjs';
 import {formatMan} from './calc.mjs';
 import {configSignature,downloadJson} from './storage.mjs';
 import {salaryDraftFromConfig,previewSalary,applySalaryPreview,undoSalaryApply,salaryUndoAvailable,salaryDraftMatches,saveSalaryScenario,saveSalaryDraft,loadSalaryDraft,clearSalaryDraft} from './salary-workflow.mjs';
@@ -35,8 +35,8 @@ export function mountSalarySheet({getState,onCommit,showNotice}){
     el('salaryState').dataset.dirty=String(!matches);
     el('salaryUndo').disabled=busy||!salaryUndoAvailable(c);
     el('salary_switchMonth').textContent=dateWithAge(nextMonth(draft.settings.lastSalaryMonth),c);
-    el('salary_lastSalaryMonthAge').textContent=dateWithAge(draft.settings.lastSalaryMonth,c);
-    el('salary_laborLastMonthAge').textContent=dateWithAge(el('salary_laborLastMonth').value,c);
+    el('salary_lastSalaryMonthAge').textContent=dateAgeHint(draft.settings.lastSalaryMonth,c);
+    el('salary_laborLastMonthAge').textContent=dateAgeHint(el('salary_laborLastMonth').value,c);
     el('salary_laborDetail').hidden=el('salary_laborMode').value!=='monthly';
   }
   function buildInputs(c){
