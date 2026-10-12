@@ -1,12 +1,18 @@
 // Reference NISA schedule. Transfers never enter household income or expenses.
 import {runRetirementPlan,projectIdeco} from './calc.mjs';
-export const NISA_MODES={none:'取り崩しなし',fixed:'毎月定額',rate:'毎月定率',all:'開始月に全額'};
+export const NISA_MODES={none:'取り崩しなし',budget:'予算不足分を毎月自動計算',fixed:'毎月定額',rate:'毎月定率',all:'開始月に全額'};
 export const IDECO_MODES={lump:'全額を一時金',annuity:'全額を年金',combined:'一時金と年金を併用'};
 export function requiredNumber(value,label,min=0,max=1e9){
  if(value==null||String(value).trim()===''||!Number.isFinite(Number(value))||Number(value)<min||Number(value)>max)throw Error(`${label}を${min}～${max}の数値で入力してください。未入力は0にしません。`);
  return Number(value);
 }
 export function planMonth(value,label){if(!/^\d{4}-(0[1-9]|1[0-2])$/.test(value||''))throw Error(`${label}を年月で指定してください。`);return value;}
+// Uses booked cash flow only: no investment gains or duplicate reference details.
+export function nisaBudgetShortfall(month){
+ const values=[month.expense,month.extraExpense,month.totalIncome];
+ if(!values.every(v=>typeof v==='number'&&Number.isFinite(v)))throw Error('予算不足を計算する月次収支が未確定です。');
+ return Math.max(0,month.expense+month.extraExpense-month.totalIncome);
+}
 export function projectNisaWithdrawal(config,monthlyDetails){
  const p=config.nisa?.withdrawal;
  if(!p)return {status:'unconfigured',rows:[],total:0,shortfall:0};
@@ -23,11 +29,11 @@ export function projectNisaWithdrawal(config,monthlyDetails){
  let total=0,shortfall=0;const rows=[];
  for(const m of months){
   const startBalance=balance,gain=startBalance*rate,available=Math.max(0,startBalance+gain),active=m.month>=start&&m.month<=end;
-  const requested=active?(p.mode==='fixed'?amount:p.mode==='rate'?available*pct:available):0;
+  const requested=active?(p.mode==='fixed'?amount:p.mode==='rate'?available*pct:p.mode==='budget'?nisaBudgetShortfall(m):available):0;
   const withdrawal=Math.min(available,requested),unmet=Math.max(0,requested-withdrawal);
   balance=Math.max(0,available-withdrawal);total+=withdrawal;shortfall+=unmet;
   if(![balance,gain,total,shortfall].every(Number.isFinite))throw Error('NISAの試算結果が数値範囲を超えました。');
-  rows.push({month:m.month,date:m.date,annualAge:m.annualAge,startBalance,gain,requested,withdrawal,unmet,endBalance:balance,overTotal:balance>Math.max(0,m.endAsset)+1e-7});
+  rows.push({budgetShortfall:p.mode==='budget'?nisaBudgetShortfall(m):null,month:m.month,date:m.date,annualAge:m.annualAge,startBalance,gain,requested,withdrawal,unmet,endBalance:balance,overTotal:balance>Math.max(0,m.endAsset)+1e-7});
  }
  return {status:'configured',rows,total,shortfall,endBalance:balance,depletedMonth:rows.find(r=>r.withdrawal>0&&r.endBalance<=1e-8)?.month||null,conflictMonth:rows.find(r=>r.overTotal)?.month||null};
 }

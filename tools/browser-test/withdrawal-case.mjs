@@ -7,7 +7,7 @@ export async function validateWithdrawalUi({browser,createTestServer,open,load,o
   data.config.nisa={marketValue:100,usageYear:2044,tsumitateUsed:0,growthUsed:0,lifetimeBookUsed:80};
   data.config.ideco={asOfDate:'2044-01-01',contributionEndDate:'2045-01-01',joinDate:'2010-01-01',lumpDate:'2045-01-01',currentBalance:120,monthlyContribution:0,accumulationReturn:0,lumpPercent:50,annuityPercent:50,annuityYears:10,annuityReturn:0};
   const file=path.join(out,'withdrawal-synthetic.json');await fs.writeFile(file,JSON.stringify(data));
-  const page=await open(context,fixture.url),errors=[];page.on('pageerror',e=>errors.push(e.message));await load(page,file);assert.equal(await page.locator('#appVersion').innerText(),'v0.9.7-nisa-simple-20261012');const before=await snapshot(page);
+  const page=await open(context,fixture.url),errors=[];page.on('pageerror',e=>errors.push(e.message));await load(page,file);assert.equal(await page.locator('#appVersion').innerText(),'v0.9.7-budget-nisa-20261012');const before=await snapshot(page);
   for(const width of [390,1280]){
    await page.setViewportSize({width,height:900});
    for(const id of ['salary','nisa','ideco','pension','retirement','expenses','events','settings']){
@@ -31,6 +31,24 @@ export async function validateWithdrawalUi({browser,createTestServer,open,load,o
   await openTab(page,'allcsv');assert((await page.locator('#detailCsvTable thead').innerText()).includes('NISA取崩し可能額（参考）'));await page.locator('#detailCsvPeriod').selectOption('annual');
   const pending=page.waitForEvent('download');await page.locator('#downloadDetailedCsv').click();const download=await pending,stream=await download.createReadStream(),chunks=[];for await(const chunk of stream)chunks.push(chunk);assert(Buffer.concat(chunks).toString().includes('NISA期末残高（参考）'));
   await openTab(page,'settings');await page.locator('#detailUndo').click();assert.deepEqual((await snapshot(page)).data,before.data);
+  for(const width of [390,1280]){
+   await page.setViewportSize({width,height:900});await openTab(page,'budget');
+   assert(await page.locator('#budget #expenseSheet').isVisible());assert(await page.locator('#budget #detail-budget').isVisible());
+   assert.equal(await page.locator('#expenseKind').inputValue(),'budget');
+   assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));
+  }
+  await openTab(page,'nisa');const auto=page.locator('#detail-nisaWithdrawal form');
+  await auto.locator('[name=mode]').selectOption('budget');
+  assert.equal(await auto.locator('[name=startMonth]').inputValue(),month);
+  assert((await auto.locator('[name=endMonth]').inputValue())>=month);
+  assert(!await auto.locator('[name=monthlyAmount]').isVisible());
+  await auto.locator('[type=submit]').click();assert(await page.locator('#detail-nisaWithdrawal [data-apply]').isVisible());
+  assert.deepEqual((await snapshot(page)).data,before.data);await openTab(page,'nisa');
+  await page.locator('#detail-nisaWithdrawal [data-apply]').click();
+  const autoSaved=await snapshot(page);assert.equal(autoSaved.data.config.nisa.withdrawal.mode,'budget');assert.deepEqual(autoSaved.home,before.home);
+  await page.reload();await page.locator('#dashboard').waitFor({state:'visible'});assert.deepEqual((await snapshot(page)).data,autoSaved.data);
+  // Reload clears undo, so restore the same isolated synthetic fixture for subsequent cases.
+  await load(page,file);assert.deepEqual((await snapshot(page)).data,before.data);
   await openTab(page,'ideco');const i=page.locator('#detail-idecoWithdrawal form');await i.locator('[name=receiptMode]').selectOption('annuity');await i.locator('[name=annuityYears]').fill('10');await i.locator('[name=annuityReturn]').fill('0');await i.locator('[type=submit]').click();assert(await page.locator('#detail-idecoWithdrawal [data-apply]').isVisible());assert.deepEqual((await snapshot(page)).data,before.data);
   await openTab(page,'ideco');await page.locator('#detail-idecoWithdrawal [data-apply]').click();const receipt=await snapshot(page);assert.equal(receipt.data.config.ideco.lumpPercent,0);assert.equal(receipt.data.config.ideco.annuityPercent,100);assert.equal(receipt.data.config.ideco.annuityYears,10);assert.deepEqual(receipt.data.scenarios,before.data.scenarios);
   await openTab(page,'ideco');assert((await page.locator('#idecoCurrentSummary').innerText()).includes('全額を年金'));await page.screenshot({path:path.join(out,'W1-ideco.png'),fullPage:true});

@@ -24,7 +24,8 @@ export function detailFormSourceSignature(kind,c){
  let source;
  if(laborEditors[kind]){const [person,job]=laborEditors[kind];source=[c.employment?.[person]?.[job],c.cashflow?.salaryLife?.postSalaryLabor];}
  else if(['ideco','idecoWithdrawal'].includes(kind))source=c.ideco;
- else if(['nisa','nisaWithdrawal'].includes(kind))source=c.nisa;
+ else if(kind==='nisaWithdrawal')source=c;
+ else if(kind==='nisa')source=c.nisa;
  else if(kind==='unemployment')source=[c.unemployment,c.employment?.primary?.mainRetirement];
  else if(kind==='goal')source=c.management?.thresholds;
  else if(kind==='event')source=c.events;
@@ -82,7 +83,7 @@ export function mountDetailUI({getState,commit,notice}){
 
   const toggle=(name,show)=>{const node=form.elements.namedItem(name);node.disabled=!show;node.required=show;node.closest('label').hidden=!show;};
   if(kind==='unemployment'){const active=!!form.elements.mode.value&&form.elements.mode.value!=='none';for(const name of ['retirementDate','dailyYen','days','startMonth','endMonth','amountStatus','basis','seekingWork','eligibilityChecked'])toggle(name,active);form.elements.mode.required=true;}
-  if(kind==='nisaWithdrawal'){const mode=form.elements.mode.value;toggle('startMonth',!!mode&&mode!=='none');toggle('endMonth',['fixed','rate'].includes(mode));toggle('monthlyAmount',mode==='fixed');toggle('monthlyRate',mode==='rate');form.elements.mode.required=true;form.elements.monthlyRate.max='100';}
+  if(kind==='nisaWithdrawal'){const mode=form.elements.mode.value;toggle('startMonth',!!mode&&mode!=='none');toggle('endMonth',['fixed','rate','budget'].includes(mode));toggle('monthlyAmount',mode==='fixed');toggle('monthlyRate',mode==='rate');form.elements.mode.required=true;form.elements.monthlyRate.max='100';}
   if(kind==='idecoWithdrawal'){const mode=form.elements.receiptMode.value;toggle('lumpPercent',mode==='combined');toggle('annuityYears',['annuity','combined'].includes(mode));toggle('annuityReturn',['annuity','combined'].includes(mode));form.elements.receiptMode.required=true;form.elements.annuityYears.min='5';form.elements.annuityYears.max='20';form.elements.annuityYears.step='1';form.elements.lumpPercent.max='100';}
  }
  function withdrawalPreview(c,kind){
@@ -108,6 +109,7 @@ export function mountDetailUI({getState,commit,notice}){
   form.addEventListener('input',()=>{invalidate();hint(form,getState().config);});
   form.addEventListener('change',e=>{
    invalidate();const c=getState().config;
+   if(kind==='nisaWithdrawal'&&e.target.name==='mode'&&e.target.value==='budget'){const ms=runRetirementPlan(c,{includeMonthlyDetails:true}).monthlyDetails;if(ms.length){if(!form.elements.startMonth.value)form.elements.startMonth.value=ms[0].month;if(!form.elements.endMonth.value)form.elements.endMonth.value=ms.at(-1).month;}}
    if(kind==='goal'&&e.target.name==='age'){fill(form,{amount:c.management?.thresholds?.[form.elements.age.value]??'',clearGoal:false});}
 
    if(kind==='labor'&&e.target.name==='person')fill(form,c.employment?.[e.target.value]?.sideWork||{monthlyGross:'',startDate:'',endDate:''});

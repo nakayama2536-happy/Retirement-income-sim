@@ -73,3 +73,50 @@ test('概要は保存値・税引前・本人配偶者・未登録を区別し�
  const s=fixture();s.config.employment.primary.regularWork={monthlyGross:0,startDate:'2045-08-01',endDate:'2046-08-01'};const html=currentSummaryHtml(s.config,'salary');assert.ok(html.includes('0万円'));assert.ok(html.includes('配偶者・正社員'));assert.ok(html.includes('未登録'));assert.ok(html.includes('保存済み'));s.config.events=[{label:'<script>alert(1)</script>',type:'expense',amount:1,date:'2046-01-01'}];assert.ok(!currentSummaryHtml(s.config,'events').includes('<script>'));
  for(const tab of ['salary','nisa','ideco','pension','retirement','expenses','events','settings'])assert.ok(currentSummaryRows(s.config,tab).length>0);
 });
+
+test('予算不足方式は余剰月0・不足月のみ、臨時支出と収入を一度だけ計上',()=>{
+ const s=fixture();s.config.ideco.currentBalance=0;s.config.budgets[0].annualBudget=240;
+ s.config.income.pensions.primary={startDate:'2045-08-01',annualAtStart:120};
+ const p=proposal(s,{mode:'budget'}),r=projectNisaWithdrawal(p.candidate);
+ assert.equal(r.rows[0].requested,10);assert.equal(r.total,120);assert.equal(p.before,p.after);
+ const months=runRetirementPlan(p.candidate,{includeMonthlyDetails:true}).monthlyDetails;
+ months[0].totalIncome=30;months[1].extraExpense=7;
+ const modified=projectNisaWithdrawal(p.candidate,months);
+ assert.equal(modified.rows[0].requested,0);assert.equal(modified.rows[1].requested,17);
+ assert.equal(modified.rows[12].requested,0);
+});
+test('予算不足方式は物価反映後支出を使い、運用益を収入へ混ぜない',()=>{
+ const s=fixture();s.config.ideco.currentBalance=0;s.config.budgets[0].annualBudget=240;s.config.plan.inflation=12;s.config.plan.afterTaxReturn=50;
+ const p=proposal(s,{mode:'budget'}),m=runRetirementPlan(p.candidate,{includeMonthlyDetails:true}).monthlyDetails,r=projectNisaWithdrawal(p.candidate);
+ assert.equal(r.rows[0].requested,20);assert.equal(r.rows[1].requested,m[1].expense);assert.ok(r.rows[1].requested>20);assert.ok(r.shortfall>0);assert.equal(r.rows.at(-1).endBalance,0);
+});
+test('予算不足方式は入力後の予算変更で再試算を要求、反映後は現在条件で再計算',()=>{
+ const s=fixture();s.config.ideco.currentBalance=0;s.config.budgets[0].annualBudget=120;
+ const p=proposal(s,{mode:'budget'});s.config.budgets[0].annualBudget=240;assert.throws(()=>verifyDetailProposal(s,p),/再試算/);
+ const r=projectNisaWithdrawal(proposal(s,{mode:'budget'}).candidate);assert.equal(r.rows[0].requested,20);
+});
+test('予算不足方式のバックアップは旧機能集合に対して復元を停止',()=>{
+ const s=fixture();s.config=proposal(s,{mode:'budget'}).candidate;const b=createFullBackup(s);
+ assert.equal(inspectBackupCompatibility(b,{features:CURRENT_FEATURES.filter(f=>f!=='nisa-budget-shortfall-v1')}).compatible,false);
+ const restored=restoreFullBackup(fixture(),b,{save:next=>next});assert.equal(restored.config.nisa.withdrawal.mode,'budget');
+ assert.deepEqual(projectNisaWithdrawal(restored.config),projectNisaWithdrawal(s.config));
+});
+test('予算不足方式は月次情報の欠落を0として扱わない',()=>{
+ const c=proposal(fixture(),{mode:'budget'}).candidate,m=runRetirementPlan(c,{includeMonthlyDetails:true}).monthlyDetails;
+ delete m[0].totalIncome;assert.throws(()=>projectNisaWithdrawal(c,m),/未確定/);
+});
+test('予算不足方式のCSV・年次集計は月次取崩しと一致し総資産に再加算しない',()=>{
+ const s=fixture();s.config.ideco.currentBalance=0;s.config.budgets[0].annualBudget=120;
+ const c=proposal(s,{mode:'budget'}).candidate;
+ for(const period of ['monthly','annual','calendar']){
+  const report=wideDetailedReport(c,{period});assert.equal(report.rows.reduce((v,r)=>v+amount(report,r,'NISA取崩し可能額（参考）'),0),120);
+ }
+ assert.deepEqual(runRetirementPlan(c),runRetirementPlan(s.config));
+});
+
+test('予算不足方式は給与生活の純入出金を使用して予算を重ねない',()=>{
+ const s=fixture();s.config.ideco.currentBalance=0;s.config.budgets[0].annualBudget=240;
+ s.config.cashflow.salaryLife={mode:'net-transfer-v1',lastSalaryMonth:'2045-09',monthlyAddition:3,monthlyWithdrawal:8,postSalaryLabor:{mode:'existing_confirmed'}};
+ const p=proposal(s,{mode:'budget'}),r=projectNisaWithdrawal(p.candidate);
+ assert.equal(r.rows[0].requested,5);assert.equal(r.rows[1].requested,5);assert.equal(r.rows[2].requested,20);
+});
