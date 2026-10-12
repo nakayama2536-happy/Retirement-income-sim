@@ -2,7 +2,7 @@ import {unemploymentPlan,laborDateRecommendation,UNEMPLOYMENT_MODES} from './une
 import {renderCurrentSummaries,currentSummaryHtml} from './current-summary.mjs';
 import {projectNisaWithdrawal,idecoMode,NISA_MODES,IDECO_MODES} from './withdrawal-plan.mjs';
 import {detailProposal,verifyDetailProposal,expenseEntries,EXPENSE_GROUPS,EXPENSE_EXAMPLES,changedPaths,undoDetail} from './detail-settings.mjs';
-import {wideDetailedReport,trendCsv,TREND_KEYS,esc,groupedYearHtml} from './detailed-report.mjs';
+import {wideDetailedReport,visibleTrendColumns,trendCsv,TREND_KEYS,esc,groupedYearHtml} from './detailed-report.mjs';
 import {configSignature} from './storage.mjs';
 import {dateWithAge,updateDateInputHints} from './date-display.mjs';
 import {expenseDisplayProfile} from './expense-display.mjs';
@@ -132,28 +132,30 @@ export function mountDetailUI({getState,commit,notice}){
    }catch(e){error.textContent=e.message;error.hidden=false;}});
   }catch(e){invalidate();error.textContent=e.message;error.hidden=false;}});
  }
- function selectedColumns(){return report?report.columns.filter(c=>!excluded.has(c.id)):[];}
+ function availableColumns(){return report?visibleTrendColumns(report,el('detailCsvIncludeDetails').checked):[];}
+ function selectedColumns(){return report?availableColumns().filter(c=>!excluded.has(c.id)):[];}
  function renderColumnPicker(){
-  const groups=[...new Set(report.columns.map(c=>c.section))];
-  el('detailColumnPicker').innerHTML=groups.map(section=>{const cols=report.columns.filter(c=>c.section===section),checked=cols.filter(c=>!excluded.has(c.id)).length;return `<details><summary>${esc(section)}（${checked}/${cols.length}項目）</summary><label class="check-label"><input type="checkbox" data-column-section="${esc(section)}" ${checked===cols.length?'checked':''}>${esc(section)}をまとめて選択</label>${cols.map(c=>`<label class="check-label"><input type="checkbox" data-column-id="${esc(c.id)}" ${excluded.has(c.id)?'':'checked'}>${esc(c.label)}</label>`).join('')}</details>`;}).join('');
-  for(const box of el('detailColumnPicker').querySelectorAll('[data-column-section]')){const cols=report.columns.filter(c=>c.section===box.dataset.columnSection),n=cols.filter(c=>!excluded.has(c.id)).length;box.indeterminate=n>0&&n<cols.length;}
-  const all=el('detailSelectAll');all.checked=selectedColumns().length===report.columns.length;all.indeterminate=selectedColumns().length>0&&!all.checked;
+  const groups=[...new Set(availableColumns().map(c=>c.section))];
+  el('detailColumnPicker').innerHTML=groups.map(section=>{const cols=availableColumns().filter(c=>c.section===section),checked=cols.filter(c=>!excluded.has(c.id)).length;return `<details><summary>${esc(section)}（${checked}/${cols.length}項目）</summary><label class="check-label"><input type="checkbox" data-column-section="${esc(section)}" ${checked===cols.length?'checked':''}>${esc(section)}をまとめて選択</label>${cols.map(c=>`<label class="check-label"><input type="checkbox" data-column-id="${esc(c.id)}" ${excluded.has(c.id)?'':'checked'}>${esc(c.label)}</label>`).join('')}</details>`;}).join('');
+  for(const box of el('detailColumnPicker').querySelectorAll('[data-column-section]')){const cols=availableColumns().filter(c=>c.section===box.dataset.columnSection),n=cols.filter(c=>!excluded.has(c.id)).length;box.indeterminate=n>0&&n<cols.length;}
+  const all=el('detailSelectAll');all.checked=selectedColumns().length===availableColumns().length;all.indeterminate=selectedColumns().length>0&&!all.checked;
  }
  function renderReport(){const c=getState().config;if(!c)return;const source=el('detailCsvSource').value,period=el('detailCsvPeriod').value;
   const sig=configSignature([c,source,period]);if(sig!==reportSignature){report=wideDetailedReport(c,{sourceProfile:source,period});reportSignature=sig;const selected=el('detailCsvAge').value;el('detailCsvAge').innerHTML=opt([['','全期間'],...report.rows.map(r=>[r.period,r.period])]);if(report.rows.some(r=>r.period===selected))el('detailCsvAge').value=selected;renderColumnPicker();}
   const age=el('detailCsvAge').value,filtered=report.rows.filter(r=>!age||r.period===age),columns=selectedColumns();
-  el('detailCsvStatus').textContent=`全${report.rows.length}期間 / 画面${filtered.length}期間、選択${columns.length}/${report.columns.length}項目。未確定は空欄で出力します。合計・内数・参考内訳は重ねて合計しません。`;
+  el('detailCsvStatus').textContent=`全${report.rows.length}期間 / 画面${filtered.length}期間、選択${columns.length}/${availableColumns().length}項目。未確定は空欄で出力します。合計・内数・参考内訳は重ねて合計しません。`;
   el('detailCsvTable').innerHTML=`<thead><tr>${TREND_KEYS.map(([,label])=>`<th scope="col">${label}</th>`).join('')}${columns.map(c=>`<th scope="col" title="${esc(c.note)}">${esc(c.label)}</th>`).join('')}</tr></thead><tbody>${filtered.map(r=>`<tr>${TREND_KEYS.map(([key])=>`<td>${esc(r[key]??'未確定')}</td>`).join('')}${columns.map(c=>`<td title="${esc(r.statuses[c.id])}">${r.values[c.id]===null?'未確定':esc(Number(r.values[c.id]).toLocaleString('ja-JP',{maximumFractionDigits:4}))}</td>`).join('')}</tr>`).join('')}</tbody>`;
   el('detailCsvLimit').textContent='縦に期間、横に項目を確認できます。CSVは画面の期間絞込みに関係なく、チェックした項目の全期間を出力します。年次は収支を合計し、期首・期末残高は最初・最後の値を使います。';
   el('downloadDetailedCsv').disabled=!columns.length;
  }
- function renderAnnual(){const c=getState().config;if(!c)return;const table=groupedYearHtml(runRetirementPlan(c),el('yearViewMode').value);el('yearHead').innerHTML=table.head;el('yearRows').innerHTML=table.body;}
+ function renderAnnual(){const c=getState().config;if(!c)return;const table=groupedYearHtml(runRetirementPlan(c,{includeMonthlyDetails:true}),el('yearViewMode').value);el('yearHead').innerHTML=table.head;el('yearRows').innerHTML=table.body;}
  function download(content,filename,type='text/plain;charset=utf-8'){const url=URL.createObjectURL(new Blob([content],{type}));const a=document.createElement('a');a.href=url;a.download=filename;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}
  el('detailUndo').addEventListener('click',()=>{try{if(!undo)return;if(commit(undoDetail(getState().config,undo))){undo=null;el('detailUndo').disabled=true;notice('今回の対象設定だけを元に戻しました。');}}catch(e){notice(e.message,'error');}});
  for(const id of ['detailCsvSource','detailCsvPeriod','detailCsvAge'])el(id).addEventListener('change',()=>{renderReport();if(id==='detailCsvSource'){el('reviewPromptText').value='';el('reviewPromptText').hidden=true;el('downloadReviewPrompt').disabled=true;}});
  el('yearViewMode').addEventListener('change',renderAnnual);
- el('detailSelectAll').addEventListener('change',e=>{if(!report)return;excluded.clear();if(!e.target.checked)for(const c of report.columns)excluded.add(c.id);renderColumnPicker();renderReport();});
- el('detailColumnPicker').addEventListener('change',e=>{const {columnId,columnSection}=e.target.dataset;const cols=columnId?report.columns.filter(c=>c.id===columnId):report.columns.filter(c=>c.section===columnSection);for(const c of cols){if(e.target.checked)excluded.delete(c.id);else excluded.add(c.id);}const open=[...el('detailColumnPicker').querySelectorAll('details[open]')].map(d=>d.querySelector('[data-column-section]').dataset.columnSection);renderColumnPicker();for(const d of el('detailColumnPicker').querySelectorAll('details'))if(open.includes(d.querySelector('[data-column-section]').dataset.columnSection))d.open=true;renderReport();});
+ el('detailCsvIncludeDetails').addEventListener('change',()=>{renderColumnPicker();renderReport();});
+ el('detailSelectAll').addEventListener('change',e=>{if(!report)return;for(const c of availableColumns()){if(e.target.checked)excluded.delete(c.id);else excluded.add(c.id);}renderColumnPicker();renderReport();});
+ el('detailColumnPicker').addEventListener('change',e=>{const {columnId,columnSection}=e.target.dataset;const cols=columnId?availableColumns().filter(c=>c.id===columnId):availableColumns().filter(c=>c.section===columnSection);for(const c of cols){if(e.target.checked)excluded.delete(c.id);else excluded.add(c.id);}const open=[...el('detailColumnPicker').querySelectorAll('details[open]')].map(d=>d.querySelector('[data-column-section]').dataset.columnSection);renderColumnPicker();for(const d of el('detailColumnPicker').querySelectorAll('details'))if(open.includes(d.querySelector('[data-column-section]').dataset.columnSection))d.open=true;renderReport();});
  el('downloadDetailedCsv').addEventListener('click',()=>{renderReport();if(!report)return;download(trendCsv(report,selectedColumns().map(c=>c.id),{includeStatus:el('detailCsvIncludeStatus').checked}),`lifeplan-items-${report.period}.csv`,'text/csv;charset=utf-8');});
  el('makeReviewPrompt').addEventListener('click',()=>{try{el('reviewPromptText').value=reviewPrompt(getState(),{sourceProfile:el('detailCsvSource').value});el('reviewPromptText').hidden=false;el('downloadReviewPrompt').disabled=false;notice('確認依頼文を作成しました。内容を確認してからChatGPTへ貼り付けてください。');}catch(e){notice(e.message,'error');}});
  el('downloadReviewPrompt').addEventListener('click',()=>download(el('reviewPromptText').value,'lifeplan-review-prompt.txt'));

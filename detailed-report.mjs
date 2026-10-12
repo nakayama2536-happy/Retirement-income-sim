@@ -19,16 +19,20 @@ export function detailedReport(config,{sourceProfile='',period='annual'}={}){
    for(const [key,label,scope] of [['startBalance','NISA期首残高（参考）','期首残高（参考）'],['gain','NISA運用益（参考）','運用参考'],['requested','NISA取崩し指定額（参考）','資金移動参考'],['withdrawal','NISA取崩し可能額（参考）','資金移動参考'],['unmet','NISA指定額に対する不足（参考）','不足参考'],['endBalance','NISA期末残高（参考）','期末残高（参考）']])add('資金移動','NISA',label,n[key],scope,note,n.overTotal?'総資産との整合要確認':n.unmet>0?'取崩し指定額に不足あり':'参考試算');
   }
   add('収入','合計','現金収入合計',m.totalIncome,'合計');
-  for(const [k,label] of [['labor','労働収入'],['primaryPension','本人公的年金'],['spousePension','配偶者公的年金'],['idecoAnnuity','iDeCo年金'],['unemployment','雇用保険'],['extraIncome','一時金・臨時・追加収入']])add('収入','中項目',label,m[k],'内数');
+  for(const [k,label] of [['labor','労働収入'],['primaryPension','本人公的年金'],['spousePension','配偶者公的年金'],['idecoAnnuity','iDeCo年金'],['unemployment','雇用保険']])add('収入',k==='idecoAnnuity'?'iDeCo':'中項目',label,m[k],'内数');
+  add('収入','iDeCo','iDeCo一時金の資産計上額',m.idecoLumpReceipt,'内数');
+  add('収入','退職金','連動設定した退職金受取',m.retirementReceipt,'内数','明示連動した退職金のみ。未連動の臨時収入はその他に残します。');
+  add('収入','資産への入金','家計から資産への追加',m.householdAddition,'内数');
+  add('収入','中項目','その他の臨時・追加収入',m.extraIncome-m.idecoLumpReceipt-m.retirementReceipt-m.householdAddition,'内数','iDeCo一時金・連動退職金・家計からの追加を除いた額。名称だけでは分類しません。');
   for(const [k,label] of [['primaryLabor','本人の労働収入'],['spouseLabor','配偶者の労働収入'],['combinedLabor','夫婦合計で指定した労働収入']])add('収入','労働収入の内訳',label,m[k],'内数');
   for(const [person,label] of [['primary','本人'],['spouse','配偶者']])for(const [type,title] of [['Regular','正社員'],['Side','アルバイト']]){
    add('労働収入の登録額','税引前',label+title+'の登録額',config.employment?.[person]?.[type==='Regular'?'regularWork':'sideWork']?m[person+type+'Gross']:null,'家計参考額','給与生活中は資産へ直接加算しません。未登録の正社員収入は未設定。',config.employment?.[person]?.[type==='Regular'?'regularWork':'sideWork']?'確認済み':'未設定');
    add('収入','労働収入の内訳',label+title+'の資産計上額',m[person+type+'Labor'],'内数');
   }
-  add('収入','一時金の内訳','iDeCo一時金の資産計上額',m.idecoLumpReceipt,'内数');add('収入','一時金の内訳','連動設定した退職金受取',m.retirementReceipt,'内数','従来の臨時収入に登録した退職金は、明示連動するまでは一般の臨時収入です。');
+
   add('支出','合計','支出合計',m.expense+m.extraExpense,'合計');add('支出','中項目','年間予算からの支出',m.expense,'内数');add('支出','中項目','臨時・別枠支出',m.extraExpense,'内数');
   add('収支','差額','現金収支',m.totalIncome-m.expense-m.extraExpense);
-  add('資金移動','家計','家計から資産への追加',m.householdAddition,'内数');add('資金移動','家計','資産から家計への取崩し',m.householdWithdrawal,'内数');add('資金移動','iDeCo','計画資産からの掛金',m.idecoContributionFromAsset,'内数','掛金原資はiDeCoタブで確認する設定。別途合計へ加えません。');
+  add('資金移動','家計','資産から家計への取崩し',m.householdWithdrawal,'内数');add('資金移動','iDeCo','計画資産からの掛金',m.idecoContributionFromAsset,'内数','掛金原資はiDeCoタブで確認する設定。別途合計へ加えません。');
   for(const e of m.events)add('明細',e.amount<0?'支出・控除':'収入等',e.label,Number(e.amount),'参考明細','税引前・税・手取等の重複を含むため明細を合計しません。');
   if(profile){
    const walk=(d,parent='')=>{const item=add('支出内訳',parent||labels.get(d.itemId),labels.get(d.itemId),d.priced.amount,'予算の参考内訳',r.scope==='family-reference'?'給与生活等の家計参考月。資産からの支出に加算しません。':d.children?.length?'子項目を含む合計。再加算しません。':'年間予算に含めて使う内訳。独立加算しません。');item.itemId=d.itemId;for(const child of d.children||[])walk(child,labels.get(d.itemId));};
@@ -52,9 +56,9 @@ export const DETAIL_COLUMNS=[['period','対象期間'],['date','基準日'],['pr
 const cell=v=>{if(v==null)return '';let s=String(v);if(typeof v!=='number'&&/^[\s]*[=+@\-]/.test(s))s="'"+s;return '"'+s.replaceAll('"','""')+'"';};
 export function detailedCsv(report){return '\uFEFF'+[DETAIL_COLUMNS.map(([,label])=>cell(label)).join(','),...report.rows.map(r=>DETAIL_COLUMNS.map(([key])=>cell(r[key])).join(','))].join('\r\n')+'\r\n';}
 export function groupedYearHtml(result,mode='summary'){
- const income=[['labor','労働収入'],['primaryPension','本人年金'],['spousePension','配偶者年金'],['idecoAnnuity','iDeCo年金'],['unemployment','雇用保険'],['extraIncome','一時金・臨時・追加']];
+ const income=[['labor','労働収入'],['primaryPension','本人年金'],['spousePension','配偶者年金'],['idecoAnnuity','iDeCo年金'],['unemployment','雇用保険'],...(result.monthlyDetails?[['idecoLumpReceipt','iDeCo一時金'],['retirementReceipt','連動退職金'],['householdAddition','家計からの追加'],['otherExtraIncome','その他の臨時・追加']]:[['extraIncome','一時金・臨時・追加（iDeCo等を含む）']])];
  const cols=mode==='income'?income:mode==='expense'?[['expense','年間予算'],['extraExpense','臨時・別枠']]:[['totalIncome','収入合計'],['allExpense','支出合計'],['balance','現金収支']];
- return {head:`<tr><th>年齢期</th><th>期首資産</th><th>運用益</th>${cols.map(([,label])=>`<th>${label}</th>`).join('')}<th>期末資産</th></tr>`,body:result.rows.map(r=>`<tr><td>${r.age}歳</td><td>${fmt(r.startAsset)}</td><td>${fmt(r.investmentGain)}</td>${cols.map(([k])=>`<td>${fmt(k==='allExpense'?r.expense+r.extraExpense:k==='balance'?r.totalIncome-r.expense-r.extraExpense:r[k])}</td>`).join('')}<td>${fmt(r.endAsset)}</td></tr>`).join('')};
+ return {head:`<tr><th>年齢期</th><th>期首資産</th><th>運用益</th>${cols.map(([,label])=>`<th>${label}</th>`).join('')}<th>期末資産</th></tr>`,body:result.rows.map(original=>{const r={...original};if(result.monthlyDetails){const ms=result.monthlyDetails.filter(m=>m.annualAge===r.age);for(const key of ['idecoLumpReceipt','retirementReceipt'])r[key]=ms.reduce((n,m)=>n+m[key],0);r.otherExtraIncome=r.extraIncome-r.idecoLumpReceipt-r.retirementReceipt-(r.householdAddition||0);}return `<tr><td>${r.age}歳</td><td>${fmt(r.startAsset)}</td><td>${fmt(r.investmentGain)}</td>${cols.map(([k])=>`<td>${fmt(k==='allExpense'?r.expense+r.extraExpense:k==='balance'?r.totalIncome-r.expense-r.extraExpense:r[k])}</td>`).join('')}<td>${fmt(r.endAsset)}</td></tr>`;}).join('')};
 }
 
 // Pivot monthly observations, preserving first/last balances and incomplete values.
@@ -72,7 +76,7 @@ export function wideDetailedReport(config,{sourceProfile='',period='monthly'}={}
  }
  const addColumn=r=>{const id=seriesKey(r);if(!columns.has(id)){
   const section=/NISA/i.test(r.item+' '+r.category)?'NISA':/iDeCo|DC/i.test(r.item+' '+r.category)?'iDeCo':r.group;
-  columns.set(id,{id,group:r.group,section,label:`${r.group} / ${r.category} / ${r.item}${r.itemId?' ［'+r.itemId+'］':''} ［${r.scope}・${r.unit}］`,item:r.item,scope:r.scope,note:r.note,unit:r.unit});
+  columns.set(id,{id,group:r.group,section,label:`${r.group} / ${r.category} / ${r.item}${r.itemId?' ［'+r.itemId+'］':''} ［${r.scope}・${r.unit}］`,item:r.item,scope:r.scope,note:r.note,unit:r.unit,detailOnly:isDetailColumn(r,config)});
  }return id;};
  for(const r of long.rows){const id=addColumn(r);
   if(r.period==='設定値'){for(const out of periods.values()){out.values[id]=r.amount;out.statuses[id]=r.amount===null?'未設定':'固定設定値（将来残高ではありません）';}continue;}
@@ -96,3 +100,16 @@ export function trendCsv(report,selectedIds,{includeStatus=false}={}){
  const header=[...TREND_KEYS.map(([,label])=>label),...columns.flatMap(c=>includeStatus?[c.label,`${c.label} 状態`]:[c.label])];
  return '\uFEFF'+[header,...report.rows.map(r=>[...TREND_KEYS.map(([key])=>r[key]),...columns.flatMap(c=>includeStatus?[r.values[c.id],r.statuses[c.id]]:[r.values[c.id]])])].map(row=>row.map(cell).join(',')).join('\r\n')+'\r\n';
 }
+
+// Summary and source observations remain inspectable without duplicating normal CSV columns.
+function isDetailColumn(r,config){
+ if(['明細','設定','労働収入の登録額'].includes(r.group))return true;
+ if(r.category==='労働収入の内訳'){
+  if(r.item==='夫婦合計で指定した労働収入')return config.cashflow?.salaryLife?.postSalaryLabor?.mode!=='monthly';
+  if(['本人の労働収入','配偶者の労働収入'].includes(r.item))return true;
+  // Keep active regular pay visible; only redundant/unregistered regular rows are hidden.
+  if(r.item.includes('正社員'))return !config.employment?.[r.item.startsWith('本人')?'primary':'spouse']?.regularWork;
+ }
+ return false;
+}
+export function visibleTrendColumns(report,includeDetails=false){return report.columns.filter(c=>includeDetails||!c.detailOnly);}
