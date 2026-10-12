@@ -336,7 +336,7 @@ function derivePending() {
   if (config.income?.pensions?.spouse?.certainty === 'unknown') items.push({type:'要確認', title:'配偶者の公的年金額', action:{tab:'pension',target:'spousePensionAmount',label:'配偶者年金を編集'}, reason:`設定中の配偶者年金 ${formatMan(config.income?.pensions?.spouse?.annualAtStart||0,1)}万円/年は暫定値です。ねんきん定期便等で確認後に更新します。`});
   if (config.nisa?.accountBreakdownStatus === 'pending') items.push({type:'要判断', title:`NISA・課税口座・現金の${config.plan.startAge}歳時点内訳`, action:{tab:'nisa',target:'detail-nisa',label:'NISAの内訳を確認'}, limitation:'NISAの開始時評価額を入力できます。口座別の運用・売却税は未対応です。', reason:'総資産試算は継続できます。取崩し順序と税引後精度を高める段階で確定します。'});
   if (config.retirement?.majorSpendDetailStatus === 'pending') items.push({type:'要判断', title:'退職金の大型支出内訳と開始資産の時点整合', action:{tab:'settings',target:'initialAssetInput',label:'開始資産を確認・編集'}, limitation:'計画期間内の個別支出は「臨時・追加収支」で登録できます。開始前の支出は開始資産との照合が必要です。', reason:`社宅退去を本業退職の約6か月前に検討するため、大型支出枠 ${formatMan(config.retirement?.majorSpendPlanned||0)}万円と開始資産の関係を詳細内訳確定時に照合します。`});
-  if (!config.care?.facilityRoomType) items.push({type:'要判断', title:'特養の個室／多床室など介護費の詳細条件', action:{tab:'expenses',target:'expenseKind',label:'年間予算の編集欄へ'}, limitation:'部屋種別の編集は未対応です。予算を変更する場合は変更の種類で「管理予算」を選んでください。', reason:'現状は年代別年間予算で包含しています。施設費を個別積上げする際に必要です。'});
+  if (!config.care?.facilityRoomType) items.push({type:'要判断', title:'特養の個室／多床室など介護費の詳細条件', action:{tab:'budget',target:'expenseKind',label:'年間予算の編集欄へ'}, limitation:'部屋種別の編集は未対応です。予算を変更する場合は変更の種類で「管理予算」を選んでください。', reason:'現状は年代別年間予算で包含しています。施設費を個別積上げする際に必要です。'});
   if (config.taxPolicy?.rulesAsOf) items.push({type:'要更新', title:'退職前の制度再確認', action:{tab:'rules',target:'ruleCards',label:'制度・出典を確認'}, reason:`税・社会保険・雇用保険は現在 ${config.taxPolicy.rulesAsOf} 制度による参考計算です。退職前に最新制度で更新します。`});
   for (const title of config.pendingDecisions || []) {
     if (!items.some(i=>i.title===title)) items.push({type:'保留',title,limitation:'この項目に対応する入力欄は未設定です。',reason:'判断または外部確認が必要なため、計算を止めず保留管理しています。'});
@@ -825,7 +825,7 @@ document.querySelectorAll('[data-help]').forEach(btn=>btn.addEventListener('clic
 }));
 el('helpClose').addEventListener('click',()=>el('helpDialog').close());
 
-el('appVersion').textContent='v0.9.7-nisa-simple-20261012'; el('rulesVersion').textContent=RULES_VERSION;
+el('appVersion').textContent='v0.9.7-budget-nisa-20261012'; el('rulesVersion').textContent=RULES_VERSION;
 if(startupError){setEmptyState();showNotice(`保存データを読み込めません。復元用バックアップを確認してください。${startupError}`,'error');}
 else refresh();
 if(!writeAccess.writable)showNotice('この画面は読み取り専用です。別の編集画面を閉じて再読み込みしてください。同時更新制御が利用できない場合も保存を停止します。','error');
