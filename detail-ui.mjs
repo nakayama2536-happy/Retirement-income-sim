@@ -1,7 +1,7 @@
 import {unemploymentPlan,laborDateRecommendation,UNEMPLOYMENT_MODES} from './unemployment-plan.mjs';
 import {renderCurrentSummaries,currentSummaryHtml} from './current-summary.mjs';
 import {projectNisaWithdrawal,idecoMode,NISA_MODES,IDECO_MODES} from './withdrawal-plan.mjs';
-import {detailProposal,verifyDetailProposal,expenseEntries,EXPENSE_GROUPS,EXPENSE_EXAMPLES,changedPaths,undoDetail} from './detail-settings.mjs';
+import {budgetTableRows,detailProposal,verifyDetailProposal,expenseEntries,EXPENSE_GROUPS,EXPENSE_EXAMPLES,changedPaths,undoDetail} from './detail-settings.mjs';
 import {wideDetailedReport,trendPickerItemsHtml,visibleTrendColumns,trendCsv,TREND_KEYS,esc,groupedYearHtml} from './detailed-report.mjs';
 import {configSignature} from './storage.mjs';
 import {dateWithAge,updateDateInputHints} from './date-display.mjs';
@@ -17,7 +17,7 @@ const dates=(c)=>num('fromAge','本人の開始年齢',c.plan.startAge)+num('toA
 const treatment=()=>select('fundingTreatment','給与生活中の扱い',[['separate','資産へ別枠計上'],['net_transfer','家計の入出金に含む（重ねて計上しない）']]);
 const profile=()=>select('profile','編集・集計する内訳',[['','保存元を選択'],['work-v0.9.7','標準の生活費内訳'],['public-v0.9','旧形式の生活費内訳']]);
 const laborEditors={laborPrimaryRegular:['primary','regularWork'],laborPrimarySide:['primary','sideWork'],laborSpouseRegular:['spouse','regularWork'],laborSpouseSide:['spouse','sideWork']};
-const fname={unemployment:'失業給付の受取予定を設定',goal:'年齢別の目標資産額を再設定',laborPrimaryRegular:'本人：正社員収入',laborPrimarySide:'本人：アルバイト収入',laborSpouseRegular:'配偶者：正社員収入',laborSpouseSide:'配偶者：アルバイト収入',nisa:'1. 開始時点のNISA残高',nisaWithdrawal:'2. 毎月の取り崩し設定',ideco:'iDeCoの残高・積立と基本条件',idecoWithdrawal:'iDeCoの取り崩し・受取プラン',retirement:'退職金の条件と受取',expense:'生活費・保険を項目ごとに設定',budget:'内訳合計を年間予算にする',event:'臨時収入・追加請求を設定',extra:'継続する追加収入を設定'};
+const fname={budgetTable:'年齢別の年間予算を入力',unemployment:'失業給付の受取予定を設定',goal:'年齢別の目標資産額を再設定',laborPrimaryRegular:'本人：正社員収入',laborPrimarySide:'本人：アルバイト収入',laborSpouseRegular:'配偶者：正社員収入',laborSpouseSide:'配偶者：アルバイト収入',nisa:'1. 開始時点のNISA残高',nisaWithdrawal:'2. 毎月の取り崩し設定',ideco:'iDeCoの残高・積立と基本条件',idecoWithdrawal:'iDeCoの取り崩し・受取プラン',retirement:'退職金の条件と受取',expense:'生活費・保険を項目ごとに設定',budget:'内訳合計を年間予算にする',event:'臨時収入・追加請求を設定',extra:'継続する追加収入を設定'};
 // Only data that supplies this editor's inputs/options. Other settings still
 // invalidate previews, but do not discard an unrelated draft.
 export function detailFormSourceSignature(kind,c){
@@ -52,11 +52,12 @@ export function mountDetailUI({getState,commit,notice}){
   if(kind==='ideco'){const i=c.ideco||{};return [['asOfDate','残高の基準日'],['contributionEndDate','掛金終了日（この月は含まない）'],['joinDate','加入日'],['lumpDate','受取開始日']].map(([k,l])=>input(k,l,'date',i[k],'required')).join('')+[['currentBalance','基準日の残高（万円）'],['monthlyContribution','毎月の掛金（万円）'],['accumulationReturn','積立中の利回り（%）'],['lumpPercent','一時金で受け取る割合（%）'],['annuityYears','残りを年金で受け取る年数'],['annuityReturn','年金受取中の利回り（%）']].map(([k,l])=>num(k,l,i[k])).join('');}
   if(kind==='retirement'){const r=c.retirement||{},e=(c.events||[]).find(x=>x.id===r.receiptEventId);return num('amount','退職金の税引前額（万円）',r.amount)+num('serviceYears','勤続年数（端数切上げ）',r.serviceYears)+input('receiveDate','受取日','date',r.receiveDate,'required')+input('companyStartDate','入社日','date',r.companyStartDate,'required')+`<label><input type="checkbox" name="postReceipt" ${e?'checked':''}>計画期間内の受取を資産へ計上する</label>`+input('receipt','資産に加える受取額（税引後・万円）','number',e?.amount)+select('eventTarget','既存の受取行がある場合は選択',[['','新しい受取行（同月の重複は停止）'],...(c.events||[]).map((x,i)=>({x,i})).filter(({x})=>x.type==='income').map(({x,i})=>[String(i),`${x.label} / ${dateWithAge(x.date,c)} / ${x.amount}万円`])]);}
   if(kind==='expense')return profile()+select('target','変更する項目',[['','新しい項目を追加']])+select('group','大項目',EXPENSE_GROUPS)+input('label','項目名（保険は商品名等）','text','','list="expenseNames" maxlength="100" required')+`<datalist id="expenseNames">${Object.values(EXPENSE_EXAMPLES).flat().map(x=>`<option value="${x}">`).join('')}</datalist>`+dates(c)+amount();
+  if(kind==='budgetTable')return '<p>開始年齢・終了年齢・年予算（万円）を入力してください。金額は元の物価基準時点の価格です。物価上昇は計算時に適用するため、将来の値上がり分を重ねて入力しないでください。65歳前の予算は給与生活タブで設定します。</p><div class="table-wrap" style="grid-column:1/-1"><table><thead><tr><th>開始年齢</th><th>終了年齢</th><th>年予算（万円）</th><th>操作</th></tr></thead><tbody data-budget-rows></tbody></table><button type="button" data-add-budget>行を追加</button></div>';
   if(kind==='budget')return profile()+dates(c);
   if(kind==='event')return select('target','変更する予定',[['','新しい予定を追加'],...(c.events||[]).map((x,i)=>[String(i),`${x.label} / ${dateWithAge(x.date,c)} / ${x.amount}万円`])])+input('label','項目名','text','','maxlength="100" required')+select('type','種類',[['expense','支出・追加請求'],['income','臨時収入']])+input('date','対象年月日','date','','required')+num('amount','金額（万円）')+treatment()+`<label><input type="checkbox" name="inflationAdjusted">支出に物価上昇を適用（開始時点の価格で入力）</label>`;
   if(kind==='extra')return select('target','変更する追加収入',[['','新しい追加収入を登録'],...[...new Map((c.cashflow?.periodOverrides||[]).filter(x=>x.kind==='income').map(x=>[x.key,x])).values()].map(x=>[x.key,x.label||x.key])])+input('label','項目名','text','','maxlength="100" required')+dates(c)+amount()+treatment();
  }
- function values(form){const data=Object.fromEntries(new FormData(form));for(const input of form.querySelectorAll('input[type=checkbox]'))data[input.name]=input.checked;return data;}
+ function values(form){const data=Object.fromEntries(new FormData(form));if(form.querySelector('[data-budget-rows]'))data.rows=JSON.stringify([...form.querySelectorAll('[data-budget-rows] tr')].map(r=>Object.fromEntries([...r.querySelectorAll('input')].map(i=>[i.dataset.field,i.value]))));for(const input of form.querySelectorAll('input[type=checkbox]'))data[input.name]=input.checked;return data;}
  function fill(form,obj){for(const [key,v] of Object.entries(obj||{})){const i=form.elements.namedItem(key);if(!i)continue;if(i.type==='checkbox')i.checked=Boolean(v);else i.value=v??'';}}
  function hint(form,c){updateDateInputHints(form,c,form.dataset.person||'primary');}
 
@@ -65,7 +66,11 @@ export function mountDetailUI({getState,commit,notice}){
   const r=laborDateRecommendation(c);
   host.innerHTML='<h3>開始・終了の推奨値（資金計画上の参考）</h3><p>開始月：'+esc(r.startMonth?dateWithAge(r.startMonth,c):'未確定')+'。'+esc(r.reason)+'</p><p>終了月：'+esc(r.endMonth?dateWithAge(r.endMonth,c):'生年月日未設定')+'（76歳の誕生月を含む）。終了日の入力値：'+esc(r.endDate?dateWithAge(r.endDate,c):'未確定')+'。</p><p class="muted">終了日はその月を含まないため、誕生月の翌月1日を入力します。参考表示だけでは設定は変わりません。高年齢給付の50日分は受給期間ではありません。就労開始の制度上の許可日ではなく、求職・就労状況はハローワークへ申告してください。</p>';
  }
+ function appendBudgetRow(form,row={}){
+  const tr=document.createElement('tr');tr.innerHTML=['fromAge','toAge','annualBudget'].map((k,i)=>`<td><input type="number" data-field="${k}" aria-label="${['開始年齢','終了年齢','年予算（万円）'][i]}" min="${i<2?65:0}" step="${i<2?1:'any'}" value="${esc(row[k]??'')}" required></td>`).join('')+'<td><button type="button" data-remove-budget>行を削除</button></td>';form.querySelector('[data-budget-rows]').append(tr);
+ }
  function populate(kind,form,c){
+  if(kind==='budgetTable')for(const row of budgetTableRows(c))appendBudgetRow(form,row);
   if(kind==='unemployment')fill(form,c.unemployment?.receiptPlan||{});
   if(kind==='goal'){form.elements.age.value=String(c.plan.endAge);fill(form,{amount:c.management?.thresholds?.[c.plan.endAge]??''});}
 
@@ -87,6 +92,8 @@ export function mountDetailUI({getState,commit,notice}){
   if(kind==='idecoWithdrawal'){const mode=form.elements.receiptMode.value;toggle('lumpPercent',mode==='combined');toggle('annuityYears',['annuity','combined'].includes(mode));toggle('annuityReturn',['annuity','combined'].includes(mode));form.elements.receiptMode.required=true;form.elements.annuityYears.min='5';form.elements.annuityYears.max='20';form.elements.annuityYears.step='1';form.elements.lumpPercent.max='100';}
  }
  function withdrawalPreview(c,kind){
+  if(kind==='budgetTable')return '<div class="table-wrap"><table><thead><tr><th>年齢</th><th>反映後の年予算（元の物価基準・万円）</th></tr></thead><tbody>'+budgetTableRows(c).map(r=>`<tr><td>${r.fromAge}～${r.toAge}歳</td><td>${r.annualBudget}</td></tr>`).join('')+'</tbody></table></div>';
+
   if(kind==='unemployment'){const p=unemploymentPlan(c);return currentSummaryHtml(c,'unemployment').replace('現在の設定の概要','今回の試算プラン').replace('保存済みの条件です。入力途中・未反映の試算は含みません。','まだ保存していない候補です。')+'<ul>'+p.rows.map(r=>'<li>'+esc(r.month)+'：'+r.days+'日分 / '+r.amount.toLocaleString('ja-JP')+'万円</li>').join('')+'</ul><p>給付額は非課税収入として扱い、旧自動計上を置き換えます。受取予定と実際の振込は異なり得ます。就労・年金との調整は別途確認してください。</p>';}
 
   if(kind==='goal'){const old=getState().config.management?.thresholds||{},next=c.management?.thresholds||{},r=runRetirementPlan(c);
@@ -95,6 +102,7 @@ export function mountDetailUI({getState,commit,notice}){
    return '<p>年齢別の変更前後です。予測資産は変わりません。</p><div class="table-wrap"><table><thead><tr><th>年齢期末</th><th>現在の目標</th><th>変更後の目標</th><th>予測資産</th><th>変更後の差額</th></tr></thead><tbody>'+ages.map(a=>{const row=r.rows.find(x=>x.age===a);return '<tr><td>'+a+'歳末</td><td>'+fmt(old[a])+'</td><td>'+fmt(next[a])+'</td><td>'+fmt(row?.endAsset)+'</td><td>'+ (next[a]==null||!row?'—':fmt(row.endAsset-next[a]))+'</td></tr>';}).join('')+'</tbody></table></div>';
   }
 
+  if(kind==='budgetTable')return '<div class="table-wrap"><table><thead><tr><th>開始年齢</th><th>終了年齢</th><th>年予算（万円・元の物価基準）</th></tr></thead><tbody>'+budgetTableRows(c).map(r=>'<tr><td>'+esc(r.fromAge)+'</td><td>'+esc(r.toAge)+'</td><td>'+esc(r.annualBudget)+'</td></tr>').join('')+'</tbody></table></div>';
   if(kind==='nisaWithdrawal'){const p=projectNisaWithdrawal(c);if(p.status!=='configured')return '<p>取り崩しプランを停止します。NISAの評価額は保持します。</p>';
    return currentSummaryHtml(c,'nisa').replace('現在の設定の概要','今回の試算プラン').replace('保存済みの条件です。入力途中・未反映の試算は含みません。','まだ保存していない候補です。')+`<details><summary>月別の取り崩し予定を確認</summary><div class="table-wrap"><table><thead><tr><th>対象月</th><th>NISA期首残高</th><th>運用益</th><th>取崩し指定額</th><th>取崩し可能額</th><th>指定額に対する不足</th><th>NISA期末残高</th></tr></thead><tbody>${p.rows.map(r=>`<tr><td>${esc(dateWithAge(r.month,c))}</td>${['startBalance','gain','requested','withdrawal','unmet','endBalance'].map(k=>`<td>${r[k].toLocaleString('ja-JP',{maximumFractionDigits:2})}</td>`).join('')}</tr>`).join('')}</tbody></table></div><p>金額は万円。計画上の参考値で、実際の口座残高・売却注文ではありません。</p></details>`;
   }
@@ -106,6 +114,7 @@ export function mountDetailUI({getState,commit,notice}){
   host.innerHTML=`<h2>${fname[kind]}</h2><form id="detail-form-${kind}" class="detail-form"><div class="form-grid">${fields(kind,c)}</div><div class="pension-actions"><button type="submit" class="primary">変更後の結果を確認（未反映）</button><button type="button" class="secondary" data-reset>未反映の入力を取り消す</button></div><p class="muted">試算結果は、この入力欄のすぐ下に表示します。入力・試算だけでは保存しません。「全体シミュレーションに反映」で保存し、ホーム・収支表・CSVを更新します。「未反映の入力を取り消す」は入力欄だけを保存済みの値に戻します。</p></form><div class="detail-preview" hidden></div><p class="inline-error" role="alert" hidden></p>`;
   const form=host.querySelector('form'),box=host.querySelector('.detail-preview'),error=host.querySelector('[role=alert]');const ctx={kind,form,box,error,proposal:null,sourceSignature:detailFormSourceSignature(kind,c),stale:false};forms.set(kind,ctx);populate(kind,form,c);ctx.initialValuesSignature=configSignature(values(form));
   const invalidate=()=>{ctx.proposal=null;box.hidden=true;error.hidden=!ctx.stale;};
+  if(kind==='budgetTable')form.addEventListener('click',e=>{if(e.target.closest('[data-add-budget]')){appendBudgetRow(form);invalidate();}if(e.target.closest('[data-remove-budget]')){e.target.closest('tr').remove();invalidate();}});
   form.addEventListener('input',()=>{invalidate();hint(form,getState().config);});
   form.addEventListener('change',e=>{
    invalidate();const c=getState().config;
@@ -126,7 +135,7 @@ export function mountDetailUI({getState,commit,notice}){
   form.addEventListener('submit',event=>{event.preventDefault();try{
    if(ctx.stale)throw Error('この入力の元になった設定が別の操作で更新されています。未反映の入力を控え、「未反映の入力を取り消す」で最新の設定を読み直してください。');
    const state=getState(),p=detailProposal(state,laborEditors[kind]?'labor':kind,laborEditors[kind]?{...values(form),person:laborEditors[kind][0],job:laborEditors[kind][1]}:values(form));ctx.proposal=p;box.hidden=false;error.hidden=true;
-   box.innerHTML=`<h3 tabindex="-1">試算結果（まだ反映していません）</h3>${withdrawalPreview(p.candidate,kind)}<p>${esc(fname[kind])}：${p.changed?'変更あり':'変更なし'}。最終資産 ${p.before.toLocaleString('ja-JP',{maximumFractionDigits:2})} → ${p.after.toLocaleString('ja-JP',{maximumFractionDigits:2})}万円</p><details><summary>変更する入力値・期間を確認</summary><dl>${Object.entries(values(form)).filter(([k])=>!['target','eventTarget'].includes(k)).map(([k,v])=>`<dt>${esc(form.elements[k]?.closest('label')?.childNodes[0]?.textContent||k)}</dt><dd>${esc(['date','month'].includes(form.elements[k]?.type)?dateWithAge(v,p.candidate,form.dataset.person||'primary'):form.elements[k]?.tagName==='SELECT'?form.elements[k].selectedOptions[0]?.textContent:v)}</dd>`).join('')}</dl></details><p>${p.values.useIndividualLabor?'給与生活終了後の収入方式を本人・配偶者の個別設定へ置き換えます。従来の夫婦合計額は重ねて計上しません。':kind==='expense'?'内訳のみの変更です。資産推移を変えるには、内訳を確認した後「内訳合計を年間予算にする」を試算してください。':['nisa','nisaWithdrawal'].includes(kind)?'NISAは開始資産の内数です。合計資産・運用利回りは変えません。':kind==='retirement'&&!p.values.postReceipt?'税の参考条件だけを変更します。退職金収入は追加しません。':'既存の計算方法・期間方式を使って全期間を再計算します。'}</p><button type="button" class="primary" data-apply ${p.changed?'':'disabled'}>全体シミュレーションに反映</button>`;
+   box.innerHTML=`<h3 tabindex="-1">試算結果（まだ反映していません）</h3>${withdrawalPreview(p.candidate,kind)}<p>${esc(fname[kind])}：${p.changed?'変更あり':'変更なし'}。最終資産 ${p.before.toLocaleString('ja-JP',{maximumFractionDigits:2})} → ${p.after.toLocaleString('ja-JP',{maximumFractionDigits:2})}万円</p><details><summary>変更する入力値・期間を確認</summary><dl>${Object.entries(values(form)).filter(([k])=>!['target','eventTarget','rows'].includes(k)).map(([k,v])=>`<dt>${esc(form.elements[k]?.closest('label')?.childNodes[0]?.textContent||k)}</dt><dd>${esc(['date','month'].includes(form.elements[k]?.type)?dateWithAge(v,p.candidate,form.dataset.person||'primary'):form.elements[k]?.tagName==='SELECT'?form.elements[k].selectedOptions[0]?.textContent:v)}</dd>`).join('')}</dl></details><p>${p.values.useIndividualLabor?'給与生活終了後の収入方式を本人・配偶者の個別設定へ置き換えます。従来の夫婦合計額は重ねて計上しません。':kind==='expense'?'内訳のみの変更です。資産推移を変えるには、内訳を確認した後「内訳合計を年間予算にする」を試算してください。':['nisa','nisaWithdrawal'].includes(kind)?'NISAは開始資産の内数です。合計資産・運用利回りは変えません。':kind==='retirement'&&!p.values.postReceipt?'税の参考条件だけを変更します。退職金収入は追加しません。':'既存の計算方法・期間方式を使って全期間を再計算します。'}</p><button type="button" class="primary" data-apply ${p.changed?'':'disabled'}>全体シミュレーションに反映</button>`;
    box.querySelector('h3').focus({preventScroll:true});box.scrollIntoView({block:'nearest'});
    box.querySelector('[data-apply]').addEventListener('click',()=>{try{
     const current=getState(),next=verifyDetailProposal(current,ctx.proposal),patches=changedPaths(current.config,next);
