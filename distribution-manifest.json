@@ -1,6 +1,6 @@
 {
   "kind": "public-release",
-  "runtime": "v0.9.7-annual-nisa-20261012",
+  "runtime": "v0.9.7-annual-budget-20261012",
   "files": [
     {
       "name": "annual-cashflow.mjs",
@@ -14,8 +14,8 @@
     },
     {
       "name": "app.mjs",
-      "size": 61878,
-      "sha256": "92e8203b7a8437252a9d566bcec8809b837cd6a8cc5aa1994fded281ec9f956e"
+      "size": 61880,
+      "sha256": "84a0d49886af59db47e73126a801be97fa53e8f5ebb078ee7ec403dce9156475"
     },
     {
       "name": "backup-compatibility.mjs",
@@ -74,13 +74,13 @@
     },
     {
       "name": "detailed-report.mjs",
-      "size": 16554,
-      "sha256": "e87541975e88446759ec42e77b0e8246ed3de5c18c97655af06678831409688b"
+      "size": 16616,
+      "sha256": "8a9c7859517ec6fa83832c87af899b78e6a5020a0a50ff94a7ff81d568d98c39"
     },
     {
       "name": "docs/USER_GUIDE.md",
-      "size": 27917,
-      "sha256": "ae88e8b77ca7a491d982c30718fa02c7897204bdd0c4abd166e8a3828f0f1ffc"
+      "size": 28248,
+      "sha256": "7f29ff27bbd90925dd3333241b3d83a9ae6063530b36988f3d5f16cc06e69054"
     },
     {
       "name": "expense-display.mjs",
@@ -134,8 +134,8 @@
     },
     {
       "name": "index.html",
-      "size": 56956,
-      "sha256": "f2776b3887937b5fbc0f8ae97f847caecb1abb766e894c2455e42b4e9b1126a8"
+      "size": 57166,
+      "sha256": "e2a9c64a9a1fdbd094bbdf6260ab0b5adb8c2b1dea45b00b200af864382b20ae"
     },
     {
       "name": "manifest.webmanifest",
@@ -169,8 +169,8 @@
     },
     {
       "name": "README.md",
-      "size": 1921,
-      "sha256": "45f3db3dfccb1efcdef907f391c959d5445ba8cf63d401268b227b627081e75a"
+      "size": 1925,
+      "sha256": "75e630f03899716194f0145fc18f07b8ad334fe5a723e04b6aac99bc69eb178b"
     },
     {
       "name": "recovery-ui.mjs",
@@ -219,8 +219,8 @@
     },
     {
       "name": "sw.js",
-      "size": 3487,
-      "sha256": "ced954eb112f468d2fab955fca3643fea148d02fd60d27c5fa0cc7176ce736aa"
+      "size": 3489,
+      "sha256": "2254f2cb77de1490b40f474cb812b9d4330e004774247ed8e1b3e13d3b263e88"
     },
     {
       "name": "tax-social-audit.mjs",

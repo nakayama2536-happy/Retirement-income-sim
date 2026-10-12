@@ -61,7 +61,8 @@ export function groupedYearHtml(result,mode='summary',config=null){
  for(const m of nisa?.rows||[])withdrawals.set(m.annualAge,(withdrawals.get(m.annualAge)||0)+m.withdrawal);
  const nisaCell=age=>!nisa||nisa.status==='unconfigured'?'未設定':nisa.status==='disabled'?fmt(0):withdrawals.has(age)?fmt(withdrawals.get(age)):'未確定';
  const income=[['labor','労働収入'],['primaryPension','本人年金'],['spousePension','配偶者年金'],['idecoAnnuity','iDeCo年金'],['unemployment','雇用保険'],...(result.monthlyDetails?[['idecoLumpReceipt','iDeCo一時金'],['retirementReceipt','連動退職金'],['householdAddition','家計からの追加'],['otherExtraIncome','その他の臨時・追加']]:[['extraIncome','一時金・臨時・追加（iDeCo等を含む）']])];
- const cols=mode==='income'?income:mode==='expense'?[['expense','年間予算'],['extraExpense','臨時・別枠']]:[['totalIncome','収入合計'],['allExpense','支出合計'],['balance','現金収支']];
+ const budget=['expense','管理予算（資産負担分）'];
+ const cols=mode==='income'?[...income,budget]:mode==='expense'?[budget,['extraExpense','臨時・別枠']]:[['totalIncome','収入合計'],budget,['allExpense','支出合計'],['balance','現金収支']];
  return {head:`<tr><th>年齢期</th><th>期首資産</th><th>運用益</th>${cols.map(([,label])=>`<th>${label}</th>`).join('')}<th>NISA取崩額（資金移動）</th><th>期末資産</th></tr>`,body:result.rows.map(original=>{const r={...original};if(result.monthlyDetails){const ms=result.monthlyDetails.filter(m=>m.annualAge===r.age);for(const key of ['idecoLumpReceipt','retirementReceipt'])r[key]=ms.reduce((n,m)=>n+m[key],0);r.otherExtraIncome=r.extraIncome-r.idecoLumpReceipt-r.retirementReceipt-(r.householdAddition||0);}return `<tr><td>${r.age}歳</td><td>${fmt(r.startAsset)}</td><td>${fmt(r.investmentGain)}</td>${cols.map(([k])=>`<td>${fmt(k==='allExpense'?r.expense+r.extraExpense:k==='balance'?r.totalIncome-r.expense-r.extraExpense:r[k])}</td>`).join('')}<td>${nisaCell(r.age)}</td><td>${fmt(r.endAsset)}</td></tr>`;}).join('')};
 }
 

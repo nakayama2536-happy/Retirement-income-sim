@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import {runRetirementPlan} from '../../calc.mjs';
 export async function validateWithdrawalUi({browser,createTestServer,open,load,openTab,snapshot,here,out,fs,path}){
  const fixture=await createTestServer();fixture.setMode('new');const context=await browser.newContext({acceptDownloads:true});
  const record={id:'W1',scope:'saved overviews, NISA/iDeCo proposal/apply/reset/undo, selected CSV and restart',status:'running'};
@@ -7,7 +8,7 @@ export async function validateWithdrawalUi({browser,createTestServer,open,load,o
   data.config.nisa={marketValue:100,usageYear:2044,tsumitateUsed:0,growthUsed:0,lifetimeBookUsed:80};
   data.config.ideco={asOfDate:'2044-01-01',contributionEndDate:'2045-01-01',joinDate:'2010-01-01',lumpDate:'2045-01-01',currentBalance:120,monthlyContribution:0,accumulationReturn:0,lumpPercent:50,annuityPercent:50,annuityYears:10,annuityReturn:0};
   const file=path.join(out,'withdrawal-synthetic.json');await fs.writeFile(file,JSON.stringify(data));
-  const page=await open(context,fixture.url),errors=[];page.on('pageerror',e=>errors.push(e.message));await load(page,file);assert.equal(await page.locator('#appVersion').innerText(),'v0.9.7-annual-nisa-20261012');const before=await snapshot(page);
+  const page=await open(context,fixture.url),errors=[];page.on('pageerror',e=>errors.push(e.message));await load(page,file);assert.equal(await page.locator('#appVersion').innerText(),'v0.9.7-annual-budget-20261012');const before=await snapshot(page);
   for(const width of [390,1280]){
    await page.setViewportSize({width,height:900});
    for(const id of ['salary','nisa','ideco','pension','retirement','expenses','events','settings']){
@@ -32,11 +33,14 @@ export async function validateWithdrawalUi({browser,createTestServer,open,load,o
    for(const mode of ['summary','income','expense']){
     await page.locator('#yearViewMode').selectOption(mode);
     assert((await page.locator('#yearHead').innerText()).includes('NISA取崩額（資金移動）'));
+    const budget=await page.locator('#yearRows tr').evaluateAll(rows=>{const heads=[...document.querySelectorAll('#yearHead th')].map(x=>x.textContent);const i=heads.indexOf('管理予算（資産負担分）');if(i<0||heads.filter(x=>x==='管理予算（資産負担分）').length!==1)throw Error('budget column');return rows.map(r=>r.children[i].textContent);});
+    const expected=runRetirementPlan(after.data.config,{includeMonthlyDetails:true}).rows.map(r=>r.expense.toLocaleString('ja-JP',{maximumFractionDigits:2}));
+    assert.deepEqual(budget,expected);
     const amounts=await page.locator('#yearRows tr').evaluateAll(rows=>rows.map(r=>r.children[r.children.length-2].textContent));
     assert.equal(amounts[0],'11');assert(amounts.slice(1).every(v=>v==='0'));
    }
    assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));
-   await page.locator('#yearRows').locator('xpath=../..').screenshot({path:path.join(out,'W1-annual-nisa-'+width+'.png')});
+   await page.locator('#yearRows').locator('xpath=../..').screenshot({path:path.join(out,'W1-annual-budget-'+width+'.png')});
   }
   assert.deepEqual((await snapshot(page)).data,after.data);
   await openTab(page,'nisa');assert((await page.locator('#nisaCurrentSummary').innerText()).includes('毎月定額'));await page.screenshot({path:path.join(out,'W1-nisa.png'),fullPage:true});
