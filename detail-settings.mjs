@@ -51,6 +51,32 @@ function editExpense(c,d){
  // Explicit display-source selection only; legacy sources remain intact.
  c.cashflow||={};c.cashflow.detailSourceProfile=d.profile;
 }
+export function budgetTableRows(c){
+ const rows=[];
+ for(let age=Math.max(65,Number(c.plan.startAge));age<=Number(c.plan.endAge);age++){
+  const o=(c.cashflow?.periodOverrides||[]).find(r=>r.kind==='budget'&&r.key==='budget'&&age>=r.fromAge&&age<=r.toAge);
+  const b=(c.budgets||[]).find(r=>age>=r.fromAge&&age<=r.toAge);
+  const value=o?(o.unit==='monthly'?Number(o.amount)*12:o.amount):b?.annualBudget;
+  const last=rows.at(-1);
+  // Keep existing period boundaries, including adjacent equal amounts.
+  if(last&&last.annualBudget===value&&!(c.budgets||[]).some(r=>Number(r.fromAge)===age)&&!(c.cashflow?.periodOverrides||[]).some(r=>r.kind==='budget'&&(Number(r.fromAge)===age||Number(r.toAge)+1===age)))last.toAge=age;
+  else rows.push({fromAge:age,toAge:age,annualBudget:value??''});
+ }
+ return rows;
+}
+function editBudgetTable(c,d){
+ const rows=JSON.parse(d.rows);
+ if(!Array.isArray(rows)||!rows.length)throw Error('予算を1行以上入力してください。');
+ if(rows.some(r=>['fromAge','toAge','annualBudget'].some(k=>r[k]==null||String(r[k]).trim()==='')))throw Error('空欄は0として扱いません。すべての欄を入力してください。');
+ const parsed=rows.map(r=>({fromAge:num(r.fromAge,'開始年齢',65,120),toAge:num(r.toAge,'終了年齢',65,120),annualBudget:num(r.annualBudget,'年予算')})).sort((a,b)=>a.fromAge-b.fromAge);
+ for(let i=0;i<parsed.length;i++){
+  const r=parsed[i];
+  if(!Number.isInteger(r.fromAge)||!Number.isInteger(r.toAge)||r.fromAge>r.toAge)throw Error('開始・終了年齢を整数で正しく入力してください。');
+  if(i&&r.fromAge!==parsed[i-1].toAge+1)throw Error('年齢範囲に重複または空白があります。');
+ }
+ if(parsed[0].fromAge>Math.max(65,Number(c.plan.startAge))||parsed.at(-1).toAge<Number(c.plan.endAge))throw Error('65歳以降の計画期間をすべて含めてください。');
+ for(const r of parsed)setOverride(c,{kind:'budget',key:'budget',label:'年齢別年間予算',fromAge:r.fromAge,toAge:r.toAge,amount:r.annualBudget,unit:'annual'});
+}
 function alignBudget(c,d){
  if(!profiles.includes(d.profile))throw Error('集計する内訳の保存元を選んでください。');
  const [fromAge,toAge]=range(d,c),rec=reconcileCashflow(c,{sourceProfile:d.profile});
@@ -122,6 +148,7 @@ function mutate(c,kind,d){
  }
  if(kind==='expense')return editExpense(c,d);
  if(kind==='budget')return alignBudget(c,d);
+ if(kind==='budgetTable')return editBudgetTable(c,d);
  if(kind==='event')return event(c,d);
  if(kind==='extra'){
   const [fromAge,toAge]=range(d,c),amount=num(d.amount,'追加収入');if(!['monthly','annual'].includes(d.unit)||!['separate','net_transfer'].includes(d.fundingTreatment))throw Error('単位・計上方法を確認してください。');
