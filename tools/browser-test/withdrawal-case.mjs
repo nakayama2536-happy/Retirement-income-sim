@@ -7,7 +7,7 @@ export async function validateWithdrawalUi({browser,createTestServer,open,load,o
   data.config.nisa={marketValue:100,usageYear:2044,tsumitateUsed:0,growthUsed:0,lifetimeBookUsed:80};
   data.config.ideco={asOfDate:'2044-01-01',contributionEndDate:'2045-01-01',joinDate:'2010-01-01',lumpDate:'2045-01-01',currentBalance:120,monthlyContribution:0,accumulationReturn:0,lumpPercent:50,annuityPercent:50,annuityYears:10,annuityReturn:0};
   const file=path.join(out,'withdrawal-synthetic.json');await fs.writeFile(file,JSON.stringify(data));
-  const page=await open(context,fixture.url),errors=[];page.on('pageerror',e=>errors.push(e.message));await load(page,file);assert.equal(await page.locator('#appVersion').innerText(),'v0.9.7-budget-nisa-20261012');const before=await snapshot(page);
+  const page=await open(context,fixture.url),errors=[];page.on('pageerror',e=>errors.push(e.message));await load(page,file);assert.equal(await page.locator('#appVersion').innerText(),'v0.9.7-annual-nisa-20261012');const before=await snapshot(page);
   for(const width of [390,1280]){
    await page.setViewportSize({width,height:900});
    for(const id of ['salary','nisa','ideco','pension','retirement','expenses','events','settings']){
@@ -27,6 +27,18 @@ export async function validateWithdrawalUi({browser,createTestServer,open,load,o
   assert(await page.locator('#detail-nisaWithdrawal [data-apply]').isVisible());assert((await page.locator('#nisaCurrentSummary').innerText()).includes('未設定'));assert.deepEqual((await snapshot(page)).data,before.data);
   await openTab(page,'nisa');await f.locator('[name=monthlyAmount]').fill('11');assert(!await page.locator('#detail-nisaWithdrawal .detail-preview').isVisible());await f.locator('[type=submit]').click();await page.locator('#detail-nisaWithdrawal [data-apply]').click();
   const after=await snapshot(page);assert.equal(after.data.config.nisa.withdrawal.monthlyAmount,11);assert.deepEqual(after.home,before.home);assert.deepEqual(after.data.scenarios,before.data.scenarios);
+  for(const width of [390,1280]){
+   await page.setViewportSize({width,height:900});await openTab(page,'cashflow');
+   for(const mode of ['summary','income','expense']){
+    await page.locator('#yearViewMode').selectOption(mode);
+    assert((await page.locator('#yearHead').innerText()).includes('NISA取崩額（資金移動）'));
+    const amounts=await page.locator('#yearRows tr').evaluateAll(rows=>rows.map(r=>r.children[r.children.length-2].textContent));
+    assert.equal(amounts[0],'11');assert(amounts.slice(1).every(v=>v==='0'));
+   }
+   assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));
+   await page.locator('#yearRows').locator('xpath=../..').screenshot({path:path.join(out,'W1-annual-nisa-'+width+'.png')});
+  }
+  assert.deepEqual((await snapshot(page)).data,after.data);
   await openTab(page,'nisa');assert((await page.locator('#nisaCurrentSummary').innerText()).includes('毎月定額'));await page.screenshot({path:path.join(out,'W1-nisa.png'),fullPage:true});
   await openTab(page,'allcsv');assert((await page.locator('#detailCsvTable thead').innerText()).includes('NISA取崩し可能額（参考）'));await page.locator('#detailCsvPeriod').selectOption('annual');
   const pending=page.waitForEvent('download');await page.locator('#downloadDetailedCsv').click();const download=await pending,stream=await download.createReadStream(),chunks=[];for await(const chunk of stream)chunks.push(chunk);assert(Buffer.concat(chunks).toString().includes('NISA期末残高（参考）'));
