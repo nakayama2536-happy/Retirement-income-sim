@@ -1,7 +1,9 @@
 // Compatibility is evaluated before normalization, calculation or any write.
-export const APP_BUILD='v0.9.7-i08-recovery-1';
-export const CURRENT_FEATURES=['salary-net-transfer-v1','anchored-months-v1','expense-adoption-v1','income-adoption-v1','nisa-withdrawal-reference-v1','nisa-budget-shortfall-v1','unemployment-receipt-plan-v1'];
+export const APP_BUILD='v0.9.7-step9-rc-20261014';
+export const CURRENT_FEATURES=['salary-net-transfer-v1','anchored-months-v1','expense-adoption-v1','income-adoption-v1','nisa-withdrawal-reference-v1','nisa-budget-shortfall-v1','unemployment-receipt-plan-v1','price-base-month-v1','opening-balance-prior-month-close-v1','ideco-received-lump-scope-v1','ideco-annuity-start-month-v1'];
 const object=x=>x!==null&&typeof x==='object'&&!Array.isArray(x);
+const has=(o,key)=>Object.prototype.hasOwnProperty.call(o??{},key);
+const validMonth=v=>typeof v==='string'&&/^\d{4}-(0[1-9]|1[0-2])$/.test(v);
 function requiredFeatures(value){
  const configs=value.config?[value.config,...(Array.isArray(value.scenarios)?value.scenarios.map(s=>s?.config):[])]:[value];
  const features=new Set();
@@ -12,6 +14,25 @@ function requiredFeatures(value){
   else if(c?.cashflow?.salaryLife?.mode && c.cashflow.salaryLife.mode!=='legacy')throw new Error('未対応の給与生活方式です。');
   if(c?.plan?.calendarMode==='anchored-months-v1')features.add('anchored-months-v1');
   else if(c?.plan?.calendarMode && c.plan.calendarMode!=='legacy')throw new Error('未対応の期間方式です。');
+  // Optional fields from steps 5–7 change calculation semantics; old builds must reject them.
+  // Presence, even with null/empty data, is never silently treated as legacy omission.
+  if(has(c?.plan,'priceBaseMonth')){
+   if(!validMonth(c.plan.priceBaseMonth))throw new Error('物価基準月の保存形式が不正です。');
+   features.add('price-base-month-v1');
+  }
+  if(has(c?.plan,'openingBalance')){
+   const o=c.plan.openingBalance;
+   if(!object(o)||o.mode!=='prior-month-close-v1'||!validMonth(o.asOfMonth)||!validMonth(o.startMonth)||typeof o.amount!=='number'||!Number.isFinite(o.amount)||o.amount<0||o.confirmed!==true)throw new Error('開始残高接続の保存形式が不正です。');
+   features.add('opening-balance-prior-month-close-v1');
+  }
+  if(has(c?.plan,'idecoAssetScope')){
+   if(c.plan.idecoAssetScope!=='received-lump-only-v1'||has(c.plan,'initialAssetIncludesIdeco'))throw new Error('iDeCo開始資産範囲の保存形式が不正です。');
+   features.add('ideco-received-lump-scope-v1');
+  }
+  if(has(c?.ideco,'annuityStartMonth')){
+   if(!validMonth(c.ideco.annuityStartMonth))throw new Error('iDeCo年金初回月の保存形式が不正です。');
+   features.add('ideco-annuity-start-month-v1');
+  }
   if(c?.expenseWorkflow)features.add('expense-adoption-v1');
   if(c?.incomeWorkflow||c?.cashflow?.periodOverrides?.some(row=>row?.source==='income-adoption-v1'||row?.incomeAdoption))features.add('income-adoption-v1');
  }
@@ -40,7 +61,18 @@ export function recoveryPair(backup,target){
  return {...check,action:check.compatible?'この組合せを全体検証してから明示復元':'復元停止。対応版で開くか、旧版と更新前バックアップの組を選ぶ'};
 }
 
+// New calculation fields saved through any local write need a backward-compatibility
+// marker, not only when explicitly exporting a backup. Legacy saves stay byte-compatible.
+export function protectNewFeatureState(state){
+ const check=assertBackupCompatibility(state);
+ const newRequired=check.requiredFeatures.some(f=>[
+  'price-base-month-v1','opening-balance-prior-month-close-v1',
+  'ideco-received-lump-scope-v1','ideco-annuity-start-month-v1'].includes(f));
+ if(!newRequired)return state;
+ return {...state,recoveryCompatibility:{...state.recoveryCompatibility,protocol:1,producerBuild:APP_BUILD,requiredFeatures:check.requiredFeatures}};
+}
+
 export function createConfigBackup(config){
  const check=assertBackupCompatibility(config);
- return {...structuredClone(config),recoveryCompatibility:{protocol:1,producerBuild:APP_BUILD,requiredFeatures:check.requiredFeatures}};
+ return {...structuredClone(config),recoveryCompatibility:{...config.recoveryCompatibility,protocol:1,producerBuild:APP_BUILD,requiredFeatures:check.requiredFeatures}};
 }

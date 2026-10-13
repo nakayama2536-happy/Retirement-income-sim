@@ -1,7 +1,7 @@
 import {projectNisaWithdrawal} from './withdrawal-plan.mjs';
 import {unemploymentPlan} from './unemployment-plan.mjs';
 import {calendarMode} from './calendar-mode.mjs';
-import {assertBackupCompatibility} from './backup-compatibility.mjs';
+import {assertBackupCompatibility,protectNewFeatureState} from './backup-compatibility.mjs';
 import {assertWriteAccess} from './write-access.mjs';
 function isoFromYear(year, month=1, day=1){ return year ? `${year}-${String(month).padStart(2,'0')}-${String(day).padStart(2,'0')}` : null; }
 
@@ -62,20 +62,22 @@ export function saveState(state,expected){
   const current=loadState();
   const next=normalizeState({...current,...state});
   if(expected&&configSignature({config:current.config,scenarios:current.scenarios})!==configSignature(normalizeState({config:expected.config,scenarios:expected.scenarios})))throw new Error('別画面で設定が更新されています。再読み込みしてください。');
-  const encoded=JSON.stringify(next);
+  const protectedNext=protectNewFeatureState(next);
+  const encoded=JSON.stringify(protectedNext);
   if(localStorage.getItem(STATE_KEY)!==before)throw new Error('別画面で保存内容が変わりました。再読み込みしてください。');
   localStorage.setItem(STATE_KEY,encoded);
-  return next;
+  return protectedNext;
 }
 export function replaceState(state,expected){
   assertWriteAccess();
   const before=localStorage.getItem(STATE_KEY);
   const current=loadState(),next=normalizeState(state);
   if(expected&&configSignature(current)!==configSignature(normalizeState(expected)))throw new Error('別画面で設定が更新されています。再読み込みしてください。');
-  const encoded=JSON.stringify(next);
+  const protectedNext=protectNewFeatureState(next);
+  const encoded=JSON.stringify(protectedNext);
   if(localStorage.getItem(STATE_KEY)!==before)throw new Error('別画面で保存内容が変わりました。再読み込みしてください。');
   localStorage.setItem(STATE_KEY,encoded);
-  return next;
+  return protectedNext;
 }
 export function saveConfig(config) {return saveState({...loadState(),config});}
 // キー順に依存せず、試算時の前提と現在の前提を比較する。
