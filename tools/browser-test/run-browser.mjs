@@ -9,6 +9,7 @@ import {fileURLToPath, pathToFileURL} from 'node:url';
 import assert from 'node:assert/strict';
 import {createTestServer} from './server.mjs';
 import {dateWithAge} from '../../date-display.mjs';
+import {APP_BUILD} from '../../backup-compatibility.mjs';
 const here=path.dirname(fileURLToPath(import.meta.url));
 const out=path.join(here,'browser-results');
 await fs.mkdir(out,{recursive:true});
@@ -120,7 +121,19 @@ async function run(browser,id,mode){
   await context.setOffline(true);
   page=await open(context,fixture.url);
   await page.locator('#dashboard').waitFor({state:'visible'});
-  const after=await snapshot(page);assert.deepEqual(after,before);
+  const after=await snapshot(page);
+  if(id==='C1'){
+   // A new app release must correctly mark the producer of its newly exported backup.
+   // Only this expected provenance change is excluded from the stored-plan comparison.
+   assert.equal(before.data.recoveryCompatibility.producerBuild,'v0.9.7-i08-recovery-1');
+   assert.equal(after.data.recoveryCompatibility.producerBuild,APP_BUILD);
+   const withoutProducer=snapshot=>{
+    const copy=structuredClone(snapshot);
+    delete copy.data.recoveryCompatibility.producerBuild;
+    return copy;
+   };
+   assert.deepEqual(withoutProducer(after),withoutProducer(before));
+  }else assert.deepEqual(after,before);
   record.after=await state(page);
   assert(record.after.caches.some(x=>x.endsWith('isolated-test-old')));
   record.controllerCache=await page.evaluate(()=>new Promise((resolve,reject)=>{
