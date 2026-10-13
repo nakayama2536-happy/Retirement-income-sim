@@ -1,6 +1,6 @@
 {
   "kind": "public-release",
-  "runtime": "v0.9.7-step9-rc-20261014",
+  "runtime": "v0.9.7-step9-20261014",
   "files": [
     {
       "name": "annual-cashflow.mjs",
@@ -14,13 +14,13 @@
     },
     {
       "name": "app.mjs",
-      "size": 62194,
-      "sha256": "1ce1c64e5c6a6665a00cf751b26fb2481aeedbb00d2cf5b3f9d344ea45f22289"
+      "size": 62179,
+      "sha256": "9ae760133368c07e7bde9bf30066a34e0781c178116c2bef20a0acf98fb8a323"
     },
     {
       "name": "backup-compatibility.mjs",
-      "size": 6369,
-      "sha256": "6e2ca32179016ff5971a911ebaacf0bbcb771cb56ae5648fa6d2b7578f5d7ba9"
+      "size": 6366,
+      "sha256": "8887c78987f6da3997bbf25c8b6c5c74f20c05744c03aef17c4ff22e0a0bb7e2"
     },
     {
       "name": "calc.mjs",
@@ -234,8 +234,8 @@
     },
     {
       "name": "sw.js",
-      "size": 3586,
-      "sha256": "0dd2fca29a52c8866d1c9b28f003d9dbc82262ecaec447577b068682c88138aa"
+      "size": 3583,
+      "sha256": "4962b5aecc5197e84a8ac892f804f96d1887b8664cd70b17b0f21bf8b5aa0ef4"
     },
     {
       "name": "tax-social-audit.mjs",
