@@ -34,11 +34,32 @@ export function salaryLifeContribution(config, date, retirementDate) {
 // Never manufacture personal defaults or mutate the supplied configuration.
 export function salaryLifeIssues(config, context) {
   const s = config.cashflow?.salaryLife;
-  if (s === undefined) return [];
+  const hasOpeningBalance = Object.prototype.hasOwnProperty.call(config.plan||{}, 'openingBalance');
+  const hasIdecoScope=Object.prototype.hasOwnProperty.call(config.plan||{}, 'idecoAssetScope');
+  const idecoSettings=config.ideco;
+  const hasSeparateAnnuity=Object.prototype.hasOwnProperty.call(idecoSettings||{},'annuityStartMonth');
+  if (s === undefined && !hasOpeningBalance && !hasIdecoScope && !hasSeparateAnnuity) return [];
   const issues = [], seen = new Set();
   const fail = (code, detail) => {
     if (!seen.has(code)) { seen.add(code); issues.push({level:'error', code:`salary-life-${code}`, title:'給与生活の設定を確認してください', detail}); }
   };
+  // Independent receipt month is optional; an explicit invalid value is never treated as absent.
+  if (hasSeparateAnnuity) {
+    const annuityStart=parseMonth(idecoSettings.annuityStartMonth);
+    const lumpMonth=dateMonth(idecoSettings.lumpDate||idecoSettings.contributionEndDate);
+    const contributionEnd=dateMonth(idecoSettings.contributionEndDate);
+    if (annuityStart===null || lumpMonth===null || contributionEnd===null || annuityStart<lumpMonth || annuityStart<contributionEnd)
+      fail('ideco-annuity-month','iDeCo年金の初回受取月はYYYY-MMで、一時金受取月・掛金終了月以降に指定してください。');
+  }
+  if (s === undefined && hasIdecoScope) {
+    fail('ideco-scope-mode','開始資産へのiDeCo一時金包含を指定するときは、給与生活方式と残高接続が必要です。');
+    return issues;
+  }
+  if (s === undefined && !hasOpeningBalance) return issues;
+  if (s === undefined && hasOpeningBalance) {
+    fail('opening-balance-mode', '開始残高の接続情報には明示的な給与生活の計算方式が必要です。旧方式には自動接続しません。');
+    return issues;
+  }
   if (!s || s.mode !== SALARY_LIFE_MODE) {
     fail('mode', '給与生活の計算方式が不明です。旧方式として読み替えることはできません。');
     return issues;
@@ -50,8 +71,32 @@ export function salaryLifeIssues(config, context) {
   if (dateMonth(config.people?.primary?.birthDate) === null || dateMonth(config.plan?.startDate) === null) fail('plan-dates', '新方式には本人の生年月日と計画開始日の明示が必要です。');
   const startAge = config.plan?.startAge;
   const anniversaryDay = Math.min(birth.getUTCDate(), new Date(Date.UTC(start.getUTCFullYear(),birth.getUTCMonth()+1,0)).getUTCDate());
-  if (!Number.isInteger(startAge) || start.getUTCFullYear() !== birth.getUTCFullYear()+startAge || start.getUTCMonth() !== birth.getUTCMonth() || start.getUTCDate() !== anniversaryDay) fail('start-anchor', '初期の新方式では、計画開始日を開始年齢の誕生日にそろえてください。別時点の残高を無断で転用できません。');
+  if (hasOpeningBalance) {
+    const o=config.plan.openingBalance;
+    if (!o || typeof o!=='object' || Array.isArray(o)) fail('opening-balance', '開始残高の接続情報は確認済みの項目を備えたオブジェクトで指定してください。');
+    else {
+      if (o.mode!=='prior-month-close-v1') fail('opening-balance-mode', '未対応の開始残高接続方式です。');
+      const evaluationMonth=parseMonth(o.asOfMonth), startMonth=parseMonth(o.startMonth);
+      const actualStartMonth=monthIndex(start);
+      if (evaluationMonth===null || startMonth===null || startMonth!==actualStartMonth || evaluationMonth!==startMonth-1)
+        fail('opening-balance-month', '開始残高の評価月は計算開始月の前月、接続先は実際の計画開始月と一致させてください。');
+      if (!amount(o.amount) || !amount(config.plan.initialAsset) || o.amount!==config.plan.initialAsset)
+        fail('opening-balance-amount', '確認済み開始残高と計算用開始資産は同じ金額にしてください。未入力と明示0は区別します。');
+      if (o.confirmed!==true) fail('opening-balance-confirmation', '開始残高の評価月・対象資産の確認を明示してください。');
+    }
+    // For an explicit, confirmed previous-month balance, the start may follow a birthday.
+    // Still require the person's true full age and an anchored monthly calculation day.
+    const expectedDay=Math.min(birth.getUTCDate(),new Date(Date.UTC(start.getUTCFullYear(),start.getUTCMonth()+1,0)).getUTCDate());
+    const years=start.getUTCFullYear()-birth.getUTCFullYear();
+    const trueAge=years-(start < new Date(Date.UTC(birth.getUTCFullYear()+years,birth.getUTCMonth(),Math.min(birth.getUTCDate(),new Date(Date.UTC(birth.getUTCFullYear()+years,birth.getUTCMonth()+1,0)).getUTCDate())))?1:0);
+    if (!Number.isInteger(startAge) || !Number.isInteger(config.plan?.endAge) || config.plan.endAge<=startAge || startAge!==trueAge || start.getUTCDate()!==expectedDay || dateMonth(config.plan.startDate)===null)
+      fail('opening-balance-start', '計画開始日を正しい年齢・月次計算日（本人誕生日の日、月末の場合は最終日）と整合させてください。');
+  } else if (!Number.isInteger(startAge) || start.getUTCFullYear() !== birth.getUTCFullYear()+startAge || start.getUTCMonth() !== birth.getUTCMonth() || start.getUTCDate() !== anniversaryDay)
+    fail('start-anchor', '初期の新方式では、計画開始日を開始年齢の誕生日にそろえてください。別時点の残高を無断で転用できません。');
   const first = monthIndex(start), stop = monthIndex(end), last = parseMonth(s.lastSalaryMonth);
+  const hasPriceBase=Object.prototype.hasOwnProperty.call(config.plan||{},'priceBaseMonth');
+  const priceBaseMonthIndex=hasPriceBase?parseMonth(config.plan.priceBaseMonth):first;
+  if(hasPriceBase && priceBaseMonthIndex===null) fail('price-base-month', '物価基準月はYYYY-MMで入力してください。未入力・不正月は推測補完しません。');
   const age64 = monthIndex(birth) + 64 * 12;
   if (first < age64 || (first === age64 && start.getUTCDate() < birth.getUTCDate())) fail('before-64', '64歳未満の試算には別の基準残高と計算期間の拡張が必要です。');
   // last=first-1 explicitly means asset-funded living begins in the first plan month.
@@ -69,7 +114,15 @@ export function salaryLifeIssues(config, context) {
   const lump = i ? dateMonth(i.lumpDate || i.contributionEndDate || retirementDate.toISOString().slice(0, 10)) : null;
   const contributionEnd = i ? dateMonth(i.contributionEndDate || retirementDate.toISOString().slice(0, 10)) : null;
   if (i && (lump === null || lump < contributionEnd)) fail('ideco-receipt-date', '拠出終了より前のiDeCo受取は、この計算方式では扱えません。受取日を確認してください。');
-  if (i && config.plan?.initialAssetIncludesIdeco !== false) fail('ideco-scope', '新方式では開始資産にiDeCoを含めないことを明示してください。');
+  if (hasIdecoScope) {
+    if (config.plan.idecoAssetScope!=='received-lump-only-v1') fail('ideco-scope','未対応のiDeCo資産範囲です。');
+    if (Object.prototype.hasOwnProperty.call(config.plan,'initialAssetIncludesIdeco')) fail('ideco-scope-duplicate','旧booleanと新しいiDeCo資産範囲は併用できません。');
+    if (!hasOpeningBalance) fail('ideco-scope-opening','iDeCo一時金を含む開始資産には確認済み前月残高が必要です。');
+    const lumpMonth=dateMonth(i?.lumpDate), endMonth=dateMonth(i?.contributionEndDate);
+    if (!i || !idecoProjection || lumpMonth===null || endMonth===null || lumpMonth>=first || lumpMonth<endMonth)
+      fail('ideco-scope-receipt','開始資産には開始前に受取済みのiDeCo一時金だけを含めます。受取日・掛金終了日を明示してください。');
+  } else if (i && config.plan?.initialAssetIncludesIdeco !== false)
+    fail('ideco-scope', '旧方式では開始資産にiDeCoを含めないことを明示してください。');
   const events = config.events || [], periods = config.cashflow?.periodOverrides || [];
   if (!Array.isArray(events) || !Array.isArray(periods)) { fail('rows', '臨時収支・期間別設定は配列で指定してください。'); return issues; }
   for (const [n, e] of events.entries()) {
@@ -109,7 +162,8 @@ export function salaryLifeIssues(config, context) {
     }
     if (before) {
       for (const person of Object.values(config.income?.pensions || {})) if (person?.annualAtStart > 0 && dateMonth(person.startDate) !== null && m >= dateMonth(person.startDate)) receipt('pension');
-      if (i && idecoProjection && lump !== null && ((m === lump && idecoProjection.lumpGross) || (m >= lump && m < lump + idecoProjection.annuityMonths && idecoProjection.annuityMonthly))) receipt('ideco');
+      const annuityFirst=hasSeparateAnnuity?parseMonth(i.annuityStartMonth):lump;
+      if (i && idecoProjection && lump !== null && ((m === lump && idecoProjection.lumpGross) || (annuityFirst!==null && m>=annuityFirst && m<annuityFirst+idecoProjection.annuityMonths && idecoProjection.annuityMonthly))) receipt('ideco');
       if (config.unemployment?.baselineMode === 'retire_at_65' && m === monthIndex(retirementDate)) receipt('unemployment');
     }
     const contribution = salaryLifeContribution(config, date, retirementDate);
@@ -123,7 +177,7 @@ export function salaryLifeIssues(config, context) {
         const allowed = before ? ['separate','withdrawal'] : ['separate','budget'];
         if (!allowed.includes(funding.accounting)) fail(`funding-${phase}-accounting`, '計画資産からの掛金は計上先を一つだけ指定してください。');
         if (funding.accounting === 'withdrawal' && s.monthlyWithdrawal < contribution) fail('contribution-withdrawal', '掛金を含む月額取崩しが掛金額を下回っています。');
-        const inflatedBudget = budget * Math.pow(1 + config.plan.inflation / 100, (m - first) / 12);
+        const inflatedBudget = budget * Math.pow(1 + config.plan.inflation / 100, (m - (priceBaseMonthIndex??first)) / 12);
         if (funding.accounting === 'budget' && amount(budget) && inflatedBudget < contribution) fail('contribution-budget', '掛金を含む管理予算が掛金額を下回っています。');
       }
     }

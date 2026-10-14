@@ -549,7 +549,9 @@ function incomeForMonth(config,date,idecoProjection, resolvedAge=null, unemploym
     income.detail.push(['iDeCo/DC一時金（資産計上額）',receipt]);
   }
   if(i && idecoProjection && lumpDate && !receiptIncluded('ideco')){
-    const m=monthsBetween(lumpDate,date);
+    const m=Object.prototype.hasOwnProperty.call(i,'annuityStartMonth')
+      ? monthKey(date)-parseMonth(i.annuityStartMonth)
+      : monthsBetween(lumpDate,date);
     if(m>=0 && m<idecoProjection.annuityMonths){ income.idecoAnnuity+=idecoProjection.annuityMonthly; income.detail.push(['iDeCo/DC年金',idecoProjection.annuityMonthly]); }
   }
   const u=config?.unemployment;
@@ -589,7 +591,11 @@ export function runRetirementPlan(config, options = {}) {
   const idecoProjection=projectIdeco(c);
   const rows=[]; let date=new Date(start); let agg=null;
   // 実績から再予測しても、支出の価格基準は元の計画開始日に固定する。
-  const baseStart=startDateFor(c);
+  const baseStart=startDateFor(c); // Monthly calculation axis; do not change the day anchor.
+  const hasPriceBase=Object.prototype.hasOwnProperty.call(c.plan||{},'priceBaseMonth');
+  const priceBaseMonthIndex=hasPriceBase?parseMonth(c.plan.priceBaseMonth):monthKey(baseStart);
+  if(hasPriceBase && priceBaseMonthIndex===null)throw new Error('物価基準月はYYYY-MM形式の実在する月を指定してください。空欄・未確認は0として扱いません。');
+  const priceBaseDate=hasPriceBase?`${c.plan.priceBaseMonth}-01`:isoDate(baseStart);
   if(anchoredCalendar){
     if(!start||start<baseStart||start>end||(start.getTime()===end.getTime()&&!options[TERMINAL_FORECAST])||!Number.isFinite(asset))throw new Error('再開日・残高が計画範囲外です');
     const expected=addMonths(baseStart,monthsBetween(baseStart,start));
@@ -616,13 +622,13 @@ export function runRetirementPlan(config, options = {}) {
     const before=funding && salaryLifeIsBefore(funding,date);
     if(funding ? !before : monthKey(date)>=monthKey(ret)){
       const annualBase=funding && age<65 ? funding.pre65MonthlyBudget*12 : budgetForAge(Math.max(65,age),c.budgets,c);
-      const yearsFromBase=monthsBetween(baseStart,date)/12;
+      const yearsFromBase=(monthKey(date)-priceBaseMonthIndex)/12;
       const priceFactor=Math.pow(1+inflation,yearsFromBase);
       expense=annualBase*priceFactor/12;
       if(includeMonthlyDetails)budgetObservation={baseAnnualAmount:annualBase,priceFactor,budgetAge:funding&&age<65?age:Math.max(65,age),source:funding&&age<65?'salaryLife.pre65MonthlyBudget':'budgets-or-periodOverride'};
     }
     if(funding || monthKey(date)>=monthKey(ret)){
-      const yearsFromBase=monthsBetween(baseStart,date)/12;
+      const yearsFromBase=(monthKey(date)-priceBaseMonthIndex)/12;
       for(const e of c.events||[]){
         const ed=parseDate(e.date);
         if(ed&&sameMonth(date,ed)&&e.type==='expense' && (!funding || e.fundingTreatment==='separate')){
@@ -657,7 +663,7 @@ export function runRetirementPlan(config, options = {}) {
 
     if(includeMonthlyDetails)monthlyDetails.push({
       sequence:monthlyDetails.length,date:isoDate(date),month:isoDate(date).slice(0,7),age,
-      annualRowIndex:rows.length,annualAge:agg.age,baseDate:isoDate(baseStart),monthsFromBase:monthsBetween(baseStart,date),
+      annualRowIndex:rows.length,annualAge:agg.age,baseDate:priceBaseDate,monthsFromBase:monthKey(date)-priceBaseMonthIndex,
       cashflowMode:funding?.mode??'legacy',phase:funding?(before?'salary':'asset-funded'):(monthKey(date)>=monthKey(ret)?'legacy-after-retirement':'legacy-before-retirement'),
       startAsset:startAssetMonth,investmentGain:gain,endAsset:asset,
       primaryLabor:inc.primaryLabor,spouseLabor:inc.spouseLabor,combinedLabor:inc.combinedLabor,idecoLumpReceipt:inc.idecoLumpReceipt,retirementReceipt:inc.retirementReceipt,
@@ -859,7 +865,7 @@ export function integrityChecks(config){
   const reserveBreakdown=c.reserve?.breakdown;if(reserveBreakdown&&Object.keys(reserveBreakdown).length){const sum=Object.values(reserveBreakdown).reduce((a,v)=>a+Number(v||0),0);if(Math.abs(sum-Number(c.reserve.total||0))>0.01)warn('reserve-sum','予備枠の内訳合計が総額と不一致',`内訳 ${formatMan(sum,1)}万円 / 総額 ${formatMan(c.reserve.total,1)}万円`);}
   for(const cat of c.expenseDetail?.monthlyCategories||[]){if(!cat.items?.length)continue;const sum=cat.items.reduce((a,i)=>a+Number(i.amount||0),0);if(Math.abs(sum-Number(cat.amount||0))>0.01)warn(`expense-${cat.key||cat.label}`,`${cat.label}の詳細内訳がカテゴリ額と不一致`,`詳細 ${formatMan(sum,1)}万円 / カテゴリ ${formatMan(cat.amount,1)}万円`);}
   const ideco=projectIdeco(c);if(c.ideco&&!ideco)warn('ideco-projection','iDeCo/DC見込計算に必要な日付が不足','現在残高・基準日・拠出終了日を確認してください。');
-  if(ideco&&c.plan?.initialAssetIncludesIdeco!==false){
+  if(ideco&&c.plan?.idecoAssetScope!=='received-lump-only-v1'&&c.plan?.initialAssetIncludesIdeco!==false){
     const message='現在の計算は開始資産とは別にiDeCo受取を加算します。開始資産に含む場合は口座間移動の計算が必要です。金額を自動補正しません。';
     if(c.plan?.initialAssetIncludesIdeco===true)error('ideco-asset-scope','開始資産に含むiDeCoの受取計算は未対応',message);
     else warn('ideco-asset-scope','開始資産にiDeCoを含むか未確認',message);

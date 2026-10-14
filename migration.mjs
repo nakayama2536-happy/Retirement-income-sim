@@ -1,7 +1,7 @@
 import {projectNisaWithdrawal} from './withdrawal-plan.mjs';
 import {STATE_KEY,migrateConfig,configSignature} from './storage.mjs';
 import {calculatePensionCandidate} from './pension.mjs';
-import {assertBackupCompatibility} from './backup-compatibility.mjs';
+import {assertBackupCompatibility,protectNewFeatureState} from './backup-compatibility.mjs';
 import {assertWriteAccess} from './write-access.mjs';
 
 export const SOURCES=[
@@ -76,7 +76,7 @@ export function migrateSelected(inspection,id,{acceptConfigOnly=false,storage=lo
     throw new Error('統合状態を保持しています。旧設定で上書きしません。');
   }
   if(candidate.configOnly&&!acceptConfigOnly)throw new Error('比較案がない候補です。比較案0件で引き継ぐ確認が必要です。');
-  const next=structuredClone(candidate.state);
+  const next=protectNewFeatureState(structuredClone(candidate.state));
   validateSavedState(next);
   const encoded=JSON.stringify(next);
   if(configSignature(snapshot(storage))!==configSignature(inspection.token))throw new Error('保存直前にデータが変わりました。候補を再確認してください。');

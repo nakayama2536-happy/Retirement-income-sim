@@ -1,6 +1,7 @@
 // I-02B save/undo service. Not connected to UI or startup.
 import {STATE_KEY} from './storage.mjs';
 import {assertWriteAccess} from './write-access.mjs';
+import {protectNewFeatureState} from './backup-compatibility.mjs';
 import {validateSavedState} from './migration.mjs';
 import {inspectCashflowSources,cashflowSourceSignature as signature} from './cashflow-sources.mjs';
 import {createExpenseDraft,previewExpenseChanges,revalidateExpensePreview} from './expense-preview.mjs';
@@ -45,7 +46,7 @@ const withoutPostDigest=state=>{const s=clone(state);delete s.config.expenseWork
 function commit(next,raw,storage,calc){
  assertWriteAccess();
  validateSavedState(next);
- const encoded=JSON.stringify(next);
+ const encoded=JSON.stringify(protectNewFeatureState(next));
  if(!equal(JSON.parse(encoded),next))throw new Error('保存できない値が含まれています。');
  if(storage.getItem(STATE_KEY)!==raw)throw new Error('保存直前に別画面で更新されました。再読み込みしてください。');
  storage.setItem(STATE_KEY,encoded); // One atomic browser item; never remove old keys.
@@ -61,7 +62,7 @@ export async function applyExpensePreview(expected,preview,{storage=localStorage
  assertExpected(expected,live.state);
  const verified=revalidateExpensePreview(expected,preview);
  if(!verified.changed)return {state:clone(live.state),...calculated(live.state),saved:false,changed:false,alreadyApplied:false};
- const next=clone(verified.candidate),view=inspectCashflowSources(next.config,{sourceProfile:verified.sourceProfile});
+ const next=protectNewFeatureState(clone(verified.candidate)),view=inspectCashflowSources(next.config,{sourceProfile:verified.sourceProfile});
  const patches=verified.patches.map(p=>{
    const rules=view.rules.filter(r=>r.ruleRef===p.ruleRef&&r.itemId===p.itemId&&r.profile===verified.sourceProfile);
    if(rules.length!==1)throw new Error('反映対象を一意に確認できません。');
@@ -85,7 +86,7 @@ function undoCandidate(state){
    if(!equal(r.rawAmount,patch.after))throw new Error('反映した金額が別の操作で変更されています。取消は停止しました。');
    draft.edits.push({itemId:r.itemId,ruleRef:r.ruleRef,unit:r.unit,priceBasis:r.priceBasis,amount:Number(patch.before)});
  }
- const reversed=previewExpenseChanges(state,draft),next=clone(reversed.candidate);
+ const reversed=previewExpenseChanges(state,draft),next=protectNewFeatureState(clone(reversed.candidate));
  // Restore original numeric strings too, without replacing row metadata.
  reversed.patches.forEach((p,i)=>{const {o,key}=atPath(next.config,p.path);o[key]=clone(t.patches[i].before);});
  validateSavedState(next);
