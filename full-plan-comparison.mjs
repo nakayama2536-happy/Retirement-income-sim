@@ -12,7 +12,7 @@ export function compareFullPlan(config,request){
  if(!month(request.primarySideStartMonth))return fail('labor-month','本人アルバイトの開始月が不正です。');
  if(request.budgets.some(b=>!Number.isInteger(b.fromAge)||!Number.isInteger(b.toAge)||b.fromAge>b.toAge||!nonnegative(b.annualBudget)))return fail('budget-invalid','予算の年齢または金額が不正です。');
  for(let i=1;i<request.budgets.length;i++)if(request.budgets[i].fromAge!==request.budgets[i-1].toAge+1)return fail('budget-gap','予算期間の空白または重複があります。');
- if(request.events.some(e=>!['income','expense'].includes(e.type)||!validDate(e.date)||!nonnegative(e.amount)||!e.label?.trim()||!['separate','budget','net_transfer'].includes(e.fundingTreatment)))return fail('event-invalid','臨時収支の入力が不正です。');
+ if(request.events.some(e=>!['income','expense'].includes(e.type)||!validDate(e.date)||!nonnegative(e.amount)||!e.label?.trim()||(!['separate','budget','net_transfer'].includes(e.fundingTreatment)||(e.type==='income'&&e.fundingTreatment==='budget'))))return fail('event-invalid','臨時収支の入力が不正です。');
  const ids=new Set((config.events||[]).map(e=>e.id).filter(Boolean));
  for(const e of request.events){if(e.id){if(ids.has(e.id))return fail('event-duplicate','イベントIDが重複しています。');ids.add(e.id);}}
  const trial=step8Trial(config,request.opening);

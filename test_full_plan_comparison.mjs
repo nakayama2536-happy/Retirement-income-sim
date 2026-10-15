@@ -14,3 +14,5 @@ test('invalid labor month rejected',()=>{const x=request();x.primarySideStartMon
 test('invalid calendar day rejected',()=>{const x=request();x.events[0].date='2046-02-30';assert.equal(compareFullPlan(fixture(),x).ok,false);});
 test('budget coverage gap rejected',()=>{const x=request();x.budgets=[{fromAge:66,toAge:95,annualBudget:12}];assert.equal(compareFullPlan(fixture(),x).ok,false);});
 test('pre-start event rejected',()=>{const x=request();x.events[0].date='2044-08-01';assert.equal(compareFullPlan(fixture(),x).ok,false);});
+
+test('income must never be classified as expense-budget event',()=>{const x=request();x.events[0].type='income';x.events[0].fundingTreatment='budget';assert.equal(compareFullPlan(fixture(),x).ok,false);});

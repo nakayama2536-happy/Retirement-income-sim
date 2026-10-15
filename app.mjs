@@ -1,5 +1,6 @@
 import {unemploymentEvents} from './unemployment-plan.mjs';
 import {mountStep8TrialCard} from './step8-trial-ui.mjs';
+import {mountFullPlanComparisonCard} from './full-plan-ui.mjs';
 import {createConfigBackup} from './backup-compatibility.mjs';
 import {mountDetailUI} from './detail-ui.mjs';
 import {dateWithAge,ageOn} from './date-display.mjs';
@@ -55,6 +56,8 @@ function inputValues(){
 const el = id => document.getElementById(id);
 const money = v => `${formatMan(v, 0)}万円`;
 const step8TrialCard=mountStep8TrialCard(el('step8TrialContainer'),()=>config);
+const fullPlanCard=mountFullPlanComparisonCard(el('fullPlanComparisonContainer'),{getConfig:()=>config,getOpeningDraft:()=>step8TrialCard.getState().draft});
+for(const type of ['input','change'])el('step8TrialContainer').addEventListener(type,()=>fullPlanCard.invalidate());
 const numOrBlank = v => v === '' || v === null || v === undefined ? null : Number(v);
 const pensionSheet=mountPensionSheet({getConfig:()=>config,showNotice,onCommit:updated=>{
   const pending=[...inputValues()].filter(([key,entry])=>renderedInputValues.has(key)&&entry.value!==renderedInputValues.get(key));
@@ -167,6 +170,7 @@ function refresh({calculated=null}={}) {
   incomeSheet.render();
   detailUI.render();
   step8TrialCard.reset();
+  fullPlanCard.reset();
   renderedInputValues=new Map([...inputValues()].map(([key,{value}])=>[key,value]));
   migrationPanel.render();
 }
