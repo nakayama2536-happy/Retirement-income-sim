@@ -26,11 +26,12 @@ const fixture=()=>migrateConfig({
 const opening=()=>({startMonth:'2044-09',salaryLastMonth:'2044-08',priceBaseMonth:'2044-08',openingAsOfMonth:'2044-08',openingAmount:100,openingConfirmed:true,idecoAssetScope:'received-lump-only-v1',replaceLegacyScope:true,annuityStartMonth:'2044-09'});
 const setup=()=>{const config=fixture(),original=structuredClone(config),root=new Element('div',doc),ui=mountFullPlanComparisonCard(root,{getConfig:()=>config,getOpeningDraft:opening});return {root,config,original,ui};};
 function fill(root,name,value){const x=find(root,name);assert.ok(x,name);x.value=String(value);x.emit('input');}
-test('full plan UI is read-only until explicit trial and has no apply/save action',()=>{
+test('full plan UI does not write or adopt until explicit save',()=>{
  const {root,config,original,ui}=setup();
  assert.ok(find(root,'fullPlanBudgetAmount0'));assert.ok(button(root,'全条件を比較（未反映）'));
  assert.equal(ui.getState().hasTrial,false);assert.deepEqual(config,original);
  assert.equal(button(root,'全体シミュレーションに反映'),undefined);
+ assert.equal(button(root,'比較案を保存（採用しない）').disabled,true);
 });
 test('explicit inputs produce checked year-end comparison without adopting',()=>{
  const {root,config,original,ui}=setup();
@@ -45,6 +46,7 @@ test('input and opening changes invalidate old result and csv eligibility',()=>{
  assert.equal(ui.getState().hasTrial,true,walk(root,x=>x.tagName==='p').map(x=>x.textContent).join(' / '));fill(root,'fullPlanBudgetAmount0','12');assert.equal(ui.getState().hasTrial,false);
  button(root,'全条件を比較（未反映）').emit('click');assert.equal(ui.getState().hasTrial,true,walk(root,x=>x.tagName==='p').map(x=>x.textContent).join(' / '));
  ui.invalidate();assert.equal(ui.getState().hasTrial,false);assert.equal(root.children.at(-1).disabled,true);
+ assert.equal(button(root,'比較案を保存（採用しない）').disabled,true);
 });
 test('missing labor month and malformed event cannot be silently adopted',()=>{
  const {root,config,original,ui}=setup();button(root,'全条件を比較（未反映）').emit('click');
@@ -57,4 +59,28 @@ test('concurrent update resets candidate before calculation',()=>{
  config.plan.inflation=1;
  button(root,'全条件を比較（未反映）').emit('click');assert.equal(ui.getState().hasTrial,false);
  assert.match(walk(root,x=>x.attributes.role==='status')[0].textContent,/別画面/);
+});
+
+test('saved comparison callback only appends an unselected scenario and can display differences',()=>{
+ const c=fixture(),original=structuredClone(c),root=new Element('div',doc);
+ let scenarios=[{id:'base',name:'合成基準',role:'baseline',selected:true,config:structuredClone(c)}],calls=0;
+ const ui=mountFullPlanComparisonCard(root,{getConfig:()=>c,getOpeningDraft:opening,getScenarios:()=>scenarios,
+ onSaveComparison:({result,request,name,sourceConfigSignature})=>{
+  assert.equal(sourceConfigSignature,JSON.stringify(c));assert.equal(result.ok,true);calls++;
+  scenarios.push({id:'unadopted',name,selected:false,role:'scenario',config:structuredClone(result.proposal),savedAt:'2026-10-16T00:00:00Z',
+   comparisonPlan:{kind:'full-plan-comparison-saved-v1',version:1,baseFingerprint:'0000000000000000',inputs:{...request,opening:{...request.opening,openingConfirmed:false}}}});
+  return {ok:true};
+ }});
+ fill(root,'fullPlanSideMonth','2045-10');fill(root,'fullPlanBudgetAmount0','12');
+ button(root,'全条件を比較（未反映）').emit('click');
+ assert.equal(button(root,'比較案を保存（採用しない）').disabled,false);
+ fill(root,'fullPlanSavedName','架空案A');
+ assert.equal(ui.getState().hasTrial,true);
+ button(root,'比較案を保存（採用しない）').emit('click');
+ assert.equal(calls,1);assert.deepEqual(c,original);
+ assert.equal(scenarios.length,2);assert.equal(scenarios[0].selected,true);assert.equal(scenarios[1].selected,false);
+ assert.equal(ui.getState().hasTrial,false);assert.equal(ui.getState().savedCount,1);
+ button(root,'架空案A の差分を表示').emit('click');
+ assert.match(walk(root,x=>x.tagName==='h4').map(x=>x.textContent).join('／'),/差分/);
+ assert.deepEqual(c,original);
 });
