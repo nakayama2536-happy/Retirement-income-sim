@@ -2,9 +2,10 @@
 // Never reads or writes browser storage, scenarios or live personal data.
 import {compareFullPlan} from './full-plan-comparison.mjs';
 import {annualCsvRows,annualCsvText} from './annual-csv.mjs';
+import {comparisonDifferences,savedComparisons,savedComparisonView} from './full-plan-saved.mjs';
 
 const clone=x=>structuredClone(x);
-export function mountFullPlanComparisonCard(root,{getConfig,getOpeningDraft}){
+export function mountFullPlanComparisonCard(root,{getConfig,getOpeningDraft,getScenarios=()=>[],onSaveComparison=null}){
  if(!root||typeof getConfig!=='function'||typeof getOpeningDraft!=='function')throw new TypeError('比較画面への接続が不正です。');
  const doc=root.ownerDocument??document;
  const elem=(tag,text=null,attributes={})=>{
@@ -15,12 +16,13 @@ export function mountFullPlanComparisonCard(root,{getConfig,getOpeningDraft}){
  };
  const formatter=v=>typeof v==='number'&&Number.isFinite(v)?v.toLocaleString('ja-JP',{maximumFractionDigits:2})+'万円':'未設定・期間外';
  const match=(a,b)=>Number.isFinite(a)&&Number.isFinite(b)&&Math.abs(a-b)<=1e-8*Math.max(1,Math.abs(a),Math.abs(b));
- let configSignature,budgets,events,sideMonth,lastResult=null,status=null,resultBox=null,csvButton=null;
+ let configSignature,budgets,events,sideMonth,lastResult=null,lastRequest=null,nameValue='',status=null,resultBox=null,csvButton=null,saveButton=null;
  function clear(message='入力を変更したため前回の比較は無効です。'){
-  lastResult=null;
+  lastResult=null;lastRequest=null;
   if(status)status.textContent=message;
   if(resultBox)resultBox.replaceChildren();
   if(csvButton)csvButton.disabled=true;
+  if(saveButton)saveButton.disabled=true;
  }
  function field(parent,label,name,value,kind,onValue){
   const row=elem('label',label),input=elem('input',null,{name,type:kind});
@@ -38,17 +40,44 @@ export function mountFullPlanComparisonCard(root,{getConfig,getOpeningDraft}){
   input.addEventListener('change',()=>{onValue(input.value);clear();});
   row.appendChild(input);parent.appendChild(row);
  }
+ function appendDiff(target,items){
+  target.appendChild(elem('h4','現在の採用値と比較案の差分'));
+  if(!items.length){target.appendChild(elem('p','表示対象に差分はありません。全設定を照合済みとは限りません。'));return;}
+  const wrap=elem('div',null,{class:'table-wrap'}),table=elem('table'),thead=elem('thead'),tr=elem('tr');
+  ['項目','現在の採用値','比較案'].forEach(h=>tr.appendChild(elem('th',h)));thead.appendChild(tr);table.appendChild(thead);
+  const tbody=elem('tbody');
+  for(const item of items){const row=elem('tr');[item.label,item.before,item.after].forEach(v=>row.appendChild(elem('td',v)));tbody.appendChild(row);}
+  table.appendChild(tbody);wrap.appendChild(table);target.appendChild(wrap);
+ }
+ function renderSaved(target){
+  target.appendChild(elem('h4','保存済み未採用比較案'));
+  const plans=savedComparisons(getScenarios());
+  if(!plans.length){target.appendChild(elem('p','保存済みの比較案はありません。'));return;}
+  target.appendChild(elem('p','保存された案は「比較案」タブにも表示されます。現在設定を変更せず差分を開けます。'));
+  for(const plan of plans){
+   const button=elem('button',(plan.name||'比較案')+' の差分を表示',{type:'button',class:'secondary'});
+   button.addEventListener('click',()=>{
+    clear('保存済みの比較案を表示中です。採用処理はありません。');
+    try{
+     const view=savedComparisonView(getConfig(),plan);
+     resultBox.appendChild(elem('p','保存日 '+(plan.savedAt||'未確認')+'／未採用'));
+     if(view.stale)resultBox.appendChild(elem('p','保存時の比較元から現在設定が変更されています。古い差額は現在条件の予測ではありません。再試算して確認してください。'));
+     appendDiff(resultBox,view.differences);
+    }catch(e){resultBox.appendChild(elem('p','保存済み案を表示できません。'+e.message));}
+   });target.appendChild(button);
+  }
+ }
  function reset(message='未試算。現在設定を参照した入力候補です。'){
   const src=getConfig();configSignature=JSON.stringify(src);
   budgets=clone(src?.budgets??[]).map(b=>({fromAge:b.fromAge,toAge:b.toAge,annualBudget:b.annualBudget}));
   events=[];
   sideMonth=typeof src?.employment?.primary?.sideWork?.startDate==='string'?src.employment.primary.sideWork.startDate.slice(0,7):'';
-  lastResult=null;render();status.textContent=message;
+  lastResult=null;lastRequest=null;nameValue='';render();status.textContent=message;
  }
  function render(){
   root.replaceChildren();
   root.appendChild(elem('h3','全条件の未反映比較'));
-  root.appendChild(elem('p','上の「開始月・開始残高・iDeCo受取月」の入力と確認を先に行います。保存済み予算を複製して編集できます。入力や試算では現在設定・既存比較案・バックアップを変更しません。'));
+  root.appendChild(elem('p','上の「開始月・開始残高・iDeCo受取月」の入力と確認を先に行います。保存済み予算を複製して編集できます。入力・試算だけでは現在設定は変わりません。明示保存した比較案も未採用で、既存案を上書きしません。'));
   field(root,'本人アルバイトの開始月（YYYY-MM）','fullPlanSideMonth',sideMonth,'text',v=>{sideMonth=v;});
   root.appendChild(elem('h4','年齢帯別の年間管理予算（万円／年）'));
   const bands=elem('div');root.appendChild(bands);
@@ -85,6 +114,10 @@ export function mountFullPlanComparisonCard(root,{getConfig,getOpeningDraft}){
   actions.append(calculate,restore);root.appendChild(actions);
   status=elem('p','',{role:'status'});root.appendChild(status);
   resultBox=elem('div',null,{role:'region','aria-label':'未反映の全条件比較結果'});root.appendChild(resultBox);
+  const saveLabel=elem('label','比較案名（80文字以内）'),nameInput=elem('input',null,{name:'fullPlanSavedName',type:'text',maxlength:'80'});
+  nameInput.value=nameValue;nameInput.addEventListener('input',()=>{nameValue=nameInput.value;});saveLabel.appendChild(nameInput);root.appendChild(saveLabel);
+  saveButton=elem('button','比較案を保存（採用しない）',{type:'button',class:'secondary'});saveButton.disabled=true;root.appendChild(saveButton);
+  const savedPanel=elem('div',null,{role:'region','aria-label':'保存済み全条件比較案'});renderSaved(savedPanel);root.appendChild(savedPanel);
   csvButton=elem('button','未反映比較の年齢期CSVを保存',{type:'button',class:'secondary'});csvButton.disabled=true;root.appendChild(csvButton);
   calculate.addEventListener('click',()=>{
    const current=getConfig();
@@ -98,7 +131,7 @@ export function mountFullPlanComparisonCard(root,{getConfig,getOpeningDraft}){
     if(!csv.length||!match(csv.at(-1).endAsset,comparison.candidateFinalAsset))throw Error('最終資産');
     for(const row of comparison.ageRows)if(row.endAsset!==null&&!match(csv.find(a=>a.age===row.age)?.endAsset,row.endAsset))throw Error(row.age+'歳期');
    }catch(e){clear('年次CSVとの整合が確認できないため出力を停止しました。');resultBox.appendChild(elem('p',String(e.message)));return;}
-   lastResult=comparison;status.textContent='未反映比較と年齢期CSVの照合が完了。現在設定・保存済み比較案は無変更です。';
+   lastResult=comparison;lastRequest=clone(inputs);status.textContent='未反映比較と年齢期CSVの照合が完了。採用済み設定は無変更です。';
    resultBox.appendChild(elem('p','現在設定の最終資産 '+formatter(comparison.baseFinalAsset)+'／比較案 '+formatter(comparison.candidateFinalAsset)+'／差額 '+formatter(comparison.candidateFinalAsset-comparison.baseFinalAsset)));
    resultBox.appendChild(elem('p','月数 '+comparison.monthlyCount+'／最初の残高負値月 '+(comparison.firstNegativeMonth??'なし（この仮定での結果）')));
    const wrap=elem('div',null,{class:'table-wrap'}),table=elem('table'),head=elem('thead'),htr=elem('tr');
@@ -108,11 +141,22 @@ export function mountFullPlanComparisonCard(root,{getConfig,getOpeningDraft}){
     const tr=elem('tr');[row.age+'歳',formatter(row.endAsset),formatter(row.referenceTarget),formatter(row.endAsset===null||row.referenceTarget===null?null:row.endAsset-row.referenceTarget)].forEach(c=>tr.appendChild(elem('td',c)));body.appendChild(tr);
    });
    table.appendChild(body);wrap.appendChild(table);resultBox.appendChild(wrap);
+   appendDiff(resultBox,comparisonDifferences(current,comparison.proposal));
    resultBox.appendChild(elem('p',comparison.notes.join(' ')));
    resultBox.appendChild(elem('p','年次CSVには未反映の比較値を含みます。外部共有前に内容を確認してください。'));
-   csvButton.disabled=false;
+   csvButton.disabled=false;saveButton.disabled=typeof onSaveComparison!=='function';
   });
   restore.addEventListener('click',()=>reset('未反映の入力を破棄しました。採用済み条件は変更していません。'));
+  saveButton.addEventListener('click',()=>{
+   if(typeof onSaveComparison!=='function'||!lastResult||!lastRequest)return;
+   if(JSON.stringify(getConfig())!==configSignature){clear('採用済み条件が変更されました。再試算して保存してください。');return;}
+   try{
+    const result=onSaveComparison({result:lastResult,request:clone(lastRequest),name:nameValue,sourceConfigSignature:configSignature});
+    if(result?.ok)reset('比較案を未採用で保存しました。現在の採用設定は変わりません。');
+    else if(result?.duplicate)status.textContent='同じ比較案が保存済みのため、重複登録しませんでした。';
+    else status.textContent=result?.message||'保存成功を確認できませんでした。比較候補は保持しています。';
+   }catch(e){status.textContent='比較案を保存できませんでした。'+e.message+' 元の設定と比較入力は保持しています。';}
+  });
   csvButton.addEventListener('click',()=>{
    if(!lastResult||JSON.stringify(getConfig())!==configSignature){clear('保存済み条件が更新されたためCSV出力を停止しました。再試算してください。');return;}
    const blob=new Blob([annualCsvText(lastResult.proposal)],{type:'text/csv;charset=utf-8'}),url=URL.createObjectURL(blob),anchor=doc.createElement('a');
@@ -121,5 +165,5 @@ export function mountFullPlanComparisonCard(root,{getConfig,getOpeningDraft}){
   });
  }
  reset();
- return {invalidate:()=>clear('開始月・残高などが変更されました。全条件比較を再試算してください。'),reset,getState:()=>({hasTrial:lastResult!==null,budgets:clone(budgets),events:clone(events),primarySideStartMonth:sideMonth}),destroy:()=>root.replaceChildren()};
+ return {invalidate:()=>clear('開始月・残高などが変更されました。全条件比較を再試算してください。'),reset,getState:()=>({hasTrial:lastResult!==null,budgets:clone(budgets),events:clone(events),primarySideStartMonth:sideMonth,savedCount:savedComparisons(getScenarios()).length}),destroy:()=>root.replaceChildren()};
 }
