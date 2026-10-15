@@ -1,6 +1,8 @@
 import {unemploymentEvents} from './unemployment-plan.mjs';
 import {mountStep8TrialCard} from './step8-trial-ui.mjs';
 import {mountFullPlanComparisonCard} from './full-plan-ui.mjs';
+import {compareFullPlan} from './full-plan-comparison.mjs';
+import {prepareSavedComparison,comparisonSourceFingerprint} from './full-plan-saved.mjs';
 import {createConfigBackup} from './backup-compatibility.mjs';
 import {mountDetailUI} from './detail-ui.mjs';
 import {dateWithAge,ageOn} from './date-display.mjs';
@@ -48,7 +50,7 @@ let renderedInputValues=new Map();
 
 function inputValues(){
   return new Map([...document.querySelectorAll('#dashboard input, #dashboard select, #dashboard textarea')]
-    .filter(input=>input.id!=='expenseDisplaySource'&&!input.closest('#pension, #salary, #salaryIdecoInputs, #calendarSheet, #expenseSheet, #incomeSheet, .detail-form, #step8TrialContainer'))
+    .filter(input=>input.id!=='expenseDisplaySource'&&!input.closest('#pension, #salary, #salaryIdecoInputs, #calendarSheet, #expenseSheet, #incomeSheet, .detail-form, #step8TrialContainer, #fullPlanComparisonContainer'))
     .map(input=>[input.id||(input.dataset.reviewKey?`review/${input.dataset.reviewKey}`:input.form?.id&&input.name?`${input.form.id}/${input.name}`:''),{input,value:input.type==='checkbox'?input.checked:input.value}])
     .filter(([key])=>key));
 }
@@ -56,7 +58,22 @@ function inputValues(){
 const el = id => document.getElementById(id);
 const money = v => `${formatMan(v, 0)}万円`;
 const step8TrialCard=mountStep8TrialCard(el('step8TrialContainer'),()=>config);
-const fullPlanCard=mountFullPlanComparisonCard(el('fullPlanComparisonContainer'),{getConfig:()=>config,getOpeningDraft:()=>step8TrialCard.getState().draft});
+const fullPlanCard=mountFullPlanComparisonCard(el('fullPlanComparisonContainer'),{
+ getConfig:()=>config,getOpeningDraft:()=>step8TrialCard.getState().draft,getScenarios:()=>scenarios,
+ onSaveComparison:({result,request,name,sourceConfigSignature})=>{
+  if(configSignature(config)!==sourceConfigSignature)return {ok:false,message:'採用済み条件が変わりました。再試算してください。'};
+  const fresh=compareFullPlan(config,request);
+  if(!fresh.ok)return {ok:false,message:'再試算が必要です。'+fresh.issues.map(x=>x.message).join('／')};
+  if(configSignature(fresh.proposal)!==configSignature(result?.proposal))return {ok:false,message:'比較候補の計算条件が変わりました。再試算してください。'};
+  let prepared;
+  try{prepared=prepareSavedComparison({current:config,scenarios,proposal:fresh.proposal,request,
+    expectedFingerprint:comparisonSourceFingerprint(config),name,id:crypto.randomUUID(),now:new Date().toISOString()});}
+  catch(e){return {ok:false,message:e.message};}
+  if(prepared.duplicate)return {ok:false,duplicate:true};
+  if(!commitState(config,prepared.scenarios))return {ok:false,message:'保存に失敗しました。現在設定・既存比較案を保持しました。'};
+  return {ok:true,name:prepared.scenario.name};
+ }
+});
 for(const type of ['input','change','click'])el('step8TrialContainer').addEventListener(type,()=>fullPlanCard.invalidate());
 const numOrBlank = v => v === '' || v === null || v === undefined ? null : Number(v);
 const pensionSheet=mountPensionSheet({getConfig:()=>config,showNotice,onCommit:updated=>{
