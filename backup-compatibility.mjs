@@ -1,6 +1,6 @@
 // Compatibility is evaluated before normalization, calculation or any write.
-export const APP_BUILD='v0.9.7-step9-20261014';
-export const CURRENT_FEATURES=['salary-net-transfer-v1','anchored-months-v1','expense-adoption-v1','income-adoption-v1','nisa-withdrawal-reference-v1','nisa-budget-shortfall-v1','unemployment-receipt-plan-v1','price-base-month-v1','opening-balance-prior-month-close-v1','ideco-received-lump-scope-v1','ideco-annuity-start-month-v1'];
+export const APP_BUILD='v0.9.7-full-compare-save-20261016';
+export const CURRENT_FEATURES=['salary-net-transfer-v1','anchored-months-v1','expense-adoption-v1','income-adoption-v1','nisa-withdrawal-reference-v1','nisa-budget-shortfall-v1','unemployment-receipt-plan-v1','price-base-month-v1','opening-balance-prior-month-close-v1','ideco-received-lump-scope-v1','ideco-annuity-start-month-v1','full-plan-comparison-saved-v1'];
 const object=x=>x!==null&&typeof x==='object'&&!Array.isArray(x);
 const has=(o,key)=>Object.prototype.hasOwnProperty.call(o??{},key);
 const validMonth=v=>typeof v==='string'&&/^\d{4}-(0[1-9]|1[0-2])$/.test(v);
@@ -36,6 +36,18 @@ function requiredFeatures(value){
   if(c?.expenseWorkflow)features.add('expense-adoption-v1');
   if(c?.incomeWorkflow||c?.cashflow?.periodOverrides?.some(row=>row?.source==='income-adoption-v1'||row?.incomeAdoption))features.add('income-adoption-v1');
  }
+ // Unknown comparison-plan versions are rejected before any write.
+ for(const s of (Array.isArray(value.scenarios)?value.scenarios:[])){
+  if(!has(s,'comparisonPlan'))continue;
+  const meta=s.comparisonPlan;
+  if(!object(meta)||meta.version!==1||meta.kind!=='full-plan-comparison-saved-v1'||
+     typeof meta.baseFingerprint!=='string'||!/^[0-9a-f]{16}$/.test(meta.baseFingerprint)||
+     !object(meta.inputs)||!object(meta.inputs.opening)||meta.inputs.opening.openingConfirmed!==false||
+     !Array.isArray(meta.inputs.budgets)||!Array.isArray(meta.inputs.events)){
+   throw new Error('未対応または破損した比較案の保存形式です。');
+  }
+  features.add('full-plan-comparison-saved-v1');
+ }
  return [...features];
 }
 export function inspectBackupCompatibility(value,{appBuild=APP_BUILD,features=CURRENT_FEATURES}={}){
@@ -67,7 +79,7 @@ export function protectNewFeatureState(state){
  const check=assertBackupCompatibility(state);
  const newRequired=check.requiredFeatures.some(f=>[
   'price-base-month-v1','opening-balance-prior-month-close-v1',
-  'ideco-received-lump-scope-v1','ideco-annuity-start-month-v1'].includes(f));
+  'ideco-received-lump-scope-v1','ideco-annuity-start-month-v1','full-plan-comparison-saved-v1'].includes(f));
  if(!newRequired)return state;
  return {...state,recoveryCompatibility:{...state.recoveryCompatibility,protocol:1,producerBuild:APP_BUILD,requiredFeatures:check.requiredFeatures}};
 }

@@ -1,0 +1,25 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {migrateConfig} from './storage.mjs';
+import {compareFullPlan} from './full-plan-comparison.mjs';
+const fixture=()=>migrateConfig({people:{primary:{birthDate:'1980-08-27'},spouse:{birthDate:'1981-05-01'}},plan:{startAge:64,endAge:69,startDate:'2044-08-27',initialAsset:100,initialAssetIncludesIdeco:false,afterTaxReturn:0,inflation:0},ideco:{asOfDate:'2044-08-27',currentBalance:120,monthlyContribution:0,contributionEndDate:'2044-08-27',lumpDate:'2044-08-27',lumpPercent:50,annuityPercent:50,annuityYears:5,accumulationReturn:0,annuityReturn:0},employment:{primary:{mainRetirement:{baseDate:'2045-08-27'},sideWork:{monthlyGross:0}},spouse:{sideWork:{monthlyGross:0}}},income:{pensions:{primary:{annualAtStart:0},spouse:{annualAtStart:0}}},budgets:[{fromAge:65,toAge:95,annualBudget:0}],unemployment:{baselineMode:'none'},cashflow:{salaryLife:{mode:'net-transfer-v1',lastSalaryMonth:'2044-08',monthlyAddition:0,monthlyWithdrawal:0,pre65MonthlyBudget:0,postSalaryLabor:{mode:'existing_confirmed'},receiptTreatment:{ideco:'separate',pension:'separate',unemployment:'separate'}}},events:[],management:{thresholds:{65:5000,70:3000}}});
+const request=()=>({opening:{startMonth:'2044-09',salaryLastMonth:'2044-08',priceBaseMonth:'2044-08',openingAsOfMonth:'2044-08',openingAmount:100,openingConfirmed:true,idecoAssetScope:'received-lump-only-v1',replaceLegacyScope:true,annuityStartMonth:'2044-09'},budgets:[{fromAge:65,toAge:95,annualBudget:12}],events:[{id:'synthetic-a',type:'expense',date:'2046-10-01',amount:10,label:'架空費用',fundingTreatment:'separate'}],primarySideStartMonth:'2045-10'});
+test('non-adopting full comparison keeps source unchanged',()=>{const c=fixture(),copy=structuredClone(c),r=compareFullPlan(c,request());assert.equal(r.ok,true,JSON.stringify(r.issues));assert.deepEqual(c,copy);assert.equal(r.saved,false);assert.equal(r.adopted,false);assert.equal(r.proposal.events.length,1);assert.equal(r.proposal.budgets[0].annualBudget,12);});
+test('missing budget rejected',()=>{const x=request();x.budgets=[];assert.equal(compareFullPlan(fixture(),x).ok,false);});
+test('overlapping budget rejected',()=>{const x=request();x.budgets.push({fromAge:90,toAge:95,annualBudget:1});assert.equal(compareFullPlan(fixture(),x).ok,false);});
+test('event ID collision rejected',()=>{const c=fixture();c.events.push({id:'synthetic-a',type:'expense',date:'2046-10-01',amount:5,label:'架空費用'});assert.equal(compareFullPlan(c,request()).ok,false);});
+test('missing confirmed opening rejected',()=>{const x=request();x.opening.openingConfirmed=false;assert.equal(compareFullPlan(fixture(),x).ok,false);});
+test('invalid labor month rejected',()=>{const x=request();x.primarySideStartMonth='invalid';assert.equal(compareFullPlan(fixture(),x).ok,false);});
+
+test('invalid calendar day rejected',()=>{const x=request();x.events[0].date='2046-02-30';assert.equal(compareFullPlan(fixture(),x).ok,false);});
+test('budget coverage gap rejected',()=>{const x=request();x.budgets=[{fromAge:66,toAge:95,annualBudget:12}];assert.equal(compareFullPlan(fixture(),x).ok,false);});
+test('pre-start event rejected',()=>{const x=request();x.events[0].date='2044-08-01';assert.equal(compareFullPlan(fixture(),x).ok,false);});
+
+test('income must never be classified as expense-budget event',()=>{const x=request();x.events[0].type='income';x.events[0].fundingTreatment='budget';assert.equal(compareFullPlan(fixture(),x).ok,false);});
+
+test('元設定の予算が欠落していても未入力をゼロ補完せず停止する',()=>{
+ const c=fixture();c.budgets=[{fromAge:70,toAge:95,annualBudget:0}];
+ const x=request();x.budgets=[{fromAge:70,toAge:95,annualBudget:12}];
+ const r=compareFullPlan(c,x);
+ assert.equal(r.ok,false);assert.equal(r.issues[0].code,'engine'); // 元設定自体が不正なため試算処理前に停止
+});

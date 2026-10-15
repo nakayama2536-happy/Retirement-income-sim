@@ -19,28 +19,28 @@ test('step8 trial fields are excluded from existing saved dashboard input snapsh
 });
 
 test('trial modules have no persistence or adopting save/import actions',()=>{
-  for(const name of ['step8-trial-ui.mjs','step8-trial-workflow.mjs']){
+  for(const name of ['step8-trial-ui.mjs','step8-trial-workflow.mjs','full-plan-ui.mjs','full-plan-comparison.mjs']){
     const code=read('./'+name);
     for(const forbidden of [/\blocalStorage\b/,/\bindexedDB\b/,/\bsaveState\s*\(/,/\bcommitPlanState\s*\(/,/\bfetch\s*\(/]){
       assert.doesNotMatch(code,forbidden,`${name}: ${forbidden}`);
     }
   }
-  assert.match(html,/比較試算（保存しない）/);
+  assert.match(html,/比較試算（未採用案の保存可）/);
 });
 
 test('offline candidate assets and module dependency closure are included',()=>{
   const {out,runtime}=collect(new URL('.',import.meta.url).pathname);
-  for(const name of ['step8-trial-ui.mjs','step8-trial-workflow.mjs','app.mjs','calc.mjs']){
+  for(const name of ['step8-trial-ui.mjs','step8-trial-workflow.mjs','full-plan-ui.mjs','full-plan-comparison.mjs','full-plan-saved.mjs','app.mjs','calc.mjs']){
     assert.ok(out.has(name),name);
     assert.ok(runtime.includes(name),name);
     assert.match(sw,new RegExp("\\./"+name.replaceAll('.','\\.')));
   }
-  assert.equal(runtime.length,49);
-  assert.equal(out.size,52);
+  assert.equal(runtime.length,52);
+  assert.equal(out.size,55);
 });
 
 test('candidate service worker is versioned separately without cache deletion or forced update',()=>{
-  assert.match(sw,/const CACHE=`\$\{CACHE_PREFIX\}v0\.9\.7-step9-20261014`/);
+  assert.match(sw,/const CACHE=`\$\{CACHE_PREFIX\}v0\.9\.7-full-compare-save-20261016`/);
   assert.doesNotMatch(sw,/caches\.delete\(/);
   assert.doesNotMatch(sw,/skipWaiting\s*\(/);
 });

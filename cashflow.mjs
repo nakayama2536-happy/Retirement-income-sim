@@ -1,4 +1,26 @@
-import { formatMan, incomeSummaryForAge, householdTaxSocialReferenceForAge } from './calc.mjs';
+import { formatMan, runRetirementPlan, estimateAnnualTaxSocial } from './calc.mjs';
+// Compatibility adapter for the old detailed CSV path. All cash receipts
+// are sourced from the current monthly engine, never recomputed from gross pay.
+const engineCache=new WeakMap();
+function incomeSummaryForAge(config,age){
+  const signature=JSON.stringify(config);
+  let cached=engineCache.get(config);
+  if(!cached||cached.signature!==signature){
+    cached={signature,result:runRetirementPlan(config,{includeMonthlyDetails:true})};
+    engineCache.set(config,cached);
+  }
+  const result=cached.result;
+  const months=(result.monthlyDetails||[]).filter(x=>x.annualAge===Number(age));
+  const sum=k=>months.reduce((v,x)=>v+Number(x[k]||0),0);
+  return {primaryLabor:sum('primaryLabor'),spouseLabor:sum('spouseLabor'),
+    primaryPension:sum('primaryPension'),spousePension:sum('spousePension'),
+    idecoAnnuity:sum('idecoAnnuity'),unemployment:sum('unemployment'),
+    extraIncome:sum('extraIncome'),totalCashIncome:sum('totalIncome')};
+}
+function householdTaxSocialReferenceForAge(config,age){
+  const tax=estimateAnnualTaxSocial(config,age);
+  return tax;
+}
 
 export const DEFAULT_EXPENSE_REDUCTION = ['通信費見直し','家賃見直し','車関連費見直し'];
 export const DEFAULT_INCOME_IMPROVEMENT = ['労働収入増','資産収入増','相続遺産'];
@@ -50,7 +72,7 @@ export function expenseItemsForAge(config,age,{inflationAdjusted=true}={}){
     if(cat.key==='taxSocial'){
       const fallback=Number(cat.fallbackMonthly||4)*12;
       const annual=tax&&Number.isFinite(tax.total)?tax.total:fallback;
-      const items=tax?[{key:'incomeTax',label:'所得税',annual:tax.incomeTax},{key:'residentTax',label:'住民税',annual:tax.residentTax},{key:'nhi',label:'国保',annual:tax.nhi},{key:'lateElderly',label:'後期高齢者医療',annual:tax.lateElderly},{key:'care',label:'介護保険',annual:tax.care},{key:'other',label:'その他',annual:0}]:[{key:'fallback',label:'暫定基準',annual:fallback}];
+      const items=tax?[{key:'incomeTax',label:'所得税',annual:tax.incomeTax},{key:'residentTax',label:'住民税',annual:tax.residentTax},{key:'health',label:'医療保険（区分未確定）',annual:tax.health},{key:'care',label:'介護保険',annual:tax.care},{key:'other',label:'その他',annual:0}]:[{key:'fallback',label:'暫定基準',annual:fallback}];
       cats.push({key:cat.key,label:cat.label,monthly:annual/12,annual,items,auto:Boolean(tax),note:tax?.note||'自動計算不能時は月4万円を暫定使用'});
       continue;
     }
