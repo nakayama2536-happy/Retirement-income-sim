@@ -14,8 +14,8 @@
     },
     {
       "name": "app.mjs",
-      "size": 59067,
-      "sha256": "6466a70c11ed023b64764e4e526d91f440a0c1961966533c87345cb2626442d6"
+      "size": 62542,
+      "sha256": "1fcaaabb24d16f7bcaf42a9090b20f689a70c73a17f22e85571863a7c5530a95"
     },
     {
       "name": "backup-compatibility.mjs",
@@ -109,13 +109,13 @@
     },
     {
       "name": "full-plan-comparison.mjs",
-      "size": 3887,
-      "sha256": "2e390bdd4af320408d0bf559a3250ecf455c9c1ebc7f7a7debcad4299daef802"
+      "size": 4104,
+      "sha256": "7279d5a0f267010fe3133cddd0d20449a7bf910a9a3015ad3be3720d55acbbe8"
     },
     {
       "name": "full-plan-ui.mjs",
-      "size": 9599,
-      "sha256": "e0b0ad87dafce91050f625b599e4cf43630a9ee4f46353fe37c0ff47ad16ea0d"
+      "size": 10339,
+      "sha256": "6a29a657c9900f055feb3810fe7c85cf43eb60168fee84ebef6e94efd8f9ed1d"
     },
     {
       "name": "icons/icon-192.png",
@@ -144,8 +144,8 @@
     },
     {
       "name": "index.html",
-      "size": 47718,
-      "sha256": "2491702a319f7c26f0bd28aee66c54317784898874486f9c1c7dd95c15f19eb1"
+      "size": 58008,
+      "sha256": "85f861d744956966e455376d2bfe12848541920a4f4ef18e74e280864866abea"
     },
     {
       "name": "manifest.webmanifest",
@@ -244,8 +244,8 @@
     },
     {
       "name": "sw.js",
-      "size": 3552,
-      "sha256": "e3c61d91f22fd69b2efb0ee4c801cdd2a25a45a5eb679a70160d28eff4159e84"
+      "size": 3646,
+      "sha256": "3022bfef26b69ec2d4781655bb216e6bbfe021cb306bc3120aad056fd628f4df"
     },
     {
       "name": "tax-social-audit.mjs",

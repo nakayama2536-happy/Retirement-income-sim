@@ -36,14 +36,14 @@ test('explicit inputs produce checked year-end comparison without adopting',()=>
  const {root,config,original,ui}=setup();
  fill(root,'fullPlanSideMonth','2045-10');fill(root,'fullPlanBudgetAmount0','12');
  button(root,'全条件を比較（未反映）').emit('click');
- assert.equal(ui.getState().hasTrial,true);
+ assert.equal(ui.getState().hasTrial,true,walk(root,x=>x.tagName==='p').map(x=>x.textContent).join(' / '));
  assert.match(walk(root,x=>x.attributes.role==='status')[0].textContent,/年齢期CSVの照合が完了/);
  assert.deepEqual(config,original);assert.equal(root.children.at(-1).disabled,false);
 });
 test('input and opening changes invalidate old result and csv eligibility',()=>{
  const {root,ui}=setup();fill(root,'fullPlanSideMonth','2045-10');button(root,'全条件を比較（未反映）').emit('click');
- assert.equal(ui.getState().hasTrial,true);fill(root,'fullPlanBudgetAmount0','12');assert.equal(ui.getState().hasTrial,false);
- button(root,'全条件を比較（未反映）').emit('click');assert.equal(ui.getState().hasTrial,true);
+ assert.equal(ui.getState().hasTrial,true,walk(root,x=>x.tagName==='p').map(x=>x.textContent).join(' / '));fill(root,'fullPlanBudgetAmount0','12');assert.equal(ui.getState().hasTrial,false);
+ button(root,'全条件を比較（未反映）').emit('click');assert.equal(ui.getState().hasTrial,true,walk(root,x=>x.tagName==='p').map(x=>x.textContent).join(' / '));
  ui.invalidate();assert.equal(ui.getState().hasTrial,false);assert.equal(root.children.at(-1).disabled,true);
 });
 test('missing labor month and malformed event cannot be silently adopted',()=>{
