@@ -109,8 +109,8 @@
     },
     {
       "name": "full-plan-comparison.mjs",
-      "size": 4104,
-      "sha256": "7279d5a0f267010fe3133cddd0d20449a7bf910a9a3015ad3be3720d55acbbe8"
+      "size": 4046,
+      "sha256": "775127eb57ae0d8102094a10ff6a49f0760e6840977a1c617fadd6193c2c0130"
     },
     {
       "name": "full-plan-ui.mjs",

@@ -18,7 +18,7 @@ export function compareFullPlan(config,request){
  const trial=step8Trial(config,request.opening);
  if(!trial.ok)return {ok:false,issues:trial.issues,saved:false,adopted:false};
  const proposed=structuredClone(trial.config);
- if(request.budgets[0].fromAge>Math.max(proposed.plan.startAge, Number(config.budgets?.[0]?.fromAge??proposed.plan.startAge))||request.budgets.at(-1).toAge<proposed.plan.endAge)return fail('budget-coverage','計算期間を通じた年間管理予算が必要です。');
+ if(request.budgets[0].fromAge>Math.max(65, proposed.plan.startAge)||request.budgets.at(-1).toAge<proposed.plan.endAge)return fail('budget-coverage','計算期間を通じた年間管理予算が必要です。');
  if(request.events.some(e=>e.date.slice(0,7)<request.opening.startMonth))return fail('event-before-start','計算開始前の臨時収支はこの比較で追加できません。');
  proposed.budgets=structuredClone(request.budgets);
  proposed.events=[...(proposed.events||[]),...structuredClone(request.events)];
