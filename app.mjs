@@ -57,7 +57,7 @@ const el = id => document.getElementById(id);
 const money = v => `${formatMan(v, 0)}万円`;
 const step8TrialCard=mountStep8TrialCard(el('step8TrialContainer'),()=>config);
 const fullPlanCard=mountFullPlanComparisonCard(el('fullPlanComparisonContainer'),{getConfig:()=>config,getOpeningDraft:()=>step8TrialCard.getState().draft});
-for(const type of ['input','change'])el('step8TrialContainer').addEventListener(type,()=>fullPlanCard.invalidate());
+for(const type of ['input','change','click'])el('step8TrialContainer').addEventListener(type,()=>fullPlanCard.invalidate());
 const numOrBlank = v => v === '' || v === null || v === undefined ? null : Number(v);
 const pensionSheet=mountPensionSheet({getConfig:()=>config,showNotice,onCommit:updated=>{
   const pending=[...inputValues()].filter(([key,entry])=>renderedInputValues.has(key)&&entry.value!==renderedInputValues.get(key));
