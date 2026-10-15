@@ -14,13 +14,13 @@
     },
     {
       "name": "app.mjs",
-      "size": 62542,
-      "sha256": "1fcaaabb24d16f7bcaf42a9090b20f689a70c73a17f22e85571863a7c5530a95"
+      "size": 62555,
+      "sha256": "972ed622008c02540dc4085361af38dba4889b9da013a024314ce53897baa8ce"
     },
     {
       "name": "backup-compatibility.mjs",
-      "size": 6366,
-      "sha256": "8887c78987f6da3997bbf25c8b6c5c74f20c05744c03aef17c4ff22e0a0bb7e2"
+      "size": 6379,
+      "sha256": "8880cf4fd4dde2083d3c2cf666a8de9ef3477f049fac7dd0a7c33b6f2370afb3"
     },
     {
       "name": "calc.mjs",
