@@ -61,7 +61,7 @@ const step8TrialCard=mountStep8TrialCard(el('step8TrialContainer'),()=>config);
 const fullPlanCard=mountFullPlanComparisonCard(el('fullPlanComparisonContainer'),{
  getConfig:()=>config,getOpeningDraft:()=>step8TrialCard.getState().draft,getScenarios:()=>scenarios,
  onSaveComparison:({result,request,name,sourceConfigSignature})=>{
-  if(configSignature(config)!==sourceConfigSignature)return {ok:false,message:'採用済み条件が変わりました。再試算してください。'};
+  if(JSON.stringify(config)!==sourceConfigSignature)return {ok:false,message:'採用済み条件が変わりました。再試算してください。'};
   const fresh=compareFullPlan(config,request);
   if(!fresh.ok)return {ok:false,message:'再試算が必要です。'+fresh.issues.map(x=>x.message).join('／')};
   if(configSignature(fresh.proposal)!==configSignature(result?.proposal))return {ok:false,message:'比較候補の計算条件が変わりました。再試算してください。'};
@@ -840,7 +840,7 @@ mountRecoveryCheck();
 window.addEventListener('storage',event=>{
   migrationPanel.invalidate(event);
   if(event.key===null||MIGRATION_KEYS.includes(event.key)){
-    detailUI.invalidate();pensionSheet.invalidate();salarySheet.invalidate();calendarSheet.invalidate();expenseSheet.invalidate();incomeSheet.invalidate();showNotice('別画面で設定が更新されました。再読み込みしてから編集してください。','error');
+    fullPlanCard.invalidate();detailUI.invalidate();pensionSheet.invalidate();salarySheet.invalidate();calendarSheet.invalidate();expenseSheet.invalidate();incomeSheet.invalidate();showNotice('別画面で設定が更新されました。再読み込みしてから編集してください。','error');
   }
 });
 

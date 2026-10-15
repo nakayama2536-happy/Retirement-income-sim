@@ -43,7 +43,7 @@ export async function validateFullPlanUi({browser,createTestServer,open,load,ope
   const saved=(await snapshot(page)).data;
   assert.deepEqual(saved.config,before.config,'comparison saving must not modify adopted settings');
   assert.deepEqual(saved.scenarios.slice(0,before.scenarios.length),before.scenarios,'existing comparisons must remain');
-  assert.equal(saved.scenarios.length,before.scenarios.length+1,'exactly one new comparison');
+  assert.equal(saved.scenarios.length,before.scenarios.length+1,'exactly one new comparison: '+await full.locator('[role=status]').innerText());
   const added=saved.scenarios.at(-1);
   assert.equal(added.name,'架空比較A');assert.equal(added.role,'scenario');assert.equal(added.selected,false);
   assert.equal(added.comparisonPlan.version,1);assert.equal(added.comparisonPlan.inputs.opening.openingConfirmed,false);
