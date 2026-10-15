@@ -17,9 +17,9 @@ test('pre-start event rejected',()=>{const x=request();x.events[0].date='2044-08
 
 test('income must never be classified as expense-budget event',()=>{const x=request();x.events[0].type='income';x.events[0].fundingTreatment='budget';assert.equal(compareFullPlan(fixture(),x).ok,false);});
 
-test('基準案の予算開始年齢が遅くても比較開始年齢の予算欠落を拒否する',()=>{
+test('元設定の予算が欠落していても未入力をゼロ補完せず停止する',()=>{
  const c=fixture();c.budgets=[{fromAge:70,toAge:95,annualBudget:0}];
  const x=request();x.budgets=[{fromAge:70,toAge:95,annualBudget:12}];
  const r=compareFullPlan(c,x);
- assert.equal(r.ok,false);assert.equal(r.issues[0].code,'budget-coverage');
+ assert.equal(r.ok,false);assert.equal(r.issues[0].code,'engine'); // 元設定自体が不正なため試算処理前に停止
 });
