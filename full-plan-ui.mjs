@@ -78,6 +78,7 @@ export function mountFullPlanComparisonCard(root,{getConfig,getOpeningDraft,getS
   root.replaceChildren();
   root.appendChild(elem('h3','全条件の未反映比較'));
   root.appendChild(elem('p','上の「開始月・開始残高・iDeCo受取月」の入力と確認を先に行います。保存済み予算を複製して編集できます。入力・試算だけでは現在設定は変わりません。明示保存した比較案も未採用で、既存案を上書きしません。'));
+  root.appendChild(elem('p','比較案を初めて保存する前に、全般設定の「設定・比較案などをまとめてバックアップ」で更新前の一括JSONを別の安全な場所に保管してください。旧アプリへの復旧は旧本体と更新前バックアップの組で行います。'));
   field(root,'本人アルバイトの開始月（YYYY-MM）','fullPlanSideMonth',sideMonth,'text',v=>{sideMonth=v;});
   root.appendChild(elem('h4','年齢帯別の年間管理予算（万円／年）'));
   const bands=elem('div');root.appendChild(bands);

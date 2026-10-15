@@ -25,11 +25,11 @@ test('公開候補の版番号は画面・バックアップ・SW・manifest・�
 });
 
 test('本番候補に旧公開版・RC・未公開の誤認ラベルを残さない',()=>{
-  assert.ok(APP_BUILD.startsWith('v0.9.7-full-compare-save-draft-'));
+  assert.ok(APP_BUILD.startsWith('v0.9.7-full-compare-save-'));
   assert.notEqual(APP_BUILD,'v0.9.7-ui-simple-20261012');
   for(const value of [APP_BUILD,app.match(/el\('appVersion'\)\.textContent='([^']+)'/)?.[1],sw.match(/const CACHE=`\$\{CACHE_PREFIX\}([^`]+)`/)?.[1],deployed.runtime]){
     assert.ok(value);
-    assert.doesNotMatch(value,/\brc\b|未公開|\bdev\b/);
+    assert.doesNotMatch(value,/\brc\b|未公開|\bdev\b|draft/);
   }
 });
 
