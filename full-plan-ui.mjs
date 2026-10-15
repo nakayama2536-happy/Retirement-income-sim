@@ -1,5 +1,5 @@
 // Draft-only, non-adopting full-plan comparison connected to existing Step 8 inputs.
-// Never reads or writes browser storage, scenarios or live personal data.
+// Reads scenarios through an injected callback; saves only via an explicit host action.
 import {compareFullPlan} from './full-plan-comparison.mjs';
 import {annualCsvRows,annualCsvText} from './annual-csv.mjs';
 import {comparisonDifferences,savedComparisons,savedComparisonView} from './full-plan-saved.mjs';

@@ -25,22 +25,22 @@ test('trial modules have no persistence or adopting save/import actions',()=>{
       assert.doesNotMatch(code,forbidden,`${name}: ${forbidden}`);
     }
   }
-  assert.match(html,/比較試算（保存しない）/);
+  assert.match(html,/比較試算（未採用案の保存可）/);
 });
 
 test('offline candidate assets and module dependency closure are included',()=>{
   const {out,runtime}=collect(new URL('.',import.meta.url).pathname);
-  for(const name of ['step8-trial-ui.mjs','step8-trial-workflow.mjs','full-plan-ui.mjs','full-plan-comparison.mjs','app.mjs','calc.mjs']){
+  for(const name of ['step8-trial-ui.mjs','step8-trial-workflow.mjs','full-plan-ui.mjs','full-plan-comparison.mjs','full-plan-saved.mjs','app.mjs','calc.mjs']){
     assert.ok(out.has(name),name);
     assert.ok(runtime.includes(name),name);
     assert.match(sw,new RegExp("\\./"+name.replaceAll('.','\\.')));
   }
-  assert.equal(runtime.length,51);
-  assert.equal(out.size,54);
+  assert.equal(runtime.length,52);
+  assert.equal(out.size,55);
 });
 
 test('candidate service worker is versioned separately without cache deletion or forced update',()=>{
-  assert.match(sw,/const CACHE=`\$\{CACHE_PREFIX\}v0\.9\.7-full-compare-draft-20261015`/);
+  assert.match(sw,/const CACHE=`\$\{CACHE_PREFIX\}v0\.9\.7-full-compare-save-draft-20261016`/);
   assert.doesNotMatch(sw,/caches\.delete\(/);
   assert.doesNotMatch(sw,/skipWaiting\s*\(/);
 });
