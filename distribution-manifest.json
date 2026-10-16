@@ -264,13 +264,13 @@
     },
     {
       "name": "sync-firebase.mjs",
-      "size": 4147,
-      "sha256": "0cea38d93fa0ebb154a5f83d5dbd927536014e27851e50ad639287809fbd3fca"
+      "size": 4414,
+      "sha256": "746b6cfe0d3edd90adfaadd2af8362208366f2aa9bec964bd168df762e226c88"
     },
     {
       "name": "sync-panel.mjs",
-      "size": 12532,
-      "sha256": "744220cba99f542d4926f19ed87e410bc8613672cfeb70edf4128c139a020fe4"
+      "size": 12576,
+      "sha256": "ed23d03d4a0f6888313fb5bfc65d7c796102a57f438f88861120685c0a01cbc3"
     },
     {
       "name": "sync-policy.mjs",
