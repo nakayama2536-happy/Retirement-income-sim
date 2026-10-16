@@ -36,9 +36,11 @@ test('second device requires an explicit first download; backup failure stops be
  const a=harness();await a.controller().initialUpload({backupConfirmed:true});
  const b=harness(a.cloud,{config:{plan:{initialAsset:999}},scenarios:[],oldField:'retain'});
  assert.equal((await b.controller().runAuto()).status,'ENROLLMENT_REQUIRED');
- b.setFailBackup(true);const failed=await b.controller().previewRemote();await b.controller().initialDownload({backupConfirmed:true});
+ b.setFailBackup(true);assert.equal((await b.controller().previewRemote()).status,'PREVIEW');
+ const failed=await b.controller().initialDownload({backupConfirmed:true});
  assert.equal(failed.status,'STOP');assert.equal(b.replacements,0);
- b.setFailBackup(false);const ok=await b.controller().previewRemote();await b.controller().initialDownload({backupConfirmed:true});
+ b.setFailBackup(false);assert.equal((await b.controller().previewRemote()).status,'PREVIEW');
+ const ok=await b.controller().initialDownload({backupConfirmed:true});
  assert.equal(ok.status,'DOWNLOADED');assert.deepEqual(b.local,a.local);
  assert.equal(b.backups.length,1);assert.equal(b.backups[0].oldField,'retain');
 });
@@ -72,12 +74,14 @@ test('corrupt cipher or incorrect passphrase prevents import and protects local'
  const a=harness();await a.controller().initialUpload({backupConfirmed:true});
  const b=harness(a.cloud,{config:{plan:{initialAsset:999}},scenarios:[]});
  a.cloud.latest.digest='0'.repeat(64);
+ assert.equal((await b.controller().previewRemote()).status,'STOP');
  assert.equal((await b.controller().initialDownload({backupConfirmed:true})).status,'STOP');
  assert.equal(b.replacements,0);assert.equal(b.backups.length,0);
 });
 test('failure after rollback backup protects existing local data',async()=>{
  const a=harness();await a.controller().initialUpload({backupConfirmed:true});
  const b=harness(a.cloud,{config:{plan:{initialAsset:999}},scenarios:[]});b.setFailWrite(true);
+ assert.equal((await b.controller().previewRemote()).status,'PREVIEW');
  assert.equal((await b.controller().initialDownload({backupConfirmed:true})).status,'STOP');
  assert.equal(b.local.config.plan.initialAsset,999);assert.equal(b.backups.length,1);
 });
