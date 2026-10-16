@@ -18,7 +18,8 @@ export function mountSyncPanel(root,{getState,replaceLocal,validateState,afterRe
  root.appendChild(element('h3','本人専用・端末間同期（開発候補）'));
  root.appendChild(element('p','同期は初期状態で停止しています。iPhoneとPCの最新の一括バックアップを先に別保管し、初回の同期元を選択してください。未接続のままでも今までどおり端末内で使えます。'));
  root.appendChild(element('p','Firebase設定とログイン情報はGitHubに保存しません。暗号化用の合言葉はブラウザ保存せず、アプリを開いた後に再入力します。同期はロック解除中のみ自動実行します。'));
- const old=parse(storage.getItem(SYNC_PUBLIC_CONFIG_KEY))||{};
+ const safeGet=key=>{try{return storage?.getItem(key)??null;}catch{return null;}};
+ const old=parse(safeGet(SYNC_PUBLIC_CONFIG_KEY))||{};
  const rows=element('div',null,{class:'form-grid'});
  function field(label,name,value,type='text'){
   const row=element('label',label),input=element('input',null,{name,type});
@@ -71,7 +72,7 @@ export function mountSyncPanel(root,{getState,replaceLocal,validateState,afterRe
   firstUpload.disabled=!enabled||remoteExists!==false||!backupCheck.checked||working;
   firstDownload.disabled=!enabled||remoteExists!==true||!previewOK||!backupCheck.checked||working;
   syncNow.disabled=!enabled||working;
-  applyPending.disabled=!enabled||remoteExists!==true||!previewOK||!backupCheck.checked||!parse(storage.getItem(SYNC_MARKER_KEY))||working;
+  applyPending.disabled=!enabled||remoteExists!==true||!previewOK||!backupCheck.checked||!parse(safeGet(SYNC_MARKER_KEY))||working;
   disconnect.disabled=!enabled||working;
   connect.disabled=working;
  };
@@ -113,7 +114,7 @@ export function mountSyncPanel(root,{getState,replaceLocal,validateState,afterRe
     const envelope={version:1,savedAt:new Date().toISOString(),state:structuredClone(oldState)};
     storage.setItem(SYNC_ROLLBACK_KEY,JSON.stringify(envelope));
    },
-   readMarker:()=>parse(storage.getItem(SYNC_MARKER_KEY)),
+   readMarker:()=>parse(safeGet(SYNC_MARKER_KEY)),
    writeMarker:value=>storage.setItem(SYNC_MARKER_KEY,JSON.stringify(value)),
    readRemote:()=>provider.read(),casRemote:(expected,next)=>provider.compareAndSwap(expected,next),
    writeAllowed,online:()=>windowRef?.navigator?.onLine!==false,canAutoImport:()=>!hasPendingEdits(),
@@ -164,6 +165,6 @@ export function mountSyncPanel(root,{getState,replaceLocal,validateState,afterRe
  windowRef?.addEventListener?.('focus',trigger);
  documentRef?.addEventListener?.('visibilitychange',onVisible);
  buttons();
- return {onLocalChange:trigger,getState:()=>({connected:!!coordinator,remoteExists,previewOK,markerPresent:!!parse(storage.getItem(SYNC_MARKER_KEY))}),
+ return {onLocalChange:trigger,getState:()=>({connected:!!coordinator,remoteExists,previewOK,markerPresent:!!parse(safeGet(SYNC_MARKER_KEY))}),
   destroy:()=>{if(timer)clearInterval(timer);windowRef?.removeEventListener?.('online',trigger);windowRef?.removeEventListener?.('focus',trigger);documentRef?.removeEventListener?.('visibilitychange',onVisible);documentRef?.removeEventListener?.('input',noteEditorEdit,true);documentRef?.removeEventListener?.('change',noteEditorEdit,true);root.replaceChildren();}};
 }
