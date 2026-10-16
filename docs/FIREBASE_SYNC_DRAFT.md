@@ -27,7 +27,7 @@ Draft branch `feature/fb-single-user-sync-20261016`、Draft候補版 `v0.9.7-fir
 - 既存端末のSafari/ホーム画面とPCでは保存領域が異なる可能性がある。自動同期を開始しても古い履歴や端末固有の未採用入力を無断統合しない。
 
 ## 重大な制限・未検証
-- Firebaseの実プロジェクト作成・Auth権限設定・Firestore Rules反映、セキュリティRulesエミュレータ検証、Web SDKの外部CDN実ロード、iPhone Safari/PWAの本人認証・安定性、PCブラウザとの実データ連携は**未実施**。
+- Firebaseの実プロジェクト作成・Auth権限設定・**Firestore本番Rules反映**、Web SDKの外部CDN実ロード、iPhone Safari/PWAの本人認証・安定性、PCブラウザとの実データ連携は**未実施**。Firestore Rulesの**独立エミュレーター検証は2026-10-16に架空UIDで23件成功**（末尾の最新検証記録参照）。
 - Nodeや隔離Chromiumで架空状態を用いた検証は、実クラウドのデプロイや権限設定の証拠ではない。
 - 旧端末の戻し方は、更新前に別保存したバックアップとアプリ版の組を確認し、同期中の状態の自動上書きで過去版へ戻そうとしない。
 - Cloud Firestoreの無料枠・課金・データ保管地域・本人の長期運用・合言葉管理を実環境導入前に確認する。暗号鍵が失われたときの復旧可能性を本人と確認する。
@@ -42,5 +42,15 @@ Draft branch `feature/fb-single-user-sync-20261016`、Draft候補版 `v0.9.7-fir
 - 同期待ちフラグは、本人が両側の内容を再表示・バックアップ確認した上で、競合なしのクラウド取込／端末の変更送信を明示的に成功させた場合だけ解除する。Firebase接続なしでアプリを利用しても、そのフラグが自動的に個人設定を変更することはない。
 - **受信側の未保存入力**を疑うときは自動反映を保留し、クラウド側の内容を確認するまで保持する。画面編集の検知は安全側に保守的であり、編集済みの画面を長く開いたままにすると自動受信ではなく明示的な再確認が必要となる場合がある。
 - FirebaseのWeb SDK `12.19.0` は公式のCDN設置資料に記載された版を使い、操作時だけ取得する（https://firebase.google.com/docs/web/alt-setup）。クラウド転送前に端末側Web CryptoでAES-GCM暗号化。Auth UIDなど同期メタデータは暗号化対象外のため、Firebaseアカウント権限とFirestore Rulesの設定が別途必要。
-- クラウドへの通常送信は世代比較（CAS）が通る場合だけ。**Firestore本番Rulesを未配信のまま**ユーザーの個人データを同期開始しない。実ルールのエミュレータ検証、iPhone実機・PCブラウザ相互、暗号化合言葉の忘失・保存容量の安全運用はまだ未完了。
+- クラウドへの通常送信は世代比較（CAS）が通る場合だけ。**Firestore本番Rulesを未配信のまま**ユーザーの個人データを同期開始しない。実UID・実プロジェクト上での権限確認、iPhone実機・PCブラウザ相互、暗号化合言葉の忘失・保存容量の安全運用はまだ未完了。
 - 一括バックアップJSONはこの同期機能とは別に必要。同期取込前に別キーへ保存する最新1件の復旧用スナップショットは過去全履歴を保証せず、端末外の一括バックアップの代替にはならない。
+ 
+## Firestoreルールの独立エミュレーター検証（2026-10-16）
+- 対象コード：Firestore Rulesテンプレート `docs/firebase-sync-firestore.rules.example` と `tools/firebase-emulator/rules.test.mjs`。
+- GitHub Actions実行：https://github.com/nakayama2536-happy/Retirement-income-sim/actions/runs/38917473475
+- **Firestoreの実ルール評価エンジンによる架空UID・架空データの23項目がすべて成功。** 初期テンプレートは全アクセス拒否。テストの一時メモリで架空ownerUidに差替え、本人役だけが許可された暗号文の読み書きを実行できることを検証。
+- 未認証、別ユーザー、別文書・別パス、コレクション列挙、削除、ownerUid変更、世代スキップ・繰返し、不正ダイジェスト、余分／不足フィールド、過大暗号文、不正暗号方式は拒否を確認。
+- 本検証に実Firebaseプロジェクト・実認証アカウント・実個人データは一切使用していない。**Firebase本番Rulesの設定・稼働、セキュリティの本人UID実接続、PC↔iPhone間の同期は未確認。**
+- 同コミットのNode 59ファイル／1,070件成功： https://github.com/nakayama2536-happy/Retirement-income-sim/actions/runs/38917473324
+- 隔離Chromium 14ケース成功： https://github.com/nakayama2536-happy/Retirement-income-sim/actions/runs/38917473729
+- 本人のChatGPT側Firebase連携は未インストール・未接続（確認時点）。これが利用可能になるまでFirebaseプロジェクト作成の操作は実施不可。既存mainとGitHub Pagesは変更していない。
