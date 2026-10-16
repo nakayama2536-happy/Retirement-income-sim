@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {mountSyncPanel,SYNC_PUBLIC_CONFIG_KEY,SYNC_MARKER_KEY} from './sync-panel.mjs';
+import {mountSyncPanel,SYNC_PUBLIC_CONFIG_KEY,SYNC_MARKER_KEY,SYNC_REVIEW_KEY} from './sync-panel.mjs';
 import {FakeCipherCloud} from './sync-policy.mjs';
 class NodeElement{
  constructor(tag,doc){this.tagName=tag;this.ownerDocument=doc;this.children=[];this.listeners={};this.value='';this.checked=false;this.disabled=false;this.textContent='';this.attributes={};}
@@ -14,7 +14,7 @@ const doc={createElement(tag){return new NodeElement(tag,doc)},addEventListener(
 const walk=x=>[x,...(x.children||[]).flatMap(walk)];
 const btn=(r,label)=>walk(r).find(x=>x.tagName==='button'&&x.textContent===label);
 const input=(r,name)=>walk(r).find(x=>x.name===name);
-class Storage{data=new Map();getItem(k){return this.data.get(k)??null;}setItem(k,v){this.data.set(k,String(v));}}
+class Storage{data=new Map();getItem(k){return this.data.get(k)??null;}setItem(k,v){this.data.set(k,String(v));}removeItem(k){this.data.delete(k);}}
 const local=()=>({config:{plan:{startDate:'2044-01-15',initialAsset:1}},scenarios:[],opaque:{keep:1}});
 test('rendering optional sync panel never starts Firebase or changes local data',()=>{
  let calls=0;const root=new NodeElement('div',doc),store=new Storage(),value=local();
@@ -45,4 +45,23 @@ test('initial connection requires explicit local config, passphrase, backup conf
  input(root,'syncBackupConfirmed').checked=true;await input(root,'syncBackupConfirmed').emit('change');
  assert.equal(btn(root,'この端末を初回の同期元にする').disabled,false);
  ui.destroy();
+});
+
+test('manual external restore creates a durable review barrier without Firebase writes',()=>{
+ let calls=0;const storage=new Storage(),root=new NodeElement('div',doc);
+ const create=()=>mountSyncPanel(root,{getState:local,replaceLocal:()=>{throw Error('must not replace');},
+ validateState:()=>{},storage,createStore:async()=>{calls++;throw Error('unexpected cloud');},
+ windowRef:{navigator:{onLine:true},addEventListener(){},removeEventListener(){}},documentRef:doc});
+ let ui=create();assert.equal(ui.getState().reviewPending,false);
+ ui.noteExternalRestore();
+ assert.equal(ui.getState().reviewPending,true);
+ assert.equal(JSON.parse(storage.getItem(SYNC_REVIEW_KEY)).reason,'manual-restore');
+ assert.equal(calls,0);ui.destroy();
+ ui=create();assert.equal(ui.getState().reviewPending,true);assert.equal(calls,0);
+ ui.destroy();
+});
+test('app marks external full/config JSON restores before any persistent write',()=>{
+ const code=(await import('node:fs')).readFileSync(new URL('./app.mjs',import.meta.url),'utf8');
+ assert.match(code,/if\(full\)\{\s*syncPanel\?\.noteExternalRestore\(\);\s*const committed=restoreFullBackup/);
+ assert.match(code,/syncPanel\?\.noteExternalRestore\(\);\s*if\(!commitState\(next,nextScenarios,false\)\)return/);
 });
