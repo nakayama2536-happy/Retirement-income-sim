@@ -44,11 +44,26 @@ export function mountSyncPanel(root,{getState,replaceLocal,validateState,afterRe
  const firstUpload=element('button','この端末を初回の同期元にする',{type:'button',class:'secondary'});
  const firstDownload=element('button','確認したクラウドをこの端末へ初回取込',{type:'button',class:'secondary'});
  const syncNow=element('button','同期状態を確認',{type:'button',class:'secondary'});
- for(const b of [connect,preview,firstUpload,firstDownload,syncNow])controls.appendChild(b);
+ const applyPending=element('button','確認したクラウド最新版を端末へ反映',{type:'button',class:'secondary'});
+ const disconnect=element('button','同期を停止してログアウト',{type:'button',class:'secondary'});
+ for(const b of [connect,preview,firstUpload,firstDownload,applyPending,syncNow,disconnect])controls.appendChild(b);
  root.appendChild(controls);
  const status=element('p','未接続・端末内のみ',{role:'status'}),details=element('p','',{role:'note'});
  root.appendChild(status);root.appendChild(details);
- let coordinator=null,remoteExists=null,previewOK=false,timer=null,working=false;
+ let coordinator=null,providerSession=null,remoteExists=null,previewOK=false,timer=null,working=false;
+ let pendingEditorChange=false;
+ const hasPendingEdits=()=>{
+  const pension=documentRef?.querySelector?.('#pensionState')?.dataset?.dirty==='true';
+  const salary=documentRef?.querySelector?.('#salaryState')?.dataset?.dirty==='true';
+  const focus=documentRef?.activeElement?.closest?.('#dashboard input, #dashboard select, #dashboard textarea');
+  return pendingEditorChange||pension||salary||Boolean(focus);
+ };
+ const noteEditorEdit=e=>{
+  if(e?.target?.closest?.('#privateSyncContainer'))return;
+  if(e?.target?.closest?.('#dashboard'))pendingEditorChange=true;
+ };
+ documentRef?.addEventListener?.('input',noteEditorEdit,true);
+ documentRef?.addEventListener?.('change',noteEditorEdit,true);
  const setStatus=(s)=>{status.textContent=s;};
  const buttons=()=>{
   const enabled=!!coordinator;
@@ -56,6 +71,8 @@ export function mountSyncPanel(root,{getState,replaceLocal,validateState,afterRe
   firstUpload.disabled=!enabled||remoteExists!==false||!backupCheck.checked||working;
   firstDownload.disabled=!enabled||remoteExists!==true||!previewOK||!backupCheck.checked||working;
   syncNow.disabled=!enabled||working;
+  applyPending.disabled=!enabled||remoteExists!==true||!previewOK||!backupCheck.checked||!parse(storage.getItem(SYNC_MARKER_KEY))||working;
+  disconnect.disabled=!enabled||working;
   connect.disabled=working;
  };
  backupCheck.addEventListener('change',buttons);
@@ -64,7 +81,7 @@ export function mountSyncPanel(root,{getState,replaceLocal,validateState,afterRe
   const map={SYNCED:'同期済み',UPLOADED:'この端末の変更を暗号化して同期しました',DOWNLOADED:'クラウド内容を検証して端末に反映しました',
    INITIAL_UPLOADED:'初回の暗号化クラウド保存が完了',PENDING_LOCAL_UPDATE:'送信中に端末で変更があり、次回再照合が必要です',
    PENDING_OFFLINE:'オフライン：端末内のデータを保持し同期待ち',ENROLLMENT_REQUIRED:'同期元未選択。初回設定が必要です',
-   LOCKED:'同期ロック中',UNCHANGED:'変更なし',REMOTE_EMPTY:'クラウドは未登録'};
+   LOCKED:'同期ロック中',UNCHANGED:'変更なし',REMOTE_EMPTY:'クラウドは未登録',REMOTE_PENDING_REVIEW:'未保存の入力がある可能性があるため、クラウドからの自動取込を保留しています。'};
   return map[s?.status]||s?.status||'同期状態を確認できませんでした。';
  }
  const guarded=async task=>{
@@ -76,6 +93,7 @@ export function mountSyncPanel(root,{getState,replaceLocal,validateState,afterRe
   if(!coordinator)return;
   const out=await coordinator.runAuto();
   setStatus(describe(out));
+  if(out?.status==='REMOTE_PENDING_REVIEW')previewOK=false;
  }
  connect.addEventListener('click',()=>guarded(async()=>{
   const values=Object.fromEntries(Object.entries(cfg).map(([key,input])=>[key,input.value.trim()]));
@@ -85,6 +103,7 @@ export function mountSyncPanel(root,{getState,replaceLocal,validateState,afterRe
   const provider=await createStore(values);
   await provider.signIn(email.value.trim(),password.value);password.value='';
   const identity=provider.getIdentity();
+   providerSession=provider;
   // Login session is managed by the Firebase SDK. No application financial data
   // are uploaded until the first explicit source-selection click.
   coordinator=createSyncCoordinator({
@@ -97,7 +116,7 @@ export function mountSyncPanel(root,{getState,replaceLocal,validateState,afterRe
    readMarker:()=>parse(storage.getItem(SYNC_MARKER_KEY)),
    writeMarker:value=>storage.setItem(SYNC_MARKER_KEY,JSON.stringify(value)),
    readRemote:()=>provider.read(),casRemote:(expected,next)=>provider.compareAndSwap(expected,next),
-   writeAllowed,online:()=>windowRef?.navigator?.onLine!==false,
+   writeAllowed,online:()=>windowRef?.navigator?.onLine!==false,canAutoImport:()=>!hasPendingEdits(),
    onApplied:afterReplace
   });
   storage.setItem(SYNC_PUBLIC_CONFIG_KEY,JSON.stringify(values)); // Nonsecret Firebase Web config only.
@@ -126,6 +145,18 @@ export function mountSyncPanel(root,{getState,replaceLocal,validateState,afterRe
   const r=await coordinator.initialDownload({backupConfirmed:backupCheck.checked});
   setStatus(describe(r));if(r.status==='DOWNLOADED')previewOK=false;
  }));
+ applyPending.addEventListener('click',()=>guarded(async()=>{
+  if(!previewOK||!backupCheck.checked)throw Error('事前バックアップとクラウド内容の差分確認が必要です。');
+  const result=await coordinator.acceptRemoteUpdate();
+  setStatus(describe(result));if(result?.status==='DOWNLOADED')previewOK=false;
+ }));
+ disconnect.addEventListener('click',()=>guarded(async()=>{
+  const old=providerSession;coordinator=null;providerSession=null;remoteExists=null;previewOK=false;
+  if(timer){clearInterval(timer);timer=null;}
+  password.value='';phrase.value='';
+  if(old?.signOut)await old.signOut();
+  setStatus('同期を停止しログアウトしました。端末保存データは保持しています。');
+ }));
  syncNow.addEventListener('click',()=>guarded(check));
  const trigger=()=>{if(coordinator&&!working)guarded(check);};
  const onVisible=()=>{if(documentRef?.visibilityState!=='hidden')trigger();};
@@ -134,5 +165,5 @@ export function mountSyncPanel(root,{getState,replaceLocal,validateState,afterRe
  documentRef?.addEventListener?.('visibilitychange',onVisible);
  buttons();
  return {onLocalChange:trigger,getState:()=>({connected:!!coordinator,remoteExists,previewOK,markerPresent:!!parse(storage.getItem(SYNC_MARKER_KEY))}),
-  destroy:()=>{if(timer)clearInterval(timer);windowRef?.removeEventListener?.('online',trigger);windowRef?.removeEventListener?.('focus',trigger);documentRef?.removeEventListener?.('visibilitychange',onVisible);root.replaceChildren();}};
+  destroy:()=>{if(timer)clearInterval(timer);windowRef?.removeEventListener?.('online',trigger);windowRef?.removeEventListener?.('focus',trigger);documentRef?.removeEventListener?.('visibilitychange',onVisible);documentRef?.removeEventListener?.('input',noteEditorEdit,true);documentRef?.removeEventListener?.('change',noteEditorEdit,true);root.replaceChildren();}};
 }
