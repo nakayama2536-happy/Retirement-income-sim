@@ -254,13 +254,13 @@
     },
     {
       "name": "sync-controller.mjs",
-      "size": 7300,
-      "sha256": "70eedff86578e9a244f503a0fd84530ef82718cbed94ec4a418c42f9b0244bd4"
+      "size": 8393,
+      "sha256": "edb4997b47ccf4ee63bd15796973e1ba25ee41847cfc5422978d36d9c2c2bd39"
     },
     {
       "name": "sync-crypto.mjs",
-      "size": 3911,
-      "sha256": "7c252ed84ab33fe65f936eb55f8c13de2ea7f7d6dfd244c1850b30764e8d554c"
+      "size": 4017,
+      "sha256": "2fa56ca0d4da521851298788d870e77f8b3df27c1fb4e0e2880281f519821c69"
     },
     {
       "name": "sync-firebase.mjs",
@@ -269,8 +269,8 @@
     },
     {
       "name": "sync-panel.mjs",
-      "size": 10188,
-      "sha256": "6a910b26032e2c0f6d8ca411693d6c9c93071890fdb00ea5b7087b31bfc70f35"
+      "size": 12532,
+      "sha256": "744220cba99f542d4926f19ed87e410bc8613672cfeb70edf4128c139a020fe4"
     },
     {
       "name": "sync-policy.mjs",
