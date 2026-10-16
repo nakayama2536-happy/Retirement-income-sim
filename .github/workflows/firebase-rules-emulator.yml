@@ -34,6 +34,9 @@ jobs:
       - name: Install isolated Firebase test packages
         working-directory: tools/firebase-emulator
         run: npm install --no-audit --no-fund --no-package-lock
+      - name: Stage exact development rules in isolated emulator folder
+        working-directory: tools/firebase-emulator
+        run: cp ../../docs/firebase-sync-firestore.rules.example firestore.rules
       - name: Verify real Firestore Security Rules interpreter using synthetic identities only
         working-directory: tools/firebase-emulator
         run: npm run test:emulator
