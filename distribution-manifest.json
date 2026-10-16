@@ -1,6 +1,6 @@
 {
   "kind": "public-release",
-  "runtime": "v0.9.7-full-compare-save-20261016",
+  "runtime": "v0.9.7-firebase-sync-draft-20261016",
   "files": [
     {
       "name": "annual-cashflow.mjs",
@@ -14,13 +14,13 @@
     },
     {
       "name": "app.mjs",
-      "size": 63917,
-      "sha256": "9aaa8ffbd742d91d01f6ee79e170c8bb0a5783ce486cc80c207b0e9b2915c602"
+      "size": 64442,
+      "sha256": "948e332641ce268d442b70d3aeccfd844c5b1a68834adad3f88e27494547e417"
     },
     {
       "name": "backup-compatibility.mjs",
-      "size": 7153,
-      "sha256": "c2c0b0bd9a1b10c3631bb487110dc7bbeac34b9144578b44213dc2d37da34516"
+      "size": 7155,
+      "sha256": "9bc537783e46a9ae11b5c6738f5046db4aac007ade5666d3ca7371b36f9485c8"
     },
     {
       "name": "calc.mjs",
@@ -149,8 +149,8 @@
     },
     {
       "name": "index.html",
-      "size": 58074,
-      "sha256": "3046b26f9dfeb36496bca40bdc515e13378b39bdec1fd44549bfda19d007287f"
+      "size": 58281,
+      "sha256": "9785e8adde5a51fb104c0ee99506cefaaebd1fecaebf9153301ea5c370fbf150"
     },
     {
       "name": "manifest.webmanifest",
@@ -249,8 +249,33 @@
     },
     {
       "name": "sw.js",
-      "size": 3669,
-      "sha256": "d622f51353fb78c623f9c71b1385a8f3e3a7875c2cc11d3de47ea4802b527dec"
+      "size": 3790,
+      "sha256": "7a5b51607840de1507eccca96b61495094543449e7c35f83414a8dc3711389e6"
+    },
+    {
+      "name": "sync-controller.mjs",
+      "size": 7300,
+      "sha256": "70eedff86578e9a244f503a0fd84530ef82718cbed94ec4a418c42f9b0244bd4"
+    },
+    {
+      "name": "sync-crypto.mjs",
+      "size": 3911,
+      "sha256": "7c252ed84ab33fe65f936eb55f8c13de2ea7f7d6dfd244c1850b30764e8d554c"
+    },
+    {
+      "name": "sync-firebase.mjs",
+      "size": 4147,
+      "sha256": "0cea38d93fa0ebb154a5f83d5dbd927536014e27851e50ad639287809fbd3fca"
+    },
+    {
+      "name": "sync-panel.mjs",
+      "size": 10188,
+      "sha256": "6a910b26032e2c0f6d8ca411693d6c9c93071890fdb00ea5b7087b31bfc70f35"
+    },
+    {
+      "name": "sync-policy.mjs",
+      "size": 2695,
+      "sha256": "505da533a08f8da6c908ffc10740f6a10157aa99496a7ebf2edc36dd9a63105b"
     },
     {
       "name": "tax-social-audit.mjs",
