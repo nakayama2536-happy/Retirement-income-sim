@@ -5,6 +5,7 @@ import {createSyncCoordinator} from './sync-controller.mjs';
 export const SYNC_PUBLIC_CONFIG_KEY='lifeplan-private-sync-config-v1';
 export const SYNC_MARKER_KEY='lifeplan-private-sync-marker-v1';
 export const SYNC_ROLLBACK_KEY='lifeplan-private-sync-previous-v1';
+export const SYNC_REVIEW_KEY='lifeplan-private-sync-pending-review-v1';
 const parse=(s)=>{try{return s?JSON.parse(s):null;}catch{return null;}};
 export function mountSyncPanel(root,{getState,replaceLocal,validateState,afterReplace=()=>{},writeAllowed=()=>true,
  createStore=createFirebaseStore,storage=globalThis.localStorage,windowRef=globalThis.window,documentRef=root?.ownerDocument??globalThis.document}={}){
@@ -20,6 +21,8 @@ export function mountSyncPanel(root,{getState,replaceLocal,validateState,afterRe
  root.appendChild(element('p','Firebase設定とログイン情報はGitHubに保存しません。暗号化用の合言葉はブラウザ保存せず、アプリを開いた後に再入力します。同期はロック解除中のみ自動実行します。'));
  const safeGet=key=>{try{return storage?.getItem(key)??null;}catch{return null;}};
  const old=parse(safeGet(SYNC_PUBLIC_CONFIG_KEY))||{};
+ const reviewBarrier=()=>safeGet(SYNC_REVIEW_KEY)!==null;
+ const clearReviewBarrier=()=>{if(storage?.removeItem)storage.removeItem(SYNC_REVIEW_KEY);};
  const rows=element('div',null,{class:'form-grid'});
  function field(label,name,value,type='text'){
   const row=element('label',label),input=element('input',null,{name,type});
@@ -45,9 +48,10 @@ export function mountSyncPanel(root,{getState,replaceLocal,validateState,afterRe
  const firstUpload=element('button','この端末を初回の同期元にする',{type:'button',class:'secondary'});
  const firstDownload=element('button','確認したクラウドをこの端末へ初回取込',{type:'button',class:'secondary'});
  const syncNow=element('button','同期状態を確認',{type:'button',class:'secondary'});
+ const acceptLocal=element('button','確認した端末の変更をクラウドへ同期',{type:'button',class:'secondary'});
  const applyPending=element('button','確認したクラウド最新版を端末へ反映',{type:'button',class:'secondary'});
  const disconnect=element('button','同期を停止してログアウト',{type:'button',class:'secondary'});
- for(const b of [connect,preview,firstUpload,firstDownload,applyPending,syncNow,disconnect])controls.appendChild(b);
+ for(const b of [connect,preview,firstUpload,firstDownload,applyPending,acceptLocal,syncNow,disconnect])controls.appendChild(b);
  root.appendChild(controls);
  const status=element('p','未接続・端末内のみ',{role:'status'}),details=element('p','',{role:'note'});
  root.appendChild(status);root.appendChild(details);
@@ -72,6 +76,7 @@ export function mountSyncPanel(root,{getState,replaceLocal,validateState,afterRe
   firstUpload.disabled=!enabled||remoteExists!==false||!backupCheck.checked||working;
   firstDownload.disabled=!enabled||remoteExists!==true||!previewOK||!backupCheck.checked||working;
   syncNow.disabled=!enabled||working;
+  acceptLocal.disabled=!enabled||remoteExists!==true||!previewOK||!backupCheck.checked||!parse(safeGet(SYNC_MARKER_KEY))||working;
   applyPending.disabled=!enabled||remoteExists!==true||!previewOK||!backupCheck.checked||!parse(safeGet(SYNC_MARKER_KEY))||working;
   disconnect.disabled=!enabled||working;
   connect.disabled=working;
@@ -82,7 +87,7 @@ export function mountSyncPanel(root,{getState,replaceLocal,validateState,afterRe
   const map={SYNCED:'同期済み',UPLOADED:'この端末の変更を暗号化して同期しました',DOWNLOADED:'クラウド内容を検証して端末に反映しました',
    INITIAL_UPLOADED:'初回の暗号化クラウド保存が完了',PENDING_LOCAL_UPDATE:'送信中に端末で変更があり、次回再照合が必要です',
    PENDING_OFFLINE:'オフライン：端末内のデータを保持し同期待ち',ENROLLMENT_REQUIRED:'同期元未選択。初回設定が必要です',
-   LOCKED:'同期ロック中',UNCHANGED:'変更なし',REMOTE_EMPTY:'クラウドは未登録',REMOTE_PENDING_REVIEW:'未保存の入力がある可能性があるため、クラウドからの自動取込を保留しています。'};
+   LOCKED:'同期ロック中',UNCHANGED:'変更なし',REMOTE_EMPTY:'クラウドは未登録',LOCAL_PENDING_REVIEW:'手動復元後の変更は自動送信せず、クラウドとの差を確認する必要があります。',REMOTE_PENDING_REVIEW:'未保存の入力がある可能性があるため、クラウドからの自動取込を保留しています。'};
   return map[s?.status]||s?.status||'同期状態を確認できませんでした。';
  }
  const guarded=async task=>{
@@ -117,7 +122,8 @@ export function mountSyncPanel(root,{getState,replaceLocal,validateState,afterRe
    readMarker:()=>parse(safeGet(SYNC_MARKER_KEY)),
    writeMarker:value=>storage.setItem(SYNC_MARKER_KEY,JSON.stringify(value)),
    readRemote:()=>provider.read(),casRemote:(expected,next)=>provider.compareAndSwap(expected,next),
-   writeAllowed,online:()=>windowRef?.navigator?.onLine!==false,canAutoImport:()=>!hasPendingEdits(),
+   writeAllowed,online:()=>windowRef?.navigator?.onLine!==false,
+   canAutoImport:()=>!hasPendingEdits()&&!reviewBarrier(),canAutoUpload:()=>!reviewBarrier(),
    onApplied:afterReplace
   });
   storage.setItem(SYNC_PUBLIC_CONFIG_KEY,JSON.stringify(values)); // Nonsecret Firebase Web config only.
@@ -139,17 +145,17 @@ export function mountSyncPanel(root,{getState,replaceLocal,validateState,afterRe
  }));
  firstUpload.addEventListener('click',()=>guarded(async()=>{
   const r=await coordinator.initialUpload({backupConfirmed:backupCheck.checked});
-  setStatus(describe(r));if(r.status==='INITIAL_UPLOADED')remoteExists=true;
+  setStatus(describe(r));if(r.status==='INITIAL_UPLOADED'){remoteExists=true;clearReviewBarrier();previewOK=false;}
  }));
  firstDownload.addEventListener('click',()=>guarded(async()=>{
   if(!previewOK)throw Error('クラウドの差分表示を先に確認してください。');
   const r=await coordinator.initialDownload({backupConfirmed:backupCheck.checked});
-  setStatus(describe(r));if(r.status==='DOWNLOADED')previewOK=false;
+  setStatus(describe(r));if(r.status==='DOWNLOADED'){previewOK=false;clearReviewBarrier();}
  }));
  applyPending.addEventListener('click',()=>guarded(async()=>{
   if(!previewOK||!backupCheck.checked)throw Error('事前バックアップとクラウド内容の差分確認が必要です。');
   const result=await coordinator.acceptRemoteUpdate();
-  setStatus(describe(result));if(result?.status==='DOWNLOADED')previewOK=false;
+  setStatus(describe(result));if(result?.status==='DOWNLOADED'){previewOK=false;clearReviewBarrier();}
  }));
  disconnect.addEventListener('click',()=>guarded(async()=>{
   const old=providerSession;coordinator=null;providerSession=null;remoteExists=null;previewOK=false;
@@ -158,6 +164,12 @@ export function mountSyncPanel(root,{getState,replaceLocal,validateState,afterRe
   if(old?.signOut)await old.signOut();
   setStatus('同期を停止しログアウトしました。端末保存データは保持しています。');
  }));
+ acceptLocal.addEventListener('click',()=>guarded(async()=>{
+  if(!previewOK||!backupCheck.checked)throw Error('端末とクラウドの再確認とバックアップ確認が必要です。');
+  const r=await coordinator.acceptLocalUpdate();
+  setStatus(describe(r));
+  if(r?.status==='UPLOADED'||r?.status==='SYNCED'){previewOK=false;clearReviewBarrier();}
+ }));
  syncNow.addEventListener('click',()=>guarded(check));
  const trigger=()=>{if(coordinator&&!working)guarded(check);};
  const onVisible=()=>{if(documentRef?.visibilityState!=='hidden')trigger();};
@@ -165,6 +177,14 @@ export function mountSyncPanel(root,{getState,replaceLocal,validateState,afterRe
  windowRef?.addEventListener?.('focus',trigger);
  documentRef?.addEventListener?.('visibilitychange',onVisible);
  buttons();
- return {onLocalChange:trigger,getState:()=>({connected:!!coordinator,remoteExists,previewOK,markerPresent:!!parse(safeGet(SYNC_MARKER_KEY))}),
+ return {
+  // Call *before* an external JSON import. A failed import may leave sync
+  // conservatively paused; that is safer than silently uploading a restore.
+  noteExternalRestore:()=>{
+   if(!reviewBarrier())storage.setItem(SYNC_REVIEW_KEY,JSON.stringify({version:1,reason:'manual-restore',at:new Date().toISOString()}));
+   previewOK=false;buttons();
+  },
+  onLocalChange:()=>{previewOK=false;buttons();trigger();},
+  getState:()=>({connected:!!coordinator,remoteExists,previewOK,reviewPending:reviewBarrier(),markerPresent:!!parse(safeGet(SYNC_MARKER_KEY))}),
   destroy:()=>{if(timer)clearInterval(timer);windowRef?.removeEventListener?.('online',trigger);windowRef?.removeEventListener?.('focus',trigger);documentRef?.removeEventListener?.('visibilitychange',onVisible);documentRef?.removeEventListener?.('input',noteEditorEdit,true);documentRef?.removeEventListener?.('change',noteEditorEdit,true);root.replaceChildren();}};
 }

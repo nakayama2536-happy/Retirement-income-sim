@@ -746,6 +746,7 @@ async function importConfig(file){
   const full=isFullBackup(parsed);
   if(!full && ('config' in parsed || 'scenarios' in parsed))throw new Error('一括バックアップの必須項目が不足しています。設定だけを部分復元しません。読み込み前のデータは変更されていません。');
   if(full){
+    syncPanel?.noteExternalRestore();
     const committed=restoreFullBackup(expected,parsed);
     config=committed.config;scenarios=committed.scenarios;
     detailUI.reset();pensionSheet.reset();salarySheet.reset();calendarSheet.reset();expenseSheet.reset();incomeSheet.reset();el('expenseDisplaySource').value='';delete el('carTransferForm').dataset.initialized;
@@ -760,6 +761,7 @@ async function importConfig(file){
     for(const s of nextScenarios)if(s.role==='baseline'){s.role='scenario';s.name=`${s.name||'基準ケース'}（旧基準）`;s.selected=false;}
     nextScenarios.push({id:crypto.randomUUID(),name:next.meta?.label||'基準ケース',role:'baseline',savedAt:new Date().toISOString(),selected:true,config:scenarioSnapshot(next)});
   }
+  syncPanel?.noteExternalRestore();
   if(!commitState(next,nextScenarios,false))return;
   detailUI.reset();pensionSheet.reset();salarySheet.reset();calendarSheet.reset();expenseSheet.reset();incomeSheet.reset();el('expenseDisplaySource').value='';delete el('carTransferForm').dataset.initialized;
   refresh();showNotice(full?'設定とシナリオをまとめて復元しました。':'設定JSONを新しい基準ケースとして読み込みました。');
