@@ -100,6 +100,8 @@ test('manual restore does not automatically upload until explicit reapproval',as
  const h=harness(),c=h.controller();assert.equal((await c.initialUpload({backupConfirmed:true})).status,'INITIAL_UPLOADED');
  h.edit(s=>s.config.plan.initialAsset=777);h.setCanUpload(false);
  assert.equal((await c.runAuto()).status,'LOCAL_PENDING_REVIEW');assert.equal(h.cloud.writes,1);
+ assert.equal((await c.acceptLocalUpdate()).status,'STOP');
+ assert.equal((await c.previewRemote()).status,'PREVIEW');
  assert.equal((await c.acceptLocalUpdate()).status,'UPLOADED');assert.equal(h.cloud.writes,2);
 });
 test('first remote import rejects absent preview and stale local edits',async()=>{
@@ -120,4 +122,13 @@ test('remote change between preview and confirmation prevents stale import',asyn
  const updated=structuredClone(a.cloud.latest);updated.revision=2;updated.digest='b'.repeat(64);a.cloud.latest=updated;
  assert.equal((await b.controller().initialDownload({backupConfirmed:true})).status,'STOP');
  assert.equal(b.replacements,0);
+});
+
+test('review token prevents upload when local content changed after review',async()=>{
+ const h=harness(),c=h.controller();await c.initialUpload({backupConfirmed:true});
+ h.edit(v=>v.config.plan.initialAsset=505);h.setCanUpload(false);
+ assert.equal((await c.previewRemote()).status,'PREVIEW');
+ h.edit(v=>v.config.plan.initialAsset=606);
+ assert.equal((await c.acceptLocalUpdate()).status,'STOP');
+ assert.equal(h.cloud.writes,1);assert.equal(h.local.config.plan.initialAsset,606);
 });

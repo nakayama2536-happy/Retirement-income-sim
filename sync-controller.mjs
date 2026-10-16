@@ -116,7 +116,12 @@ export function createSyncCoordinator({
     if(action.action==='UNCHANGED')return {status:'SYNCED',revision:m.baseRevision};
     if(action.action!=='UPLOAD_CAS')return {status:action.action==='CONFLICT'?'CONFLICT':'STOP',
      message:'クラウドと端末の変更が一致しません。自動上書きは行いません。'};
-    return upload(m,local,digest,action);
+    if(!reviewedRemote||reviewedRemote.revision!==remote?.revision||
+       reviewedRemote.digest!==remote?.digest||reviewedRemote.localDigest!==digest)
+      throw Error('端末とクラウドの照合後に変更がありました。送信前に再確認してください。');
+    const out=await upload(m,local,digest,action);
+    reviewedRemote=null;
+    return out;
    });
   },
   async runAuto(){
