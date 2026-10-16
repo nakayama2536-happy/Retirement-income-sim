@@ -32,6 +32,7 @@ test('lazy import never happens at module load and requires auth to read',async(
  await store.signIn('fictional@example.test','test-only-password');
  assert.deepEqual(store.getIdentity(),{uid:'fictional-uid',projectId:'synthetic-proj'});
  assert.equal(await store.read(),null);
+ assert.deepEqual(await store.signIn('',''),{uid:'fictional-uid',projectId:'synthetic-proj'});
 });
 test('Firestore transaction CAS creates once and refuses stale overwrites',async()=>{
  const m=mock(),store=await createFirebaseStore(config,{moduleLoader:m.loader});

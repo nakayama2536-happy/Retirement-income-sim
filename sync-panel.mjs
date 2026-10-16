@@ -32,7 +32,7 @@ export function mountSyncPanel(root,{getState,replaceLocal,validateState,afterRe
   appId:field('Firebase app ID','syncAppId',old.appId)
  };
  const email=field('本人専用ログインのメールアドレス','syncEmail','','email');
- const password=field('ログイン用パスワード（保存しません）','syncPassword','','password');
+ const password=field('ログイン用パスワード（Firebaseログイン済みなら空欄可・保存しません）','syncPassword','','password');
  const phrase=field('端末間共通の暗号化用合言葉（16文字以上・保存しません）','syncPhrase','','password');
  root.appendChild(rows);
  const backupRow=element('label'),backupCheck=element('input',null,{name:'syncBackupConfirmed',type:'checkbox'});

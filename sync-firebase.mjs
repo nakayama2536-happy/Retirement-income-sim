@@ -33,6 +33,9 @@ export async function createFirebaseStore(config,{moduleLoader=url=>import(url)}
  }
  return {
   async signIn(email,password){
+   // Firebase Auth already owns its persisted token. No need to keep a second
+   // copy of passwords when a session survives an app restart.
+   if(auth.currentUser?.uid&&(!password||password===''))return {uid:auth.currentUser.uid,projectId:publicConfig.projectId};
    if(typeof email!=='string'||!email.includes('@')||typeof password!=='string'||!password)throw Error('Firebaseログイン情報を確認してください。');
    const signed=await authApi.signInWithEmailAndPassword(auth,email,password);
    if(!signed.user?.uid)throw Error('本人アカウントを確認できません。');
