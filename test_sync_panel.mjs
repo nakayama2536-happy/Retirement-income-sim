@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import fs from 'node:fs';
 import {mountSyncPanel,SYNC_PUBLIC_CONFIG_KEY,SYNC_MARKER_KEY,SYNC_REVIEW_KEY} from './sync-panel.mjs';
 import {FakeCipherCloud} from './sync-policy.mjs';
 class NodeElement{
@@ -61,7 +62,7 @@ test('manual external restore creates a durable review barrier without Firebase 
  ui.destroy();
 });
 test('app marks external full/config JSON restores before any persistent write',()=>{
- const code=(await import('node:fs')).readFileSync(new URL('./app.mjs',import.meta.url),'utf8');
+ const code=fs.readFileSync(new URL('./app.mjs',import.meta.url),'utf8');
  assert.match(code,/if\(full\)\{\s*syncPanel\?\.noteExternalRestore\(\);\s*const committed=restoreFullBackup/);
  assert.match(code,/syncPanel\?\.noteExternalRestore\(\);\s*if\(!commitState\(next,nextScenarios,false\)\)return/);
 });
