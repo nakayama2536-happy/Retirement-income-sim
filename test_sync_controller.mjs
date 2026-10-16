@@ -5,8 +5,8 @@ import {createSyncCoordinator} from './sync-controller.mjs';
 const pass='completely-fictional-long-encryption-passphrase';
 const state=()=>({config:{people:{primary:{birthDate:'1980-01-15'}},plan:{startDate:'2044-02-15',initialAsset:101}},scenarios:[{id:'fictional-a',role:'baseline',config:{fake:1}}],unknownEnvelope:{future:'keep'}});
 const harness=(cloud=new FakeCipherCloud(),initial=state())=>{
- let local=structuredClone(initial),meta=null,failBackup=false,failWrite=false,online=true,writeAccess=true,canImport=true,backups=[],replacements=0,applied=0;
- const controller=()=>createSyncCoordinator({
+ let local=structuredClone(initial),meta=null,failBackup=false,failWrite=false,online=true,writeAccess=true,canImport=true,canUpload=true,backups=[],replacements=0,applied=0;
+ const newController=()=>createSyncCoordinator({
   projectId:'test-project',uid:'test-person',passphrase:pass,
   loadLocal:()=>structuredClone(local),
   validateLocal:s=>{if(!s?.config||!Array.isArray(s.scenarios))throw Error('invalid-full-state');},
@@ -14,11 +14,12 @@ const harness=(cloud=new FakeCipherCloud(),initial=state())=>{
   saveBeforeReplace:old=>{if(failBackup)throw Error('BackupWriteError');backups.push(structuredClone(old));},
   readMarker:()=>structuredClone(meta),writeMarker:x=>{meta=structuredClone(x);},
   readRemote:()=>cloud.read(),casRemote:(old,next)=>cloud.compareAndSwap(old,next),
-  online:()=>online,writeAllowed:()=>writeAccess,canAutoImport:()=>canImport,onApplied:()=>{applied++;}
+  online:()=>online,writeAllowed:()=>writeAccess,canAutoImport:()=>canImport,canAutoUpload:()=>canUpload,onApplied:()=>{applied++;}
  });
- return {controller,cloud,get local(){return structuredClone(local);},get meta(){return structuredClone(meta);},get backups(){return structuredClone(backups);},
+ const instance=newController();
+ return {controller:()=>instance,cloud,get local(){return structuredClone(local);},get meta(){return structuredClone(meta);},get backups(){return structuredClone(backups);},
  get replacements(){return replacements;},get applied(){return applied;},
- edit:f=>f(local),setOnline:v=>online=v,setWriteAllowed:v=>writeAccess=v,setCanImport:v=>canImport=v,setFailBackup:v=>failBackup=v,setFailWrite:v=>failWrite=v};
+ edit:f=>f(local),setOnline:v=>online=v,setWriteAllowed:v=>writeAccess=v,setCanImport:v=>canImport=v,setCanUpload:v=>canUpload=v,setFailBackup:v=>failBackup=v,setFailWrite:v=>failWrite=v};
 };
 test('no first-device enrollment or upload without full backup consent',async()=>{
  const h=harness();assert.equal((await h.controller().runAuto()).status,'ENROLLMENT_REQUIRED');
@@ -35,16 +36,16 @@ test('second device requires an explicit first download; backup failure stops be
  const a=harness();await a.controller().initialUpload({backupConfirmed:true});
  const b=harness(a.cloud,{config:{plan:{initialAsset:999}},scenarios:[],oldField:'retain'});
  assert.equal((await b.controller().runAuto()).status,'ENROLLMENT_REQUIRED');
- b.setFailBackup(true);const failed=await b.controller().initialDownload({backupConfirmed:true});
+ b.setFailBackup(true);const failed=await b.controller().previewRemote();await b.controller().initialDownload({backupConfirmed:true});
  assert.equal(failed.status,'STOP');assert.equal(b.replacements,0);
- b.setFailBackup(false);const ok=await b.controller().initialDownload({backupConfirmed:true});
+ b.setFailBackup(false);const ok=await b.controller().previewRemote();await b.controller().initialDownload({backupConfirmed:true});
  assert.equal(ok.status,'DOWNLOADED');assert.deepEqual(b.local,a.local);
  assert.equal(b.backups.length,1);assert.equal(b.backups[0].oldField,'retain');
 });
 test('device A changes sync through CAS and clean device B downloads safely',async()=>{
  const a=harness(),b=harness(a.cloud,{config:{plan:{initialAsset:999}},scenarios:[]});
  await a.controller().initialUpload({backupConfirmed:true});
- await b.controller().initialDownload({backupConfirmed:true});
+ await b.controller().previewRemote();await b.controller().initialDownload({backupConfirmed:true});
  a.edit(s=>{s.config.plan.initialAsset=222;s.unknownEnvelope.keep=1;});
  assert.equal((await a.controller().runAuto()).status,'UPLOADED');
  assert.equal((await b.controller().runAuto()).status,'DOWNLOADED');assert.deepEqual(b.local,a.local);
@@ -52,7 +53,7 @@ test('device A changes sync through CAS and clean device B downloads safely',asy
 });
 test('parallel edits raise CONFLICT; losing device does not overwrite either',async()=>{
  const a=harness(),b=harness(a.cloud,{config:{plan:{initialAsset:999}},scenarios:[]});
- await a.controller().initialUpload({backupConfirmed:true});await b.controller().initialDownload({backupConfirmed:true});
+ await a.controller().initialUpload({backupConfirmed:true});await b.controller().previewRemote();await b.controller().initialDownload({backupConfirmed:true});
  a.edit(s=>s.config.plan.initialAsset=202);b.edit(s=>s.config.plan.initialAsset=303);
  assert.equal((await a.controller().runAuto()).status,'UPLOADED');
  assert.equal((await b.controller().runAuto()).status,'CONFLICT');assert.equal(a.cloud.writes,2);
@@ -83,7 +84,7 @@ test('failure after rollback backup protects existing local data',async()=>{
 
 test('uncommitted UI edits block automatic cloud download until explicit review',async()=>{
  const a=harness(),b=harness(a.cloud,{config:{plan:{initialAsset:999}},scenarios:[]});
- await a.controller().initialUpload({backupConfirmed:true});await b.controller().initialDownload({backupConfirmed:true});
+ await a.controller().initialUpload({backupConfirmed:true});await b.controller().previewRemote();await b.controller().initialDownload({backupConfirmed:true});
  a.edit(x=>x.config.plan.initialAsset=888);assert.equal((await a.controller().runAuto()).status,'UPLOADED');
  b.setCanImport(false);
  const before=b.local;
@@ -93,4 +94,30 @@ test('uncommitted UI edits block automatic cloud download until explicit review'
  const review=await b.controller().previewRemote();assert.equal(review.status,'PREVIEW');
  const imported=await b.controller().acceptRemoteUpdate();assert.equal(imported.status,'DOWNLOADED');
  assert.equal(b.local.config.plan.initialAsset,888);
+});
+
+test('manual restore does not automatically upload until explicit reapproval',async()=>{
+ const h=harness(),c=h.controller();assert.equal((await c.initialUpload({backupConfirmed:true})).status,'INITIAL_UPLOADED');
+ h.edit(s=>s.config.plan.initialAsset=777);h.setCanUpload(false);
+ assert.equal((await c.runAuto()).status,'LOCAL_PENDING_REVIEW');assert.equal(h.cloud.writes,1);
+ assert.equal((await c.acceptLocalUpdate()).status,'UPLOADED');assert.equal(h.cloud.writes,2);
+});
+test('first remote import rejects absent preview and stale local edits',async()=>{
+ const a=harness(),b=harness(a.cloud,{config:{plan:{initialAsset:999}},scenarios:[]});
+ await a.controller().initialUpload({backupConfirmed:true});
+ assert.equal((await b.controller().initialDownload({backupConfirmed:true})).status,'STOP');assert.equal(b.replacements,0);
+ assert.equal((await b.controller().previewRemote()).status,'PREVIEW');
+ b.edit(s=>s.config.plan.initialAsset=777);
+ assert.equal((await b.controller().initialDownload({backupConfirmed:true})).status,'STOP');
+ assert.equal(b.replacements,0);
+ assert.equal((await b.controller().previewRemote()).status,'PREVIEW');
+ assert.equal((await b.controller().initialDownload({backupConfirmed:true})).status,'DOWNLOADED');
+});
+test('remote change between preview and confirmation prevents stale import',async()=>{
+ const a=harness(),b=harness(a.cloud,{config:{plan:{initialAsset:999}},scenarios:[]});
+ await a.controller().initialUpload({backupConfirmed:true});
+ assert.equal((await b.controller().previewRemote()).status,'PREVIEW');
+ const updated=structuredClone(a.cloud.latest);updated.revision=2;updated.digest='b'.repeat(64);a.cloud.latest=updated;
+ assert.equal((await b.controller().initialDownload({backupConfirmed:true})).status,'STOP');
+ assert.equal(b.replacements,0);
 });
