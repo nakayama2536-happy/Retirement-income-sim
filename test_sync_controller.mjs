@@ -5,7 +5,7 @@ import {createSyncCoordinator} from './sync-controller.mjs';
 const pass='completely-fictional-long-encryption-passphrase';
 const state=()=>({config:{people:{primary:{birthDate:'1980-01-15'}},plan:{startDate:'2044-02-15',initialAsset:101}},scenarios:[{id:'fictional-a',role:'baseline',config:{fake:1}}],unknownEnvelope:{future:'keep'}});
 const harness=(cloud=new FakeCipherCloud(),initial=state())=>{
- let local=structuredClone(initial),meta=null,failBackup=false,failWrite=false,online=true,writeAccess=true,backups=[],replacements=0,applied=0;
+ let local=structuredClone(initial),meta=null,failBackup=false,failWrite=false,online=true,writeAccess=true,canImport=true,backups=[],replacements=0,applied=0;
  const controller=()=>createSyncCoordinator({
   projectId:'test-project',uid:'test-person',passphrase:pass,
   loadLocal:()=>structuredClone(local),
@@ -14,11 +14,11 @@ const harness=(cloud=new FakeCipherCloud(),initial=state())=>{
   saveBeforeReplace:old=>{if(failBackup)throw Error('BackupWriteError');backups.push(structuredClone(old));},
   readMarker:()=>structuredClone(meta),writeMarker:x=>{meta=structuredClone(x);},
   readRemote:()=>cloud.read(),casRemote:(old,next)=>cloud.compareAndSwap(old,next),
-  online:()=>online,writeAllowed:()=>writeAccess,onApplied:()=>{applied++;}
+  online:()=>online,writeAllowed:()=>writeAccess,canAutoImport:()=>canImport,onApplied:()=>{applied++;}
  });
  return {controller,cloud,get local(){return structuredClone(local);},get meta(){return structuredClone(meta);},get backups(){return structuredClone(backups);},
  get replacements(){return replacements;},get applied(){return applied;},
- edit:f=>f(local),setOnline:v=>online=v,setWriteAllowed:v=>writeAccess=v,setFailBackup:v=>failBackup=v,setFailWrite:v=>failWrite=v};
+ edit:f=>f(local),setOnline:v=>online=v,setWriteAllowed:v=>writeAccess=v,setCanImport:v=>canImport=v,setFailBackup:v=>failBackup=v,setFailWrite:v=>failWrite=v};
 };
 test('no first-device enrollment or upload without full backup consent',async()=>{
  const h=harness();assert.equal((await h.controller().runAuto()).status,'ENROLLMENT_REQUIRED');
@@ -79,4 +79,18 @@ test('failure after rollback backup protects existing local data',async()=>{
  const b=harness(a.cloud,{config:{plan:{initialAsset:999}},scenarios:[]});b.setFailWrite(true);
  assert.equal((await b.controller().initialDownload({backupConfirmed:true})).status,'STOP');
  assert.equal(b.local.config.plan.initialAsset,999);assert.equal(b.backups.length,1);
+});
+
+test('uncommitted UI edits block automatic cloud download until explicit review',async()=>{
+ const a=harness(),b=harness(a.cloud,{config:{plan:{initialAsset:999}},scenarios:[]});
+ await a.controller().initialUpload({backupConfirmed:true});await b.controller().initialDownload({backupConfirmed:true});
+ a.edit(x=>x.config.plan.initialAsset=888);assert.equal((await a.controller().runAuto()).status,'UPLOADED');
+ b.setCanImport(false);
+ const before=b.local;
+ const pending=await b.controller().runAuto();
+ assert.equal(pending.status,'REMOTE_PENDING_REVIEW');
+ assert.deepEqual(b.local,before);assert.equal(b.replacements,1);
+ const review=await b.controller().previewRemote();assert.equal(review.status,'PREVIEW');
+ const imported=await b.controller().acceptRemoteUpdate();assert.equal(imported.status,'DOWNLOADED');
+ assert.equal(b.local.config.plan.initialAsset,888);
 });
