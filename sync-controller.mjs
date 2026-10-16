@@ -37,6 +37,22 @@ export function createSyncCoordinator({
  }
  return {
   async inspect(){return guarded(async()=>({status:'INSPECT',remote:await readRemote(),marker:getMarker()}));},
+  async previewRemote(){
+   return guarded(async()=>{
+    if(!online())return {status:'PENDING_OFFLINE'};
+    const remote=await readRemote();
+    if(!remote)return {status:'REMOTE_EMPTY'};
+    if(!validRemoteRecord(remote))throw Error('クラウドの保存形式が不正です。');
+    const candidate=await decryptSnapshot(remote.ciphertext,passphrase,remote.digest);
+    validateLocal(candidate);
+    const local=loadLocal();
+    const summary=s=>({hasConfig:!!s?.config,scenarioCount:Array.isArray(s?.scenarios)?s.scenarios.length:0,
+     startDate:s?.config?.plan?.startDate??null,openingAsset:s?.config?.plan?.initialAsset??null});
+    return {status:'PREVIEW',remoteRevision:remote.revision,
+     differs:(await snapshotDigest(candidate))!==(await snapshotDigest(local)),
+     device:summary(local),cloud:summary(candidate)};
+   });
+  },
   async initialUpload({backupConfirmed=false}={}){
    return guarded(async()=>{
     writable();if(!backupConfirmed)throw Error('初回同期前の一括バックアップ確認が必要です。');
