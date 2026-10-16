@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import {mountSyncPanel,SYNC_PUBLIC_CONFIG_KEY,SYNC_MARKER_KEY,SYNC_REVIEW_KEY} from './sync-panel.mjs';
 import {FakeCipherCloud} from './sync-policy.mjs';
+import {encryptSnapshot} from './sync-crypto.mjs';
 class NodeElement{
  constructor(tag,doc){this.tagName=tag;this.ownerDocument=doc;this.children=[];this.listeners={};this.value='';this.checked=false;this.disabled=false;this.textContent='';this.attributes={};}
  setAttribute(k,v){this.attributes[k]=String(v);if(k==='name')this.name=v;}
@@ -65,4 +66,42 @@ test('app marks external full/config JSON restores before any persistent write',
  const code=fs.readFileSync(new URL('./app.mjs',import.meta.url),'utf8');
  assert.match(code,/if\(full\)\{\s*syncPanel\?\.noteExternalRestore\(\);\s*const committed=restoreFullBackup/);
  assert.match(code,/syncPanel\?\.noteExternalRestore\(\);\s*if\(!commitState\(next,nextScenarios,false\)\)return/);
+});
+
+test('editing a different screen invalidates cloud import review without replacing local data',async()=>{
+ const activeDoc={...doc,_listeners:{},
+  addEventListener(type,listener){(this._listeners[type]??=[]).push(listener);},
+  removeEventListener(){},
+  querySelector:()=>null,activeElement:null};
+ const root=new NodeElement('div',activeDoc),storage=new Storage(),cloud=new FakeCipherCloud();
+ const passphrase='fictional-encryption-secret-16plus';
+ const encrypted=await encryptSnapshot(local(),passphrase);
+ cloud.latest={formatVersion:1,revision:1,digest:encrypted.digest,ciphertext:encrypted.payload};
+ let replaced=0;
+ const fakeStore={
+  signIn:async()=>({uid:'fake-user'}),
+  getIdentity:()=>({projectId:'test-project',uid:'fake-user'}),
+  read:()=>cloud.read(),
+  compareAndSwap:(a,b)=>cloud.compareAndSwap(a,b)
+ };
+ const panel=mountSyncPanel(root,{getState:local,replaceLocal:()=>{replaced++;},
+  validateState:()=>{},storage,createStore:async()=>fakeStore,
+  windowRef:{navigator:{onLine:true},addEventListener(){},removeEventListener(){}},
+  documentRef:activeDoc});
+ for(const [name,value] of Object.entries({syncApiKey:'fake-key',syncAuthDomain:'test-project.firebaseapp.com',syncProjectId:'test-project',syncAppId:'1:12:web:fake',
+  syncEmail:'fictional@example.test',syncPassword:'fictional-password',syncPhrase:passphrase}))input(root,name).value=value;
+ await btn(root,'Firebaseに本人ログインして確認').emit('click');
+ await new Promise(resolve=>setTimeout(resolve,20));
+ input(root,'syncBackupConfirmed').checked=true;await input(root,'syncBackupConfirmed').emit('change');
+ await btn(root,'クラウド内容と端末内容を照合（書込みなし）').emit('click');
+ await new Promise(resolve=>setTimeout(resolve,20));
+ assert.equal(panel.getState().previewOK,true);
+ assert.equal(btn(root,'確認したクラウドをこの端末へ初回取込').disabled,false);
+ for(const listener of activeDoc._listeners.input||[])listener({target:{closest:sel=>sel==='#dashboard'?{}:null}});
+ assert.equal(panel.getState().pendingEdits,true);
+ assert.equal(panel.getState().previewOK,false);
+ assert.equal(btn(root,'確認したクラウドをこの端末へ初回取込').disabled,true);
+ await btn(root,'確認したクラウドをこの端末へ初回取込').emit('click');
+ assert.equal(replaced,0);assert.equal(cloud.writes,0);
+ panel.destroy();
 });

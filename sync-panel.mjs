@@ -63,9 +63,12 @@ export function mountSyncPanel(root,{getState,replaceLocal,validateState,afterRe
   const focus=documentRef?.activeElement?.closest?.('#dashboard input, #dashboard select, #dashboard textarea');
   return pendingEditorChange||pension||salary||Boolean(focus);
  };
+ const refuseUnsavedEdits=()=>{
+  if(hasPendingEdits())throw Error('別の入力欄に未保存の下書きがある可能性があります。必要な入力を保存・控えて画面を開き直し、クラウドと端末の差分を再確認してください。');
+ };
  const noteEditorEdit=e=>{
   if(e?.target?.closest?.('#privateSyncContainer'))return;
-  if(e?.target?.closest?.('#dashboard'))pendingEditorChange=true;
+  if(e?.target?.closest?.('#dashboard')){pendingEditorChange=true;previewOK=false;buttons();}
  };
  documentRef?.addEventListener?.('input',noteEditorEdit,true);
  documentRef?.addEventListener?.('change',noteEditorEdit,true);
@@ -149,11 +152,13 @@ export function mountSyncPanel(root,{getState,replaceLocal,validateState,afterRe
  }));
  firstDownload.addEventListener('click',()=>guarded(async()=>{
   if(!previewOK)throw Error('クラウドの差分表示を先に確認してください。');
+  refuseUnsavedEdits();
   const r=await coordinator.initialDownload({backupConfirmed:backupCheck.checked});
   setStatus(describe(r));if(r.status==='DOWNLOADED'){previewOK=false;clearReviewBarrier();}
  }));
  applyPending.addEventListener('click',()=>guarded(async()=>{
   if(!previewOK||!backupCheck.checked)throw Error('事前バックアップとクラウド内容の差分確認が必要です。');
+  refuseUnsavedEdits();
   const result=await coordinator.acceptRemoteUpdate();
   setStatus(describe(result));if(result?.status==='DOWNLOADED'){previewOK=false;clearReviewBarrier();}
  }));
@@ -185,6 +190,6 @@ export function mountSyncPanel(root,{getState,replaceLocal,validateState,afterRe
    previewOK=false;buttons();
   },
   onLocalChange:()=>{previewOK=false;buttons();trigger();},
-  getState:()=>({connected:!!coordinator,remoteExists,previewOK,reviewPending:reviewBarrier(),markerPresent:!!parse(safeGet(SYNC_MARKER_KEY))}),
+  getState:()=>({connected:!!coordinator,remoteExists,previewOK,pendingEdits:hasPendingEdits(),reviewPending:reviewBarrier(),markerPresent:!!parse(safeGet(SYNC_MARKER_KEY))}),
   destroy:()=>{if(timer)clearInterval(timer);windowRef?.removeEventListener?.('online',trigger);windowRef?.removeEventListener?.('focus',trigger);documentRef?.removeEventListener?.('visibilitychange',onVisible);documentRef?.removeEventListener?.('input',noteEditorEdit,true);documentRef?.removeEventListener?.('change',noteEditorEdit,true);root.replaceChildren();}};
 }
