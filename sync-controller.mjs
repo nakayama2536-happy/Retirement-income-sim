@@ -6,7 +6,7 @@ import {encryptSnapshot,decryptSnapshot,snapshotDigest} from './sync-crypto.mjs'
 const error=(message)=>({status:'STOP',message});
 export function createSyncCoordinator({
  projectId,uid,loadLocal,validateLocal,applyLocal,saveBeforeReplace,readMarker,writeMarker,
- readRemote,casRemote,passphrase,online=()=>true,writeAllowed=()=>true,onApplied=()=>{}
+ readRemote,casRemote,passphrase,online=()=>true,writeAllowed=()=>true,canAutoImport=()=>false,onApplied=()=>{}
 }){
  if(typeof projectId!=='string'||!projectId||typeof uid!=='string'||!uid)throw Error('Firebase認証が必要です。');
  for(const fn of [loadLocal,validateLocal,applyLocal,saveBeforeReplace,readMarker,writeMarker,readRemote,casRemote])
@@ -30,8 +30,8 @@ export function createSyncCoordinator({
   await saveBeforeReplace(local);
   await ensureCurrent(digest);
   writable();
-  await applyLocal(decoded,local); // Must be atomic + optimistic compare, no silent partial import.
-  writeMarker(marker(remote.revision,remote.digest,await snapshotDigest(decoded)));
+  const applied=await applyLocal(decoded,local); // Atomic optimistic compare, not a partial import.
+  writeMarker(marker(remote.revision,remote.digest,await snapshotDigest(applied??decoded)));
   onApplied(decoded);
   return {status:'DOWNLOADED',revision:remote.revision};
  }
@@ -79,6 +79,18 @@ export function createSyncCoordinator({
     return download(remote,local,digest);
    });
   },
+  async acceptRemoteUpdate(){
+   return guarded(async()=>{
+    writable();if(!online())return {status:'PENDING_OFFLINE'};
+    const m=getMarker();if(!validSyncMarker(m))throw Error('同期登録を確認してください。');
+    const local=loadLocal();validateLocal(local);const digest=await snapshotDigest(local);
+    const remote=await readRemote();
+    const decision=decideSync({marker:m,localDigest:digest,remote,online:true});
+    if(decision.action==='UNCHANGED')return {status:'SYNCED',revision:m.baseRevision};
+    if(decision.action!=='DOWNLOAD_VALIDATED')return {status:decision.action==='CONFLICT'?'CONFLICT':'STOP',message:'クラウドと端末の状態が変わりました。差分を再確認してください。'};
+    return download(remote,local,digest);
+   });
+  },
   async runAuto(){
    return guarded(async()=>{
     writable();const existing=getMarker();
@@ -90,7 +102,11 @@ export function createSyncCoordinator({
     const action=decideSync({marker:existing,localDigest:digest,remote,online:true});
     if(action.action==='STOP'||action.action==='CONFLICT')return {status:action.action,message:action.reason||'両端末で別の変更がありました。確認まで同期を停止します。'};
     if(action.action==='UNCHANGED')return {status:'SYNCED',revision:existing.baseRevision};
-    if(action.action==='DOWNLOAD_VALIDATED')return download(remote,local,digest);
+    if(action.action==='DOWNLOAD_VALIDATED'){
+    if(!canAutoImport())return {status:'REMOTE_PENDING_REVIEW',remoteRevision:remote.revision,
+     message:'端末に未保存の入力がある可能性があります。クラウドの新しい内容を確認してから取り込んでください。'};
+    return download(remote,local,digest);
+   }
     if(action.action!=='UPLOAD_CAS')return {status:action.action};
     const enc=await encryptSnapshot(local,passphrase);await ensureCurrent(digest);writable();
     const next={formatVersion:1,revision:existing.baseRevision+1,digest:enc.digest,ciphertext:enc.payload};
