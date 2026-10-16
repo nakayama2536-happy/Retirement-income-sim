@@ -14,8 +14,8 @@
     },
     {
       "name": "app.mjs",
-      "size": 64442,
-      "sha256": "948e332641ce268d442b70d3aeccfd844c5b1a68834adad3f88e27494547e417"
+      "size": 64516,
+      "sha256": "7a6e223126b1c6797263b0f01fbae40e425a65088706322748e4c50fa0238245"
     },
     {
       "name": "backup-compatibility.mjs",
@@ -254,8 +254,8 @@
     },
     {
       "name": "sync-controller.mjs",
-      "size": 8393,
-      "sha256": "edb4997b47ccf4ee63bd15796973e1ba25ee41847cfc5422978d36d9c2c2bd39"
+      "size": 10263,
+      "sha256": "5d92ffa0c9501620b83379765a66be7dd35cf9b737aa98f32cc1fe4e51100154"
     },
     {
       "name": "sync-crypto.mjs",
@@ -269,8 +269,8 @@
     },
     {
       "name": "sync-panel.mjs",
-      "size": 12576,
-      "sha256": "ed23d03d4a0f6888313fb5bfc65d7c796102a57f438f88861120685c0a01cbc3"
+      "size": 14130,
+      "sha256": "594456dfcbfca27832edfd8ac68c9c1fe769398c882fb26cf21e94c5377b98af"
     },
     {
       "name": "sync-policy.mjs",
