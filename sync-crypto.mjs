@@ -12,6 +12,7 @@ function decode64(value){
  const bin=atob(value),result=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)result[i]=bin.charCodeAt(i);return result;
 }
 function hex(b){return [...b].map(c=>c.toString(16).padStart(2,'0')).join('');}
+const canonicalPayload=p=>JSON.stringify(Object.fromEntries(Object.keys(p).sort().map(k=>[k,p[k]])));
 export async function sha256Bytes(data){const c=cryptoApi();return hex(new Uint8Array(await c.subtle.digest('SHA-256',data)));}
 export async function snapshotDigest(value){
  const sorted=x=>Array.isArray(x)?x.map(sorted):x&&typeof x==='object'?Object.fromEntries(Object.keys(x).sort().map(k=>[k,sorted(x[k])])):x;
@@ -36,12 +37,12 @@ export async function encryptSnapshot(state,passphrase){
  const ct=new Uint8Array(await c.subtle.encrypt({name:'AES-GCM',iv},key,plaintext));
  const payload={version:1,algorithm:'AES-256-GCM/PBKDF2-SHA256',iterations:PBKDF2_ITERATIONS,salt:encode64(salt),iv:encode64(iv),data:encode64(ct)};
  if(enc.encode(JSON.stringify(payload)).length>ENCRYPTED_PAYLOAD_LIMIT)throw Error('暗号化後の同期データが容量制限を超えました。');
- return {payload,digest:await sha256Bytes(enc.encode(JSON.stringify(payload)))};
+ return {payload,digest:await sha256Bytes(enc.encode(canonicalPayload(payload)))};
 }
 export async function decryptSnapshot(payload,passphrase,expectedDigest){
  try{
   const {salt,iv,ct}=validateFormat(payload);
-  const hash=await sha256Bytes(enc.encode(JSON.stringify(payload)));
+  const hash=await sha256Bytes(enc.encode(canonicalPayload(payload)));
   if(typeof expectedDigest!=='string'||hash!==expectedDigest)throw Error('hash-mismatch');
   const key=await derive(passphrase,salt,PBKDF2_ITERATIONS);
   const output=await cryptoApi().subtle.decrypt({name:'AES-GCM',iv},key,ct);

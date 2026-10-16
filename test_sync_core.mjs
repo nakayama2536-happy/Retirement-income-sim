@@ -34,7 +34,8 @@ test('WebCrypto encrypt/decrypt roundtrip preserves unknown future keys, events 
  const {payload,digest}=await encryptSnapshot(state,passphrase);
  assert.equal(payload.iterations,PBKDF2_ITERATIONS);
  assert.notEqual(JSON.stringify(payload).includes('initialAsset'),true);
- const restored=await decryptSnapshot(payload,passphrase,digest);
+ const reordered=Object.fromEntries(Object.entries(payload).reverse());
+ const restored=await decryptSnapshot(reordered,passphrase,digest);
  assert.deepEqual(restored,state);
  assert.equal(await snapshotDigest(state),await snapshotDigest({...state,scenarios:[...state.scenarios]}));
 });
