@@ -35,12 +35,12 @@ test('offline candidate assets and module dependency closure are included',()=>{
     assert.ok(runtime.includes(name),name);
     assert.match(sw,new RegExp("\\./"+name.replaceAll('.','\\.')));
   }
-  assert.equal(runtime.length,52);
-  assert.equal(out.size,55);
+  assert.equal(runtime.length,57);
+  assert.equal(out.size,60);
 });
 
 test('candidate service worker is versioned separately without cache deletion or forced update',()=>{
-  assert.match(sw,/const CACHE=`\$\{CACHE_PREFIX\}v0\.9\.7-full-compare-save-20261016`/);
+  assert.match(sw,/const CACHE=`\$\{CACHE_PREFIX\}v0\.9\.7-firebase-sync-draft-20261016`/);
   assert.doesNotMatch(sw,/caches\.delete\(/);
   assert.doesNotMatch(sw,/skipWaiting\s*\(/);
 });

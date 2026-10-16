@@ -18,6 +18,7 @@ import {createFullBackup,restoreFullBackup,isFullBackup} from './full-backup.mjs
 import {assertBackupCompatibility} from './backup-compatibility.mjs';
 import {acquireWriteAccess,assertWriteAccess} from './write-access.mjs';
 import {mountRecoveryCheck} from './recovery-ui.mjs';
+import {mountSyncPanel} from './sync-panel.mjs';
 import {
   runRetirementPlan, runForecastFromLatestActual, latestActual, planRowAtAge, scenarioMetrics,
   formatMan, pensionAnnualFromBase65, pensionAdjustmentFactor,
@@ -27,7 +28,7 @@ import {
   fukuyamaCarePremium2026, lateElderlyMedicalPremium2026, lateElderlyMedicalPremium2026Details, fukuyamaNhiPremium2026, fukuyamaNhiPremium2026Details,
   replaceAgeRangeOverride, estimateAnnualTaxSocial, applyCarDisposalTransfer, expenseDetailRows
 } from './calc.mjs';
-import { loadState, STATE_KEY, downloadJson, migrateConfig, configSignature } from './storage.mjs';
+import { loadState, replaceState, STATE_KEY, downloadJson, migrateConfig, configSignature } from './storage.mjs';
 import { commitPlanState } from './state.mjs';
 import { RULES } from './rules.mjs';
 import { mountPensionSheet } from './pension-ui.mjs';
@@ -41,6 +42,7 @@ let initialState, startupError;
 try{const check=inspectMigration();if(check.integrated.status==='invalid')throw new Error(check.integrated.error);initialState=loadState();}catch(e){initialState={config:null,scenarios:[]};startupError=e.message;}
 let config=initialState.config;
 let scenarios=initialState.scenarios;
+let syncPanel=null; // Firebase is never accessed before explicit opt-in.
 const currentConfig=()=>config;
 const currentScenarios=()=>scenarios;
 let result = null;
@@ -50,7 +52,7 @@ let renderedInputValues=new Map();
 
 function inputValues(){
   return new Map([...document.querySelectorAll('#dashboard input, #dashboard select, #dashboard textarea')]
-    .filter(input=>input.id!=='expenseDisplaySource'&&!input.closest('#pension, #salary, #salaryIdecoInputs, #calendarSheet, #expenseSheet, #incomeSheet, .detail-form, #step8TrialContainer, #fullPlanComparisonContainer'))
+    .filter(input=>input.id!=='expenseDisplaySource'&&!input.closest('#pension, #salary, #salaryIdecoInputs, #calendarSheet, #expenseSheet, #incomeSheet, .detail-form, #step8TrialContainer, #fullPlanComparisonContainer, #privateSyncContainer'))
     .map(input=>[input.id||(input.dataset.reviewKey?`review/${input.dataset.reviewKey}`:input.form?.id&&input.name?`${input.form.id}/${input.name}`:''),{input,value:input.type==='checkbox'?input.checked:input.value}])
     .filter(([key])=>key));
 }
@@ -157,6 +159,7 @@ function commitState(nextConfig,nextScenarios=scenarios,preserveDrafts=true){
     if(input.type==='checkbox')input.checked=value;
     else if(input.tagName!=='SELECT'||[...input.options].some(o=>o.value===value))input.value=value;
   }
+  syncPanel?.onLocalChange();
   return true;
 }
 
@@ -836,6 +839,12 @@ function switchTab(id){
 document.querySelectorAll('[data-group]').forEach(btn=>btn.addEventListener('click',()=>{const first=document.querySelector(`[data-group-item="${btn.dataset.group}"]`);if(first)switchTab(first.dataset.tab);}));
 document.querySelectorAll('[data-tab]').forEach(btn=>btn.addEventListener('click',()=>switchTab(btn.dataset.tab)));
 const migrationPanel=mountMigration({onCommit:()=>{const saved=loadState();config=saved.config;scenarios=saved.scenarios;refresh();}});
+syncPanel=mountSyncPanel(el('privateSyncContainer'),{
+ getState:()=>loadState(),validateState:value=>validateSavedState(value),
+ replaceLocal:(next,expected)=>replaceState(next,expected),
+ afterReplace:()=>{const saved=loadState();config=saved.config;scenarios=saved.scenarios;refresh();},
+ writeAllowed:()=>writeAccess.writable
+});
 mountRecoveryCheck();
 window.addEventListener('storage',event=>{
   migrationPanel.invalidate(event);
@@ -851,7 +860,7 @@ document.querySelectorAll('[data-help]').forEach(btn=>btn.addEventListener('clic
 }));
 el('helpClose').addEventListener('click',()=>el('helpDialog').close());
 
-el('appVersion').textContent='v0.9.7-full-compare-save-20261016'; el('rulesVersion').textContent=RULES_VERSION;
+el('appVersion').textContent='v0.9.7-firebase-sync-draft-20261016'; el('rulesVersion').textContent=RULES_VERSION;
 if(startupError){setEmptyState();showNotice(`保存データを読み込めません。復元用バックアップを確認してください。${startupError}`,'error');}
 else refresh();
 if(!writeAccess.writable)showNotice('この画面は読み取り専用です。別の編集画面を閉じて再読み込みしてください。同時更新制御が利用できない場合も保存を停止します。','error');
