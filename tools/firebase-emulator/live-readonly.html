@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Firebase本人専用・読取り専用接続検証</title>
+<style>body{font-family:system-ui,sans-serif;max-width:740px;margin:2rem auto;padding:0 1rem;line-height:1.7}label{display:block;margin:1rem 0}input{display:block;width:100%;box-sizing:border-box;padding:.65rem}button{padding:.7rem;margin-right:.5rem}pre{white-space:pre-wrap;background:#f3f4f6;padding:1rem}strong{color:#8b0000}</style></head><body>
+<h1>Firebase実接続の読取り専用検証</h1>
+<p><strong>架空データも書き込みません。削除・同期・採用・アップロード機能はありません。</strong> 個人データの本番同期は未承認です。ブラウザのローカルサーバー（localhost）だけで開き、設定値やパスワードをチャット・GitHubに貼らないでください。</p>
+<form id="form" autocomplete="off">
+<label>Firebase apiKey<input name="apiKey" required autocomplete="off"></label>
+<label>Firebase authDomain<input name="authDomain" required autocomplete="off"></label>
+<label>Firebase projectId<input name="projectId" required autocomplete="off"></label>
+<label>Firebase appId<input name="appId" required autocomplete="off"></label>
+<label>本人メールアドレス<input name="email" type="email" required autocomplete="off"></label>
+<label>Firebaseログイン用パスワード<input name="password" type="password" required autocomplete="off"></label>
+<button type="submit">本人としてログインし、同期文書を読取り確認</button><button id="clear" type="button">入力を消去</button>
+</form>
+<pre id="result" role="status" aria-live="polite">未実行。クラウドへの書込みはありません。</pre>
+<p>確認対象は owners/&lt;認証済み本人UID&gt;/snapshots/current のみです。文書が未作成の場合、正常な認証・権限でも「文書なし」と表示します。許可された本人UIDがルールと一致しなければ拒否されます。</p>
+<script type="module">
+const root='https://www.gstatic.com/firebasejs/12.19.0/';
+const form=document.querySelector('#form'),out=document.querySelector('#result'),clear=document.querySelector('#clear');
+const say=x=>out.textContent=x;
+clear.onclick=()=>{form.reset();say('入力を消去しました。')};
+form.addEventListener('submit',async event=>{
+ event.preventDefault();const data=Object.fromEntries(new FormData(form));
+ const {email,password,...config}=data;
+ say('本人認証と読取り権限を確認中です。');
+ let auth,authApi;
+ try{
+  const [core,authModule,firestore]=await Promise.all([
+   import(root+'firebase-app.js'),import(root+'firebase-auth.js'),import(root+'firebase-firestore.js')
+  ]);
+  authApi=authModule;
+  const app=core.initializeApp(config,'lifeplan-readonly-check');
+  auth=authApi.getAuth(app);
+  await authApi.setPersistence(auth,authApi.inMemoryPersistence);
+  const signed=await authApi.signInWithEmailAndPassword(auth,email,password);
+  form.elements.password.value='';
+  const ref=firestore.doc(firestore.getFirestore(app),'owners',signed.user.uid,'snapshots','current');
+  const snap=await firestore.getDocFromServer(ref);
+  say(snap.exists()?
+   '認証成功・Firestore読取り許可。同期文書が既に存在します。内容は表示・送信しません。ここで停止してください。':
+   '認証成功・Firestore読取り許可。同期文書は未作成です（正常）。書込みは行っていません。');
+ }catch(e){
+  form.elements.password.value='';
+  const code=typeof e?.code==='string'?e.code:'unknown';
+  say('読取り検証は完了していません。Firebaseエラーコード: '+code+
+   '\nメールアドレス・UID・トークン・パスワード・クラウド内容は表示しません。');
+ }finally{
+  try{if(auth&&authApi)await authApi.signOut(auth);}catch{}
+ }
+});
+</script></body></html>

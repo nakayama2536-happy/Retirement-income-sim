@@ -6,7 +6,9 @@ const read=f=>fs.readFileSync(new URL(f,import.meta.url),'utf8');
 const app=read('./app.mjs'),html=read('./index.html'),sw=read('./sw.js');
 
 test('step8 independent comparison card is mounted on the current main settings screen',()=>{
-  assert.match(html,/<section id="settings" class="panel" hidden>\s*<article[^>]*id="step8TrialCard"/);
+  assert.match(html,/<section id="settings" class="panel" hidden>\s*<article[^>]*id="privateSyncCard"/);
+  assert.match(html,/<article[^>]*id="step8TrialCard"/);
+  assert.match(html,/<div id="privateSyncContainer"><\/div>/);
   assert.match(html,/<div id="step8TrialContainer"><\/div>/);
   assert.match(app,/import \{mountStep8TrialCard\} from '\.\/step8-trial-ui\.mjs'/);
   assert.match(app,/mountStep8TrialCard\(el\('step8TrialContainer'\),\(\)=>config\)/);
@@ -35,12 +37,12 @@ test('offline candidate assets and module dependency closure are included',()=>{
     assert.ok(runtime.includes(name),name);
     assert.match(sw,new RegExp("\\./"+name.replaceAll('.','\\.')));
   }
-  assert.equal(runtime.length,52);
-  assert.equal(out.size,55);
+  assert.equal(runtime.length,57);
+  assert.equal(out.size,60);
 });
 
 test('candidate service worker is versioned separately without cache deletion or forced update',()=>{
-  assert.match(sw,/const CACHE=`\$\{CACHE_PREFIX\}v0\.9\.7-full-compare-save-20261016`/);
+  assert.match(sw,/const CACHE=`\$\{CACHE_PREFIX\}v0\.9\.7-firebase-sync-draft-20261016`/);
   assert.doesNotMatch(sw,/caches\.delete\(/);
   assert.doesNotMatch(sw,/skipWaiting\s*\(/);
 });
