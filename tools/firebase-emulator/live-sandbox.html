@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>検証専用Firestore架空データ接続試験</title>
+<style>
+body{font:16px/1.65 system-ui,sans-serif;max-width:720px;margin:0 auto;padding:24px}
+label{display:block;margin:14px 0}input:not([type=checkbox]){box-sizing:border-box;width:100%;padding:10px}
+button{padding:10px;margin:10px 6px 10px 0}pre{white-space:pre-wrap;background:#f4f4f4;padding:16px}strong{color:#9f1239}
+</style></head><body>
+<h1>Firebase検証専用・架空データ試験</h1>
+<p><strong>対象は lifeplan-sync-sandbox のみです。本人用 lifeplan-private-sync への書込み・同期・参照は行いません。</strong></p>
+<p>検証ユーザーの <code>sandbox/{uid}/snapshots/trial</code> だけを作成し、読取り、世代の更新、古い世代の拒否、削除・不存在確認を実行します。</p>
+<form id="form" autocomplete="off">
+<label>Firebase apiKey<input name="apiKey" required autocomplete="off"></label>
+<label>Firebase authDomain<input name="authDomain" required autocomplete="off"></label>
+<label>Firebase projectId<input name="projectId" required autocomplete="off" placeholder="lifeplan-sync-sandbox"></label>
+<label>Firebase appId<input name="appId" required autocomplete="off"></label>
+<label>検証ユーザーのメールアドレス<input name="email" type="email" required autocomplete="off"></label>
+<label>検証ユーザーのパスワード<input name="password" type="password" required autocomplete="off"></label>
+<label><input name="confirm" type="checkbox" required> 本人用ではない別プロジェクト・別ユーザーであることを確認済み</label>
+<button type="submit" id="run">架空データを検証し、削除まで行う</button>
+<button type="button" id="clear">入力を消去</button>
+</form>
+<pre id="status" role="status">未実行。Firestoreへの書込みはありません。</pre>
+<p>失敗表示が出たら再実行せず、まずFirebase Consoleで検証用 trial 文書の有無を確認してください。個人情報・パスワード・UIDはこのチャットやGitHubへ送らないでください。</p>
+<script type="module">
+const form=document.querySelector('#form'),status=document.querySelector('#status'),run=document.querySelector('#run');
+const messages=[],show=s=>{messages.push(s);status.textContent=messages.join('\n');};
+document.querySelector('#clear').onclick=()=>{form.reset();messages.length=0;status.textContent='入力を消去しました。'};
+let busy=false;
+form.addEventListener('submit',async e=>{
+ e.preventDefault();if(busy)return;busy=true;run.disabled=true;messages.length=0;
+ const fields=Object.fromEntries(new FormData(form)),{email,password,confirm,...config}=fields;
+ form.elements.password.value='';
+ if(!confirm||config.projectId!=='lifeplan-sync-sandbox'||config.authDomain!=='lifeplan-sync-sandbox.firebaseapp.com'){
+  show('中止：検証専用FirebaseのID・認証ドメインと一致しません。書込みなし。');busy=false;run.disabled=false;return;
+ }
+ let auth=null,authApi=null,firestore=null,ref=null,created=false;
+ try{
+  const root='https://www.gstatic.com/firebasejs/12.19.0/';
+  const [core,a,db]=await Promise.all([import(root+'firebase-app.js'),import(root+'firebase-auth.js'),import(root+'firebase-firestore.js')]);
+  authApi=a;firestore=db;
+  const app=core.initializeApp(config,'lifeplan-sandbox-check');
+  auth=a.getAuth(app);
+  await a.setPersistence(auth,a.inMemoryPersistence);
+  const logged=await a.signInWithEmailAndPassword(auth,email,password);
+  const uid=logged.user.uid;
+  if(!uid)throw Error('no-test-uid');
+  const database=db.getFirestore(app);
+  ref=db.doc(database,'sandbox',uid,'snapshots','trial');
+  const before=await db.getDocFromServer(ref);
+  if(before.exists())throw Error('trial-already-exists');
+  show('1/7 検証アカウントで認証成功。試験用文書は未作成。');
+  const random=crypto.getRandomValues(new Uint8Array(16));
+  const b64=bytes=>btoa(String.fromCharCode(...bytes));
+  const payload=new TextEncoder().encode('fictional-firestore-check-only');
+  const digest=[...new Uint8Array(await crypto.subtle.digest('SHA-256',payload))].map(v=>v.toString(16).padStart(2,'0')).join('');
+  const base={ownerUid:uid,formatVersion:1,revision:1,digest,
+    ciphertext:{version:1,algorithm:'AES-256-GCM/PBKDF2-SHA256',iterations:600000,
+      salt:b64(random),iv:b64(crypto.getRandomValues(new Uint8Array(12))),data:'AQABAg=='},
+    updatedAt:db.serverTimestamp()};
+  // Format-only synthetic ciphertext tests Firestore Rules; not an AES roundtrip.
+  await db.setDoc(ref,base);created=true;
+  show('2/7 架空の形式確認用レコードの作成成功。');
+  const after=await db.getDocFromServer(ref);
+  if(!after.exists()||after.data().revision!==1||after.data().digest!==digest)throw Error('read-mismatch');
+  show('3/7 クラウドからの読取り一致。');
+  const nextHash='b'.repeat(64);
+  const compare=async(v,hash,next)=>db.runTransaction(database,async tx=>{
+   const snap=await tx.get(ref);
+   if(!snap.exists()||snap.data().revision!==v||snap.data().digest!==hash)throw Error('stale-revision-blocked');
+   tx.update(ref,{revision:v+1,digest:next,updatedAt:db.serverTimestamp()});
+  });
+  await compare(1,digest,nextHash);
+  show('4/7 世代比較による更新成功。');
+  let rejected=false;
+  try{await compare(1,digest,'c'.repeat(64))}catch(err){if(err.message==='stale-revision-blocked')rejected=true;else throw err;}
+  if(!rejected)throw Error('stale-writer-not-rejected');
+  show('5/7 古い世代の上書きを拒否。');
+  const check=await db.getDocFromServer(ref);
+  if(!check.exists()||check.data().revision!==2||check.data().digest!==nextHash)throw Error('recheck-failed');
+  show('6/7 競合後の保存状態が正常。');
+  await db.deleteDoc(ref);created=false;
+  if((await db.getDocFromServer(ref)).exists())throw Error('cleanup-verification-failed');
+  show('7/7 テスト文書の削除と不存在を確認。完了。');
+ }catch(err){
+  show('検証停止：'+(typeof err?.code==='string'?err.code:'確認が必要なエラー')+'。再実行しないでください。');
+ }finally{
+  if(created&&ref&&firestore){
+   try{await firestore.deleteDoc(ref);created=false;
+    const absent=!(await firestore.getDocFromServer(ref)).exists();
+    show(absent?'後片付け：試験文書の削除・不存在確認済み。':'警告：削除後の不存在を確認できません。');
+   }catch{show('警告：試験文書の削除を確認できません。次の実行は停止してください。');}
+  }
+  try{if(auth&&authApi)await authApi.signOut(auth)}catch{}
+  busy=false;run.disabled=false;
+ }
+});
+</script></body></html>
