@@ -3,7 +3,7 @@ import {fileURLToPath} from 'node:url';
 import {resolve,dirname} from 'node:path';
 import assert from 'node:assert/strict';
 import {initializeTestEnvironment,assertSucceeds,assertFails} from '@firebase/rules-unit-testing';
-import {collection,doc,getDoc,getDocs,setDoc,updateDoc,deleteDoc,serverTimestamp} from 'firebase/firestore';
+import {collection,doc,getDoc,getDocs,setDoc,updateDoc,deleteDoc,serverTimestamp,runTransaction} from 'firebase/firestore';
 
 const here=dirname(fileURLToPath(import.meta.url));
 const template=readFileSync(resolve(here,'../../docs/firebase-sync-firestore.rules.example'),'utf8');
@@ -64,6 +64,34 @@ try{
       ...record().ciphertext,algorithm:'plaintext'}})));
    await testCase('Correct next revision accepted',()=>assertSucceeds(updateDoc(ref(self),{revision:2,digest:'b'.repeat(64),updatedAt:serverTimestamp()})));
    await testCase('Another account denied after owner update',()=>assertFails(getDoc(ref(stranger))));
+   // Exercise actual Firestore SDK transaction retry/compare-and-swap against
+   // the real emulator; never run these synthetic writes against a live project.
+   const cas=(context,expectedRevision,expectedDigest,nextDigest)=>runTransaction(context.firestore(),async tx=>{
+     const target=ref(context),snapshot=await tx.get(target);
+     if(!snapshot.exists()||snapshot.data().revision!==expectedRevision||snapshot.data().digest!==expectedDigest)
+       throw Error('sync-conflict: version changed');
+     tx.update(target,{revision:expectedRevision+1,digest:nextDigest,updatedAt:serverTimestamp()});
+     return expectedRevision+1;
+   });
+   await testCase('SDK transaction CAS accepts exact remote generation and digest',async()=>{
+     const revision=await assertSucceeds(cas(self,2,'b'.repeat(64),'c'.repeat(64)));
+     assert.equal(revision,3);
+     assert.equal((await getDoc(ref(self))).data().revision,3);
+   });
+   await testCase('SDK transaction refuses previously read stale generation',async()=>{
+     await assert.rejects(cas(self,2,'b'.repeat(64),'d'.repeat(64)),/sync-conflict/);
+     assert.equal((await getDoc(ref(self))).data().revision,3);
+   });
+   await testCase('SDK transaction refuses altered digest at current generation',async()=>{
+     await assert.rejects(cas(self,3,'b'.repeat(64),'d'.repeat(64)),/sync-conflict/);
+     assert.equal((await getDoc(ref(self))).data().digest,'c'.repeat(64));
+   });
+   await testCase('SDK transaction cannot advance someone elses identity',()=>assertFails(cas(stranger,3,'c'.repeat(64),'d'.repeat(64))));
+   await testCase('SDK transaction allows next valid generation after rejected changes',async()=>{
+     assert.equal(await assertSucceeds(cas(self,3,'c'.repeat(64),'d'.repeat(64))),4);
+     assert.equal((await getDoc(ref(self))).data().revision,4);
+   });
+
  });
  console.log('FIREBASE_RULES_EMULATOR_OK '+count+' isolated synthetic checks; no live Firebase project or user data.');
 }catch(e){process.exitCode=1;console.error('FIREBASE_RULES_EMULATOR_FAIL '+count+' passed before failure:',e?.message);}
