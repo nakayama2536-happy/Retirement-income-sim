@@ -5,6 +5,7 @@ on:
     branches: [main]
     paths:
       - 'docs/firebase-sync-firestore.rules.example'
+      - 'docs/firebase-sync-sandbox.rules.example'
       - 'sync-*.mjs'
       - 'tools/firebase-emulator/**'
       - '.github/workflows/firebase-rules-emulator.yml'
