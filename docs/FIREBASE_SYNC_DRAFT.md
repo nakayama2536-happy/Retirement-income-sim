@@ -54,3 +54,21 @@ Draft branch `feature/fb-single-user-sync-20261016`、Draft候補版 `v0.9.7-fir
 - 同コミットのNode 59ファイル／1,070件成功： https://github.com/nakayama2536-happy/Retirement-income-sim/actions/runs/38917473324
 - 隔離Chromium 14ケース成功： https://github.com/nakayama2536-happy/Retirement-income-sim/actions/runs/38917473729
 - 本人のChatGPT側Firebase連携は未インストール・未接続（確認時点）。これが利用可能になるまでFirebaseプロジェクト作成の操作は実施不可。既存mainとGitHub Pagesは変更していない。
+
+## 無課金・隔離した実書込み検証の方針（2026-10-17）
+
+**確定事項（Firebase公式料金）**：Firestoreの無料枠は各Google/Firebaseプロジェクト内の最初の**1データベースのみ**で、同じプロジェクトに追加のFirestoreデータベースを作るには有料プランへのアップグレードが必要。
+出典：https://firebase.google.com/docs/firestore/pricing
+
+したがって、既存の本人用 `lifeplan-private-sync` の `(default)` に、別の検証DBを増設しない。また、同DB内の `owners/<本人UID>/snapshots/current` に架空データを書き込まない（現在の本人の同期用空枠を占有し、クライアントルールでの削除を禁止しているため）。
+
+**採用する次の手順**：別のFirebaseプロジェクト `lifeplan-sync-sandbox`（名称候補）を**Spark無料・専用・架空データだけ**で作り、Standard/(default)、個別Authenticationテストユーザー、読み書き・削除を限定したテスト専用Rulesを用いて、実Firestoreの暗号化データ・トランザクションCAS・古い世代の拒否・認証なし／別ユーザーの拒否・試験後の削除まで検証する。不要になった検証用データだけを後から安全に削除する。
+
+- 本人用プロジェクトとアプリConfig/Authを絶対に使い回さない。テスト用のFirebaseプロジェクトIDをコード中の文字列チェックだけで区別するのではなく、ログイン先のプロジェクト・認証UID・Firestoreの書込み先パス、試験ルール、削除権限を毎回照合する。
+- テスト用の認証メール、パスワード、UID、Firebase Web設定や暗号化合言葉をGitHub・公開Actionsログに追加しない。Firebaseの実アカウントを自動的に新規作成できない場合、本人のConsole操作が必要。
+- 検証専用Rulesは本人用Rulesの無断置換ではなく、別プロジェクトの別のルール正本。限定したテスト文書だけに削除を許可する。ユーザーの本番プランにその削除許可を反映しない。
+- 有料Blaze・請求設定・Cloud Functions・有料バックアップ・Hostingは使用しない。画面でSpark無料が維持されていることを確認する。
+- Firestoreエミュレーター28件・Node 1,071件・隔離Chromium14件の既存証拠は有効。本人用Firebaseでの読取り成功はユーザーの画面に基づく証拠。実Firestoreへの架空書込み・負荷・削除の成功は、今後別の実測として記録する。
+- 本人の個人JSONのアップロード、計算条件の採用、GitHub mainマージ、本番公開は本検証と無関係で、許可なしに行わない。
+
+完了の境界：試験プロジェクトの存在・Sparkプラン・Rules/認証・実測結果・試験データの後片付けを個別に確認する。作成未実施なら「実接続未実施」と報告する。
