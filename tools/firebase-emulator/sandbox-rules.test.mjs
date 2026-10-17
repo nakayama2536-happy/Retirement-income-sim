@@ -19,7 +19,7 @@ try{
  await env.clearFirestore();
  const self=env.authenticatedContext(owner);
  const path=ctx=>doc(ctx.firestore(),'sandbox',owner,'snapshots','trial');
- await check('Unset sandbox owner denies writes',()=>assertFails(setDoc(path(context),record())));
+ await check('Unset sandbox owner denies writes',()=>assertFails(setDoc(path(self),record())));
  await env.cleanup();
  configured=await initializeTestEnvironment({projectId:'demo-lifeplan-sync-rulecheck',
    firestore:{...firestore,rules:template.replaceAll('__SET_SANDBOX_TEST_UID_PRIVATELY__',owner)}});
