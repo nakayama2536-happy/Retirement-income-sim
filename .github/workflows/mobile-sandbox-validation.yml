@@ -1,0 +1,45 @@
+name: Mobile sandbox diagnostic (no cloud)
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'tools/firebase-mobile/**'
+      - 'tools/firebase-emulator/encrypted-sandbox-check.mjs'
+      - 'sync-crypto.mjs'
+      - 'test_sync_mobile.mjs'
+      - 'tools/browser-test/mobile-sandbox-ui-check.mjs'
+      - '.github/workflows/mobile-sandbox-validation.yml'
+permissions:
+  contents: read
+concurrency:
+  group: mobile-sandbox-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  mobile-diagnostic:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify mobile policy and allowlisted bundle
+        run: node --test test_sync_mobile.mjs
+      - name: Install existing pinned browser dependency
+        working-directory: tools/browser-test
+        run: npm install --no-save --package-lock=false --ignore-scripts playwright@1.62.1
+      - name: Install isolated Chromium and WebKit
+        working-directory: tools/browser-test
+        run: npx --no-install playwright install --with-deps chromium webkit
+      - name: Test mobile HTTPS fixture with mocked Firebase only
+        run: node tools/browser-test/mobile-sandbox-ui-check.mjs
+      - name: Keep synthetic mobile evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mobile-sandbox-evidence
+          path: tools/browser-test/mobile-results/
+          if-no-files-found: warn
+          retention-days: 7
