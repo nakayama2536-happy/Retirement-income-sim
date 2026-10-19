@@ -27,6 +27,11 @@ export function prepareBundle(destination){
  const output=resolve(destination);
  // Do not overwrite any existing output or write inside the source tree.
  if(output===root||output.startsWith(root+'/'))throw Error('Choose a fresh destination outside the repository');
+ const approval=JSON.parse(readFileSync(resolve(here,'preview-approval.json'),'utf8'));
+ if(approval.approvalStatus!=='approved'||approval.project!==PROJECT||approval.site!==PROJECT||
+    approval.channel!==CHANNEL||approval.expires!=='14d'||approval.allowAutomaticExtension!==false||
+    approval.automaticDeploy!==false||approval.deployed!==false||approval.status!=='unpublished')
+  throw Error('Preview approval does not match the bounded 14-day candidate');
  const entries=Object.entries(FILES).map(([target,source])=>{
   const path=resolve(root,source);if(!lstatSync(path).isFile()||lstatSync(path).isSymbolicLink())throw Error('Non-regular source');
   return [target,readFileSync(path)];
@@ -41,8 +46,9 @@ export function prepareBundle(destination){
  const configuration={hosting:{site:PROJECT,public:'public',ignore:['firebase.json','**/.*'],headers:[{source:'**',headers:HEADERS}]}};
  writeFileSync(resolve(output,'firebase.json'),JSON.stringify(configuration,null,2)+'\n',{flag:'wx'});
  writeFileSync(resolve(output,'bundle-sha256.json'),JSON.stringify({build:BUILD,files:hashes},null,2)+'\n',{flag:'wx'});
- writeFileSync(resolve(output,'APPROVAL_REQUIRED.json'),JSON.stringify({status:'unpublished',project:PROJECT,channel:CHANNEL,expires:'7d',scope:'sandbox Hosting preview static files only',notAuthorized:['hosting-live','production-main','github-pages','personal-data','rules-or-auth-changes','billing'],automaticDeploy:false},null,2)+'\n',{flag:'wx'});
- return {build:BUILD,destination:output,publicFileCount:hashes.length,bytes:hashes.reduce((s,f)=>s+f.bytes,0),deployed:false};
+ // Legacy filename retained for bundle compatibility. The content records APPROVED, not deployed.
+ writeFileSync(resolve(output,'APPROVAL_REQUIRED.json'),JSON.stringify(approval,null,2)+'\n',{flag:'wx'});
+ return {build:BUILD,destination:output,publicFileCount:hashes.length,bytes:hashes.reduce((s,f)=>s+f.bytes,0),approvalStatus:approval.approvalStatus,expires:approval.expires,deployed:false};
 }
 if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url)){
  if(process.argv.length!==3)throw Error('Usage: node tools/firebase-mobile/prepare.mjs NEW_DIRECTORY_OUTSIDE_REPO');

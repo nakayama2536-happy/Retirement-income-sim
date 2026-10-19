@@ -7,6 +7,7 @@ on:
       - 'tools/firebase-emulator/encrypted-sandbox-check.mjs'
       - 'sync-crypto.mjs'
       - 'test_sync_mobile.mjs'
+      - 'test_sync_preview_approval.mjs'
       - 'tools/browser-test/mobile-sandbox-ui-check.mjs'
       - '.github/workflows/mobile-sandbox-validation.yml'
 permissions:
@@ -25,8 +26,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Verify mobile policy and allowlisted bundle
-        run: node --test test_sync_mobile.mjs
+      - name: Verify mobile policy and fourteen-day preview approval
+        run: node --test test_sync_mobile.mjs test_sync_preview_approval.mjs
       - name: Install existing pinned browser dependency
         working-directory: tools/browser-test
         run: npm install --no-save --package-lock=false --ignore-scripts playwright@1.62.1
@@ -35,6 +36,15 @@ jobs:
         run: npx --no-install playwright install --with-deps chromium webkit
       - name: Test mobile HTTPS fixture with mocked Firebase only
         run: node tools/browser-test/mobile-sandbox-ui-check.mjs
+      - name: Build approved static preview package without deployment
+        run: node tools/firebase-mobile/prepare.mjs "$RUNNER_TEMP/lifeplan-mobile-preview-candidate"
+      - name: Retain reviewed package for authenticated deployment
+        uses: actions/upload-artifact@v4
+        with:
+          name: mobile-preview-approved-14d
+          path: ${{ runner.temp }}/lifeplan-mobile-preview-candidate/
+          if-no-files-found: error
+          retention-days: 7
       - name: Keep synthetic mobile evidence
         if: always()
         uses: actions/upload-artifact@v4
