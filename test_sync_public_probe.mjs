@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {inspectConfig,boundedGet,probePublicPreview,compareSecurityHeaders,PREVIEW} from './tools/firebase-mobile/probe-public-config.mjs';
+import {inspectConfig,boundedGet,probePublicPreview,compareSecurityHeaders,inspectRobotsHeader,PREVIEW} from './tools/firebase-mobile/probe-public-config.mjs';
 const cfg={projectId:'lifeplan-sync-sandbox',authDomain:'lifeplan-sync-sandbox.firebaseapp.com',apiKey:'SYNTHETIC_NOT_TO_ECHO'};
 test('probe reports legacy config shape without values',()=>{
  const report=inspectConfig(JSON.stringify(cfg),'application/json');
@@ -43,4 +43,28 @@ test('missing or materially different security headers are never normalized to s
  const report=compareSecurityHeaders(new Headers({'Cache-Control':'max-age=3600','Content-Security-Policy':"default-src 'none'; script-src *"}),expected);
  assert.ok(report.every(x=>!x.equivalent));assert.ok(compareSecurityHeaders(new Headers(),expected).every(x=>!x.present&&!x.equivalent));
  assert.ok(report.every(x=>Object.keys(x).sort().join(',')==='equivalent,exactMatch,name,present'));
+});
+
+test('robots observation separates duplicate directives from an actual missing directive',()=>{
+ const x=inspectRobotsHeader('noindex, nofollow, noarchive, NOINDEX, nofollow');
+ assert.equal(x.duplicateDirectives,true);assert.equal(x.allExpectedDirectivesPresent,true);assert.equal(x.conflictingDirectives,false);assert.equal(x.unknownDirectiveCount,0);
+ const expected=[{key:'X-Robots-Tag',value:'noindex, nofollow, noarchive'}];
+ assert.equal(compareSecurityHeaders(new Headers({'X-Robots-Tag':'noindex, nofollow, noarchive, noindex'}),expected)[0].exactMatch,false);
+});
+test('robots observation does not equate noindex alone with every configured directive',()=>{
+ const x=inspectRobotsHeader('noindex');assert.equal(x.noindex,true);assert.equal(x.nofollow,false);assert.equal(x.noarchive,false);assert.equal(x.allExpectedDirectivesPresent,false);
+ assert.equal(inspectRobotsHeader('none, noarchive').allExpectedDirectivesPresent,true);
+});
+test('unknown crawler directives and scoped rules are counted but never echoed',()=>{
+ const x=inspectRobotsHeader('googlebot: noindex, SECRET_HEADER_VALUE, nofollow');
+ assert.equal(x.noindex,false);assert.equal(x.unknownDirectiveCount,2);assert.ok(!JSON.stringify(x).includes('SECRET'));assert.ok(!JSON.stringify(x).includes('googlebot'));
+});
+test('robots observation preserves missing, oversized and conflicting states',()=>{
+ assert.equal(inspectRobotsHeader(null).present,false);assert.equal(inspectRobotsHeader(null).parseable,false);
+ for(const v of ['',undefined,'x'.repeat(2049),'noindex,'.repeat(65)])assert.equal(inspectRobotsHeader(v).parseable,false);
+ assert.equal(inspectRobotsHeader('noindex, index').conflictingDirectives,true);assert.equal(inspectRobotsHeader('none, all').conflictingDirectives,true);
+});
+test('public probe records non-identifying robots diagnostics without changing pass criteria',async()=>{
+ const report=await probePublicPreview({fetcher:async url=>new Response(url.endsWith('init.json')?JSON.stringify(cfg):'fictional-static',{headers:{'Content-Type':'application/json','X-Robots-Tag':'noindex, nofollow, noarchive, noindex'}}),files:{'index.html':'fixture'},expectedHeaders:[{key:'X-Robots-Tag',value:'noindex, nofollow, noarchive'}],readExpected:()=>Buffer.from('fictional-static')});
+ assert.equal(report.files[0].securityHeadersMatch,false);assert.equal(report.files[0].robotsDirectives.allExpectedDirectivesPresent,true);assert.equal(report.files[0].robotsDirectives.duplicateDirectives,true);assert.equal(report.requests,2);assert.equal(report.writes,0);
 });

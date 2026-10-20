@@ -45,6 +45,22 @@ export function compareSecurityHeaders(headers,expectedHeaders){
   return {name,present:actual!==null,exactMatch:actual===value,equivalent:normalize(name,actual)===normalize(name,value)};
  });
 }
+// Explain only fixed crawler directives; never log raw/unknown header values.
+// This is an observation, not an authentication check or an indexing guarantee.
+export function inspectRobotsHeader(value){
+ const out={present:value!==null,parseable:false,noindex:false,nofollow:false,noarchive:false,duplicateDirectives:false,conflictingDirectives:false,unknownDirectiveCount:0,allExpectedDirectivesPresent:false};
+ if(typeof value!=='string'||!value.trim()||value.length>2048)return out;
+ const tokens=value.toLowerCase().split(',').map(x=>x.trim()).filter(Boolean);
+ if(tokens.length>64)return out;
+ const known=new Set(['noindex','nofollow','noarchive','none','index','follow','all','nosnippet','noimageindex','notranslate','nositelinkssearchbox','nocache']);
+ const unique=new Set(tokens);out.parseable=true;out.duplicateDirectives=unique.size!==tokens.length;
+ out.unknownDirectiveCount=tokens.filter(x=>!known.has(x)).length;
+ out.noindex=unique.has('noindex')||unique.has('none');
+ out.nofollow=unique.has('nofollow')||unique.has('none');out.noarchive=unique.has('noarchive');
+ out.conflictingDirectives=(out.noindex&&(unique.has('index')||unique.has('all')))||(out.nofollow&&(unique.has('follow')||unique.has('all')));
+ out.allExpectedDirectivesPresent=out.noindex&&out.nofollow&&out.noarchive;
+ return out;
+}
 export async function probePublicPreview({fetcher=fetch,files,expectedHeaders,readExpected}){
  const report={checkedAt:new Date().toISOString(),scope:'public-static-read-only',authenticated:false,writes:0,requests:0,config:null,files:[]};
  try{
@@ -64,7 +80,7 @@ export async function probePublicPreview({fetcher=fetch,files,expectedHeaders,re
    const hash=createHash('sha256').update(response.bytes).digest('hex');
    const expectedHash=createHash('sha256').update(readExpected(source)).digest('hex');
    const headerChecks=compareSecurityHeaders(response.headers,expectedHeaders);
-   report.files.push({path:target,status:response.status,sha256:hash,matchesCandidate:response.ok&&hash===expectedHash,matchesPreviousRelease:response.ok&&hash===(previous[target]??expectedHash),securityHeadersMatch:headerChecks.every(x=>x.exactMatch),securityHeadersEquivalent:headerChecks.every(x=>x.equivalent),headerChecks});
+   report.files.push({path:target,status:response.status,sha256:hash,matchesCandidate:response.ok&&hash===expectedHash,matchesPreviousRelease:response.ok&&hash===(previous[target]??expectedHash),securityHeadersMatch:headerChecks.every(x=>x.exactMatch),securityHeadersEquivalent:headerChecks.every(x=>x.equivalent),headerChecks,robotsDirectives:inspectRobotsHeader(response.headers.get('x-robots-tag'))});
   }catch{report.files.push({path:target,fetched:false,error:'PUBLIC_READ_UNAVAILABLE'});}
  }
  return report;
