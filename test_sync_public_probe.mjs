@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {inspectConfig,boundedGet,probePublicPreview,PREVIEW} from './tools/firebase-mobile/probe-public-config.mjs';
+import {inspectConfig,boundedGet,probePublicPreview,compareSecurityHeaders,PREVIEW} from './tools/firebase-mobile/probe-public-config.mjs';
 const cfg={projectId:'lifeplan-sync-sandbox',authDomain:'lifeplan-sync-sandbox.firebaseapp.com',apiKey:'SYNTHETIC_NOT_TO_ECHO'};
 test('probe reports legacy config shape without values',()=>{
  const report=inspectConfig(JSON.stringify(cfg),'application/json');
@@ -31,4 +31,16 @@ test('probe failure output does not echo network/SDK error bodies',async()=>{
 test('probe returns only sanitized config facts and static file hashes',async()=>{
  const report=await probePublicPreview({fetcher:async url=>new Response(url.endsWith('init.json')?JSON.stringify(cfg):'fictional-static',{headers:{'Content-Type':'application/json'}}),files:{'index.html':'fixture'},expectedHeaders:[],readExpected:()=>Buffer.from('fictional-static')});
  assert.equal(report.config.acceptedByCandidate,true);assert.equal(report.files[0].matchesCandidate,true);assert.equal(report.requests,2);assert.ok(!JSON.stringify(report).includes('SYNTHETIC_NOT_TO_ECHO'));
+});
+
+test('public security-header comparison distinguishes harmless separator whitespace',()=>{
+ const expected=[{key:'Cache-Control',value:'no-store, max-age=0'},{key:'Content-Security-Policy',value:"default-src 'none'; script-src 'self'"}];
+ const report=compareSecurityHeaders(new Headers({'Cache-Control':'max-age=0,no-store','Content-Security-Policy':"script-src 'self'; default-src   'none';"}),expected);
+ assert.ok(report.every(x=>x.present&&x.equivalent));assert.ok(report.every(x=>!x.exactMatch));
+});
+test('missing or materially different security headers are never normalized to success',()=>{
+ const expected=[{key:'Cache-Control',value:'no-store, max-age=0'},{key:'Content-Security-Policy',value:"default-src 'none'; script-src 'self'"}];
+ const report=compareSecurityHeaders(new Headers({'Cache-Control':'max-age=3600','Content-Security-Policy':"default-src 'none'; script-src *"}),expected);
+ assert.ok(report.every(x=>!x.equivalent));assert.ok(compareSecurityHeaders(new Headers(),expected).every(x=>!x.present&&!x.equivalent));
+ assert.ok(report.every(x=>Object.keys(x).sort().join(',')==='equivalent,exactMatch,name,present'));
 });

@@ -32,6 +32,19 @@ export async function boundedGet(path,fetcher=fetch){
   return {status:response.status,ok:response.ok,headers:response.headers,bytes};
  }finally{clearTimeout(timer);}
 }
+export function compareSecurityHeaders(headers,expectedHeaders){
+ const normalize=(key,value)=>{
+  if(value===null)return null;
+  if(key==='content-security-policy')return value.split(';').map(x=>x.trim().replace(/\s+/g,' ')).filter(Boolean).sort().join(';');
+  if(['cache-control','x-robots-tag','permissions-policy'].includes(key))return value.split(',').map(x=>x.trim()).sort().join(',');
+  return value.trim();
+ };
+ // Emit only fixed header names and comparison booleans, never raw response values.
+ return expectedHeaders.map(({key,value})=>{
+  const name=key.toLowerCase(),actual=headers.get(key);
+  return {name,present:actual!==null,exactMatch:actual===value,equivalent:normalize(name,actual)===normalize(name,value)};
+ });
+}
 export async function probePublicPreview({fetcher=fetch,files,expectedHeaders,readExpected}){
  const report={checkedAt:new Date().toISOString(),scope:'public-static-read-only',authenticated:false,writes:0,requests:0,config:null,files:[]};
  try{
@@ -50,7 +63,8 @@ export async function probePublicPreview({fetcher=fetch,files,expectedHeaders,re
    const response=await boundedGet('/'+target,fetcher);
    const hash=createHash('sha256').update(response.bytes).digest('hex');
    const expectedHash=createHash('sha256').update(readExpected(source)).digest('hex');
-   report.files.push({path:target,status:response.status,sha256:hash,matchesCandidate:response.ok&&hash===expectedHash,matchesPreviousRelease:response.ok&&hash===(previous[target]??expectedHash),securityHeadersMatch:expectedHeaders.every(({key,value})=>response.headers.get(key)===value)});
+   const headerChecks=compareSecurityHeaders(response.headers,expectedHeaders);
+   report.files.push({path:target,status:response.status,sha256:hash,matchesCandidate:response.ok&&hash===expectedHash,matchesPreviousRelease:response.ok&&hash===(previous[target]??expectedHash),securityHeadersMatch:headerChecks.every(x=>x.exactMatch),securityHeadersEquivalent:headerChecks.every(x=>x.equivalent),headerChecks});
   }catch{report.files.push({path:target,fetched:false,error:'PUBLIC_READ_UNAVAILABLE'});}
  }
  return report;
