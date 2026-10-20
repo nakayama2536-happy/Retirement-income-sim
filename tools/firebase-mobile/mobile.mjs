@@ -11,14 +11,16 @@ function environment(){
  // This key is an incomplete-test marker only; never read financial app keys.
  if(localStorage.getItem(MARKER))failure('unfinished');
 }
-function showReport(sessionClosed){element('report').value=summary(result,sessionClosed);element('copy').disabled=false;}
+function showReport(sessionClosed){element('report').value=summary(result,sessionClosed,config?(Object.hasOwn(config,'appId')?'with-app-id':'without-app-id'):'not-checked');element('copy').disabled=false;}
 try{environment();prepare.disabled=false;setup.textContent='未接続。ボタンで検証用の接続先を確認してください。';}
 catch(error){setup.textContent=safeMessage(error);}
 prepare.addEventListener('click',async()=>{
  prepare.disabled=true;setup.textContent='検証用の接続先を確認しています。認証・書込みはまだ行いません。';
  const abort=new AbortController(),timeout=setTimeout(()=>abort.abort(),10000);
  try{environment();config=await loadHostingConfig(fetch,{signal:abort.signal});fields.disabled=false;
-  setup.textContent='接続先の設定を確認しました：'+PROJECT+'。検証用アカウントを入力してください。';}
+  setup.textContent='接続先の設定を確認しました：'+PROJECT+'。'+
+   (Object.hasOwn(config,'appId')?'':'appIdは提供されていないため、認証・Firestoreだけを検証します。')+
+   '検証用アカウントを入力してください。';}
  catch(error){config=null;fields.disabled=true;setup.textContent=safeMessage(error);}
  finally{clearTimeout(timeout);}
 });

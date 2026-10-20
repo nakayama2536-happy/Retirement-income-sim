@@ -7,6 +7,7 @@ on:
       - 'docs/firebase-sync-firestore.rules.example'
       - 'docs/firebase-sync-sandbox.rules.example'
       - 'sync-*.mjs'
+      - 'tools/firebase-mobile/mobile-policy.mjs'
       - 'tools/firebase-emulator/**'
       - '.github/workflows/firebase-rules-emulator.yml'
   workflow_dispatch:
@@ -41,3 +42,9 @@ jobs:
       - name: Verify real Firestore Security Rules interpreter using synthetic identities only
         working-directory: tools/firebase-emulator
         run: npm run test:emulator
+      - name: Pin SDK to the existing mobile diagnostic version
+        working-directory: tools/firebase-emulator
+        run: npm install --no-save --no-package-lock --no-audit --no-fund --ignore-scripts firebase@12.19.0
+      - name: Verify appId-present and appId-absent configs with real local Auth and Firestore
+        working-directory: tools/firebase-emulator
+        run: npx --no-install firebase emulators:exec --only auth,firestore --project demo-lifeplan-encrypted-sync --config config-compat.firebase.json "node sdk-config-compat.test.mjs"

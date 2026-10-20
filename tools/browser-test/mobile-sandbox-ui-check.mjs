@@ -7,9 +7,12 @@ import {fileURLToPath} from 'node:url';
 import {FILES,HEADERS} from '../firebase-mobile/prepare.mjs';
 import {PROJECT,MARKER,LOCK,BUILD} from '../firebase-mobile/mobile-policy.mjs';
 const root=resolve(dirname(fileURLToPath(import.meta.url)),'../..');
-const out=resolve(root,'tools/browser-test/mobile-results');await mkdir(out,{recursive:true});
+const variant=process.env.MOBILE_CONFIG_VARIANT??'with-app-id';
+assert.ok(['with-app-id','without-app-id'].includes(variant));
+const out=resolve(root,'tools/browser-test/mobile-results',variant);await mkdir(out,{recursive:true});
 const host='lifeplan-sync-sandbox--encrypted-mobile-synthetic.web.app';
 const cfg={projectId:PROJECT,authDomain:PROJECT+'.firebaseapp.com',apiKey:'synthetic-api-key',appId:'synthetic-app'};
+if(variant==='without-app-id')delete cfg.appId;
 const headers=Object.fromEntries(HEADERS.map(x=>[x.key,x.value]));
 const core=`
 export function initializeApp(options,name){globalThis.__cloud??={doc:null,writes:0,deletes:0,closed:0,tail:Promise.resolve()};return {options,name};}
@@ -17,7 +20,7 @@ export async function deleteApp(){globalThis.__cloud.closed++;}
 `;
 function auth(mode){return `
 export const inMemoryPersistence='memory';
-export function initializeAuth(app,options){if(options.persistence!=='memory')throw Error('unsafe-persistence');return {app};}
+export function initializeAuth(app,options){if(${variant==='without-app-id'}&&Object.hasOwn(app.options,'appId'))throw Error('fabricated-app-id');if(options.persistence!=='memory')throw Error('unsafe-persistence');return {app};}
 export async function signInWithEmailAndPassword(auth,email,password){if(!email||!password)throw Error('missing');auth.app.signedIn=true;return {user:{uid:'synthetic-mobile-user'}};}
 export async function getIdTokenResult(user){return {claims:{aud:'lifeplan-sync-sandbox',iss:'${mode==='wrong'?'https://securetoken.google.com/other':'https://securetoken.google.com/lifeplan-sync-sandbox'}',sub:user.uid}};}
 export async function signOut(auth){auth.app.signedIn=false;}
@@ -31,7 +34,7 @@ export function serverTimestamp(){return {syntheticTimestamp:true};}
 export function runTransaction(db,fn){const c=globalThis.__cloud;const task=c.tail.then(async()=>{if(!db.app.signedIn)throw Object.assign(new Error('denied'),{code:'permission-denied'});let pending;const value=await fn({get:async()=>snap(),set(_r,v){pending=structuredClone(v);},delete(){pending=null;}});if(pending!==undefined){c.doc=pending;if(pending===null)c.deletes++;else c.writes++;}return value;});c.tail=task.catch(()=>{});return task;}
 export async function terminate(){}
 `;
-const report={build:BUILD,scope:'isolated HTTPS fixtures; real browser crypto; mocked Firebase; no real iPhone, cloud or personal data',engines:[]};
+const report={build:BUILD,variant,scope:'isolated HTTPS fixtures; real browser crypto; mocked Firebase; no real iPhone, cloud or personal data',engines:[]};
 for(const [name,engine] of [['chromium',chromium],['webkit',webkit]]){
  const record={name,version:null,cases:[]};report.engines.push(record);let browser;
  const passed=title=>{record.cases.push({name:title,pass:true});console.log('MOBILE_PASS '+name+' '+title);};
@@ -69,7 +72,8 @@ for(const [name,engine] of [['chromium',chromium],['webkit',webkit]]){
   assert.equal(await page.locator('#prepare').isEnabled(),true);assert.equal(await page.locator('#email').isDisabled(),true);
   assert.deepEqual(f.requests,{config:0,sdk:0,blocked:[]});passed('initial load has no config, auth or cloud request');
   await page.locator('#prepare').click();await page.waitForFunction(()=>!document.querySelector('#fields').disabled);
-  assert.equal(f.requests.config,1);assert.equal(f.requests.sdk,0);assert.equal(await page.locator('input').count(),3);passed('automatic sandbox config replaces manual parameter entry');
+  assert.equal(f.requests.config,1);assert.equal(f.requests.sdk,0);assert.equal(await page.locator('input').count(),3);
+  if(variant==='without-app-id')assert.match(await page.locator('#setupStatus').innerText(),/appIdは提供されていない/);passed('automatic sandbox config replaces manual parameter entry');
   await page.evaluate(()=>localStorage.setItem('lifeplan-sim-state-v1','FICTIONAL-KEEP-UNCHANGED'));
   await fill(page);await page.locator('#run').click();
   await page.waitForFunction(()=>document.querySelector('#status').textContent.startsWith('12/12 成功'),{},{timeout:45000});
@@ -77,7 +81,7 @@ for(const [name,engine] of [['chromium',chromium],['webkit',webkit]]){
   assert.deepEqual(values,{doc:null,writes:2,deletes:1,closed:3,marker:null,saved:'FICTIONAL-KEEP-UNCHANGED'});
   assert.equal(await page.locator('#email').inputValue(),'');assert.equal(await page.locator('#password').inputValue(),'');assert.equal(await page.locator('#run').isDisabled(),true);
   assert.equal(await page.locator('#steps li').count(),12);assert.equal(f.requests.sdk,3);assert.deepEqual(f.requests.blocked,[]);passed('12 encrypted stages, exact cleanup, logout and unrelated stored state retained');
-  const text=await page.locator('#report').inputValue();assert.match(text,/12\/12 成功/);assert.ok(!/fictional@example|synthetic-mobile-user|synthetic-api-key|fictional-only-password/.test(text));
+  const text=await page.locator('#report').inputValue();assert.match(text,/12\/12 成功/);if(variant==='without-app-id')assert.match(text,/appId未提供/);assert.ok(!/fictional@example|synthetic-mobile-user|synthetic-api-key|fictional-only-password/.test(text));
   for(const width of [375,390,1280]){
    await page.setViewportSize({width,height:900});assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);
    assert.ok(await page.locator('#copy').evaluate(n=>n.getBoundingClientRect().height>=44));
@@ -102,4 +106,4 @@ for(const [name,engine] of [['chromium',chromium],['webkit',webkit]]){
  finally{if(browser)await browser.close();record.passed=record.cases.length;}
 }
 await writeFile(resolve(out,'report.json'),JSON.stringify(report,null,2)+'\n');
-const total=report.engines.reduce((n,e)=>n+e.passed,0);console.log('MOBILE_BROWSER_SUMMARY '+JSON.stringify({total,engines:report.engines.map(({name,passed,error})=>({name,passed,error})),realFirebase:false,realIPhone:false}));
+const total=report.engines.reduce((n,e)=>n+e.passed,0);console.log('MOBILE_BROWSER_SUMMARY '+JSON.stringify({total,variant,engines:report.engines.map(({name,passed,error})=>({name,passed,error})),realFirebase:false,realIPhone:false}));
