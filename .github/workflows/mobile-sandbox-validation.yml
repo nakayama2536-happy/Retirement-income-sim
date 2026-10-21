@@ -4,6 +4,9 @@ on:
     branches: [main]
     paths:
       - 'tools/firebase-mobile/**'
+      - 'tools/firebase-pair/**'
+      - 'test_sync_pair_check.mjs'
+      - 'tools/browser-test/paired-preview-ui-check.mjs'
       - 'tools/firebase-emulator/encrypted-sandbox-check.mjs'
       - 'sync-crypto.mjs'
       - 'test_sync_mobile.mjs'
@@ -55,6 +58,29 @@ jobs:
         run: node tools/browser-test/prepare.mjs
       - name: Verify actual sync panel in separate desktop and mobile browser contexts
         run: node tools/browser-test/two-device-sync-app.mjs
+      - name: Validate unapproved cross-device pair policy and package
+        run: |
+          node --check tools/firebase-pair/pair.mjs
+          node --test test_sync_pair_check.mjs
+      - name: Package isolated two-device preview candidate without deployment
+        run: node tools/firebase-pair/prepare.mjs "$RUNNER_TEMP/lifeplan-pair-check-candidate"
+      - name: Exercise paired diagnostic in independent Chromium and WebKit browsers (mock Firebase only)
+        run: node tools/browser-test/paired-preview-ui-check.mjs "$RUNNER_TEMP/lifeplan-pair-check-candidate"
+      - name: Retain separate preview candidate requiring explicit authorization
+        uses: actions/upload-artifact@v4
+        with:
+          name: pair-check-candidate-NO-DEPLOY
+          path: ${{ runner.temp }}/lifeplan-pair-check-candidate/
+          if-no-files-found: error
+          retention-days: 7
+      - name: Retain paired browser diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pair-check-browser-evidence
+          path: tools/browser-test/mobile-results/paired-preview/
+          if-no-files-found: warn
+          retention-days: 7
       - name: Build correction candidate without deployment or expiry changes
         run: |
           node tools/firebase-mobile/prepare.mjs "$RUNNER_TEMP/lifeplan-mobile-preview-candidate"
