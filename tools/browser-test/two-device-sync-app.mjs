@@ -74,7 +74,7 @@ const mark=(name)=>{report.cases.push({name,pass:true});console.log('ACTUAL_APP_
 const readState=page=>page.evaluate(()=>JSON.parse(localStorage.getItem('lifeplan-sim-state-v1')));
 const readMarker=page=>page.evaluate(()=>JSON.parse(localStorage.getItem('lifeplan-private-sync-marker-v1')));
 const status=page=>page.locator('#privateSyncContainer [role="status"]').innerText();
-const wait=(page,text)=>page.waitForFunction(expected=>document.querySelector('#privateSyncContainer [role="status"]')?.textContent?.includes(expected),text,{timeout:30000});
+const wait=async(page,text)=>{await page.waitForFunction(expected=>{const s=document.querySelector('#privateSyncContainer [role="status"]')?.textContent??'';return s.includes(expected)||s.includes('同期停止');},text,{timeout:30000});const observed=await status(page);if(!observed.includes(text))throw Error('Unexpected sync status ('+text+'): '+observed.slice(0,320));};
 const click=(page,label)=>page.getByRole('button',{name:label,exact:true}).click();
 const edit=(page,value)=>page.evaluate(value=>{const k='lifeplan-sim-state-v1';const state=JSON.parse(localStorage.getItem(k));state.config.plan.initialAsset=value;localStorage.setItem(k,JSON.stringify(state));},value);
 let pcBrowser,phoneBrowser,pcContext,phoneContext,pc,phone;
