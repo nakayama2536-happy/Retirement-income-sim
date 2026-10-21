@@ -94,7 +94,7 @@ async function context(browser,seed,viewport){
 async function open(ctx){
  const page=await ctx.newPage();page.setDefaultTimeout(25000);
  await page.goto(origin+'/',{waitUntil:'domcontentloaded'});
- await page.locator('#privateSyncContainer [name="syncApiKey"]').waitFor();
+ await page.locator('#privateSyncContainer [name="syncApiKey"]').waitFor({state:'attached'});
  await page.locator('[data-group="manage"]').click();
  await page.locator('[data-tab="settings"]').click();
  const details=page.locator('#privateSyncCard details');
