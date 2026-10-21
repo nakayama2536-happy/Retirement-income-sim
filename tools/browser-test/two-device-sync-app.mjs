@@ -74,13 +74,13 @@ const mark=(name)=>{report.cases.push({name,pass:true});console.log('ACTUAL_APP_
 const readState=page=>page.evaluate(()=>JSON.parse(localStorage.getItem('lifeplan-sim-state-v1')));
 const readMarker=page=>page.evaluate(()=>JSON.parse(localStorage.getItem('lifeplan-private-sync-marker-v1')));
 const status=page=>page.locator('#privateSyncContainer [role="status"]').innerText();
-const wait=async(page,text)=>{await page.waitForFunction(expected=>{const s=document.querySelector('#privateSyncContainer [role="status"]')?.textContent??'';return s.includes(expected)||s.includes('同期停止');},text,{timeout:30000});const observed=await status(page);if(!observed.includes(text))throw Error('Unexpected sync status ('+text+'): '+observed.slice(0,320));};
+const wait=async(page,text)=>{await page.waitForFunction(expected=>{const s=document.querySelector('#privateSyncContainer [role="status"]')?.textContent??'';return s.includes(expected)||s.includes('同期停止');},text,{timeout:30000});const observed=await status(page);if(!observed.includes(text)){const debug=await page.evaluate(()=>({activeTag:document.activeElement?.tagName,activeId:document.activeElement?.id,activeName:document.activeElement?.getAttribute?.('name'),inSync:!!document.activeElement?.closest?.('#privateSyncContainer'),otherFocused:!!document.activeElement?.closest?.('#dashboard input, #dashboard select, #dashboard textarea'),pensionDirty:document.querySelector('#pensionState')?.dataset?.dirty,salaryDirty:document.querySelector('#salaryState')?.dataset?.dirty,externalEvents:(window.__testExternalEvents||[]).slice(-12)}));throw Error('Unexpected sync status ('+text+'): '+observed.slice(0,250)+' GUARD '+JSON.stringify(debug));}};
 const click=(page,label)=>page.getByRole('button',{name:label,exact:true}).click();
 const edit=(page,value)=>page.evaluate(value=>{const k='lifeplan-sim-state-v1';const state=JSON.parse(localStorage.getItem(k));state.config.plan.initialAsset=value;localStorage.setItem(k,JSON.stringify(state));},value);
 let pcBrowser,phoneBrowser,pcContext,phoneContext,pc,phone;
 async function context(browser,seed,viewport){
  const result=await browser.newContext({viewport,acceptDownloads:true,serviceWorkers:'block'});
- await result.addInitScript(seed=>{if(!localStorage.getItem('lifeplan-sim-state-v1'))localStorage.setItem('lifeplan-sim-state-v1',JSON.stringify(seed));},seed);
+ await result.addInitScript(seed=>{if(!localStorage.getItem('lifeplan-sim-state-v1'))localStorage.setItem('lifeplan-sim-state-v1',JSON.stringify(seed));window.__testExternalEvents=[];for(const type of ['input','change'])document.addEventListener(type,event=>{const el=event.target;if(el?.closest?.('#dashboard')&&!el?.closest?.('#privateSyncContainer'))window.__testExternalEvents.push({type,tag:el.tagName,id:el.id||'',name:el.getAttribute?.('name')||''});},true);},seed);
  await result.route('**/*',async route=>{
   const u=new URL(route.request().url());
   if(u.origin===origin)return route.continue();
