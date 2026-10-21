@@ -51,6 +51,10 @@ jobs:
         env:
           MOBILE_CONFIG_VARIANT: without-app-id
         run: node tools/browser-test/mobile-sandbox-ui-check.mjs
+      - name: Stage real candidate app files from manifest in isolated environment
+        run: node tools/browser-test/prepare.mjs
+      - name: Verify actual sync panel in separate desktop and mobile browser contexts
+        run: node tools/browser-test/two-device-sync-app.mjs
       - name: Build correction candidate without deployment or expiry changes
         run: |
           node tools/firebase-mobile/prepare.mjs "$RUNNER_TEMP/lifeplan-mobile-preview-candidate"
