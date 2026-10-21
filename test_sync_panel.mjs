@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import {mountSyncPanel,SYNC_PUBLIC_CONFIG_KEY,SYNC_MARKER_KEY,SYNC_REVIEW_KEY} from './sync-panel.mjs';
+import {mountSyncPanel,hasExternalEditorFocus,SYNC_PUBLIC_CONFIG_KEY,SYNC_MARKER_KEY,SYNC_REVIEW_KEY} from './sync-panel.mjs';
 import {FakeCipherCloud} from './sync-policy.mjs';
 import {encryptSnapshot} from './sync-crypto.mjs';
 class NodeElement{
@@ -104,4 +104,16 @@ test('editing a different screen invalidates cloud import review without replaci
  await btn(root,'確認したクラウドをこの端末へ初回取込').emit('click');
  assert.equal(replaced,0);assert.equal(cloud.writes,0);
  panel.destroy();
+});
+
+test('focused Firebase sync inputs are not mistaken for unsaved financial edits in Safari',()=>{
+ const focused=(isSync)=>({closest(selector){
+  if(selector==='#dashboard input, #dashboard select, #dashboard textarea')return this;
+  if(selector==='#privateSyncContainer')return isSync?{}:null;
+  return null;
+ }});
+ assert.equal(hasExternalEditorFocus({activeElement:focused(true)}),false);
+ assert.equal(hasExternalEditorFocus({activeElement:focused(false)}),true);
+ assert.equal(hasExternalEditorFocus({activeElement:{closest:()=>null}}),false);
+ assert.equal(hasExternalEditorFocus(null),false);
 });

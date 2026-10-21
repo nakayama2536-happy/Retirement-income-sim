@@ -7,6 +7,14 @@ export const SYNC_MARKER_KEY='lifeplan-private-sync-marker-v1';
 export const SYNC_ROLLBACK_KEY='lifeplan-private-sync-previous-v1';
 export const SYNC_REVIEW_KEY='lifeplan-private-sync-pending-review-v1';
 const parse=(s)=>{try{return s?JSON.parse(s):null;}catch{return null;}};
+// Focus remaining on Firebase inputs is not a pending edit in the financial dashboard.
+// Safari/WebKit may retain input focus when a button is clicked.
+export function hasExternalEditorFocus(doc){
+ const active=doc?.activeElement;
+ return Boolean(active?.closest?.('#dashboard input, #dashboard select, #dashboard textarea')&&
+   !active?.closest?.('#privateSyncContainer'));
+}
+
 export function mountSyncPanel(root,{getState,replaceLocal,validateState,afterReplace=()=>{},writeAllowed=()=>true,
  createStore=createFirebaseStore,storage=globalThis.localStorage,windowRef=globalThis.window,documentRef=root?.ownerDocument??globalThis.document}={}){
  if(!root||typeof getState!=='function'||typeof replaceLocal!=='function'||typeof validateState!=='function')throw TypeError('同期設定の初期化が不正です。');
@@ -60,8 +68,7 @@ export function mountSyncPanel(root,{getState,replaceLocal,validateState,afterRe
  const hasPendingEdits=()=>{
   const pension=documentRef?.querySelector?.('#pensionState')?.dataset?.dirty==='true';
   const salary=documentRef?.querySelector?.('#salaryState')?.dataset?.dirty==='true';
-  const focus=documentRef?.activeElement?.closest?.('#dashboard input, #dashboard select, #dashboard textarea');
-  return pendingEditorChange||pension||salary||Boolean(focus);
+  return pendingEditorChange||pension||salary||hasExternalEditorFocus(documentRef);
  };
  const refuseUnsavedEdits=()=>{
   if(hasPendingEdits())throw Error('別の入力欄に未保存の下書きがある可能性があります。必要な入力を保存・控えて画面を開き直し、クラウドと端末の差分を再確認してください。');
