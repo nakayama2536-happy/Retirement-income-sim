@@ -1,0 +1,30 @@
+name: Pair preview public delivery read-only check
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'tools/firebase-pair/probe-published-readonly.mjs'
+      - '.github/workflows/pair-preview-live-readonly.yml'
+permissions:
+  contents: read
+jobs:
+  readonly-preview:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Inspect public preview, compare exact eight byte hashes (no Firebase auth)
+        run: node tools/firebase-pair/probe-published-readonly.mjs "$RUNNER_TEMP/pair-check-readonly.json"
+      - name: Retain nonsecret read-only hosting report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pair-check-public-readonly
+          path: ${{ runner.temp }}/pair-check-readonly.json
+          if-no-files-found: warn
+          retention-days: 7
