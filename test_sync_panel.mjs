@@ -2,6 +2,9 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import {mountSyncPanel,hasExternalEditorFocus,SYNC_PUBLIC_CONFIG_KEY,SYNC_MARKER_KEY,SYNC_REVIEW_KEY} from './sync-panel.mjs';
+import {salaryDraftNeedsProtection} from './salary-ui.mjs';
+import {salaryDraftFromConfig} from './salary-workflow.mjs';
+
 import {FakeCipherCloud} from './sync-policy.mjs';
 import {encryptSnapshot} from './sync-crypto.mjs';
 class NodeElement{
@@ -116,4 +119,20 @@ test('focused Firebase sync inputs are not mistaken for unsaved financial edits 
  assert.equal(hasExternalEditorFocus({activeElement:focused(false)}),true);
  assert.equal(hasExternalEditorFocus({activeElement:{closest:()=>null}}),false);
  assert.equal(hasExternalEditorFocus(null),false);
+});
+
+test('legacy salary suggestion without editing is not an unsaved draft, but saved edits remain protected',()=>{
+ const original=JSON.parse(fs.readFileSync(new URL('./tools/browser-test/synthetic-full.json',import.meta.url),'utf8')).config;
+ assert.equal(original.cashflow?.salaryLife,undefined);
+ const automatic=salaryDraftFromConfig(original);
+ assert.equal(salaryDraftNeedsProtection(original,automatic,false),false);
+ assert.equal(salaryDraftNeedsProtection(original,automatic,true),true);
+ const changed=structuredClone(automatic);changed.settings.monthlyAddition='4321';
+ assert.equal(salaryDraftNeedsProtection(original,changed,true),true);
+ // If a salary-life mode was already adopted, an unmatched draft stays protected.
+ const adopted=structuredClone(original);adopted.cashflow.salaryLife=structuredClone(automatic.settings);
+ const adoptedDraft=salaryDraftFromConfig(adopted);
+ assert.equal(salaryDraftNeedsProtection(adopted,adoptedDraft,false),false);
+ const different=structuredClone(adoptedDraft);different.settings.lastSalaryMonth='2040-01';
+ assert.equal(salaryDraftNeedsProtection(adopted,different,false),true);
 });

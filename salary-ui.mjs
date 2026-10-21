@@ -11,12 +11,19 @@ const option=(value,label)=>`<option value="${esc(value)}">${esc(label)}</option
 const receiptOptions=()=>option('','未確認')+option('separate','別枠で資産に計上')+option('net_transfer','追加・取崩しに含む');
 const fundingValue=v=>v?.source?`${v.source}${v.accounting?':'+v.accounting:''}`:'';
 const fundingObject=value=>{if(!value)return undefined;const [source,accounting]=value.split(':');return accounting?{source,accounting}:{source};};
+// Used only for cloud-import safety. The displayed "legacy mode not yet adopted"
+// does not itself mean there is a pending user edit. Never adopt a new mode here.
+export function salaryDraftNeedsProtection(config,draft,hasUserDraft=false){
+ if(!config||!draft)return false;
+ return !salaryDraftMatches(config,draft) && (Boolean(config.cashflow?.salaryLife)||Boolean(hasUserDraft));
+}
+
 
 export function mountSalarySheet({getState,onCommit,showNotice}){
-  let draft=null,preview=null,busy=false;
+  let draft=null,preview=null,busy=false,hasUserSalaryDraft=false;
   const error=message=>{el('salaryError').textContent=message;el('salaryError').hidden=!message;};
   function invalidate(){preview=null;el('salaryPreview').hidden=true;el('salaryApply').disabled=true;el('salarySaveScenario').disabled=true;}
-  function persist(){try{saveSalaryDraft(getState().config,draft);el('salaryDraftNote').textContent='入力中の条件をこの端末に保存しました。集計表は反映するまで変わりません。';}catch{el('salaryDraftNote').textContent='入力を保存できませんでした。画面を閉じると入力が失われます。採用済み設定は変更していません。';}}
+  function persist(){hasUserSalaryDraft=true;try{saveSalaryDraft(getState().config,draft);el('salaryDraftNote').textContent='入力中の条件をこの端末に保存しました。集計表は反映するまで変わりません。';}catch{el('salaryDraftNote').textContent='入力を保存できませんでした。画面を閉じると入力が失われます。採用済み設定は変更していません。';}}
   function read(){
     const d=structuredClone(draft),s=d.settings;
     for(const k of ['lastSalaryMonth','monthlyAddition','monthlyWithdrawal','pre65MonthlyBudget'])s[k]=el('salary_'+k).value;
@@ -32,7 +39,9 @@ export function mountSalarySheet({getState,onCommit,showNotice}){
     const c=getState().config;if(!c||!draft)return;
     const matches=salaryDraftMatches(c,draft);
     el('salaryState').textContent=matches?'反映済み':c.cashflow?.salaryLife?'未反映の変更あり':'旧方式を使用中・新方式は未反映';
-    el('salaryState').dataset.dirty=String(!matches);
+    // The legacy-mode default is only a proposal, not a user-edited draft.
+    // An explicitly saved/edited draft still blocks cloud import even in legacy mode.
+    el('salaryState').dataset.dirty=String(salaryDraftNeedsProtection(c,draft,hasUserSalaryDraft));
     el('salaryUndo').disabled=busy||!salaryUndoAvailable(c);
     el('salary_switchMonth').textContent=dateWithAge(nextMonth(draft.settings.lastSalaryMonth),c);
     el('salary_lastSalaryMonthAge').textContent=dateAgeHint(draft.settings.lastSalaryMonth,c);
@@ -80,7 +89,7 @@ export function mountSalarySheet({getState,onCommit,showNotice}){
   }
   function render(){
     const c=getState().config;if(!c)return;
-    if(!draft){draft=loadSalaryDraft(c)||salaryDraftFromConfig(c);buildInputs(c);el('salaryDraftNote').textContent='入力は集計表と別に保存します。まだ反映していません。';}
+    if(!draft){const savedDraft=loadSalaryDraft(c);draft=savedDraft||salaryDraftFromConfig(c);hasUserSalaryDraft=!!savedDraft;buildInputs(c);el('salaryDraftNote').textContent='入力は集計表と別に保存します。まだ反映していません。';}
     const adopted=c.cashflow?.salaryLife;
     el('salaryAdopted').textContent=adopted?`採用中：給与生活 ${dateWithAge(adopted.lastSalaryMonth,c)}まで、生活費負担 ${dateWithAge(nextMonth(adopted.lastSalaryMonth),c)}から。追加 ${money(adopted.monthlyAddition)}/月、取崩し ${money(adopted.monthlyWithdrawal)}/月。`:'採用中：旧方式。新方式の試算・比較だけでは現在の計画を変更しません。';
     el('salaryExistingLabor').innerHTML='<strong>登録済みの個別条件（採用中）</strong><ul>'+[['primary','本人'],['spouse','配偶者']].flatMap(([person,label])=>[['regularWork','正社員'],['sideWork','アルバイト']].map(([job,title])=>{const v=c.employment?.[person]?.[job];return `<li>${label}${title}：${v?esc(money(v.monthlyGross))+'/月 ／ 開始 '+esc(dateWithAge(v.startDate,c,person))+' ／ 終了日 '+esc(dateWithAge(v.endDate,c,person))+' ／ 最終計上月 '+esc(dateWithAge(previousMonth(v.endDate),c,person)):'未設定'}</li>`;})).join('')+'</ul><p class="muted">開始月を含み、終了月を含みません。給与生活中は上の家計と資産の入出金で扱います。</p>';
@@ -104,7 +113,7 @@ export function mountSalarySheet({getState,onCommit,showNotice}){
     el('salaryPreview').scrollIntoView?.({block:'start',behavior:'smooth'});
   }
   function changed(){draft=read();invalidate();error('');persist();state();}
-  function reset({forget=true}={}){invalidate();draft=null;error('');if(forget){try{clearSalaryDraft();}catch{}}}
+  function reset({forget=true}={}){invalidate();draft=null;hasUserSalaryDraft=false;error('');if(forget){try{clearSalaryDraft();}catch{}}}
   el('salaryForm').addEventListener('input',event=>{if(event.target.id==='salary_lastSalaryMonth')el('salary_monthsConfirmed').value='';changed();});
   el('salaryIdecoInputs').addEventListener('input',()=>changed());
   el('salaryForm').addEventListener('submit',event=>{event.preventDefault();error('');draft=read();persist();try{preview=previewSalary(getState(),draft);renderPreview();}catch(e){invalidate();error(e.message);}});
