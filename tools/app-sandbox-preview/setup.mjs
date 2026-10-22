@@ -82,6 +82,7 @@ for(const [name,role] of [['seedPc','pc'],['seedPhone','phone']]){
 }
 byId('cleanup').addEventListener('click',async()=>{
  buttons.forEach(b=>b.disabled=true);
+ result.textContent='架空試験文書を照合中です。完了まで操作しないでください。';
  try{
   const client=await import('/tools/app-sandbox-preview/cleanup.mjs');
   result.textContent=await client.cleanupSandboxTrial({
