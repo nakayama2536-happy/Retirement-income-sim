@@ -1,0 +1,50 @@
+name: Firebase Security Rules emulator (synthetic)
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'docs/firebase-sync-firestore.rules.example'
+      - 'docs/firebase-sync-sandbox.rules.example'
+      - 'sync-*.mjs'
+      - 'tools/firebase-mobile/mobile-policy.mjs'
+      - 'tools/firebase-emulator/**'
+      - '.github/workflows/firebase-rules-emulator.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: firebase-rules-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  firestore-rules:
+    name: Deny-by-default owner-only rules (emulator)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - name: Install isolated Firebase test packages
+        working-directory: tools/firebase-emulator
+        run: npm install --no-audit --no-fund --no-package-lock
+      - name: Stage exact development rules in isolated emulator folder
+        working-directory: tools/firebase-emulator
+        run: cp ../../docs/firebase-sync-firestore.rules.example firestore.rules
+      - name: Verify real Firestore Security Rules interpreter using synthetic identities only
+        working-directory: tools/firebase-emulator
+        run: npm run test:emulator
+      - name: Pin SDK to the existing mobile diagnostic version
+        working-directory: tools/firebase-emulator
+        run: npm install --no-save --no-package-lock --no-audit --no-fund --ignore-scripts firebase@12.19.0
+      - name: Verify appId-present and appId-absent configs with real local Auth and Firestore
+        working-directory: tools/firebase-emulator
+        run: npx --no-install firebase emulators:exec --only auth,firestore --project demo-lifeplan-encrypted-sync --config config-compat.firebase.json "node sdk-config-compat.test.mjs"

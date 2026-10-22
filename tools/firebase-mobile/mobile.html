@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="ja"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow"><meta name="referrer" content="no-referrer">
+<title>iPhone向け・暗号化診断（架空データ専用）</title>
+<link rel="stylesheet" href="/tools/firebase-mobile/mobile.css">
+<script type="module" src="/tools/firebase-mobile/mobile.mjs"></script></head>
+<body><main>
+<p class="eyebrow">ライフプランシミュレーター / 検証専用</p>
+<h1>iPhoneからの暗号化診断</h1>
+<p>本人の資産データは使用しません。検証用の架空データで、暗号化・保存・復号・上書き拒否・削除を自動確認します。</p>
+<p class="caution">これはPCのデータをiPhoneへ取り込む操作ではありません。検証終了まで画面を開いたままにしてください。</p>
+<section aria-labelledby="setupTitle"><h2 id="setupTitle">1. 接続先を確認</h2>
+<p>接続先は <code>lifeplan-sync-sandbox</code> のみです。設定値の転記は不要です。</p>
+<button id="prepare" type="button" disabled>検証用の接続先を自動確認</button>
+<p id="setupStatus" role="status">未接続。実行環境を確認しています。</p></section>
+<section aria-labelledby="runTitle"><h2 id="runTitle">2. 検証用アカウントで実行</h2>
+<form id="form" autocomplete="off"><fieldset id="fields" disabled>
+<legend class="visually-hidden">検証用の認証情報</legend>
+<label for="email">検証用メールアドレス</label><input id="email" name="email" type="email" inputmode="email" autocomplete="off" autocapitalize="none" autocorrect="off" spellcheck="false" required>
+<label for="password">検証用パスワード</label><input id="password" name="password" type="password" autocomplete="off" required>
+<label class="check"><input id="confirm" type="checkbox" required>本人用ではない検証用アカウントで、架空データの作成・削除を行うことを確認しました。</label>
+<button id="run" type="submit">暗号化テストを開始する</button>
+</fieldset></form>
+<p class="small">アプリ側では認証情報を保存しません。端末のパスワード保存機能の動作は別です。入力内容やUIDはチャットへ送らないでください。</p></section>
+<section aria-labelledby="resultTitle"><h2 id="resultTitle">3. 結果を確認</h2>
+<p id="status" role="status" aria-live="polite">未実行。データの作成・更新・削除は行っていません。</p>
+<ol id="steps"></ol>
+<label for="report">共有できる結果（認証情報を含みません）</label>
+<textarea id="report" rows="9" readonly></textarea>
+<button id="copy" type="button" disabled>結果だけをコピー</button>
+<p id="copyStatus" role="status"></p></section>
+<p class="small">失敗・途中終了時は再実行せず、結果を確認してください。PCとiPhoneの保存データは、この画面では読み込みません。プレビューURLは非公開保管先ではありません。</p>
+<noscript>JavaScriptが無効なため診断できません。接続・書込みは行っていません。</noscript>
+</main></body></html>

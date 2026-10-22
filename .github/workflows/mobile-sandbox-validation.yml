@@ -1,0 +1,108 @@
+name: Mobile sandbox diagnostic and public read-only preflight
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'tools/firebase-mobile/**'
+      - 'tools/firebase-pair/**'
+      - 'test_sync_pair_check.mjs'
+      - 'tools/browser-test/paired-preview-ui-check.mjs'
+      - 'tools/browser-test/two-device-sync-app.mjs'
+      - 'test_sync_real_device_readiness.mjs'
+      - 'sync-controller.mjs'
+      - 'sync-panel.mjs'
+      - 'sync-firebase.mjs'
+      - 'docs/SYNC_FULL_APP_REAL_DEVICE_GATE_20261022.md'
+      - 'tools/firebase-emulator/encrypted-sandbox-check.mjs'
+      - 'sync-crypto.mjs'
+      - 'test_sync_mobile.mjs'
+      - 'test_sync_mobile_config_compat.mjs'
+      - 'test_sync_public_probe.mjs'
+      - 'test_sync_preview_approval.mjs'
+      - 'tools/browser-test/mobile-sandbox-ui-check.mjs'
+      - '.github/workflows/mobile-sandbox-validation.yml'
+permissions:
+  contents: read
+concurrency:
+  group: mobile-sandbox-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  mobile-diagnostic:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify mobile policy and fourteen-day preview approval
+        run: node --test test_sync_mobile.mjs test_sync_preview_approval.mjs test_sync_mobile_config_compat.mjs test_sync_public_probe.mjs
+      - name: Observe existing public preview without authentication or writes
+        run: node tools/firebase-mobile/probe-public-config.mjs "$RUNNER_TEMP/public-preview-readonly.json"
+      - name: Retain sanitized public observation
+        uses: actions/upload-artifact@v4
+        with:
+          name: public-preview-readonly-probe
+          path: ${{ runner.temp }}/public-preview-readonly.json
+          if-no-files-found: error
+          retention-days: 7
+      - name: Install existing pinned browser dependency
+        working-directory: tools/browser-test
+        run: npm install --no-save --package-lock=false --ignore-scripts playwright@1.62.1
+      - name: Install isolated Chromium and WebKit
+        working-directory: tools/browser-test
+        run: npx --no-install playwright install --with-deps chromium webkit
+      - name: Test mobile HTTPS fixture with mocked Firebase only
+        run: node tools/browser-test/mobile-sandbox-ui-check.mjs
+      - name: Repeat mobile checks with no appId in Hosting config
+        env:
+          MOBILE_CONFIG_VARIANT: without-app-id
+        run: node tools/browser-test/mobile-sandbox-ui-check.mjs
+      - name: Stage real candidate app files from manifest in isolated environment
+        run: node tools/browser-test/prepare.mjs
+      - name: Verify actual sync panel in separate desktop and mobile browser contexts
+        run: node tools/browser-test/two-device-sync-app.mjs
+      - name: Validate unapproved cross-device pair policy and package
+        run: |
+          node --check tools/firebase-pair/pair.mjs
+          node --test test_sync_pair_check.mjs
+      - name: Package isolated two-device preview candidate without deployment
+        run: node tools/firebase-pair/prepare.mjs "$RUNNER_TEMP/lifeplan-pair-check-candidate"
+      - name: Exercise paired diagnostic in independent Chromium and WebKit browsers (mock Firebase only)
+        run: node tools/browser-test/paired-preview-ui-check.mjs "$RUNNER_TEMP/lifeplan-pair-check-candidate"
+      - name: Retain separate preview candidate requiring explicit authorization
+        uses: actions/upload-artifact@v4
+        with:
+          name: pair-check-candidate-NO-DEPLOY
+          path: ${{ runner.temp }}/lifeplan-pair-check-candidate/
+          if-no-files-found: error
+          retention-days: 7
+      - name: Retain paired browser diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pair-check-browser-evidence
+          path: tools/browser-test/mobile-results/paired-preview/
+          if-no-files-found: warn
+          retention-days: 7
+      - name: Build correction candidate without deployment or expiry changes
+        run: |
+          node tools/firebase-mobile/prepare.mjs "$RUNNER_TEMP/lifeplan-mobile-preview-candidate"
+          cp docs/SYNC_CONFIG_COMPAT_20261021.md "$RUNNER_TEMP/lifeplan-mobile-preview-candidate/READ_BEFORE_UPDATE.md"
+      - name: Retain reviewed package for authenticated deployment
+        uses: actions/upload-artifact@v4
+        with:
+          name: mobile-config-compat-candidate-no-deploy
+          path: ${{ runner.temp }}/lifeplan-mobile-preview-candidate/
+          if-no-files-found: error
+          retention-days: 7
+      - name: Keep synthetic mobile evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mobile-sandbox-evidence
+          path: tools/browser-test/mobile-results/
+          if-no-files-found: warn
+          retention-days: 7

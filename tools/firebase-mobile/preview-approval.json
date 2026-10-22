@@ -1,0 +1,31 @@
+{
+  "schemaVersion": 1,
+  "status": "unpublished",
+  "approvalStatus": "approved",
+  "approvedOn": "2026-10-19",
+  "approvalSource": "explicit-user-instruction",
+  "project": "lifeplan-sync-sandbox",
+  "site": "lifeplan-sync-sandbox",
+  "channel": "encrypted-mobile",
+  "expires": "14d",
+  "expiryBasis": "initial-preview-deployment",
+  "allowAutomaticExtension": false,
+  "scope": "sandbox Hosting preview static files only",
+  "requiredPreflight": [
+    "authenticated Firebase access to the designated sandbox",
+    "Spark plan and available free quota verified",
+    "existing same-name channel absent or safely reconciled without overwrite",
+    "exact seven public files and security headers verified",
+    "no implicit Firebase Authentication domain changes"
+  ],
+  "notAuthorized": [
+    "hosting-live",
+    "production-main",
+    "github-pages",
+    "personal-data",
+    "rules-or-auth-changes",
+    "billing"
+  ],
+  "automaticDeploy": false,
+  "deployed": false
+}

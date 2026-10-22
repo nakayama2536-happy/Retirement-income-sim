@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow"><meta name="referrer" content="no-referrer">
+<title>PCとiPhoneの架空データ受渡し・検証専用</title><link rel="stylesheet" href="/tools/firebase-pair/pair.css">
+<script type="module" src="/tools/firebase-pair/pair.mjs"></script></head>
+<body><main>
+<p class="eyebrow">ライフプランシミュレーター・未公開検証候補</p>
+<h1>PC → iPhone：架空暗号文の受渡し検証</h1>
+<p><strong>本人の資産情報・保存済み設定・バックアップは一切使用しません。</strong> 同じテスト用Firebaseアカウントを2台で使用し、PCが架空データを暗号化送信し、iPhoneが受信・復号して確認応答を返します。最後にPCが試験文書を削除します。</p>
+<p class="warning">これは通常のアプリ同期の公開版ではありません。クラウドの試験文書 <code>sandbox/{テストUID}/snapshots/trial</code> に一時的に書き込みます。既存文書があれば作成・上書きしません。途中終了した場合は新しい試験を始めず、削除状態を確認してください。</p>
+<section><h2>検証用の入力</h2><p>検証用Firebaseは <code>lifeplan-sync-sandbox</code> に限定します。2台で同じ<strong>架空テスト専用の合言葉</strong>（16文字以上）を入力します。本人用の合言葉や資産データを使わないでください。認証情報と合言葉は画面・ブラウザ保存領域へ記録しません。</p>
+<form id="credentials" autocomplete="off">
+<label>検証用メールアドレス<input id="email" type="email" required autocomplete="off" autocapitalize="none" spellcheck="false"></label>
+<label>検証用パスワード<input id="password" type="password" required autocomplete="off"></label>
+<label>架空試験だけに使う合言葉（2台で同一）<input id="phrase" type="password" minlength="16" required autocomplete="off"></label>
+<label class="consent"><input id="consent" type="checkbox">本人データではなく、検証用アカウントと架空データだけを使用します</label>
+</form></section>
+<section><h2>順番に実行</h2>
+<ol>
+<li><strong>PC</strong>：入力後に「① PCから試験データ送信」を1回押す</li>
+<li><strong>iPhone Safari</strong>：同じ試験アカウントと試験用合言葉で「② iPhoneで受信・確認応答」</li>
+<li><strong>PCの同じブラウザ</strong>：改めて試験アカウントと合言葉を入力し「③ PCで確認・削除」。削除・不存在を確認する</li>
+</ol>
+<div class="actions">
+<button id="send" type="button">① PCから試験データ送信</button>
+<button id="receive" type="button">② iPhoneで受信・確認応答</button>
+<button id="finish" type="button">③ PCで確認・削除</button>
+<button id="cancel" type="button" class="secondary">PCで未応答の試験だけを中止・削除</button>
+</div>
+<p class="small">「①」は空の試験文書に対して一度だけ。「②」は①の試験文書に対して確認応答を返すための更新を実施します。「③」はPCに保存した架空の試験識別子と暗号文を照合した後にだけ削除します。既存文書・他者の文書は削除しません。</p>
+</section>
+<section><h2>診断結果</h2>
+<p id="status" role="status" aria-live="polite">未実行。認証・Firestoreアクセスは開始していません。</p>
+<textarea id="result" readonly rows="7" aria-label="共有用の診断結果"></textarea>
+<button id="copy" type="button" disabled>診断結果のみコピー</button><p id="copyNote" class="small"></p>
+</section>
+<p class="small">検証の途中で問題が発生したら再送信・再応答を行わず、試験用Firebaseの文書状態を確認してください。表示用の結果だけを共有し、メール、パスワード、UID、試験用合言葉をChatGPTやGitHubに送らないでください。</p>
+</main></body></html>

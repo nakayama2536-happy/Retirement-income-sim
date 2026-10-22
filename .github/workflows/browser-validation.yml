@@ -29,6 +29,8 @@ jobs:
         run: node tools/browser-test/prepare.mjs
       - name: Exercise update failures and corresponding backup restore
         run: node tools/browser-test/run-browser.mjs
+      - name: Verify encrypted diagnostic UI without real Firebase access
+        run: node tools/browser-test/encrypted-sandbox-ui-check.mjs
       - name: Keep synthetic test evidence
         if: always()
         uses: actions/upload-artifact@v4

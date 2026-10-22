@@ -1,0 +1,33 @@
+name: GitHub Pages production delivery (read-only)
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'index.html'
+      - 'sw.js'
+      - 'app.mjs'
+      - 'distribution-manifest.json'
+      - 'sync-*.mjs'
+      - 'styles.css'
+      - '.github/workflows/pages-delivery-readonly.yml'
+      - 'verify-pages-public.mjs'
+permissions:
+  contents: read
+concurrency:
+  group: published-pages-readonly-main
+  cancel-in-progress: false
+jobs:
+  verify-delivered-public-bytes:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Syntax check of delivery verifier
+        run: node --check verify-pages-public.mjs
+      - name: Confirm exact GitHub Pages bytes for public runtime
+        run: node verify-pages-public.mjs

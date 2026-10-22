@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>検証専用・暗号化往復テスト</title>
+<style>body{font:16px/1.65 system-ui,sans-serif;max-width:760px;margin:auto;padding:24px}label{display:block;margin:14px 0}input:not([type=checkbox]){box-sizing:border-box;width:100%;padding:10px}button{padding:12px;margin:8px 0}pre{white-space:pre-wrap;overflow-wrap:anywhere;background:#f3f3f3;padding:16px}code{overflow-wrap:anywhere}</style></head><body>
+<h1>Firebase検証専用・暗号化往復テスト</h1>
+<p><strong>lifeplan-sync-sandbox 専用です。本人用Firebase・アプリ保存データ・本人バックアップは使用しません。</strong></p>
+<p>PC役から受信役へ、同一PC内の独立した接続を使用します。既存アプリの暗号処理で固定の架空データを暗号化し、作成・別接続での読取りと復号・改ざん拒否・未認証拒否・競合拒否・削除を確認します。実iPhone同期ではありません。</p>
+<p>書込み先は <code>sandbox/{uid}/snapshots/trial</code> だけ。既存文書は置換せず停止します。途中で別の内容に変わった文書も削除しません。</p>
+<form id="form" autocomplete="off">
+<label>検証用 apiKey<input name="apiKey" required autocomplete="off"></label>
+<label>検証用 authDomain<input name="authDomain" required value="lifeplan-sync-sandbox.firebaseapp.com" autocomplete="off"></label>
+<label>検証用 projectId<input name="projectId" required value="lifeplan-sync-sandbox" autocomplete="off"></label>
+<label>検証用 appId<input name="appId" required autocomplete="off"></label>
+<label>検証ユーザーのメールアドレス<input name="email" type="email" required autocomplete="off"></label>
+<label>検証ユーザーのパスワード<input name="password" type="password" required autocomplete="off"></label>
+<label><input name="confirm" type="checkbox" required> 別の検証用プロジェクト・検証ユーザー・公開済み検証ルールであることを確認した</label>
+<button id="run" type="submit">暗号化テストを実行し、削除まで確認</button>
+</form>
+<pre id="status" role="status">未実行。クラウド接続・書込みはありません。</pre>
+<p>実行中は画面・サーバーを閉じないでください。失敗時は再実行せず、結果部分だけを共有してください。接続設定・メール・パスワード・UIDは送らないでください。テスト用暗号化キーは毎回メモリ内で生成し、保存・表示しません。</p>
+<script type="module">
+import {LIVE_PROJECT,createSandboxStore,runEncryptedSandboxCheck} from './encrypted-sandbox-check.mjs';
+const form=document.querySelector('#form'),status=document.querySelector('#status'),run=document.querySelector('#run');
+const marker='lifeplan-sandbox-encrypted-test-incomplete-v1';
+let attempted=false;
+function show(text){status.textContent+=text+'\n';}
+function canStart(){
+ if(location.protocol!=='http:'||location.hostname!=='127.0.0.1'||!window.isSecureContext||!navigator.locks?.request)throw Error('ローカル検証用URLと対応ブラウザで開いてください。');
+ // Only this diagnostic's non-secret recovery marker; no application state is read.
+ if(localStorage.getItem(marker))throw Error('前回の試験の終了状態が未確認です。再実行せず検証用文書の状態を確認してください。');
+}
+try{canStart();}catch(e){run.disabled=true;status.textContent=e.message;}
+form.addEventListener('submit',async event=>{
+ event.preventDefault();if(attempted)return;run.disabled=true;status.textContent='';
+ try{
+  canStart();
+  await navigator.locks.request('lifeplan-sandbox-encrypted-test',{ifAvailable:true},async lock=>{
+   if(!lock)throw Error('別の診断画面が実行中です。書込みはありません。');
+   canStart();attempted=true;
+   const f=Object.fromEntries(new FormData(form));
+   const config=Object.fromEntries(['apiKey','authDomain','projectId','appId'].map(k=>[k,(f[k]??'').trim()]));
+   const email=f.email;let password=f.password;form.elements.password.value='';
+   if(!f.confirm||config.projectId!==LIVE_PROJECT||config.authDomain!==LIVE_PROJECT+'.firebaseapp.com')throw Error('検証専用プロジェクトと一致しません。接続していません。');
+   const apps=[],auths=[],databases=[];let core,authSdk,dbSdk,result;
+   try{
+    const root='https://www.gstatic.com/firebasejs/12.19.0/';
+    [core,authSdk,dbSdk]=await Promise.all([import(root+'firebase-app.js'),import(root+'firebase-auth.js'),import(root+'firebase-firestore.js')]);
+    const connect=async authenticated=>{
+     const app=core.initializeApp(config,'sandbox-encrypted-'+crypto.randomUUID());apps.push(app);
+     const auth=authSdk.getAuth(app);auths.push(auth);await authSdk.setPersistence(auth,authSdk.inMemoryPersistence);
+     let uid=null;
+     if(authenticated){
+      const logged=await authSdk.signInWithEmailAndPassword(auth,email,password),token=await authSdk.getIdTokenResult(logged.user);
+      if(token.claims.aud!==LIVE_PROJECT||token.claims.sub!==logged.user.uid)throw Error('認証先が検証プロジェクトと一致しません。');
+      uid=logged.user.uid;
+     }
+     const database=dbSdk.getFirestore(app);databases.push(database);return {database,uid};
+    };
+    const first=await connect(true),second=await connect(true),guest=await connect(false);password=null;
+    if(first.uid!==second.uid)throw Error('検証用アカウントが一致しません。');
+    const options=client=>({sdk:dbSdk,database:client.database,projectId:LIVE_PROJECT,uid:first.uid});
+    const writer=createSandboxStore(options(first)),reader=createSandboxStore(options(second));
+    localStorage.setItem(marker,'1');
+    result=await runEncryptedSandboxCheck({writer,reader,
+     unauthenticatedRead:()=>dbSdk.getDocFromServer(dbSdk.doc(guest.database,'sandbox',first.uid,'snapshots','trial')),
+     onProgress:(n,label)=>show(n+'/12 '+label+'：成功')});
+    if(result.cleanup==='confirmed'||result.cleanup==='not-needed')localStorage.removeItem(marker);
+    if(result.ok)show('12/12 完了。暗号化往復・拒否・削除と不存在を確認しました。本人データは使用していません。');
+    else show('停止：'+result.errorCode+'。後片付け：'+(result.cleanup==='confirmed'?'今回の文書の削除・不存在確認済み':result.cleanup==='not-needed'?'この診断からの書込み試行なし':'未確認。再実行しないでください。'));
+   }finally{
+    password=null;form.elements.email.value='';form.elements.password.value='';
+    for(const auth of auths)try{await authSdk.signOut(auth);}catch{}
+    for(const database of databases)try{await dbSdk.terminate(database);}catch{}
+    for(const app of apps)try{await core.deleteApp(app);}catch{}
+   }
+  });
+ }catch(e){
+  // Never echo SDK error messages, which can contain credentials/configuration.
+  const safe=['auth/invalid-credential','auth/too-many-requests','permission-denied','unavailable'];
+  show('診断停止：'+(safe.includes(e?.code)?e.code:'実行条件または接続を確認してください')+'。再実行せず結果を確認してください。');
+ }
+ run.disabled=true;
+});
+</script></body></html>

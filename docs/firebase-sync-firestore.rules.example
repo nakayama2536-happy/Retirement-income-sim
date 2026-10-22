@@ -1,0 +1,47 @@
+// TEMPLATE ONLY. NOT DEPLOYED. Replace owner UID privately in Firebase Console.
+// The placeholder deliberately denies everybody. Never commit an actual owner UID.
+rules_version = '2';
+service cloud.firestore {
+ match /databases/{database}/documents {
+  function singleOwner(uid) {
+   return request.auth != null && request.auth.uid == uid &&
+          uid == '__SET_SINGLE_OWNER_UID_PRIVATELY__';
+  }
+  function validSnapshot(uid) {
+   return request.resource.data.keys().hasOnly(['ownerUid','formatVersion','revision','digest','ciphertext','updatedAt']) &&
+     request.resource.data.keys().hasAll(['ownerUid','formatVersion','revision','digest','ciphertext','updatedAt']) &&
+     request.resource.data.ownerUid == uid &&
+     request.resource.data.formatVersion == 1 &&
+     request.resource.data.revision is int && request.resource.data.revision >= 1 &&
+     request.resource.data.digest is string && request.resource.data.digest.matches('^[a-f0-9]{64}$') &&
+     request.resource.data.ciphertext is map &&
+     request.resource.data.ciphertext.keys().hasOnly(['version','algorithm','iterations','salt','iv','data']) &&
+     request.resource.data.ciphertext.keys().hasAll(['version','algorithm','iterations','salt','iv','data']) &&
+     request.resource.data.ciphertext.version == 1 &&
+     request.resource.data.ciphertext.algorithm == 'AES-256-GCM/PBKDF2-SHA256' &&
+     request.resource.data.ciphertext.iterations == 600000 &&
+     request.resource.data.ciphertext.salt is string &&
+     request.resource.data.ciphertext.salt.size() > 0 &&
+     request.resource.data.ciphertext.salt.size() <= 128 &&
+     request.resource.data.ciphertext.iv is string &&
+     request.resource.data.ciphertext.iv.size() > 0 &&
+     request.resource.data.ciphertext.iv.size() <= 128 &&
+     request.resource.data.ciphertext.data is string &&
+     request.resource.data.ciphertext.data.size() > 0 &&
+     request.resource.data.ciphertext.data.size() <= 725000 &&
+     request.resource.data.updatedAt is timestamp;
+  }
+  match /owners/{uid}/snapshots/{documentId} {
+   allow get: if documentId == 'current' && singleOwner(uid);
+   allow list, delete: if false;
+   allow create: if documentId == 'current' && singleOwner(uid) && validSnapshot(uid) &&
+                 request.resource.data.revision == 1;
+   allow update: if documentId == 'current' && singleOwner(uid) && validSnapshot(uid) &&
+                 resource.data.ownerUid == uid &&
+                 request.resource.data.revision == resource.data.revision + 1;
+  }
+  match /{otherDocument=**} {
+   allow read, write: if false;
+  }
+ }
+}

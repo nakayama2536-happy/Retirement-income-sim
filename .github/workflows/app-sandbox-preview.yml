@@ -1,0 +1,57 @@
+name: Synthetic full-app Firebase preview candidate — NO DEPLOY
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'tools/app-sandbox-preview/**'
+      - 'tools/browser-test/app-sandbox-preview-ui-check.mjs'
+      - 'test_sync_app_sandbox_preview.mjs'
+      - '.github/workflows/app-sandbox-preview.yml'
+permissions:
+  contents: read
+concurrency:
+  group: app-sandbox-preview-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  candidate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate preview-only changes and complete synthetic source
+        run: |
+          node --check tools/app-sandbox-preview/prepare.mjs
+          node --check tools/app-sandbox-preview/setup.mjs
+          node --check tools/app-sandbox-preview/cleanup.mjs
+          node --check tools/app-sandbox-preview/deploy-preview.mjs
+          node --test test_sync_app_sandbox_preview.mjs
+      - name: Build isolated app-sync-check preview candidate, no publish
+        run: node tools/app-sandbox-preview/prepare.mjs "$RUNNER_TEMP/lifeplan-sandbox-full-app-candidate"
+      - name: Retain synthetic-only approved-scope Hosting package WITHOUT DEPLOY
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-sync-check-candidate-NO-DEPLOY
+          path: ${{ runner.temp }}/lifeplan-sandbox-full-app-candidate/
+          if-no-files-found: error
+          retention-days: 7
+      - name: Install isolated existing Playwright 1.62.1
+        working-directory: tools/browser-test
+        run: npm install --no-save --package-lock=false --ignore-scripts playwright@1.62.1
+      - name: Install Chromium and WebKit
+        working-directory: tools/browser-test
+        run: npx --no-install playwright install --with-deps chromium webkit
+      - name: Verify separate preview fixtures in desktop Chromium and mobile WebKit
+        run: node tools/browser-test/app-sandbox-preview-ui-check.mjs "$RUNNER_TEMP/lifeplan-sandbox-full-app-candidate"
+      - name: Retain isolated browser evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-sync-check-browser-evidence
+          path: tools/browser-test/mobile-results/app-sandbox-preview/
+          if-no-files-found: warn
+          retention-days: 7
