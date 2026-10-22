@@ -1,0 +1,26 @@
+<!doctype html><html lang="ja"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow"><meta name="referrer" content="no-referrer">
+<title>ライフプランシミュレーター・架空データ実機検証</title>
+<link rel="stylesheet" href="/tools/app-sandbox-preview/guard.css">
+<script type="module" src="/tools/app-sandbox-preview/setup.mjs"></script></head>
+<body class="sandbox-fixture">
+<h1>架空データのみ：PC・iPhoneでアプリ同期の実機検証</h1>
+<p><strong>このページは普段使うライフプランの画面とは別の、期限付き検証用サイトです。</strong> 個人のJSON・バックアップを選択しないでください。</p>
+<section><h2>1. 端末に架空データを準備</h2>
+<p>この新しいURLに保存済みアプリデータがあれば上書きしません。PC・iPhoneは別々のブラウザ保存領域です。</p>
+<button id="seedPc" disabled>PC：架空の同期元データを準備</button>
+<button id="seedPhone" disabled>iPhone：架空の受信元データを準備</button>
+<a href="/">架空アプリを開く</a><p id="localStatus"></p></section>
+<section><h2>2. 実アプリを操作</h2>
+<p>PCから初回送信する前に、iPhoneにも別の架空データを準備してください。普段のFirebase本人アカウントは使用せず、検証専用Firebaseのテストアカウントと16文字以上のテスト専用合言葉だけを使用します。</p>
+<p>両端末の設定画面の「本人専用・端末間同期（開発候補）」で接続・内容比較・明示的な初回送受信を行ってください。初回送信前には試験文書が空であることを確認してください。</p></section>
+<section><h2>3. 最後にPCから試験文書だけを削除</h2>
+<p>この削除は、PCの架空データ識別子・合言葉で復号した試験文書が一致した場合のみ実行します。本人データ、本番Firebase、普段のブラウザ保存にはアクセスしません。</p>
+<label>検証用メールアドレス<input id="email" type="email" autocomplete="off"></label>
+<label>検証用パスワード<input id="password" type="password" autocomplete="off"></label>
+<label>両端末で共通のテスト専用合言葉<input id="phrase" type="password" autocomplete="off"></label>
+<label><input id="confirmed" type="checkbox">対象は架空の試験文書だけであり、削除することを確認しました</label>
+<button id="cleanup" disabled>PC：今回の架空試験文書を照合して削除</button>
+<p id="result" role="status">未実行。Firestore操作はしていません。</p></section>
+<p>失敗時は同じ操作を繰り返さず、結果だけをチャットに共有してください。パスワード・UID・合言葉・JSON全文は送らないでください。</p></body></html>
