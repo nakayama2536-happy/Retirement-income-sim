@@ -59,7 +59,7 @@ async function check(browser,width,button){
  assert.equal((await state(page)).state,null);
  assert.equal(await page.locator('#'+button).isEnabled(),true);
  await page.locator('#'+button).click();
- await page.waitForFunction(()=>!!localStorage.getItem('lifeplan-sim-state-v1'));
+ await page.waitForFunction(()=>document.querySelector('#result')?.textContent?.includes('新規保存しました'),null,{timeout:25000});
  const snap=await state(page);
  assert(snap.state&&snap.state.syntheticEvidence?.tag==='LIFEPLAN-APP-SANDBOX-SYNTHETIC-ONLY');
  assert.equal(snap.publicConfig?.projectId,'lifeplan-sync-sandbox');
