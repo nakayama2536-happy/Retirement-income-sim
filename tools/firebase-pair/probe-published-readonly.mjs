@@ -1,7 +1,7 @@
 // Independent post-publication HTTP observation. NO Firebase auth or writes.
 import {createHash} from 'node:crypto';
 import {writeFileSync} from 'node:fs';
-const site='https://lifeplan-sync-sandbox--pair-check-0gqjlshx.web.app/';
+const site='https://lifeplan-sync-sandbox--pair-check-o9qjlshx.web.app/';
 const old='https://lifeplan-sync-sandbox--encrypted-mobile-m6wu7a9n.web.app/';
 const expected=[
  ['index.html',4165,'3c6424ce67e916c50258cad60d5720e44862d2e47311fd5df63a55f85c8e050c'],
