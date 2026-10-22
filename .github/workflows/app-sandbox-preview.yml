@@ -32,6 +32,13 @@ jobs:
           node --test test_sync_app_sandbox_preview.mjs
       - name: Build isolated app-sync-check preview candidate, no publish
         run: node tools/app-sandbox-preview/prepare.mjs "$RUNNER_TEMP/lifeplan-sandbox-full-app-candidate"
+      - name: Retain synthetic-only approved-scope Hosting package WITHOUT DEPLOY
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-sync-check-candidate-NO-DEPLOY
+          path: ${{ runner.temp }}/lifeplan-sandbox-full-app-candidate/
+          if-no-files-found: error
+          retention-days: 7
       - name: Install isolated existing Playwright 1.62.1
         working-directory: tools/browser-test
         run: npm install --no-save --package-lock=false --ignore-scripts playwright@1.62.1
@@ -40,13 +47,6 @@ jobs:
         run: npx --no-install playwright install --with-deps chromium webkit
       - name: Verify separate preview fixtures in desktop Chromium and mobile WebKit
         run: node tools/browser-test/app-sandbox-preview-ui-check.mjs "$RUNNER_TEMP/lifeplan-sandbox-full-app-candidate"
-      - name: Retain synthetic-only approved-scope Hosting package WITHOUT DEPLOY
-        uses: actions/upload-artifact@v4
-        with:
-          name: app-sync-check-candidate-NO-DEPLOY
-          path: ${{ runner.temp }}/lifeplan-sandbox-full-app-candidate/
-          if-no-files-found: error
-          retention-days: 7
       - name: Retain isolated browser evidence
         if: always()
         uses: actions/upload-artifact@v4
