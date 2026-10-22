@@ -11,7 +11,7 @@ const report={scope:'isolated synthetic preview PC Chromium and mobile WebKit, m
 const network=[],match=[];
 const mockSdk={
  'firebase-app.js':[
-  'export function initializeApp(config,name){return {config,name};}',
+  'export function initializeApp(config,name){return {options:config,name};}',
   'export async function deleteApp(){window.__authClosed=(window.__authClosed||0)+1;}'
  ].join('\n'),
  'firebase-auth.js':[
