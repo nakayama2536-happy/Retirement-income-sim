@@ -30,7 +30,7 @@ const mockSdk={
  ].join('\n')
 };
 let chromiumBrowser,webkitBrowser,contexts=[];
-async function create(browser,width){
+async function create(browser,width,{includeAppId=true}={}){
  const ctx=await browser.newContext({viewport:{width,height:840},serviceWorkers:'block'});
  await ctx.route('**/*',async route=>{
   const req=route.request(),url=new URL(req.url());
@@ -42,7 +42,7 @@ async function create(browser,width){
   }
   if(req.method()!=='GET')throw Error('Unexpected write method '+req.method());
   if(url.pathname==='/__/firebase/init.json')
-   return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({projectId:'lifeplan-sync-sandbox',authDomain:'lifeplan-sync-sandbox.firebaseapp.com',apiKey:'synthetic-web-public-key',appId:'synthetic-public-app-id'})});
+   return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({...{projectId:'lifeplan-sync-sandbox',authDomain:'lifeplan-sync-sandbox.firebaseapp.com',apiKey:'synthetic-web-public-key'},...(includeAppId?{appId:'synthetic-public-app-id'}:{})})});
   const file=url.pathname==='/'?'/index.html':url.pathname;
   if(!allow.has(file))return route.fulfill({status:404,body:'not an allowed file'});
   const data=await readFile(resolve(path,'public',file.slice(1)));
@@ -54,7 +54,7 @@ async function create(browser,width){
 const state=page=>page.evaluate(()=>({state:JSON.parse(localStorage.getItem('lifeplan-sim-state-v1')||'null'),run:localStorage.getItem('lifeplan-app-sandbox-source-run-v1'),publicConfig:JSON.parse(localStorage.getItem('lifeplan-private-sync-config-v1')||'null')}));
 const pass=label=>{report.cases.push(label);console.log('SANDBOX_APP_BROWSER_PASS '+label);};
 async function check(browser,width,button){
- const ctx=await create(browser,width),page=await ctx.newPage();page.setDefaultTimeout(20000);
+ const ctx=await create(browser,width,{includeAppId:button==='seedPc'}),page=await ctx.newPage();page.setDefaultTimeout(20000);
  await page.goto(origin+'/setup.html',{waitUntil:'domcontentloaded'});
  assert.equal((await state(page)).state,null);
  assert.equal(await page.locator('#'+button).isEnabled(),true);
@@ -63,6 +63,7 @@ async function check(browser,width,button){
  const snap=await state(page);
  assert(snap.state&&snap.state.syntheticEvidence?.tag==='LIFEPLAN-APP-SANDBOX-SYNTHETIC-ONLY');
  assert.equal(snap.publicConfig?.projectId,'lifeplan-sync-sandbox');
+ assert.equal(Object.hasOwn(snap.publicConfig,'appId'),button==='seedPc');
  assert.equal(await page.locator('#seedPc').isDisabled(),true);
  assert.equal(await page.locator('#seedPhone').isDisabled(),true);
  assert.equal(await page.locator('#cleanup').isEnabled(),button==='seedPc');

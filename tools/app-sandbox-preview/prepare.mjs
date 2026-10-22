@@ -29,10 +29,26 @@ export function prepareAppPreview(destination){
  if(files.size<50||!files.has('index.html')||!files.has('sync-firebase.mjs')||!files.has('sw.js'))throw Error('Missing app runtime');
  const adapter=files.get('sync-firebase.mjs').toString('utf8');
  let testAdapter=patchOnce(adapter,BASE_DOCUMENT,TEST_DOCUMENT);
+ // Preview-only compatibility: Hosting reserved init.json can omit appId.
+ // FirebaseOptions.appId is optional for Email/Password Auth + Firestore here.
+ // Do not synthesize an appId or change the app's source module.
+ testAdapter=patchOnce(testAdapter,
+  "const KEY_FIELDS=['apiKey','authDomain','projectId','appId'];",
+  "const KEY_FIELDS=['apiKey','authDomain','projectId'];");
+ testAdapter=patchOnce(testAdapter,
+  "const config=Object.fromEntries(KEY_FIELDS.map(k=>[k,value[k]]));",
+  "const config=Object.fromEntries(KEY_FIELDS.map(k=>[k,value[k]]));\n if(Object.hasOwn(value,'appId')){if(typeof value.appId!=='string'||!value.appId.trim()||value.appId.length>500)throw Error('Firebase appIdの形式が不正です。');config.appId=value.appId;}");
+
  const boundary=" return config;\n}";
  const guarded=" if(config.projectId!=='lifeplan-sync-sandbox'||config.authDomain!=='lifeplan-sync-sandbox.firebaseapp.com')throw Error('架空データ用Firebase以外は接続できません。');\n return config;\n}";
  testAdapter=patchOnce(testAdapter,boundary,guarded);
  files.set('sync-firebase.mjs',Buffer.from(testAdapter));
+ const panel=files.get('sync-panel.mjs').toString('utf8');
+ const adjustedPanel=patchOnce(panel,
+  "const values=Object.fromEntries(Object.entries(cfg).map(([key,input])=>[key,input.value.trim()]));",
+  "const values=Object.fromEntries(Object.entries(cfg).map(([key,input])=>[key,input.value.trim()]));\n  if(!values.appId)delete values.appId; // preview only: optional appId if Hosting omitted it");
+ files.set('sync-panel.mjs',Buffer.from(adjustedPanel));
+
  let html=files.get('index.html').toString('utf8');
  html=patchOnce(html,'</head>','<meta name="robots" content="noindex,nofollow"><link rel="stylesheet" href="/tools/app-sandbox-preview/guard.css"></head>');
  html=patchOnce(html,'<body class="simulation-only">','<body class="simulation-only"><aside class="sandbox-preview-banner" role="note">検証専用／架空データのみ。PC・iPhoneの普段のライフプランやバックアップを入力・復元しないでください。<a href="/setup.html">架空データの準備・検証終了</a></aside>');

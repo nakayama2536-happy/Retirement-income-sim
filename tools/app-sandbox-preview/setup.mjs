@@ -38,10 +38,13 @@ async function setPublicConfig(){
   if(!response.ok||response.redirected) return;
   const raw=await response.json();
   if(raw.projectId!=='lifeplan-sync-sandbox'||raw.authDomain!=='lifeplan-sync-sandbox.firebaseapp.com')return;
-  const fields=['apiKey','authDomain','projectId','appId'];
-  if(fields.some(k=>typeof raw[k]!=='string'||raw[k].length===0||raw[k].length>500))return;
+  const fields=['apiKey','authDomain','projectId'];
+  if(fields.some(k=>typeof raw[k]!=='string'||!raw[k].trim()||raw[k].length>500))return;
+  if(Object.hasOwn(raw,'appId')&&(typeof raw.appId!=='string'||!raw.appId.trim()||raw.appId.length>500))return;
+  const config=Object.fromEntries(fields.map(k=>[k,raw[k]]));
+  if(Object.hasOwn(raw,'appId'))config.appId=raw.appId;
   if(localStorage.getItem(PUBLIC_CONFIG)===null)
-   localStorage.setItem(PUBLIC_CONFIG,JSON.stringify(Object.fromEntries(fields.map(k=>[k,raw[k]]))));
+   localStorage.setItem(PUBLIC_CONFIG,JSON.stringify(config));
  }catch{/* Browser-only optional public setting. No login or cloud write. */}
 }
 async function seed(role){

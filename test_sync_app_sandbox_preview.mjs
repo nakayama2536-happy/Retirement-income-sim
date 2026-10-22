@@ -29,7 +29,17 @@ test('synthetic full app candidate is isolated and cannot overwrite original rep
   assert.doesNotMatch(patched,/dbApi\.doc\(db,'owners',user\(\)\.uid,'snapshots','current'\)/);
   assert.match(patched,/dbApi\.doc\(db,'sandbox',user\(\)\.uid,'snapshots','trial'\)/);
   assert.match(patched,/config\.projectId!=='lifeplan-sync-sandbox'/);
-  assert.equal(patched.replace("dbApi.doc(db,'sandbox',user().uid,'snapshots','trial')","dbApi.doc(db,'owners',user().uid,'snapshots','current')")
+  assert.match(patched,/const KEY_FIELDS=\['apiKey','authDomain','projectId'\]/);
+  assert.match(patched,/Object\.hasOwn\(value,'appId'\)/);
+  assert.match(patched,/config\.appId=value\.appId/);
+  const sourcePanel=read('./sync-panel.mjs');
+  const previewPanel=readFileSync(join(output,'public','sync-panel.mjs'),'utf8');
+  assert.match(previewPanel,/if\(!values\.appId\)delete values\.appId/);
+  assert.equal(previewPanel.replace("  if(!values.appId)delete values.appId; // preview only: optional appId if Hosting omitted it\n",""),sourcePanel);
+  assert.equal(
+   patched.replace("dbApi.doc(db,'sandbox',user().uid,'snapshots','trial')","dbApi.doc(db,'owners',user().uid,'snapshots','current')")
+    .replace("const KEY_FIELDS=['apiKey','authDomain','projectId'];","const KEY_FIELDS=['apiKey','authDomain','projectId','appId'];")
+    .replace(" if(Object.hasOwn(value,'appId')){if(typeof value.appId!=='string'||!value.appId.trim()||value.appId.length>500)throw Error('Firebase appIdの形式が不正です。');config.appId=value.appId;}\n","")
     .replace(" if(config.projectId!=='lifeplan-sync-sandbox'||config.authDomain!=='lifeplan-sync-sandbox.firebaseapp.com')throw Error('架空データ用Firebase以外は接続できません。');\n",""),base);
   const html=readFileSync(join(output,'public','index.html'),'utf8');
   for(const id of ['importFile','importFile2','recoveryCheckFile'])assert.match(html,new RegExp('id="'+id+'" type="file" disabled'));
