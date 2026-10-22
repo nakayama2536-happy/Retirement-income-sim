@@ -106,7 +106,7 @@ async function open(ctx){
  if(!(await details.getAttribute('open')))await details.locator('summary').click();
  return page;
 }
-async function login(page,persisted=false){
+async function login(page,persisted=false,{expectConflict=false}={}){
  for(const [name,value] of Object.entries({
   syncApiKey:'synthetic-key',syncAuthDomain:project+'.firebaseapp.com',
   syncProjectId:project,syncAppId:'synthetic-web-id',
@@ -124,7 +124,8 @@ async function login(page,persisted=false){
   return Boolean(b&&!b.disabled);
  },null,{timeout:30000});
  const connectedStatus=await status(page);
- assert(!connectedStatus.startsWith('同期停止'),connectedStatus);
+ if(expectConflict)assert.match(connectedStatus,/同期停止：両端末で別の変更/);
+ else assert(!connectedStatus.startsWith('同期停止'),connectedStatus);
 }
 try{
  pcBrowser=await chromium.launch({headless:true});phoneBrowser=await webkit.launch({headless:true});
@@ -192,7 +193,7 @@ try{
  pc=await open(pcContext);phone=await open(phoneContext);
  await login(pc,true);await wait(pc,'この端末の変更を暗号化して同期しました');
  assert.equal(cloud.document.revision,3);
- await login(phone,true);await wait(phone,'同期停止');
+ await login(phone,true,{expectConflict:true});await wait(phone,'同期停止');
  assert.match(await status(phone),/両端末|競合|衝突/);
  assert.equal((await readState(phone)).config.plan.initialAsset,1040);
  assert.equal((await readState(pc)).config.plan.initialAsset,1030);
