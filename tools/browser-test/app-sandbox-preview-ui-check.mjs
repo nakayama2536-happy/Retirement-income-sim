@@ -9,12 +9,37 @@ const list=JSON.parse(await readFile(resolve(path,'PREVIEW_SHA256.json'),'utf8')
 const allow=new Set(list.files.map(x=>'/'+x.name));
 const report={scope:'isolated synthetic preview PC Chromium and mobile WebKit, mocked HTTP only',cases:[],realFirebase:false,personalData:false};
 const network=[],match=[];
+const mockSdk={
+ 'firebase-app.js':[
+  'export function initializeApp(config,name){return {config,name};}',
+  'export async function deleteApp(){window.__authClosed=(window.__authClosed||0)+1;}'
+ ].join('\n'),
+ 'firebase-auth.js':[
+  'export const inMemoryPersistence={kind:"memory"};',
+  'export function initializeAuth(app,{persistence}){if(persistence!==inMemoryPersistence)throw Error("bad-persistence");return {app};}',
+  'export async function signInWithEmailAndPassword(auth,email,password){if(email!=="fake@example.invalid"||password!=="fictional-password")throw Error("bad-login");return {user:{uid:"fake-user"}};}',
+  'export async function getIdTokenResult(u){return {claims:{aud:"lifeplan-sync-sandbox",sub:u.uid,iss:"https://securetoken.google.com/lifeplan-sync-sandbox"}};}',
+  'export async function signOut(){window.__signedOut=(window.__signedOut||0)+1;}'
+ ].join('\n'),
+ 'firebase-firestore.js':[
+  'export function getFirestore(app){return {app};}',
+  'export function doc(db,...parts){if(parts.join("/")!=="sandbox/fake-user/snapshots/trial")throw Error("wrong-document");return {db};}',
+  'export async function getDocFromServer(){const value=window.__fakeDoc;return {exists:()=>value!=null,data:()=>structuredClone(value)};}',
+  'export async function runTransaction(db,fn){const tx={async get(ref){if(ref.db!==db)throw Error("wrong-db");const value=window.__fakeDoc;return {exists:()=>value!=null,data:()=>structuredClone(value)};},delete(ref){if(ref.db!==db)throw Error("wrong-db");window.__fakeDoc=null;}};return await fn(tx);}',
+  'export async function terminate(){window.__terminated=(window.__terminated||0)+1;}'
+ ].join('\n')
+};
 let chromiumBrowser,webkitBrowser,contexts=[];
 async function create(browser,width){
  const ctx=await browser.newContext({viewport:{width,height:840},serviceWorkers:'block'});
  await ctx.route('**/*',async route=>{
   const req=route.request(),url=new URL(req.url());
-  if(url.origin!==origin){network.push(url.origin);return route.abort();}
+  if(url.origin!==origin){
+   const filename=url.pathname.split('/').at(-1);
+   if(url.origin==='https://www.gstatic.com'&&url.pathname.startsWith('/firebasejs/12.19.0/')&&Object.hasOwn(mockSdk,filename))
+    return route.fulfill({status:200,contentType:'text/javascript',headers:{'Access-Control-Allow-Origin':'*'},body:mockSdk[filename]});
+   network.push(url.origin);return route.abort();
+  }
   if(req.method()!=='GET')throw Error('Unexpected write method '+req.method());
   if(url.pathname==='/__/firebase/init.json')
    return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({projectId:'lifeplan-sync-sandbox',authDomain:'lifeplan-sync-sandbox.firebaseapp.com',apiKey:'synthetic-web-public-key',appId:'synthetic-public-app-id'})});
@@ -60,6 +85,38 @@ try{
  await check(chromiumBrowser,1280,'seedPc');await check(webkitBrowser,390,'seedPhone');
  assert.deepEqual(network,[]);
  pass('no-outbound-Firebase-or-personal-network-requests');
+ // The original PC's synthetic snapshot must be the only deletable payload.
+ const pc=await contexts[0].newPage();
+ await pc.goto(origin+'/setup.html',{waitUntil:'domcontentloaded'});
+ const record=await pc.evaluate(async()=>{
+   const state=JSON.parse(localStorage.getItem('lifeplan-sim-state-v1'));
+   const {encryptSnapshot}=await import('/sync-crypto.mjs');
+   const encrypted=await encryptSnapshot(state,'fictional-only-32-character-key');
+   return {ownerUid:'fake-user',formatVersion:1,revision:2,
+    digest:encrypted.digest,ciphertext:encrypted.payload,updatedAt:{synthetic:true}};
+ });
+ await pc.evaluate(value=>{window.__fakeDoc=value;},record);
+ const invoke=async phrase=>{
+   await pc.locator('#email').fill('fake@example.invalid');
+   await pc.locator('#password').fill('fictional-password');
+   await pc.locator('#phrase').fill(phrase);
+   await pc.locator('#confirmed').check();
+   await pc.locator('#cleanup').click();
+   await pc.waitForFunction(()=>document.querySelector('#result')?.textContent?.includes('確認できません')||
+     document.querySelector('#result')?.textContent?.includes('削除・不存在確認済み'),null,{timeout:25000});
+   return await pc.locator('#result').textContent();
+ };
+ const wrong=await invoke('wrong-fictional-32-character-key');
+ assert.match(wrong,/確認できません/);
+ assert.equal(await pc.evaluate(()=>window.__fakeDoc?.revision),2);
+ assert.equal(await pc.evaluate(()=>Boolean(localStorage.getItem('lifeplan-app-sandbox-source-run-v1'))),true);
+ pass('incorrect-test-key-preserves-remote-and-owner-marker');
+ const clean=await invoke('fictional-only-32-character-key');
+ assert.match(clean,/削除・不存在確認済み/);
+ assert.equal(await pc.evaluate(()=>window.__fakeDoc??null),null);
+ assert.equal(await pc.evaluate(()=>localStorage.getItem('lifeplan-app-sandbox-source-run-v1')),null);
+ pass('owned-and-decrypted-synthetic-only-conditional-delete');
+ await pc.close();
  report.status='pass';console.log('SANDBOX_APP_BROWSER_OK '+report.cases.length);
 }catch(e){report.status='fail';report.error=e.stack;process.exitCode=1;console.error('SANDBOX_APP_BROWSER_FAILED '+e.stack);}
 finally{
