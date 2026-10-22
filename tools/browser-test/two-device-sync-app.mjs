@@ -13,7 +13,11 @@ const allowed=new Set(manifest.files.map(f=>'/'+f.path));
 const fixture=JSON.parse(await readFile(resolve(dir,'synthetic-full.json'),'utf8'));
 const pcSeed=structuredClone(fixture),phoneSeed=structuredClone(fixture);
 pcSeed.futureEnvelope={kind:'fictional-pc',keep:[0,null,'日本語']};
+pcSeed.config.actuals['70']={endAsset:920,expense:10,taxSocial:1,note:'架空PC実績',updatedAt:'2026-10-20T00:00:00.000Z'};
+pcSeed.config.reviews['70']={items:{synthetic_review:true},note:'架空PC年次点検',updatedAt:'2026-10-20T00:00:00.000Z'};
 phoneSeed.config.plan.initialAsset=987;
+phoneSeed.config.actuals['69']={endAsset:777,note:'架空iPhone旧実績'};
+phoneSeed.config.reviews['69']={items:{},note:'架空iPhone旧点検'};
 phoneSeed.futureEnvelope={kind:'fictional-phone-original'};
 const uid='synthetic-ui-owner',project='synthetic-ui-project',passphrase='synthetic-only-encryption-passphrase';
 const cloud={document:null,writes:0,reads:0,conflicts:0},blocked=[];
@@ -72,6 +76,7 @@ const sdk={'firebase-app.js':appJs,'firebase-auth.js':authJs,'firebase-firestore
 const report={scope:'candidate app UI, real sync/crypto, desktop Chromium + mobile WebKit, isolated in-memory cloud, no real Firebase or personal data',cases:[]};
 const mark=(name)=>{report.cases.push({name,pass:true});console.log('ACTUAL_APP_TWO_DEVICE_PASS '+name);};
 const readState=page=>page.evaluate(()=>JSON.parse(localStorage.getItem('lifeplan-sim-state-v1')));
+const canonicalState=page=>page.evaluate(async()=>{const {loadState}=await import('/storage.mjs');return loadState();});
 const readMarker=page=>page.evaluate(()=>JSON.parse(localStorage.getItem('lifeplan-private-sync-marker-v1')));
 const status=page=>page.locator('#privateSyncContainer [role="status"]').innerText();
 const wait=async(page,text)=>{await page.waitForFunction(expected=>{const s=document.querySelector('#privateSyncContainer [role="status"]')?.textContent??'';return s.includes(expected)||s.includes('同期停止');},text,{timeout:30000});const observed=await status(page);if(!observed.includes(text)){const debug=await page.evaluate(()=>({activeTag:document.activeElement?.tagName,activeId:document.activeElement?.id,activeName:document.activeElement?.getAttribute?.('name'),inSync:!!document.activeElement?.closest?.('#privateSyncContainer'),otherFocused:!!document.activeElement?.closest?.('#dashboard input, #dashboard select, #dashboard textarea'),pensionDirty:document.querySelector('#pensionState')?.dataset?.dirty,salaryDirty:document.querySelector('#salaryState')?.dataset?.dirty,externalEvents:(window.__testExternalEvents||[]).slice(-12)}));throw Error('Unexpected sync status ('+text+'): '+observed.slice(0,250)+' GUARD '+JSON.stringify(debug));}};
@@ -110,7 +115,16 @@ async function login(page,persisted=false){
   syncPhrase:passphrase
  }))await page.locator('[name="'+name+'"]').fill(value);
  await click(page,'Firebaseに本人ログインして確認');
- await wait(page,'接続済み');
+ // After restart, successful connection may advance directly from "connected" to
+ // "synced" or "uploaded" before a status-text waiter runs. Observe the
+ // enabled authenticated control instead of depending on transient wording.
+ await page.waitForFunction(()=>{
+  const buttons=[...document.querySelectorAll('#privateSyncContainer button')];
+  const b=buttons.find(x=>x.textContent==='同期状態を確認');
+  return Boolean(b&&!b.disabled);
+ },null,{timeout:30000});
+ const connectedStatus=await status(page);
+ assert(!connectedStatus.startsWith('同期停止'),connectedStatus);
 }
 try{
  pcBrowser=await chromium.launch({headless:true});phoneBrowser=await webkit.launch({headless:true});
@@ -136,13 +150,23 @@ try{
  await click(phone,'クラウド内容と端末内容を照合（書込みなし）');
  await wait(phone,'クラウド内容を読み取り検証しました');
  assert.equal((await readState(phone)).config.plan.initialAsset,987);
+ const phoneBeforeImport=await canonicalState(phone);
+ assert.equal(cloud.writes,1,'preview must not write cloud');
  await click(phone,'確認したクラウドをこの端末へ初回取込');
  await wait(phone,'クラウド内容を検証して端末に反映しました');
  assert.equal((await readState(phone)).config.plan.initialAsset,1000);
  assert.deepEqual((await readState(phone)).futureEnvelope,pcSeed.futureEnvelope);
- assert.equal((await phone.evaluate(()=>JSON.parse(localStorage.getItem('lifeplan-private-sync-previous-v1')))).state.config.plan.initialAsset,987);
+ const receiverBackup=await phone.evaluate(()=>JSON.parse(localStorage.getItem('lifeplan-private-sync-previous-v1')));
+ assert.deepEqual(receiverBackup.state,phoneBeforeImport,'original receiver state must be recoverable');
+ assert.deepEqual(await canonicalState(phone),await canonicalState(pc),
+  'all adopted settings, comparison scenarios, actuals, reviews, unknown fields must transfer intact');
+ assert.equal((await readState(phone)).config.actuals['70'].endAsset,920);
+ assert.equal((await readState(phone)).config.reviews['70'].note,'架空PC年次点検');
+ assert.equal((await readState(phone)).scenarios.length,2);
  assert.equal((await readMarker(phone)).baseRevision,1);
+ assert.equal(cloud.writes,1,'the import must not create another cloud write');
  mark('phone-reviewed-import-with-previous-backup');
+ mark('complete-settings-scenarios-actuals-reviews-and-unknown-fields-preserved');
  const previous=await readState(phone);
  await phone.reload({waitUntil:'domcontentloaded'});
  await phone.locator('[data-group="manage"]').click();
@@ -159,6 +183,8 @@ try{
  await click(phone,'同期状態を確認');
  await wait(phone,'クラウド内容を検証して端末に反映しました');
  assert.equal((await readState(phone)).config.plan.initialAsset,1025);
+ assert.deepEqual(await canonicalState(phone),await canonicalState(pc),
+   'revision 2 must not drop scenarios, actuals or annual review');
  assert.equal((await readMarker(phone)).baseRevision,2);
  mark('pc-update-to-phone-verified-remote-update');
  await edit(pc,1030);await edit(phone,1040);
@@ -171,6 +197,9 @@ try{
  assert.equal((await readState(phone)).config.plan.initialAsset,1040);
  assert.equal((await readState(pc)).config.plan.initialAsset,1030);
  assert.equal((await readMarker(phone)).baseRevision,2);
+ assert.equal((await readState(phone)).config.actuals['70'].endAsset,920);
+ assert.equal((await readState(phone)).config.reviews['70'].note,'架空PC年次点検');
+ assert.equal((await readState(phone)).scenarios.length,2);
  mark('parallel-edits-stop-without-overwriting-or-merging');
  assert.deepEqual(blocked,[]);
  const storageChecks=await Promise.all([pc,phone].map(p=>p.evaluate(()=>{
