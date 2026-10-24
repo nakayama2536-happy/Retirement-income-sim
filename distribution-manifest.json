@@ -1,6 +1,6 @@
 {
   "kind": "public-release",
-  "runtime": "v0.9.7-firebase-sync-draft-20261016",
+  "runtime": "v0.9.7-cloud-ui-comment-20261024",
   "files": [
     {
       "name": "annual-cashflow.mjs",
@@ -14,13 +14,13 @@
     },
     {
       "name": "app.mjs",
-      "size": 64516,
-      "sha256": "7a6e223126b1c6797263b0f01fbae40e425a65088706322748e4c50fa0238245"
+      "size": 64513,
+      "sha256": "f5d0df8d2de8b62103961de6c9d5593dd1d260821fd4869e2fd24bd80cdb115c"
     },
     {
       "name": "backup-compatibility.mjs",
-      "size": 7155,
-      "sha256": "9bc537783e46a9ae11b5c6738f5046db4aac007ade5666d3ca7371b36f9485c8"
+      "size": 7152,
+      "sha256": "6e11056418920173132a8597a9f92e5415bd532081723f27ffe224fa639c1671"
     },
     {
       "name": "calc.mjs",
@@ -64,13 +64,13 @@
     },
     {
       "name": "detail-settings.mjs",
-      "size": 20361,
-      "sha256": "ffa47315e1756956a7f116ba88203de91b17e8bdcf1d7cc49a126c9fd512249e"
+      "size": 20464,
+      "sha256": "ac77743506648f9d95abe9b502f397fe690dc952c53aaab41671fcec9a4acbc1"
     },
     {
       "name": "detail-ui.mjs",
-      "size": 33874,
-      "sha256": "89027ca6b378a8ee7b48219037a5181893ff2fc2f2c3c8a08378009bdbed0b87"
+      "size": 34000,
+      "sha256": "d1194ac2ace7eace7cec510858c49a787bc4d49569090c1117dbef5f1e788771"
     },
     {
       "name": "detailed-report.mjs",
@@ -79,8 +79,8 @@
     },
     {
       "name": "docs/USER_GUIDE.md",
-      "size": 31325,
-      "sha256": "8e9ad507d031fe8107b125f78f00b963f4f932815375bf21a8f2c99251cb9a3a"
+      "size": 33836,
+      "sha256": "7818440344d7bbe16c7d8aa13b1ea43cb7cf384aecc454260b4e7dc8ae75af45"
     },
     {
       "name": "expense-display.mjs",
@@ -149,8 +149,8 @@
     },
     {
       "name": "index.html",
-      "size": 58281,
-      "sha256": "9785e8adde5a51fb104c0ee99506cefaaebd1fecaebf9153301ea5c370fbf150"
+      "size": 58256,
+      "sha256": "8a07b1898ff9a8eb3786fada60ddd6aff71f98bc457f8315ff247d941074984c"
     },
     {
       "name": "manifest.webmanifest",
@@ -191,6 +191,11 @@
       "name": "recovery-ui.mjs",
       "size": 1907,
       "sha256": "46b17d0d3bad75e71a0c2d9e56af6f1d8cfca806910a971eaf072ee5f3e0c1c8"
+    },
+    {
+      "name": "retirement-comment.mjs",
+      "size": 2769,
+      "sha256": "17ef70a0115321e57c51c4dd03494d71ea770d69d5e9a65e2e83da6fd70baf30"
     },
     {
       "name": "review-prompt.mjs",
@@ -249,13 +254,13 @@
     },
     {
       "name": "sw.js",
-      "size": 3790,
-      "sha256": "7a5b51607840de1507eccca96b61495094543449e7c35f83414a8dc3711389e6"
+      "size": 3828,
+      "sha256": "551d3c3d8137402370912dc9cfca3b488f44f6d51965b141d8f197fca95c178f"
     },
     {
       "name": "sync-controller.mjs",
-      "size": 10263,
-      "sha256": "5d92ffa0c9501620b83379765a66be7dd35cf9b737aa98f32cc1fe4e51100154"
+      "size": 10644,
+      "sha256": "3d7138be156a25b619e31e9a600b1b5125b541d8b58a0f7d99cdc65d2559f61e"
     },
     {
       "name": "sync-crypto.mjs",
@@ -264,13 +269,13 @@
     },
     {
       "name": "sync-firebase.mjs",
-      "size": 4414,
-      "sha256": "746b6cfe0d3edd90adfaadd2af8362208366f2aa9bec964bd168df762e226c88"
+      "size": 4861,
+      "sha256": "4c52895ae1cde9961fab348d21ecfa7674d6b762c2b500099d74b6de593b8553"
     },
     {
       "name": "sync-panel.mjs",
-      "size": 14800,
-      "sha256": "3ddbbeedbd5e61735c34f41a52830aaba9de14d7ffc67455311ce254b3737fe3"
+      "size": 33694,
+      "sha256": "2fb6b0e7435b62974e3668577711d13927023ead41bea5407068530837679a4b"
     },
     {
       "name": "sync-policy.mjs",

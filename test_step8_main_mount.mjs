@@ -32,17 +32,17 @@ test('trial modules have no persistence or adopting save/import actions',()=>{
 
 test('offline candidate assets and module dependency closure are included',()=>{
   const {out,runtime}=collect(new URL('.',import.meta.url).pathname);
-  for(const name of ['step8-trial-ui.mjs','step8-trial-workflow.mjs','full-plan-ui.mjs','full-plan-comparison.mjs','full-plan-saved.mjs','app.mjs','calc.mjs']){
+  for(const name of ['step8-trial-ui.mjs','step8-trial-workflow.mjs','full-plan-ui.mjs','full-plan-comparison.mjs','full-plan-saved.mjs','app.mjs','calc.mjs','retirement-comment.mjs']){
     assert.ok(out.has(name),name);
     assert.ok(runtime.includes(name),name);
     assert.match(sw,new RegExp("\\./"+name.replaceAll('.','\\.')));
   }
-  assert.equal(runtime.length,57);
-  assert.equal(out.size,60);
+  assert.equal(runtime.length,58);
+  assert.equal(out.size,61);
 });
 
 test('candidate service worker is versioned separately without cache deletion or forced update',()=>{
-  assert.match(sw,/const CACHE=`\$\{CACHE_PREFIX\}v0\.9\.7-firebase-sync-draft-20261016`/);
+  assert.match(sw,/const CACHE=`\$\{CACHE_PREFIX\}v0\.9\.7-cloud-ui-comment-20261024`/);
   assert.doesNotMatch(sw,/caches\.delete\(/);
   assert.doesNotMatch(sw,/skipWaiting\s*\(/);
 });

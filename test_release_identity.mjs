@@ -25,11 +25,11 @@ test('公開候補の版番号は画面・バックアップ・SW・manifest・�
 });
 
 test('本番候補に旧公開版・RC・未公開の誤認ラベルを残さない',()=>{
-  assert.ok(APP_BUILD.startsWith('v0.9.7-firebase-sync-draft-'));
+  assert.equal(APP_BUILD,'v0.9.7-cloud-ui-comment-20261024');
   assert.notEqual(APP_BUILD,'v0.9.7-ui-simple-20261012');
   for(const value of [APP_BUILD,app.match(/el\('appVersion'\)\.textContent='([^']+)'/)?.[1],sw.match(/const CACHE=`\$\{CACHE_PREFIX\}([^`]+)`/)?.[1],deployed.runtime]){
     assert.ok(value);
-    assert.match(value,/-draft-/);assert.doesNotMatch(value,/\brc\b|未公開|\bdev\b/);
+    assert.doesNotMatch(value,/-draft-|\brc\b|未公開|\bdev\b/);
   }
 });
 
@@ -38,7 +38,7 @@ test('登録済み配布manifestと実際の資材はバイト一致',()=>{
   const expected=out.get('distribution-manifest.json');
   assert.ok(expected);
   assert.equal(read('./distribution-manifest.json'),expected.toString('utf8'));
-  assert.equal(deployed.files.length,59);
+  assert.equal(deployed.files.length,60);
   for(const entry of deployed.files){assert.ok(out.has(entry.name),entry.name);}
 });
 
