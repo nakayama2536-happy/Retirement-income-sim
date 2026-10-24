@@ -1,0 +1,58 @@
+name: Stage verified cloud UI candidate (feature branch only)
+on:
+  push:
+    branches: [feature/cloud-ui-retirement-comment-20261024]
+    paths: [.ci/cloud-ui-candidate-ready.json]
+permissions:
+  contents: write
+jobs:
+  stage:
+    if: github.repository == 'nakayama2536-happy/Retirement-income-sim' && github.ref == 'refs/heads/feature/cloud-ui-retirement-comment-20261024'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Apply exact reviewed patch and verify every changed blob
+        env:
+          TARGET_BRANCH: feature/cloud-ui-retirement-comment-20261024
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$GITHUB_REF" = "refs/heads/$TARGET_BRANCH"
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          test "$(git ls-remote origin refs/heads/main | cut -f1)" = a77a50fa07152a93e3057a5c4a719b16531b9111
+          python3 - <<'PY'
+          import base64,hashlib,json,pathlib,subprocess,zlib
+          root=pathlib.Path('.')
+          m=json.loads((root/'.ci/cloud-ui-candidate-ready.json').read_text())
+          assert m['base']=='a77a50fa07152a93e3057a5c4a719b16531b9111'
+          allowed={'app.mjs','backup-compatibility.mjs','detail-settings.mjs','detail-ui.mjs','distribution-manifest.json','docs/CLOUD_UI_LOGIN_20261024.md','sw.js','sync-controller.mjs','sync-firebase.mjs','sync-panel.mjs','test_cloud_login_candidate.mjs','test_cloud_ui_interactions.mjs','test_release_identity.mjs','test_retirement_comment.mjs','test_sync_panel.mjs','tools/browser-test/retirement-comment-case.mjs','tools/browser-test/run-browser.mjs','tools/browser-test/two-device-sync-app.mjs','tools/cloud-ui-test/dom.mjs','tools/cloud-ui-test/export-snapshots.mjs','tools/cloud-ui-test/fixture.mjs','tools/cloud-ui-test/harness.mjs','tools/cloud-ui-test/index.html','tools/package-public.mjs'}
+          assert {x['path'] for x in m['files']}==allowed
+          encoded=''.join((root/f'.ci/cloud-ui-patch-{i}.txt').read_text().strip() for i in range(4))
+          patch=zlib.decompress(base64.b64decode(encoded,validate=True))
+          assert len(patch)<300000 and hashlib.sha256(patch).hexdigest()==m['patch_sha256']
+          assert subprocess.check_output(['git','diff','--cached','--name-only']).strip()==b''
+          target=pathlib.Path('/tmp/cloud-ui-verified.patch');target.write_bytes(patch)
+          subprocess.run(['git','apply','--check',str(target)],check=True)
+          subprocess.run(['git','apply','--index',str(target)],check=True)
+          changed=set(subprocess.check_output(['git','diff','--cached','--name-only'],text=True).splitlines())
+          assert changed==allowed,(changed,allowed)
+          for item in m['files']:
+            p=root/item['path'];assert not p.is_symlink()
+            content=p.read_bytes()
+            assert hashlib.sha256(content).hexdigest()==item['sha256'],item['path']
+            blob=hashlib.sha1(b'blob '+str(len(content)).encode()+b'\0'+content).hexdigest()
+            assert blob==item['git_blob'],item['path']
+            if p.suffix=='.mjs': subprocess.run(['node','--check',str(p)],check=True)
+          print('Verified 24 exact source changes; no main or application data writes.')
+          PY
+          git diff --cached --check
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m 'feat: simplify cloud login UI and add non-calculating retirement concept comment'
+          git push origin "HEAD:refs/heads/$TARGET_BRANCH"
