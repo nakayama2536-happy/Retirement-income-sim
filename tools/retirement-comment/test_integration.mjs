@@ -21,6 +21,7 @@ function setup(){
  seed.config=migrateConfig(seed.config);
  seed.scenarios=seed.scenarios.map(s=>({...s,config:migrateConfig(s.config)}));
  seed.futureTestEnvelope={keep:[0,null,'fictional']};
+ seed.config.retirement ??= {amount:250,serviceYears:20,receiveDate:'2042-06-15',companyStartDate:'2022-06-15',retirementDeclarationFiled:true};
  seed.config.retirement.unknownTestField={keep:true};
  storage.setItem(STATE_KEY,JSON.stringify(seed));
  return {storage,state:loadState()};

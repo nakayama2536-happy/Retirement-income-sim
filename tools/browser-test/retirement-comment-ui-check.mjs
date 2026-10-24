@@ -6,6 +6,7 @@ import {resolve,extname,sep} from 'node:path';
 import {chromium} from 'playwright';
 const root=resolve('.'),out=resolve('stage2-evidence');await mkdir(out,{recursive:true});
 const fixture=JSON.parse(await readFile('tools/browser-test/synthetic-full.json','utf8'));
+fixture.config.retirement ??= {amount:250,serviceYears:20,receiveDate:'2042-06-15',companyStartDate:'2022-06-15',retirementDeclarationFiled:true};
 const report={scope:'actual app / isolated Chromium / fictional fixture / no cloud',cases:[],status:'running'};
 const mark=name=>{report.cases.push({name,pass:true});console.log('COMMENT_UI_PASS '+name);};
 const server=createServer(async(req,res)=>{
