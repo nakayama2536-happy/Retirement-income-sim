@@ -18,11 +18,11 @@ export async function validateFullPlanUi({browser,createTestServer,open,load,ope
   await openTab(page,'settings');await page.locator('#step8TrialCard details > summary').click();
   const syncCard=page.locator('#privateSyncCard');
   assert.equal(await syncCard.count(),1);
-  await syncCard.locator('summary').click();
-  assert(await syncCard.getByRole('button',{name:'Firebaseに本人ログインして確認'}).isVisible());
-  assert(await syncCard.getByRole('button',{name:'この端末を初回の同期元にする'}).isDisabled());
+  await syncCard.locator(':scope > details > summary').click();
+  assert(await syncCard.locator('[data-sync-action="1"]').isVisible());
+  assert(await syncCard.locator('[data-sync-action="6"]').isDisabled());
   assert.deepEqual((await snapshot(page)).data,before,'optional sync UI must not change data or connect without configuration');
-  await syncCard.locator('summary').click();
+  await syncCard.locator(':scope > details > summary').click();
   const opening=page.locator('#step8TrialContainer'),full=page.locator('#fullPlanComparisonContainer');
   for(const [name,value] of [['startMonth','2044-09'],['salaryLastMonth','2044-08'],['priceBaseMonth','2044-08'],['openingAsOfMonth','2044-08'],['openingAmount','100'],['annuityStartMonth','2044-09']])await opening.locator('[name="'+name+'"]').fill(value);
   await opening.locator('[name="idecoAssetScope"]').selectOption('received-lump-only-v1');
