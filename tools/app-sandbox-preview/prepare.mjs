@@ -44,9 +44,12 @@ export function prepareAppPreview(destination){
  testAdapter=patchOnce(testAdapter,boundary,guarded);
  files.set('sync-firebase.mjs',Buffer.from(testAdapter));
  const panel=files.get('sync-panel.mjs').toString('utf8');
+ // Match the reviewed cloud UI's single configuration validation entry point.
+ // Keep the production module unchanged; only this isolated preview allows
+ // Hosting's omitted appId. Unknown upstream text still fails closed.
  const adjustedPanel=patchOnce(panel,
-  "const values=Object.fromEntries(Object.entries(cfg).map(([key,input])=>[key,input.value.trim()]));",
-  "const values=Object.fromEntries(Object.entries(cfg).map(([key,input])=>[key,input.value.trim()]));\n  if(!values.appId)delete values.appId; // preview only: optional appId if Hosting omitted it");
+  "function values(){return validateFirebaseConfig(Object.fromEntries(Object.entries(cfg).map(([k,v])=>[k,v.value.trim()])));}",
+  "function values(){const values=Object.fromEntries(Object.entries(cfg).map(([k,v])=>[k,v.value.trim()]));\n  if(!values.appId)delete values.appId; // preview only: optional appId if Hosting omitted it\n  return validateFirebaseConfig(values);}");
  files.set('sync-panel.mjs',Buffer.from(adjustedPanel));
 
  let html=files.get('index.html').toString('utf8');
