@@ -1,0 +1,53 @@
+name: Combined cloud UI candidate validation
+on:
+  pull_request:
+    branches: [main]
+permissions:
+  contents: read
+concurrency:
+  group: combined-cloud-candidate-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  integration:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Assemble exact hash-pinned candidate in disposable checkout
+        run: |
+          node tools/cloud-ui-candidate/prepare.mjs
+          git diff --check
+      - name: Verify integrated cloud, comment, release identity and assets
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --test test_sync_panel.mjs test_sync_firebase.mjs test_sync_core.mjs test_sync_controller.mjs tools/retirement-comment/test_integration.mjs test_release_identity.mjs test_distribution_audit.mjs test_service_worker.mjs test_step8_main_mount.mjs | tee stage4-evidence/targeted.tap
+      - name: Install existing pinned browser test dependency
+        working-directory: tools/browser-test
+        run: npm install --no-save --package-lock=false --ignore-scripts playwright@1.62.1
+      - name: Install Chromium and WebKit
+        working-directory: tools/browser-test
+        run: npx --no-install playwright install --with-deps chromium webkit
+      - name: Verify comment operations in complete integrated application
+        run: node tools/browser-test/retirement-comment-ui-check.mjs
+      - name: Verify two-device cloud operations with loopback-only fictional backend
+        run: |
+          node tools/browser-test/prepare.mjs
+          node tools/browser-test/two-device-sync-app.mjs
+      - name: Keep candidate evidence, not a deployment
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: combined-cloud-ui-candidate-evidence
+          path: |
+            stage4-evidence/
+            stage2-evidence/
+            tools/browser-test/mobile-results/actual-app-sync/
+          if-no-files-found: error
+          retention-days: 14
