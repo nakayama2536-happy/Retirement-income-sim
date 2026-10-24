@@ -1,0 +1,36 @@
+name: Cloud UI baseline evidence (read-only)
+
+on:
+  push:
+    branches: [feature/cloud-ui-retirement-comment-20261024]
+    paths: [.github/workflows/cloud-ui-source-evidence.yml]
+
+permissions:
+  contents: read
+
+jobs:
+  baseline:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: a77a50fa07152a93e3057a5c4a719b16531b9111
+          persist-credentials: false
+      - name: Archive exact public source, without credentials or Git metadata
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = a77a50fa07152a93e3057a5c4a719b16531b9111
+          mkdir -p "$RUNNER_TEMP/cloud-ui-baseline"
+          git archive --format=zip --output="$RUNNER_TEMP/cloud-ui-baseline/source.zip" HEAD
+          git rev-parse HEAD > "$RUNNER_TEMP/cloud-ui-baseline/commit.txt"
+          git ls-tree -r HEAD > "$RUNNER_TEMP/cloud-ui-baseline/git-blobs.txt"
+          cd "$RUNNER_TEMP/cloud-ui-baseline"
+          sha256sum source.zip > SHA256SUMS
+      - uses: actions/upload-artifact@v4
+        with:
+          name: cloud-ui-public-baseline-a77a50f
+          path: ${{ runner.temp }}/cloud-ui-baseline/
+          retention-days: 7
+          if-no-files-found: error
