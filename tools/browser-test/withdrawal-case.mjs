@@ -15,7 +15,7 @@ export async function validateWithdrawalUi({browser,createTestServer,open,load,o
    await page.setViewportSize({width,height:900});
    for(const id of ['salary','nisa','ideco','pension','retirement','expenses','events','settings']){
     await openTab(page,id);const summary=page.locator('#'+id+'CurrentSummary');assert(await summary.isVisible());assert((await summary.innerText()).includes('現在の設定の概要'));
-    assert(await summary.evaluate(node=>{const panel=node.closest('section'),firstForm=panel.querySelector('form');return !firstForm||Boolean(node.compareDocumentPosition(firstForm)&Node.DOCUMENT_POSITION_FOLLOWING);}));
+    assert(await summary.evaluate(node=>{const panel=node.closest('section');const firstForm=panel.id==='settings'?panel.querySelector('#settingsForm'):panel.querySelector('form');return !firstForm||Boolean(node.compareDocumentPosition(firstForm)&Node.DOCUMENT_POSITION_FOLLOWING);}));
     assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));
    }
    await openTab(page,'salary');await page.screenshot({path:path.join(out,`W1-overview-${width}.png`),fullPage:true});
