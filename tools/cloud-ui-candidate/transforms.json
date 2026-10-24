@@ -1,0 +1,260 @@
+[
+  {
+    "path": "app.mjs",
+    "before": "7a6e223126b1c6797263b0f01fbae40e425a65088706322748e4c50fa0238245",
+    "after": "f5d0df8d2de8b62103961de6c9d5593dd1d260821fd4869e2fd24bd80cdb115c",
+    "edits": [
+      {
+        "line": 864,
+        "remove": 1,
+        "insert": "el('appVersion').textContent='v0.9.7-cloud-ui-comment-20261024'; el('rulesVersion').textContent=RULES_VERSION;\n"
+      }
+    ]
+  },
+  {
+    "path": "index.html",
+    "before": "9785e8adde5a51fb104c0ee99506cefaaebd1fecaebf9153301ea5c370fbf150",
+    "after": "8a07b1898ff9a8eb3786fada60ddd6aff71f98bc457f8315ff247d941074984c",
+    "edits": [
+      {
+        "line": 181,
+        "remove": 1,
+        "insert": "<article class=\"card\" id=\"privateSyncCard\"><details><summary>クラウド保存・読込み（PC・iPhone共通）</summary><div id=\"privateSyncContainer\"></div></details></article>\n"
+      }
+    ]
+  },
+  {
+    "path": "docs/USER_GUIDE.md",
+    "before": "8e9ad507d031fe8107b125f78f00b963f4f932815375bf21a8f2c99251cb9a3a",
+    "after": "7818440344d7bbe16c7d8aa13b1ea43cb7cf384aecc454260b4e7dc8ae75af45",
+    "edits": [
+      {
+        "line": 14,
+        "remove": 1,
+        "insert": "端末内だけで使うことも、任意の本人専用クラウド保存・読込みを利用することもできます。クラウド利用中も、本人認証・暗号化解除・オンライン等の条件が必要です。今回の機能公開は、本人計画書の採用・保存済み現在設定の自動更新・税や社会保険制度の精密検証を意味しません。\n"
+      },
+      {
+        "line": 79,
+        "remove": 1,
+        "insert": "1. 普段使っている同じ端末・同じ起動方法で開き、現在設定を確認します。クラウド機能を使わない場合は端末内保存のみです。登録済みでも、暗号化解除前やオフラインではクラウドへ書き込めません。\n"
+      },
+      {
+        "line": 198,
+        "remove": 0,
+        "insert": "\n\n## クラウド保存・読込みと構想コメント（2026-10-24改修）\n\n通常は登録済み端末のログイン状態を自動確認します。ログインが有効ならメール・パスワード欄を省略し、①で合言葉を入力して暗号化を解除します。合言葉とパスワードはアプリ内に永続保存しません。\n\n- 日常操作：②この端末からクラウドへ書込み、③クラウドからこの端末へ読込み、④保存状況と差分を確認。④自身は書込み・置換をしません。番号は識別用であり、順に全部押す必要はありません。\n- ⑤停止・ログアウトは接続管理内です。⑥クラウドの初期登録はクラウドが空の場合だけ。⑦は新しい端末で既存のクラウドを使い始める場合に限ります。初回設定は日常操作と分けています。\n- 現在の状態、番号付きの手動操作結果、自動処理の結果を別々に表示します。保存成功が確認できない場合は保存済みと表示しません。\n- クラウドが共通の確定データでも、端末の未送信変更・未保存入力・双方の変更は無断で破棄しません。復元後は確認待ちにし、必要なバックアップと差分確認後に手動更新します。同期は端末外バックアップの代わりにはなりません。\n- 自動処理は保存後、前面復帰、オンライン復帰、利用中の定期確認が契機です。アプリ終了中やOSによる停止中の常時動作、一定秒数以内の書込み、端末のパスワード自動入力を保証しません。\n- 退職金の「構想コメント」は任意・複数行・2,000 UTF-16コード単位までです。計算に使いません。入力・試算だけでは保存せず「全体シミュレーションに反映」で保存します。空欄を明示反映すると既存コメントを消去します。既存の比較案は勝手に書き換えません。\n- コメントは設定・一括バックアップおよび暗号化された保存データに含まれます。金額計算・既存CSVの数値は変えません。\n"
+      }
+    ]
+  },
+  {
+    "path": "test_distribution_audit.mjs",
+    "before": "00dfe641ffe36c9e3f5a22e9e9be2f7cdaafa3e3849a5cc389ed2fa2305aa90a",
+    "after": "d4add1589d2e452e9133350e44507f8882ede48b3a999084b636f7097eec4c9f",
+    "edits": [
+      {
+        "line": 5,
+        "remove": 1,
+        "insert": "test('候補には起動58＋案内2＋manifestのみ',()=>{const x=collect(root);assert.equal(x.runtime.length,58);assert.equal(x.out.size,61);assert.equal([...x.out.keys()].some(p=>p.startsWith('test_')||p.startsWith('tools/')||p.includes('I08')||p.endsWith('.patch')),false);});\n"
+      },
+      {
+        "line": 15,
+        "remove": 1,
+        "insert": "test('manifestのサイズと全体SHAを照合',()=>{const {out}=collect(root);const m=JSON.parse(out.get('distribution-manifest.json'));assert.equal(m.files.length,60);for(const f of m.files){assert.equal(f.size,out.get(f.name).length);assert.equal(f.sha256,crypto.createHash('sha256').update(out.get(f.name)).digest('hex'));}});\n"
+      }
+    ]
+  },
+  {
+    "path": "test_release_identity.mjs",
+    "before": "d898989ff2f88fc5e2aba1624a8f11b601741d3825b9eef0e3f6f1b9c99abf71",
+    "after": "fad3815ef16575ff35ad075d7db5a5cf880930441afe467ab59b993a75ccc648",
+    "edits": [
+      {
+        "line": 27,
+        "remove": 1,
+        "insert": "  assert.equal(APP_BUILD,'v0.9.7-cloud-ui-comment-20261024');\n"
+      },
+      {
+        "line": 31,
+        "remove": 1,
+        "insert": "    assert.doesNotMatch(value,/-draft-|\\brc\\b|未公開|\\bdev\\b/);\n"
+      },
+      {
+        "line": 40,
+        "remove": 1,
+        "insert": "  assert.equal(deployed.files.length,60);\n"
+      }
+    ]
+  },
+  {
+    "path": "test_service_worker.mjs",
+    "before": "55c82ae94605027214455816a4a080552d21609b789cc19854a2a0c590dae304",
+    "after": "7bce446582364b02a5e41783d37592aad115cb5fc8f755bf6412aa8382ff2a02",
+    "edits": [
+      {
+        "line": 80,
+        "remove": 1,
+        "insert": "  const h=harness();await h.run('install');assert.equal(h.requests.length,58);\n"
+      },
+      {
+        "line": 85,
+        "remove": 0,
+        "insert": "  assert.ok(h.requests.some(r=>r.url===h.scope+'retirement-comment.mjs'));\n"
+      }
+    ]
+  },
+  {
+    "path": "test_step8_main_mount.mjs",
+    "before": "bf92939fea7aa2fe851740d7ad2af9bbcd0d131ad3dca2845d7d63124bb2265b",
+    "after": "73a0ca3705dfb18a15b398c80d75198165c4aa375dffbbf72d5e47728d5e5078",
+    "edits": [
+      {
+        "line": 34,
+        "remove": 1,
+        "insert": "  for(const name of ['step8-trial-ui.mjs','step8-trial-workflow.mjs','full-plan-ui.mjs','full-plan-comparison.mjs','full-plan-saved.mjs','app.mjs','calc.mjs','retirement-comment.mjs']){\n"
+      },
+      {
+        "line": 39,
+        "remove": 2,
+        "insert": "  assert.equal(runtime.length,58);\n  assert.equal(out.size,61);\n"
+      },
+      {
+        "line": 44,
+        "remove": 1,
+        "insert": "  assert.match(sw,/const CACHE=`\\$\\{CACHE_PREFIX\\}v0\\.9\\.7-cloud-ui-comment-20261024`/);\n"
+      }
+    ]
+  },
+  {
+    "path": "test_sync_panel.mjs",
+    "before": "33c99123f9fc655ea77a0def04a7d587f1ba8043d8c24ae85e7ae14bac2b7076",
+    "after": "9fee4f3726f1a561686df7df9afcb9cca0dbab2e6407974a6a392372bf347050",
+    "edits": [
+      {
+        "line": 4,
+        "remove": 2,
+        "insert": ""
+      },
+      {
+        "line": 10,
+        "remove": 1,
+        "insert": " constructor(tag,doc){this.tagName=tag;this.ownerDocument=doc;this.children=[];this.listeners={};this.value='';this.checked=false;this.disabled=false;this.textContent='';this.attributes={};this.classList={add(){}};}\n"
+      },
+      {
+        "line": 15,
+        "remove": 1,
+        "insert": " async emit(k){for(const fn of this.listeners[k]||[])await fn({preventDefault(){}});}\n"
+      },
+      {
+        "line": 19,
+        "remove": 1,
+        "insert": "// Select stable action numbers, not translated button copy.\nconst actionNumber={\n 'Firebaseに本人ログインして確認':1,'クラウド内容と端末内容を照合（書込みなし）':4,\n 'この端末を初回の同期元にする':6,'確認したクラウドをこの端末へ初回取込':7\n};\nconst btn=(r,label)=>walk(r).find(x=>x.tagName==='button'&&x.attributes['data-sync-action']===String(actionNumber[label]));\nconst loginForm=r=>walk(r).find(x=>x.tagName==='form'&&x.attributes.id==='lifeplanCloudUnlock');\nconst idle=async ui=>{const deadline=Date.now()+10000;while(ui.getState().working){if(Date.now()>deadline)throw Error('UI timeout');await new Promise(r=>setTimeout(r,5));}};\n"
+      },
+      {
+        "line": 43,
+        "remove": 3,
+        "insert": " await loginForm(root).emit('submit');\n // Wait for the actual operation, including encryption validation.\n await idle(ui);\n"
+      },
+      {
+        "line": 95,
+        "remove": 2,
+        "insert": " await loginForm(root).emit('submit');\n await idle(panel);\n"
+      },
+      {
+        "line": 99,
+        "remove": 1,
+        "insert": " await idle(panel);\n"
+      },
+      {
+        "line": 123,
+        "remove": 1,
+        "insert": "test('legacy salary suggestion without editing is not an unsaved draft, but saved edits remain protected',async()=>{\n const {salaryDraftNeedsProtection}=await import('./salary-ui.mjs');\n const {salaryDraftFromConfig}=await import('./salary-workflow.mjs');\n"
+      }
+    ]
+  },
+  {
+    "path": "tools/browser-test/two-device-sync-app.mjs",
+    "before": "bd97090ae9b9c5469482d72235232c1ca80ee19d082e538d2cd882cb715bb4ce",
+    "after": "9dd879ff6da67ed1a11b6d427e0086c165cd0fa9d247f8937cff31c79f60c7d1",
+    "edits": [
+      {
+        "line": 63,
+        "remove": 2,
+        "insert": " 'export function onAuthStateChanged(auth,fn){(auth.listeners??=new Set()).add(fn);queueMicrotask(()=>{if(auth.listeners.has(fn))fn(auth.currentUser);});return()=>auth.listeners.delete(fn);}',\n 'export async function signInWithEmailAndPassword(auth,email,password){if(email!==\"fictional@example.invalid\"||password!==\"synthetic-firebase-password\")throw Error(\"bad-test-login\");auth.currentUser={uid:\"synthetic-ui-owner\"};localStorage.setItem(\"__synthetic_auth\",\"synthetic-ui-owner\");for(const f of auth.listeners||[])f(auth.currentUser);return {user:auth.currentUser};}',\n 'export async function signOut(auth){auth.currentUser=null;localStorage.removeItem(\"__synthetic_auth\");for(const f of auth.listeners||[])f(null);}'\n"
+      },
+      {
+        "line": 80,
+        "remove": 3,
+        "insert": "const status=page=>page.locator('#privateSyncContainer .cloud-status').innerText();\nconst wait=async(page,text)=>{await page.waitForFunction(expected=>{const s=document.querySelector('#privateSyncContainer .cloud-status')?.textContent??'';return s.includes(expected)||s.includes('処理を保留')||s.includes('両方に変更');},text,{timeout:30000});const observed=await status(page);if(!observed.includes(text)){const debug=await page.evaluate(()=>({activeTag:document.activeElement?.tagName,activeId:document.activeElement?.id,activeName:document.activeElement?.getAttribute?.('name'),inSync:!!document.activeElement?.closest?.('#privateSyncContainer'),otherFocused:!!document.activeElement?.closest?.('#dashboard input, #dashboard select, #dashboard textarea'),pensionDirty:document.querySelector('#pensionState')?.dataset?.dirty,salaryDirty:document.querySelector('#salaryState')?.dataset?.dirty,externalEvents:(window.__testExternalEvents||[]).slice(-12)}));throw Error('Unexpected sync status ('+text+'): '+observed.slice(0,250)+' GUARD '+JSON.stringify(debug));}};\nconst actionByOldLabel={'Firebaseに本人ログインして確認':1,'クラウド内容と端末内容を照合（書込みなし）':4,\n 'この端末を初回の同期元にする':6,'確認したクラウドをこの端末へ初回取込':7};\nconst action=(page,n)=>page.locator('#privateSyncContainer [data-sync-action=\"'+n+'\"]');\nconst click=(page,label)=>action(page,actionByOldLabel[label]).click();\n"
+      },
+      {
+        "line": 104,
+        "remove": 2,
+        "insert": " const details=page.locator('#privateSyncCard details').first();\n if(!(await details.getAttribute('open')))await details.locator('summary').first().click();\n"
+      },
+      {
+        "line": 109,
+        "remove": 19,
+        "insert": " // Returning enrolled devices bootstrap Auth only. Do not fill disabled config or\n // hidden password fields; enter only the in-memory encryption phrase.\n await page.waitForFunction(()=>{const b=document.querySelector('[data-sync-action=\"1\"]');return b&&!b.disabled;},null,{timeout:30000});\n if(!persisted){\n  for(const [name,value] of Object.entries({syncApiKey:'synthetic-key',syncAuthDomain:project+'.firebaseapp.com',\n   syncProjectId:project,syncAppId:'synthetic-web-id',syncEmail:'fictional@example.invalid',syncPassword:'synthetic-firebase-password'}))\n   await page.locator('[name=\"'+name+'\"]').fill(value);\n }else{\n  assert.equal(await page.locator('[name=\"syncPassword\"]').isVisible(),false);\n }\n await page.locator('[name=\"syncPhrase\"]').fill(passphrase);\n await action(page,1).click();\n await page.waitForFunction(()=>{const b=document.querySelector('[data-sync-action=\"4\"]');return b&&!b.disabled;},null,{timeout:30000});\n const observed=await status(page);\n if(expectConflict)assert.match(observed,/端末とクラウドの両方に変更/);\n else assert(!observed.includes('処理を保留'),observed);\n"
+      },
+      {
+        "line": 129,
+        "remove": 0,
+        "insert": "\n"
+      },
+      {
+        "line": 140,
+        "remove": 1,
+        "insert": " assert.equal(await action(pc,6).isDisabled(),true);\n"
+      },
+      {
+        "line": 143,
+        "remove": 1,
+        "insert": " await click(pc,'この端末を初回の同期元にする');await wait(pc,'クラウドの初期登録が完了');\n"
+      },
+      {
+        "line": 149,
+        "remove": 1,
+        "insert": " assert.equal(await action(phone,7).isDisabled(),true);\n"
+      },
+      {
+        "line": 151,
+        "remove": 1,
+        "insert": " await wait(phone,'初回登録前です');\n"
+      },
+      {
+        "line": 156,
+        "remove": 1,
+        "insert": " await wait(phone,'クラウドの最新版をこの端末へ反映しました');\n"
+      },
+      {
+        "line": 174,
+        "remove": 1,
+        "insert": " await phone.locator('#privateSyncCard summary').first().click();\n"
+      },
+      {
+        "line": 176,
+        "remove": 1,
+        "insert": " await login(phone,true);await wait(phone,'クラウドと一致しています');\n"
+      },
+      {
+        "line": 180,
+        "remove": 2,
+        "insert": " await pc.locator('#privateSyncCard summary').first().click();\n await login(pc,true);await wait(pc,'クラウドへの書込みが完了しました');\n"
+      },
+      {
+        "line": 183,
+        "remove": 2,
+        "insert": " // The new ④ is strictly read-only. Trigger the existing automatic focus event.\n await phone.evaluate(()=>window.dispatchEvent(new Event('focus')));\n await wait(phone,'クラウドの最新版をこの端末へ反映しました');\n"
+      },
+      {
+        "line": 193,
+        "remove": 1,
+        "insert": " await login(pc,true);await wait(pc,'クラウドへの書込みが完了しました');\n"
+      },
+      {
+        "line": 195,
+        "remove": 2,
+        "insert": " await login(phone,true,{expectConflict:true});await wait(phone,'端末とクラウドの両方に変更');\n assert.match(await status(phone),/端末とクラウドの両方に変更/);\n"
+      }
+    ]
+  }
+]

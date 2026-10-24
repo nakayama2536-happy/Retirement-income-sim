@@ -61,8 +61,9 @@ const authJs=[
  'export const browserLocalPersistence={type:"synthetic-browser-persistence"};',
  'export function getAuth(app){const active=localStorage.getItem("__synthetic_auth")==="synthetic-ui-owner";return {app,currentUser:active?{uid:"synthetic-ui-owner"}:null,authStateReady:async()=>{}};}',
  'export async function setPersistence(auth,value){if(value!==browserLocalPersistence)throw Error("wrong-persistence");}',
- 'export async function signInWithEmailAndPassword(auth,email,password){if(email!=="fictional@example.invalid"||password!=="synthetic-firebase-password")throw Error("bad-test-login");auth.currentUser={uid:"synthetic-ui-owner"};localStorage.setItem("__synthetic_auth","synthetic-ui-owner");return {user:auth.currentUser};}',
- 'export async function signOut(auth){auth.currentUser=null;localStorage.removeItem("__synthetic_auth");}'
+ 'export function onAuthStateChanged(auth,fn){(auth.listeners??=new Set()).add(fn);queueMicrotask(()=>{if(auth.listeners.has(fn))fn(auth.currentUser);});return()=>auth.listeners.delete(fn);}',
+ 'export async function signInWithEmailAndPassword(auth,email,password){if(email!=="fictional@example.invalid"||password!=="synthetic-firebase-password")throw Error("bad-test-login");auth.currentUser={uid:"synthetic-ui-owner"};localStorage.setItem("__synthetic_auth","synthetic-ui-owner");for(const f of auth.listeners||[])f(auth.currentUser);return {user:auth.currentUser};}',
+ 'export async function signOut(auth){auth.currentUser=null;localStorage.removeItem("__synthetic_auth");for(const f of auth.listeners||[])f(null);}'
 ].join('\n');
 const firestoreJs=[
  'export function getFirestore(app){return {app};}',
@@ -78,9 +79,12 @@ const mark=(name)=>{report.cases.push({name,pass:true});console.log('ACTUAL_APP_
 const readState=page=>page.evaluate(()=>JSON.parse(localStorage.getItem('lifeplan-sim-state-v1')));
 const canonicalState=page=>page.evaluate(async()=>{const {loadState}=await import('/storage.mjs');return loadState();});
 const readMarker=page=>page.evaluate(()=>JSON.parse(localStorage.getItem('lifeplan-private-sync-marker-v1')));
-const status=page=>page.locator('#privateSyncContainer [role="status"]').innerText();
-const wait=async(page,text)=>{await page.waitForFunction(expected=>{const s=document.querySelector('#privateSyncContainer [role="status"]')?.textContent??'';return s.includes(expected)||s.includes('同期停止');},text,{timeout:30000});const observed=await status(page);if(!observed.includes(text)){const debug=await page.evaluate(()=>({activeTag:document.activeElement?.tagName,activeId:document.activeElement?.id,activeName:document.activeElement?.getAttribute?.('name'),inSync:!!document.activeElement?.closest?.('#privateSyncContainer'),otherFocused:!!document.activeElement?.closest?.('#dashboard input, #dashboard select, #dashboard textarea'),pensionDirty:document.querySelector('#pensionState')?.dataset?.dirty,salaryDirty:document.querySelector('#salaryState')?.dataset?.dirty,externalEvents:(window.__testExternalEvents||[]).slice(-12)}));throw Error('Unexpected sync status ('+text+'): '+observed.slice(0,250)+' GUARD '+JSON.stringify(debug));}};
-const click=(page,label)=>page.getByRole('button',{name:label,exact:true}).click();
+const status=page=>page.locator('#privateSyncContainer .cloud-status').innerText();
+const wait=async(page,text)=>{await page.waitForFunction(expected=>{const s=document.querySelector('#privateSyncContainer .cloud-status')?.textContent??'';return s.includes(expected)||s.includes('処理を保留')||s.includes('両方に変更');},text,{timeout:30000});const observed=await status(page);if(!observed.includes(text)){const debug=await page.evaluate(()=>({activeTag:document.activeElement?.tagName,activeId:document.activeElement?.id,activeName:document.activeElement?.getAttribute?.('name'),inSync:!!document.activeElement?.closest?.('#privateSyncContainer'),otherFocused:!!document.activeElement?.closest?.('#dashboard input, #dashboard select, #dashboard textarea'),pensionDirty:document.querySelector('#pensionState')?.dataset?.dirty,salaryDirty:document.querySelector('#salaryState')?.dataset?.dirty,externalEvents:(window.__testExternalEvents||[]).slice(-12)}));throw Error('Unexpected sync status ('+text+'): '+observed.slice(0,250)+' GUARD '+JSON.stringify(debug));}};
+const actionByOldLabel={'Firebaseに本人ログインして確認':1,'クラウド内容と端末内容を照合（書込みなし）':4,
+ 'この端末を初回の同期元にする':6,'確認したクラウドをこの端末へ初回取込':7};
+const action=(page,n)=>page.locator('#privateSyncContainer [data-sync-action="'+n+'"]');
+const click=(page,label)=>action(page,actionByOldLabel[label]).click();
 const edit=(page,value)=>page.evaluate(value=>{const k='lifeplan-sim-state-v1';const state=JSON.parse(localStorage.getItem(k));state.config.plan.initialAsset=value;localStorage.setItem(k,JSON.stringify(state));},value);
 let pcBrowser,phoneBrowser,pcContext,phoneContext,pc,phone;
 async function context(browser,seed,viewport){
@@ -102,31 +106,29 @@ async function open(ctx){
  await page.locator('#privateSyncContainer [name="syncApiKey"]').waitFor({state:'attached'});
  await page.locator('[data-group="manage"]').click();
  await page.locator('[data-tab="settings"]').click();
- const details=page.locator('#privateSyncCard details');
- if(!(await details.getAttribute('open')))await details.locator('summary').click();
+ const details=page.locator('#privateSyncCard details').first();
+ if(!(await details.getAttribute('open')))await details.locator('summary').first().click();
  return page;
 }
 async function login(page,persisted=false,{expectConflict=false}={}){
- for(const [name,value] of Object.entries({
-  syncApiKey:'synthetic-key',syncAuthDomain:project+'.firebaseapp.com',
-  syncProjectId:project,syncAppId:'synthetic-web-id',
-  syncEmail:persisted?'':'fictional@example.invalid',
-  syncPassword:persisted?'':'synthetic-firebase-password',
-  syncPhrase:passphrase
- }))await page.locator('[name="'+name+'"]').fill(value);
- await click(page,'Firebaseに本人ログインして確認');
- // After restart, successful connection may advance directly from "connected" to
- // "synced" or "uploaded" before a status-text waiter runs. Observe the
- // enabled authenticated control instead of depending on transient wording.
- await page.waitForFunction(()=>{
-  const buttons=[...document.querySelectorAll('#privateSyncContainer button')];
-  const b=buttons.find(x=>x.textContent==='同期状態を確認');
-  return Boolean(b&&!b.disabled);
- },null,{timeout:30000});
- const connectedStatus=await status(page);
- if(expectConflict)assert.match(connectedStatus,/同期停止：両端末で別の変更/);
- else assert(!connectedStatus.startsWith('同期停止'),connectedStatus);
+ // Returning enrolled devices bootstrap Auth only. Do not fill disabled config or
+ // hidden password fields; enter only the in-memory encryption phrase.
+ await page.waitForFunction(()=>{const b=document.querySelector('[data-sync-action="1"]');return b&&!b.disabled;},null,{timeout:30000});
+ if(!persisted){
+  for(const [name,value] of Object.entries({syncApiKey:'synthetic-key',syncAuthDomain:project+'.firebaseapp.com',
+   syncProjectId:project,syncAppId:'synthetic-web-id',syncEmail:'fictional@example.invalid',syncPassword:'synthetic-firebase-password'}))
+   await page.locator('[name="'+name+'"]').fill(value);
+ }else{
+  assert.equal(await page.locator('[name="syncPassword"]').isVisible(),false);
+ }
+ await page.locator('[name="syncPhrase"]').fill(passphrase);
+ await action(page,1).click();
+ await page.waitForFunction(()=>{const b=document.querySelector('[data-sync-action="4"]');return b&&!b.disabled;},null,{timeout:30000});
+ const observed=await status(page);
+ if(expectConflict)assert.match(observed,/端末とクラウドの両方に変更/);
+ else assert(!observed.includes('処理を保留'),observed);
 }
+
 try{
  pcBrowser=await chromium.launch({headless:true});phoneBrowser=await webkit.launch({headless:true});
  report.engines={desktop:'Chromium '+pcBrowser.version(),mobile:'WebKit '+phoneBrowser.version()};
@@ -138,23 +140,23 @@ try{
  assert.equal(cloud.writes,0);mark('independent-real-app-saved-states');
  await login(pc);
  assert.equal(cloud.writes,0);
- assert.equal(await pc.getByRole('button',{name:'この端末を初回の同期元にする'}).isDisabled(),true);
+ assert.equal(await action(pc,6).isDisabled(),true);
  mark('no-initial-write-without-explicit-backup-and-source');
  await pc.locator('[name="syncBackupConfirmed"]').check();
- await click(pc,'この端末を初回の同期元にする');await wait(pc,'初回の暗号化クラウド保存が完了');
+ await click(pc,'この端末を初回の同期元にする');await wait(pc,'クラウドの初期登録が完了');
  assert.equal(cloud.writes,1);assert.equal(cloud.document.revision,1);
  assert.equal(JSON.stringify(cloud.document).includes('initialAsset'),false);
  assert.equal((await readMarker(pc)).baseRevision,1);
  mark('pc-encrypted-first-upload');
  await login(phone);await phone.locator('[name="syncBackupConfirmed"]').check();
- assert.equal(await phone.getByRole('button',{name:'確認したクラウドをこの端末へ初回取込'}).isDisabled(),true);
+ assert.equal(await action(phone,7).isDisabled(),true);
  await click(phone,'クラウド内容と端末内容を照合（書込みなし）');
- await wait(phone,'クラウド内容を読み取り検証しました');
+ await wait(phone,'初回登録前です');
  assert.equal((await readState(phone)).config.plan.initialAsset,987);
  const phoneBeforeImport=await canonicalState(phone);
  assert.equal(cloud.writes,1,'preview must not write cloud');
  await click(phone,'確認したクラウドをこの端末へ初回取込');
- await wait(phone,'クラウド内容を検証して端末に反映しました');
+ await wait(phone,'クラウドの最新版をこの端末へ反映しました');
  assert.equal((await readState(phone)).config.plan.initialAsset,1000);
  assert.deepEqual((await readState(phone)).futureEnvelope,pcSeed.futureEnvelope);
  const receiverBackup=await phone.evaluate(()=>JSON.parse(localStorage.getItem('lifeplan-private-sync-previous-v1')));
@@ -172,17 +174,18 @@ try{
  await phone.reload({waitUntil:'domcontentloaded'});
  await phone.locator('[data-group="manage"]').click();
  await phone.locator('[data-tab="settings"]').click();
- await phone.locator('#privateSyncCard summary').click();
+ await phone.locator('#privateSyncCard summary').first().click();
  assert.deepEqual(await readState(phone),previous);
- await login(phone,true);await wait(phone,'同期済み');
+ await login(phone,true);await wait(phone,'クラウドと一致しています');
  mark('mobile-restart-persistent-state-marker-and-auth');
  await edit(pc,1025);await pc.reload({waitUntil:'domcontentloaded'});
  await pc.locator('[data-group="manage"]').click();await pc.locator('[data-tab="settings"]').click();
- await pc.locator('#privateSyncCard summary').click();
- await login(pc,true);await wait(pc,'この端末の変更を暗号化して同期しました');
+ await pc.locator('#privateSyncCard summary').first().click();
+ await login(pc,true);await wait(pc,'クラウドへの書込みが完了しました');
  assert.equal(cloud.document.revision,2);
- await click(phone,'同期状態を確認');
- await wait(phone,'クラウド内容を検証して端末に反映しました');
+ // The new ④ is strictly read-only. Trigger the existing automatic focus event.
+ await phone.evaluate(()=>window.dispatchEvent(new Event('focus')));
+ await wait(phone,'クラウドの最新版をこの端末へ反映しました');
  assert.equal((await readState(phone)).config.plan.initialAsset,1025);
  assert.deepEqual(await canonicalState(phone),await canonicalState(pc),
    'revision 2 must not drop scenarios, actuals or annual review');
@@ -191,10 +194,10 @@ try{
  await edit(pc,1030);await edit(phone,1040);
  await pc.close();await phone.close();
  pc=await open(pcContext);phone=await open(phoneContext);
- await login(pc,true);await wait(pc,'この端末の変更を暗号化して同期しました');
+ await login(pc,true);await wait(pc,'クラウドへの書込みが完了しました');
  assert.equal(cloud.document.revision,3);
- await login(phone,true,{expectConflict:true});await wait(phone,'同期停止');
- assert.match(await status(phone),/両端末|競合|衝突/);
+ await login(phone,true,{expectConflict:true});await wait(phone,'端末とクラウドの両方に変更');
+ assert.match(await status(phone),/端末とクラウドの両方に変更/);
  assert.equal((await readState(phone)).config.plan.initialAsset,1040);
  assert.equal((await readState(pc)).config.plan.initialAsset,1030);
  assert.equal((await readMarker(phone)).baseRevision,2);
