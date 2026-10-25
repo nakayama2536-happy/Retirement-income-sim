@@ -1,6 +1,6 @@
 {
   "kind": "public-release",
-  "runtime": "v0.9.7-cloud-master-20261025",
+  "runtime": "v0.9.7-lock-resume-20261025",
   "files": [
     {
       "name": "annual-cashflow.mjs",
@@ -14,13 +14,13 @@
     },
     {
       "name": "app.mjs",
-      "size": 65427,
-      "sha256": "b4fa84bde1dc9ff7ec173a4c066fa1aecb254a464e13b8582414311e9a9b5d1e"
+      "size": 65531,
+      "sha256": "eaac6a29c8a8e82d4f67a3864a28f45aabafbb422d1827176e8d7744bce23999"
     },
     {
       "name": "backup-compatibility.mjs",
-      "size": 7148,
-      "sha256": "2781fa83a5f7d20d002db6d5953d1e7ac007a3afcf53ef6f3c7e29a0cac7c14e"
+      "size": 7147,
+      "sha256": "187e24cb0501353a4cb8dc8172ead62b22218cd32b9ae02b32143e6862a00c8e"
     },
     {
       "name": "calc.mjs",
@@ -254,8 +254,8 @@
     },
     {
       "name": "sw.js",
-      "size": 3824,
-      "sha256": "ca9f330b3aab16bd4819f06e5bb95e053c1a81538c0014d5003ffd584799f70d"
+      "size": 3823,
+      "sha256": "d5325b12d9ef0ae400567fe0c1dcfac151acef36173225fdd5020d12e45b5b5d"
     },
     {
       "name": "sync-controller.mjs",
@@ -274,8 +274,8 @@
     },
     {
       "name": "sync-panel.mjs",
-      "size": 39322,
-      "sha256": "e014883ab45b1397a1b802b24fb13b6b4b896b0a07a7439575d1dc0da0bd1f94"
+      "size": 40102,
+      "sha256": "e1fb84730bd8a611f12a7350225d6e1231fad2cbbeefee64bcce031e04898bb0"
     },
     {
       "name": "sync-policy.mjs",
@@ -299,8 +299,8 @@
     },
     {
       "name": "write-access.mjs",
-      "size": 1129,
-      "sha256": "572ba2a3213efe5ac80cc39a3c372f11d9a022bb02f400338c161dd0a3ab470c"
+      "size": 3213,
+      "sha256": "7aa6dac98e27b09d9390e90d11de21d4d2e979d1f82d8362dcfbd4b0cfa825ce"
     }
   ]
 }

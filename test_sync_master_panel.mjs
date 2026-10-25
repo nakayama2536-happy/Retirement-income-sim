@@ -22,7 +22,7 @@ const form=(root,id)=>all(root).find(x=>x.tagName==='FORM'&&x.attributes.id===id
 const wait=async panel=>{const end=Date.now()+15000;while(panel.getState().working){if(Date.now()>end)throw Error('UI operation stalled');await new Promise(done=>setTimeout(done,5));}};
 class Store{data=new Map();getItem(k){return this.data.get(k)??null;}setItem(k,v){this.data.set(k,String(v));}removeItem(k){this.data.delete(k);}}
 async function setup(){
- const cloud=new FakeCipherCloud();let iPhone=local(404),replaceCount=0,exports=[],backups=[];
+ const cloud=new FakeCipherCloud();let iPhone=local(404),replaceCount=0,exports=[],backups=[],editable=true,lockState='exclusive-owner';
  const oldCipher=await encryptSnapshot(local(101),phrase),remoteCipher=await encryptSnapshot(local(303),phrase),stateDigest=await snapshotDigest(local(101));
  cloud.latest={formatVersion:1,revision:2,digest:remoteCipher.digest,ciphertext:remoteCipher.payload};
  const marker={version:1,projectId:'example-project',uid:'synthetic-account',baseRevision:1,baseRemoteDigest:oldCipher.digest,baseLocalDigest:stateDigest,enabled:true,backupConfirmed:true};
@@ -33,13 +33,16 @@ async function setup(){
  const panel=mountSyncPanel(root,{
   getState:()=>structuredClone(iPhone),replaceLocal:(next,prior)=>{assert.deepEqual(iPhone,prior);iPhone=structuredClone(next);replaceCount++;return structuredClone(next);},
   validateState:s=>{if(!s.config)throw Error('invalid');},storage,createStore:async()=>provider,
+  writeAllowed:()=>editable,writeAccessReason:()=>lockState,
   exportLocalBackup:state=>{exports.push(structuredClone(state));},
   windowRef:{navigator:{onLine:true},addEventListener(){},removeEventListener(){}},documentRef:doc,
   schedule:()=>1,unschedule:()=>{}
  });
  for(const [k,v]of Object.entries({syncApiKey:'fake',syncAuthDomain:'example-project.firebaseapp.com',syncProjectId:'example-project',syncAppId:'1:12:web:fake',syncEmail:'example@invalid.test',syncPassword:'fictional',syncPhrase:phrase}))el(root,k).value=v;
  await form(root,'lifeplanCloudUnlock').emit('submit');await wait(panel);
- return {root,panel,cloud,storage,exports,backups,get device(){return structuredClone(iPhone);},get replaceCount(){return replaceCount;}};
+ return {root,panel,cloud,storage,exports,backups,
+  setReadOnly(reason){editable=false;lockState=reason;panel.refreshWriteAccess();},
+  get device(){return structuredClone(iPhone);},get replaceCount(){return replaceCount;}};
 }
 test('③-B visible only after conflict review and requires a fresh JSON export and two consents',async()=>{
  const h=await setup();
@@ -69,4 +72,17 @@ test('ineligible conflict import without a portable backup callback is disabled'
  const h=await setup();h.panel.destroy();
  const root=new Element('div',doc),panel=mountSyncPanel(root,{getState:()=>h.device,replaceLocal:()=>{throw Error('not permitted');},validateState:()=>{},storage:h.storage,createStore:async()=>{throw Error('not used');},windowRef:{navigator:{onLine:true},addEventListener(){},removeEventListener(){}},documentRef:doc});
  assert.equal(btn(root,'3b').disabled,true);panel.destroy();
+});
+
+
+test('read-only conflict gives lock-specific reason and cannot export or overwrite',async()=>{
+ const h=await setup();
+ await btn(h.root,'4').emit('click');await wait(h.panel);
+ assert.equal(h.panel.getState().previewOK,true);
+ h.setReadOnly('lock-unavailable');
+ assert.equal(btn(h.root,'3b').disabled,true);
+ assert.match(all(h.root).find(x=>x.attributes.id==='cloudReason3b').textContent,/安全な編集ロック/);
+ assert.equal(all(h.root).find(x=>x.attributes['data-sync-conflict-backup']==='1').disabled,true);
+ assert.equal(h.replaceCount,0);assert.equal(h.cloud.writes,0);
+ h.panel.destroy();
 });

@@ -27,7 +27,7 @@ jobs:
           git rev-parse HEAD > stage3-evidence/source-commit.txt
           git rev-parse HEAD^{tree} > stage3-evidence/source-tree.txt
           git archive --format=zip HEAD > stage3-evidence/committed-source-NOT-DEPLOYED.zip
-          echo '329e1f946cd5efc024e3f6ac69740f5218298048c502381e2aa5c258b6211fbe  distribution-manifest.json' | sha256sum -c -
+          echo 'ec8d8a524428404ada608abfbd97b31b84f5a8ffd253dd49b3fe4690ac90ab7a  distribution-manifest.json' | sha256sum -c -
           node --test test_cloud_login_candidate.mjs test_cloud_ui_interactions.mjs test_sync_panel.mjs test_sync_master_override.mjs test_sync_master_panel.mjs test_sync_firebase.mjs tools/retirement-comment/test_integration.mjs test_release_identity.mjs test_distribution_audit.mjs test_service_worker.mjs test_step8_main_mount.mjs | tee stage3-evidence/targeted.tap
           node tools/package-public.mjs . stage3-evidence/public-candidate-NOT-DEPLOYED
           git diff --exit-code
@@ -37,6 +37,8 @@ jobs:
       - name: Install test browsers
         working-directory: tools/browser-test
         run: npx --no-install playwright install --with-deps chromium webkit
+      - name: Verify Web Locks resume and exclusive editing in Chromium/WebKit
+        run: node tools/browser-test/write-access-resume-browser.mjs
       - name: Verify comment in the actual isolated application
         run: node tools/browser-test/retirement-comment-ui-check.mjs
       - name: Verify cloud UI against local fictional cloud only
@@ -52,5 +54,6 @@ jobs:
             stage3-evidence/
             stage2-evidence/
             tools/browser-test/mobile-results/actual-app-sync/
+            tools/browser-test/mobile-results/write-access/
           if-no-files-found: warn
           retention-days: 14

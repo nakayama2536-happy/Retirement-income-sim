@@ -849,8 +849,9 @@ syncPanel=mountSyncPanel(el('privateSyncContainer'),{
  exportLocalBackup:state=>downloadJson(createFullBackup(state),`lifeplan-conflict-device-before-cloud-${new Date().toISOString().replace(/[:.]/g,'-')}.json`),
  replaceLocal:(next,expected)=>replaceState(next,expected),
  afterReplace:()=>{const saved=loadState();config=saved.config;scenarios=saved.scenarios;refresh();},
- writeAllowed:()=>writeAccess.writable
+ writeAllowed:()=>writeAccess.writable,writeAccessReason:()=>writeAccess.reason
 });
+writeAccess.subscribe?.(()=>syncPanel?.refreshWriteAccess?.());
 mountRecoveryCheck();
 window.addEventListener('storage',event=>{
   migrationPanel.invalidate(event);
@@ -866,7 +867,7 @@ document.querySelectorAll('[data-help]').forEach(btn=>btn.addEventListener('clic
 }));
 el('helpClose').addEventListener('click',()=>el('helpDialog').close());
 
-el('appVersion').textContent='v0.9.7-cloud-master-20261025'; el('rulesVersion').textContent=RULES_VERSION;
+el('appVersion').textContent='v0.9.7-lock-resume-20261025'; el('rulesVersion').textContent=RULES_VERSION;
 if(startupError){setEmptyState();showNotice(`保存データを読み込めません。復元用バックアップを確認してください。${startupError}`,'error');}
 else refresh();
 if(!writeAccess.writable)showNotice('この画面は読み取り専用です。別の編集画面を閉じて再読み込みしてください。同時更新制御が利用できない場合も保存を停止します。','error');
