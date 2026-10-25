@@ -52,6 +52,8 @@ async function snapshot(page){
   assert.equal(home.finalThreshold,candidate?'未設定':'0万円');
   home.finalThreshold=null;
  }
+ // Preserve the original snapshot helper's postcondition for existing tests.
+ if(hasDedicatedBackupTab)await openTab(page,'settings');
  return {home,scenarios,comparison,data:normalize(data)};
 }
 async function open(context,url){

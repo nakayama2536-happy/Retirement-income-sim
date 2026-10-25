@@ -23,6 +23,7 @@ export async function validateFullPlanUi({browser,createTestServer,open,load,ope
   assert(await syncCard.locator('[data-sync-action="1"]').isVisible());
   assert(await syncCard.locator('[data-sync-action="6"]').isDisabled());
   assert.deepEqual((await snapshot(page)).data,before,'optional sync UI must not change data or connect without configuration');
+  await openTab(page,'backup');
   await syncCard.locator(':scope > details > summary').click();
   await openTab(page,'settings');
   const opening=page.locator('#step8TrialContainer'),full=page.locator('#fullPlanComparisonContainer');
