@@ -1,3 +1,4 @@
+import {withRetirementConceptComment} from './retirement-comment.mjs';
 import {unemploymentPlan} from './unemployment-plan.mjs';
 // Explicit proposals on native settings; never writes storage or changes a mode.
 import {runRetirementPlan,replaceAgeRangeOverride} from './calc.mjs';
@@ -182,7 +183,7 @@ function mutate(c,kind,d){
   c.ideco=i;return;
  }
  if(kind==='retirement'){
-  const r={...(c.retirement||{}),amount:num(d.amount,'退職金額'),serviceYears:num(d.serviceYears,'勤続年数',1,80),receiveDate:date(d.receiveDate,'受取日'),companyStartDate:date(d.companyStartDate,'入社日')};
+  const r=withRetirementConceptComment({...(c.retirement||{}),amount:num(d.amount,'退職金額'),serviceYears:num(d.serviceYears,'勤続年数',1,80),receiveDate:date(d.receiveDate,'受取日'),companyStartDate:date(d.companyStartDate,'入社日')},d);
   if(!Number.isInteger(r.serviceYears)||r.companyStartDate>r.receiveDate)throw Error('勤続年数・入社日・受取日を確認してください。');
   if(d.postReceipt){
    const receipt=num(d.receipt,'資産に加える受取額',0,r.amount);

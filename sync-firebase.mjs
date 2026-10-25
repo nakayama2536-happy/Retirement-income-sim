@@ -41,6 +41,14 @@ export async function createFirebaseStore(config,{moduleLoader=url=>import(url)}
    if(!signed.user?.uid)throw Error('本人アカウントを確認できません。');
    return {uid:signed.user.uid,projectId:publicConfig.projectId};
   },
+  // Authentication only: no Firestore read and no financial payload access.
+  getSessionIdentity(){
+   return auth.currentUser?.uid?{uid:auth.currentUser.uid,projectId:publicConfig.projectId}:null;
+  },
+  watchSession(listener){
+   if(typeof listener!=='function')throw TypeError('認証状態の確認先が不正です。');
+   return authApi.onAuthStateChanged(auth,u=>listener(u?.uid?{uid:u.uid,projectId:publicConfig.projectId}:null));
+  },
   async signOut(){await authApi.signOut(auth);},
   getIdentity(){const u=user();return {uid:u.uid,projectId:publicConfig.projectId};},
   async read(){

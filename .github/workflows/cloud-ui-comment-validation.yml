@@ -1,0 +1,56 @@
+name: Cloud UI and retirement comment validation
+on:
+  pull_request:
+    branches: [main]
+permissions:
+  contents: read
+concurrency:
+  group: cloud-ui-comment-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  integration:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate committed integrated source and release assets
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p stage3-evidence
+          git rev-parse HEAD > stage3-evidence/source-commit.txt
+          git rev-parse HEAD^{tree} > stage3-evidence/source-tree.txt
+          git archive --format=zip HEAD > stage3-evidence/committed-source-NOT-DEPLOYED.zip
+          echo '12e3183a734a667baef9ac25fce132da414450f44243344fa103c0e754b9d0b6  distribution-manifest.json' | sha256sum -c -
+          node --test test_cloud_login_candidate.mjs test_cloud_ui_interactions.mjs test_sync_panel.mjs test_sync_firebase.mjs tools/retirement-comment/test_integration.mjs test_release_identity.mjs test_distribution_audit.mjs test_service_worker.mjs test_step8_main_mount.mjs | tee stage3-evidence/targeted.tap
+          node tools/package-public.mjs . stage3-evidence/public-candidate-NOT-DEPLOYED
+          git diff --exit-code
+      - name: Install existing pinned browser dependency
+        working-directory: tools/browser-test
+        run: npm install --no-save --package-lock=false --ignore-scripts playwright@1.62.1
+      - name: Install test browsers
+        working-directory: tools/browser-test
+        run: npx --no-install playwright install --with-deps chromium webkit
+      - name: Verify comment in the actual isolated application
+        run: node tools/browser-test/retirement-comment-ui-check.mjs
+      - name: Verify cloud UI against local fictional cloud only
+        run: |
+          node tools/browser-test/prepare.mjs
+          node tools/browser-test/two-device-sync-app.mjs
+      - name: Keep synthetic evidence only
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cloud-ui-comment-integration-evidence
+          path: |
+            stage3-evidence/
+            stage2-evidence/
+            tools/browser-test/mobile-results/actual-app-sync/
+          if-no-files-found: warn
+          retention-days: 14

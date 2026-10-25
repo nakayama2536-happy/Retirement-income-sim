@@ -35,7 +35,10 @@ test('synthetic full app candidate is isolated and cannot overwrite original rep
   const sourcePanel=read('./sync-panel.mjs');
   const previewPanel=readFileSync(join(output,'public','sync-panel.mjs'),'utf8');
   assert.match(previewPanel,/if\(!values\.appId\)delete values\.appId/);
-  assert.equal(previewPanel.replace("  if(!values.appId)delete values.appId; // preview only: optional appId if Hosting omitted it\n",""),sourcePanel);
+  assert.equal(previewPanel.replace(
+   "function values(){const values=Object.fromEntries(Object.entries(cfg).map(([k,v])=>[k,v.value.trim()]));\n  if(!values.appId)delete values.appId; // preview only: optional appId if Hosting omitted it\n  return validateFirebaseConfig(values);}",
+   "function values(){return validateFirebaseConfig(Object.fromEntries(Object.entries(cfg).map(([k,v])=>[k,v.value.trim()])));}"),sourcePanel);
+  assert.doesNotMatch(sourcePanel,/delete values\.appId/,'production still requires the explicit appId');
   assert.equal(
    patched.replace("dbApi.doc(db,'sandbox',user().uid,'snapshots','trial')","dbApi.doc(db,'owners',user().uid,'snapshots','current')")
     .replace("const KEY_FIELDS=['apiKey','authDomain','projectId'];","const KEY_FIELDS=['apiKey','authDomain','projectId','appId'];")

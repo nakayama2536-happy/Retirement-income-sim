@@ -63,7 +63,11 @@ export function createSyncCoordinator({
     reviewedRemote={revision:remote.revision,digest:remote.digest,localDigest};
     const summary=s=>({hasConfig:!!s?.config,scenarioCount:Array.isArray(s?.scenarios)?s.scenarios.length:0,
      startDate:s?.config?.plan?.startDate??null,openingAsset:s?.config?.plan?.initialAsset??null});
-    return {status:'PREVIEW',remoteRevision:remote.revision,
+    // Read-only direction hint. The mutation methods still independently recheck
+    // the full marker and reviewed digest; this is not a write permission token.
+    const savedMarker=getMarker();
+    const decision=savedMarker?decideSync({marker:savedMarker,localDigest,remote,online:true}):{action:'ENROLLMENT_REQUIRED'};
+    return {status:'PREVIEW',remoteRevision:remote.revision,syncAction:decision.action,message:decision.reason||'',
      differs:(await snapshotDigest(candidate))!==localDigest,
      device:summary(local),cloud:summary(candidate)};
    });
