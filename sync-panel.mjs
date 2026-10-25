@@ -85,7 +85,7 @@ const panelStyle=`
 @media(max-width:480px){.cloud-panel .cloud-card,.cloud-panel details{padding:.8rem}.cloud-panel .cloud-grid{grid-template-columns:1fr}}
 `;
 export function mountSyncPanel(root,{getState,replaceLocal,validateState,afterReplace=()=>{},writeAllowed=()=>true,
- exportLocalBackup=null,
+ exportLocalBackup=null,writeAccessReason=()=>null,
  createStore=createFirebaseStore,storage=globalThis.localStorage,windowRef=globalThis.window,documentRef=root?.ownerDocument??globalThis.document,
  clock=()=>new Date(),schedule=(fn,ms)=>setInterval(fn,ms),unschedule=id=>clearInterval(id)}={}){
  if(!root||typeof getState!=='function'||typeof replaceLocal!=='function'||typeof validateState!=='function')throw TypeError('同期設定の初期化が不正です。');
@@ -233,7 +233,17 @@ export function mountSyncPanel(root,{getState,replaceLocal,validateState,afterRe
   for(const input of [...Object.values(cfg),email,password,phrase])input.disabled=working||active||(input!==email&&input!==password&&input!==phrase&&!!providerSession);
   function set(n,reason){actions[n].disabled=working||!!reason;reasons[n].textContent=working?'処理中です。完了をお待ちください。':reason||({1:'合言葉はこの起動中だけ使用します。',2:'この端末 → クラウド',3:'クラウド → この端末',4:'この確認操作では書込み・置換をしません。',5:'接続を止めます。端末データは削除しません。',6:'クラウドが空の場合だけ使用します。',7:'この端末の保存内容をクラウドの内容へ置き換えます。'}[n]);}
   set(1,active?'自動処理は開始済みです。':authMode==='checking'?'ログイン状態を確認中です。':authMode==='mismatch'?'⑤でログアウトし、登録済みアカウントを確認してください。':'');
-  const checkFirst=!active?'①でロック解除してください。':!reg?'先に初回設定を完了してください。':remoteExists!==true?'クラウド状態を④で確認してください。':!writeAllowed()?'この画面は閲覧専用です。':!previewOK?'手動更新は④の差分確認後に行えます。':'';
+  const editBlockReason=()=>{
+   if(writeAllowed())return '';
+   switch(writeAccessReason()){
+    case 'other-screen':return '別の画面が編集権限を持っています。重複画面を閉じてから④で再確認してください。';
+    case 'lock-unavailable':return 'この起動環境では安全な編集ロックを利用できません。保存処理を停止しています。';
+    case 'lock-failed':return '安全な編集ロックの取得に失敗しました。保存データは変更していません。';
+    case 'page-hidden':case 'released':case 'initializing':return '画面復帰後の編集権限を確認中です。';
+    default:return 'この画面は読み取り専用です。編集権限を確認してください。';
+   }
+  };
+  const checkFirst=!active?'①でロック解除してください。':!reg?'先に初回設定を完了してください。':remoteExists!==true?'クラウド状態を④で確認してください。':!writeAllowed()?editBlockReason():!previewOK?'手動更新は④の差分確認後に行えます。':'';
   function direction(action){
    if(previewAction==='UNCHANGED')return '端末とクラウドは一致しています。操作不要です。';
    if(previewAction==='CONFLICT'||previewAction==='STOP')return '双方の変更・状態の確認が必要です。無条件では上書きしません。';
@@ -248,14 +258,14 @@ export function mountSyncPanel(root,{getState,replaceLocal,validateState,afterRe
   fileCheck.disabled=working||!conflictBackupDigest;
   discardCheck.disabled=working||!conflictBackupDigest;
   const conflictReason=!canResolve?'④で新しいクラウド版との競合を確認してください。':
-   !writeAllowed()?'この端末では書込みできません。':hasPendingEdits()?'未保存入力を保存・控えてから画面を開き直してください。':
+   !writeAllowed()?editBlockReason():hasPendingEdits()?'未保存入力を保存・控えてから画面を開き直してください。':
    !conflictBackupDigest?'③-B-1で新しい一括JSONを作成してください。':
    !fileCheck.checked?'作成したJSONファイルの保存先を確認してください。':
    !discardCheck.checked?'端末側の変更を採用しないことを確認してください。':'';
   set('3b',checkFirst||conflictReason);
   set(4,!active?'①でロック解除してください。':'');
   set(5,!providerSession?'未接続です。':'');
-  const start=!active?'①で接続してください。':reg?'初回設定は完了しています。':!writeAllowed()?'この画面は閲覧専用です。':'';
+  const start=!active?'①で接続してください。':reg?'初回設定は完了しています。':!writeAllowed()?editBlockReason():'';
   set(6,start||(remoteExists!==false?'クラウドにデータがあるか、まだ未確認です。既存データは上書きしません。':!backupCheck.checked?'バックアップ確認をチェックしてください。':''));
   set(7,start||(remoteExists!==true?'読み込めるクラウドデータがありません。':!previewOK?'④でクラウドの内容を確認してください。':hasPendingEdits()?'未保存入力を保存・控えてから再確認してください。':!backupCheck.checked?'バックアップ確認をチェックしてください。':''));
   safety.hidden=!active||(!reg?remoteExists===null:!previewOK||!['UPLOAD_CAS','DOWNLOAD_VALIDATED'].includes(previewAction));
@@ -440,6 +450,7 @@ export function mountSyncPanel(root,{getState,replaceLocal,validateState,afterRe
    invalidatePreview();recordOutcome({status:'LOCAL_PENDING_REVIEW'});render();
   },
   onLocalChange:()=>{localGeneration++;invalidatePreview();recordOutcome({status:'PENDING_LOCAL_UPDATE'});render();trigger();},
+  refreshWriteAccess:()=>{if(!destroyed)render();},
   getState:()=>({connected:!!coordinator,remoteExists,previewOK,pendingEdits:hasPendingEdits(),reviewPending:reviewBarrier(),markerPresent:!!marker(),authMode,working,status:lastOutcome.status}),
   destroy:()=>{
    destroyed=true;epoch++;stopAuto();unwatch?.();unwatch=null;providerSession=null;password.value='';phrase.value='';
