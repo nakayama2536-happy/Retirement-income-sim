@@ -205,6 +205,41 @@ try{
  assert.equal((await readState(phone)).config.reviews['70'].note,'架空PC年次点検');
  assert.equal((await readState(phone)).scenarios.length,2);
  mark('parallel-edits-stop-without-overwriting-or-merging');
+ // ③ must remain locked; only ③-B may explicitly discard the fictional phone's
+ // conflicting edits after a fresh portable JSON backup and two acknowledgements.
+ assert.equal(await action(phone,3).isDisabled(),true);
+ assert.equal(await action(phone,'3b').isVisible(),false);
+ await action(phone,4).click();
+ await phone.waitForFunction(()=>document.querySelector('[data-sync-action="3b"]')?.offsetParent!==null);
+ assert.equal(await action(phone,'3b').isDisabled(),true);
+ const phoneOld=await canonicalState(phone), cloudWritesBefore=cloud.writes, cloudRevisionBefore=cloud.document.revision;
+ const [backupDownload]=await Promise.all([
+  phone.waitForEvent('download'),phone.locator('[data-sync-conflict-backup="1"]').click()
+ ]);
+ const backupJson=JSON.parse(await readFile(await backupDownload.path(),'utf8'));
+ assert.equal(backupJson.config.plan.initialAsset,1040,'backup captures unsent phone edits');
+ assert.deepEqual(backupJson.futureEnvelope,phoneOld.futureEnvelope);
+ assert.equal(cloud.writes,cloudWritesBefore,'export must not send cloud writes');
+ assert.equal(await action(phone,'3b').isDisabled(),true);
+ await phone.locator('[name="syncConflictFileVerified"]').check();
+ assert.equal(await action(phone,'3b').isDisabled(),true);
+ await phone.locator('[name="syncConflictDiscardConfirmed"]').check();
+ assert.equal(await action(phone,'3b').isDisabled(),false);
+ await action(phone,'3b').click();
+ await phone.waitForFunction(()=>document.querySelector('#privateSyncContainer .cloud-status')?.textContent.includes('クラウドを正として'),null,{timeout:30000});
+ assert.match(await status(phone),/クラウドを正として/);
+ assert.deepEqual(await canonicalState(phone),await canonicalState(pc));
+ assert.equal((await readMarker(phone)).baseRevision,cloudRevisionBefore);
+ assert.equal(cloud.writes,cloudWritesBefore,'master import must never change cloud');
+ const beforeOverwrite=await phone.evaluate(()=>JSON.parse(localStorage.getItem('lifeplan-private-sync-previous-v1')));
+ assert.deepEqual(beforeOverwrite.state,phoneOld,'recoverable last complete phone state');
+ mark('manual-cloud-master-conflict-resolution-requires-export-and-double-consent');
+ mark('forced-local-replace-preserves-cloud-revision-and-before-backup');
+ await action(phone,4).click();
+ await wait(phone,'端末とクラウドの保存内容は一致しています');
+ assert.equal(await action(phone,'3b').isVisible(),false);
+ assert.equal(cloud.writes,cloudWritesBefore,'read-only post-check must not write');
+ mark('post-override-matches-cloud-without-reupload');
  assert.deepEqual(blocked,[]);
  const storageChecks=await Promise.all([pc,phone].map(p=>p.evaluate(()=>{
   const values=Object.entries(localStorage).map(([key,val])=>key+'='+val).join('\n');

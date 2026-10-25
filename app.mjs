@@ -846,6 +846,7 @@ document.querySelectorAll('[data-tab]').forEach(btn=>btn.addEventListener('click
 const migrationPanel=mountMigration({onCommit:()=>{const saved=loadState();config=saved.config;scenarios=saved.scenarios;refresh();}});
 syncPanel=mountSyncPanel(el('privateSyncContainer'),{
  getState:()=>loadState(),validateState:value=>validateSavedState(value),
+ exportLocalBackup:state=>downloadJson(createFullBackup(state),`lifeplan-conflict-device-before-cloud-${new Date().toISOString().replace(/[:.]/g,'-')}.json`),
  replaceLocal:(next,expected)=>replaceState(next,expected),
  afterReplace:()=>{const saved=loadState();config=saved.config;scenarios=saved.scenarios;refresh();},
  writeAllowed:()=>writeAccess.writable
@@ -865,7 +866,7 @@ document.querySelectorAll('[data-help]').forEach(btn=>btn.addEventListener('clic
 }));
 el('helpClose').addEventListener('click',()=>el('helpDialog').close());
 
-el('appVersion').textContent='v0.9.7-age100-20261025'; el('rulesVersion').textContent=RULES_VERSION;
+el('appVersion').textContent='v0.9.7-cloud-master-20261025'; el('rulesVersion').textContent=RULES_VERSION;
 if(startupError){setEmptyState();showNotice(`保存データを読み込めません。復元用バックアップを確認してください。${startupError}`,'error');}
 else refresh();
 if(!writeAccess.writable)showNotice('この画面は読み取り専用です。別の編集画面を閉じて再読み込みしてください。同時更新制御が利用できない場合も保存を停止します。','error');

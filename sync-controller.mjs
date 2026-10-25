@@ -21,7 +21,7 @@ export function createSyncCoordinator({
   busy=true;try{return await fn();}catch(e){return error(e?.message||'同期に失敗しました。元の保存状態を維持します。');}finally{busy=false;}
  };
  function writable(){if(!writeAllowed())throw Error('この画面に保存権限がありません。編集元を閉じて再読み込みしてください。');}
- async function download(remote,local,digest,{requireReview=false}={}){
+ async function download(remote,local,digest,{requireReview=false,masterOverride=false,expectedMarker=null}={}){
   if(requireReview&&(!reviewedRemote||reviewedRemote.localDigest!==digest||
       reviewedRemote.revision!==remote?.revision||reviewedRemote.digest!==remote?.digest))
     throw Error('照合後に端末または同期先が変更されました。取込前に再確認してください。');
@@ -29,15 +29,34 @@ export function createSyncCoordinator({
   const decoded=await decryptSnapshot(remote.ciphertext,passphrase,remote.digest);
   validateLocal(decoded); // Includes feature compatibility and full-plan calculation.
   await ensureCurrent(digest);
-  // A previous full integrated snapshot is kept separately before any replace.
+  if(masterOverride){
+   // Detect any change to the remote or this device's sync baseline during decryption.
+   const current=getMarker();
+   if(!validSyncMarker(current)||current.baseRevision!==expectedMarker?.baseRevision||
+      current.baseRemoteDigest!==expectedMarker?.baseRemoteDigest||current.baseLocalDigest!==expectedMarker?.baseLocalDigest)
+    throw Error('同期基準が変更されました。④で差分を再確認してください。');
+   const newest=await readRemote();
+   if(!validRemoteRecord(newest)||newest.revision!==remote.revision||newest.digest!==remote.digest)
+    throw Error('クラウドが照合後に更新されました。④で差分を再確認してください。');
+  }
+  // Preserve the full device state independently before any replacement.
   await saveBeforeReplace(local);
   await ensureCurrent(digest);
+  if(masterOverride){
+   const current=getMarker();
+   if(!validSyncMarker(current)||current.baseRevision!==expectedMarker?.baseRevision||
+      current.baseRemoteDigest!==expectedMarker?.baseRemoteDigest||current.baseLocalDigest!==expectedMarker?.baseLocalDigest)
+    throw Error('同期基準が変更されました。④で差分を再確認してください。');
+   const newest=await readRemote();
+   if(!validRemoteRecord(newest)||newest.revision!==remote.revision||newest.digest!==remote.digest)
+    throw Error('クラウドが照合後に更新されました。④で差分を再確認してください。');
+  }
   writable();
   const applied=await applyLocal(decoded,local); // Atomic optimistic compare, not a partial import.
   writeMarker(marker(remote.revision,remote.digest,await snapshotDigest(applied??decoded)));
   reviewedRemote=null;
   onApplied(decoded);
-  return {status:'DOWNLOADED',revision:remote.revision};
+  return {status:masterOverride?'REMOTE_MASTER_APPLIED':'DOWNLOADED',revision:remote.revision};
  }
  async function upload(existing,local,digest,action){
   const enc=await encryptSnapshot(local,passphrase);await ensureCurrent(digest);writable();
@@ -67,6 +86,7 @@ export function createSyncCoordinator({
     // the full marker and reviewed digest; this is not a write permission token.
     const savedMarker=getMarker();
     const decision=savedMarker?decideSync({marker:savedMarker,localDigest,remote,online:true}):{action:'ENROLLMENT_REQUIRED'};
+    reviewedRemote.action=decision.action;
     return {status:'PREVIEW',remoteRevision:remote.revision,syncAction:decision.action,message:decision.reason||'',
      differs:(await snapshotDigest(candidate))!==localDigest,
      device:summary(local),cloud:summary(candidate)};
@@ -108,6 +128,33 @@ export function createSyncCoordinator({
     if(decision.action==='UNCHANGED')return {status:'SYNCED',revision:m.baseRevision};
     if(decision.action!=='DOWNLOAD_VALIDATED')return {status:decision.action==='CONFLICT'?'CONFLICT':'STOP',message:'クラウドと端末の状態が変わりました。差分を再確認してください。'};
     return download(remote,local,digest,{requireReview:true});
+   });
+  },
+  async acceptRemoteAsMaster({backupConfirmed=false,backedUpLocalDigest=null,discardLocalConfirmed=false}={}){
+   return guarded(async()=>{
+    writable();
+    if(!online())return {status:'PENDING_OFFLINE'};
+    if(backupConfirmed!==true||discardLocalConfirmed!==true)
+     throw Error('端末バックアップの保管と、端末側変更を破棄する確認が必要です。');
+    const m=getMarker();
+    if(!validSyncMarker(m))throw Error('同期登録を確認してください。');
+    const local=loadLocal();validateLocal(local);
+    const digest=await snapshotDigest(local);
+    if(typeof backedUpLocalDigest!=='string'||backedUpLocalDigest!==digest)
+     throw Error('バックアップ作成後に端末の保存内容が変わりました。④から再確認してください。');
+    const remote=await readRemote();
+    const decision=decideSync({marker:m,localDigest:digest,remote,online:true});
+    // Do not reinterpret same-revision remote mutations, tampering or rollbacks as
+    // an ordinary cloud-master conflict. Only a strictly newer cloud revision qualifies.
+    if(decision.action!=='CONFLICT'||!validRemoteRecord(remote)||remote.revision<=m.baseRevision)
+     throw Error('クラウドの採用条件が変わりました。④で差分を再確認してください。');
+    if(!reviewedRemote||reviewedRemote.action!=='CONFLICT'||
+       reviewedRemote.revision!==remote.revision||reviewedRemote.digest!==remote.digest||
+       reviewedRemote.localDigest!==digest)
+     throw Error('照合後に変更がありました。④で差分を再確認してください。');
+    // No cloud CAS/write is ever used by this method. Existing encrypted
+    // snapshot verification and optimistic local replacement are preserved.
+    return download(remote,local,digest,{requireReview:true,masterOverride:true,expectedMarker:m});
    });
   },
   async acceptLocalUpdate(){
