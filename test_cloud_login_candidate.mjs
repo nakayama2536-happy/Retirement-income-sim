@@ -89,8 +89,9 @@ test('current encryption remains AES-GCM with the same format and full-state pre
  const enc=await encryptSnapshot(state(),phrase);assert.equal(enc.payload.algorithm,'AES-256-GCM/PBKDF2-SHA256');assert.equal(enc.payload.iterations,600000);
  assert.deepEqual(await decryptSnapshot(enc.payload,phrase,enc.digest),state());await assert.rejects(decryptSnapshot(enc.payload,'wrong fixture passphrase',enc.digest));
 });
-test('all seven action labels have stable distinct numbers and no ambiguous sync action name',()=>{
- assert.deepEqual(Object.keys(CLOUD_ACTIONS),['1','2','3','4','5','6','7']);assert.equal(new Set(Object.values(CLOUD_ACTIONS)).size,7);
+test('seven daily/initial action numbers remain stable and ③-B is an explicitly separate conflict action',()=>{
+ assert.deepEqual(Object.keys(CLOUD_ACTIONS),['1','2','3','4','5','6','7','3b']);assert.equal(new Set(Object.values(CLOUD_ACTIONS)).size,8);
+ assert.match(CLOUD_ACTIONS['3b'],/クラウドを採用/);
  for(const name of Object.values(CLOUD_ACTIONS))assert.doesNotMatch(name,/クラウドへ同期/);
 });
 test('error and offline presentation never claims successful cloud saving',()=>{

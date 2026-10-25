@@ -3,6 +3,7 @@
 import {createFirebaseStore,validateFirebaseConfig} from './sync-firebase.mjs';
 import {createSyncCoordinator} from './sync-controller.mjs';
 import {validSyncMarker} from './sync-policy.mjs';
+import {snapshotDigest} from './sync-crypto.mjs';
 export const SYNC_PUBLIC_CONFIG_KEY='lifeplan-private-sync-config-v1';
 export const SYNC_MARKER_KEY='lifeplan-private-sync-marker-v1';
 export const SYNC_ROLLBACK_KEY='lifeplan-private-sync-previous-v1';
@@ -12,9 +13,10 @@ export const CLOUD_ACTIONS=Object.freeze({
  1:'ログイン・ロック解除して開始',2:'今すぐクラウドに書き込む',
  3:'クラウドの最新版を読み込む',4:'保存状況と差分を確認',
  5:'自動保存を停止してログアウト',6:'この端末のデータでクラウドを初期登録',
- 7:'クラウドのデータでこの端末を利用開始'
+ 7:'クラウドのデータでこの端末を利用開始',
+ '3b':'クラウドを採用し、この端末を置き換える'
 });
-const numbers=['','①','②','③','④','⑤','⑥','⑦'];
+const numbers={'1':'①','2':'②','3':'③','4':'④','5':'⑤','6':'⑥','7':'⑦','3b':'③-B'};
 const parse=s=>{try{return s?JSON.parse(s):null;}catch{return null;}};
 const sameIdentity=(a,b)=>!!a&&!!b&&a.uid===b.uid&&a.projectId===b.projectId;
 export function hasExternalEditorFocus(doc){
@@ -31,7 +33,9 @@ export function cloudResultText(s){
  }
  const map={
   SYNCED:'クラウドと一致しています。',UPLOADED:'クラウドへの書込みが完了しました。',
-  DOWNLOADED:'クラウドの最新版をこの端末へ反映しました。',INITIAL_UPLOADED:'クラウドの初期登録が完了しました。',
+  BACKUP_STARTED:'一括JSONのダウンロードを開始しました。ファイルが安全な場所に保存されたことを確認してください。',
+  DOWNLOADED:'クラウドの最新版をこの端末へ反映しました。',
+  REMOTE_MASTER_APPLIED:'クラウドを正として、この端末を更新しました。クラウドへの書込みはありません。',INITIAL_UPLOADED:'クラウドの初期登録が完了しました。',
   PENDING_LOCAL_UPDATE:'端末に新しい変更があります。クラウドへの保存完了は未確認です。',
   PENDING_OFFLINE:'通信待ちです。端末の保存データを保持しています。クラウド保存は未確認です。',
   ENROLLMENT_REQUIRED:'初回設定が必要です。下の「初回設定」を確認してください。',
@@ -76,10 +80,12 @@ const panelStyle=`
 .cloud-panel .cloud-result{white-space:pre-line;overflow-wrap:anywhere}.cloud-panel .cloud-safety{padding:.75rem;border:1px solid #b08943;border-radius:8px;margin:1rem 0}
 .cloud-panel .cloud-safety input{width:auto;min-height:0;margin-right:.5rem}.cloud-panel button:focus-visible,.cloud-panel summary:focus-visible{outline:3px solid #3678af;outline-offset:3px}
 .cloud-panel .cloud-diff{overflow-x:auto}.cloud-panel table{width:100%;border-collapse:collapse;font-size:.88rem}
+.cloud-panel .cloud-conflict{border-color:#b08943;background:#fffbf4}.cloud-panel .cloud-danger{font-weight:650}
 .cloud-panel th,.cloud-panel td{border-bottom:1px solid #ccd7e2;text-align:left;padding:.4rem;overflow-wrap:anywhere}
 @media(max-width:480px){.cloud-panel .cloud-card,.cloud-panel details{padding:.8rem}.cloud-panel .cloud-grid{grid-template-columns:1fr}}
 `;
 export function mountSyncPanel(root,{getState,replaceLocal,validateState,afterReplace=()=>{},writeAllowed=()=>true,
+ exportLocalBackup=null,
  createStore=createFirebaseStore,storage=globalThis.localStorage,windowRef=globalThis.window,documentRef=root?.ownerDocument??globalThis.document,
  clock=()=>new Date(),schedule=(fn,ms)=>setInterval(fn,ms),unschedule=id=>clearInterval(id)}={}){
  if(!root||typeof getState!=='function'||typeof replaceLocal!=='function'||typeof validateState!=='function')throw TypeError('同期設定の初期化が不正です。');
@@ -97,7 +103,7 @@ export function mountSyncPanel(root,{getState,replaceLocal,validateState,afterRe
  let coordinator=null,providerSession=null,providerConfig=null,unwatch=null,timer=null,working=false,destroyed=false,epoch=0;
  let remoteExists=null,previewOK=false,previewAction=null,pendingEditorChange=false,authMode='unknown',localGeneration=0;
  let lastOutcome={status:'UNCONNECTED'},lastCheck=null,lastWrite=null,lastRead=null,manualMessage='',autoMessage='まだ実行していません。';
- let comparison=null,comparisonStale=false;
+ let comparison=null,comparisonStale=false,conflictBackupDigest=null;
  const dateText=d=>d?d.toLocaleString('ja-JP',{hour12:false}):'この起動では未確認';
  const now=()=>clock();
  root.replaceChildren();root.classList.add('cloud-panel');
@@ -131,6 +137,18 @@ export function mountSyncPanel(root,{getState,replaceLocal,validateState,afterRe
  const everyday=el('div',null,{class:'cloud-grid'});
  append(daily,el('h4','よく使う操作'),el('p','通常は自動です。番号は操作の識別用で、順番にすべて押す必要はありません。',{class:'cloud-help'}));
  for(const n of [2,3,4])action(everyday,n);append(daily,everyday);root.appendChild(daily);
+ // Only for real divergent edits. A full portable local backup plus explicit
+ // acknowledgement are required; the everyday ③ button remains fail-closed.
+ const conflict=el('section',null,{class:'cloud-card cloud-conflict','aria-label':'競合時にクラウドを正とする'});
+ const conflictHelp=el('p','端末・クラウドの両方に変更があります。クラウドを正として採用すると、この端末だけの変更は失われます。クラウドへ書込みはしません。',{class:'cloud-danger'});
+ const conflictExport=el('button','③-B-1 現在の端末を一括JSONでバックアップ',{type:'button','data-sync-conflict-backup':'1'});
+ const conflictExportNote=el('p','④で照合した端末の内容を、別ファイルに保存してください。',{class:'cloud-help'});
+ const fileCheckRow=el('label'),fileCheck=el('input',null,{type:'checkbox',name:'syncConflictFileVerified'});
+ append(fileCheckRow,fileCheck,el('span','今回作成した一括JSONファイルが、安全な保存先に存在することを確認しました。'));
+ const discardRow=el('label'),discardCheck=el('input',null,{type:'checkbox',name:'syncConflictDiscardConfirmed'});
+ append(discardRow,discardCheck,el('span','iPhoneのクラウド未保存の変更は採用せず、クラウドの内容に置き換えることを承認します。'));
+ append(conflict,el('h4','③-B 競合時の解決（通常は操作不要）'),conflictHelp,conflictExport,conflictExportNote,fileCheckRow,discardRow);
+ action(conflict,'3b');root.appendChild(conflict);
  const safety=el('div',null,{class:'cloud-safety'}),backupRow=el('label'),backupCheck=el('input',null,{type:'checkbox',name:'syncBackupConfirmed'});
  append(backupRow,backupCheck,el('span','手動更新・初回登録に備え、必要な一括バックアップを別の安全な場所に保管しました。'));
  append(safety,backupRow,el('p','クラウドからの読込みは、この端末の保存内容を置き換えます。未保存入力や双方の変更は勝手に消しません。',{class:'cloud-help'}));
@@ -156,7 +174,11 @@ export function mountSyncPanel(root,{getState,replaceLocal,validateState,afterRe
  append(root,el('p','自動処理はアプリ利用中・オンライン・本人認証済み・暗号化解除中に限ります。閉じている間の常時動作は保証しません。',{class:'cloud-help'}));
  function hasPendingEdits(){return pendingEditorChange||doc?.querySelector?.('#pensionState')?.dataset?.dirty==='true'||
   doc?.querySelector?.('#salaryState')?.dataset?.dirty==='true'||hasExternalEditorFocus(doc);}
- function invalidatePreview(){previewOK=false;previewAction=null;if(comparison)comparisonStale=true;}
+ function invalidatePreview(){
+  previewOK=false;previewAction=null;conflictBackupDigest=null;
+  fileCheck.checked=false;discardCheck.checked=false;
+  if(comparison)comparisonStale=true;
+ }
  function values(){return validateFirebaseConfig(Object.fromEntries(Object.entries(cfg).map(([k,v])=>[k,v.value.trim()])));}
  function assertMarkerAndConfig(config){
   const raw=safeGet(SYNC_MARKER_KEY),m=marker();
@@ -220,6 +242,17 @@ export function mountSyncPanel(root,{getState,replaceLocal,validateState,afterRe
   }
   set(2,checkFirst||direction('UPLOAD_CAS'));
   set(3,checkFirst||(hasPendingEdits()?'未保存入力を保護しています。必要な入力を保存・控えた後に再確認してください。':direction('DOWNLOAD_VALIDATED')));
+  const canResolve=previewOK&&previewAction==='CONFLICT'&&comparison?.remoteRevision>marker()?.baseRevision;
+  conflict.hidden=!canResolve;
+  conflictExport.disabled=working||!canResolve||hasPendingEdits()||!writeAllowed()||typeof exportLocalBackup!=='function';
+  fileCheck.disabled=working||!conflictBackupDigest;
+  discardCheck.disabled=working||!conflictBackupDigest;
+  const conflictReason=!canResolve?'④で新しいクラウド版との競合を確認してください。':
+   !writeAllowed()?'この端末では書込みできません。':hasPendingEdits()?'未保存入力を保存・控えてから画面を開き直してください。':
+   !conflictBackupDigest?'③-B-1で新しい一括JSONを作成してください。':
+   !fileCheck.checked?'作成したJSONファイルの保存先を確認してください。':
+   !discardCheck.checked?'端末側の変更を採用しないことを確認してください。':'';
+  set('3b',checkFirst||conflictReason);
   set(4,!active?'①でロック解除してください。':'');
   set(5,!providerSession?'未接続です。':'');
   const start=!active?'①で接続してください。':reg?'初回設定は完了しています。':!writeAllowed()?'この画面は閲覧専用です。':'';
@@ -241,10 +274,13 @@ export function mountSyncPanel(root,{getState,replaceLocal,validateState,afterRe
  function recordOutcome(r){
   lastOutcome=r;
   if(['UPLOADED','INITIAL_UPLOADED'].includes(r.status)){lastWrite=now();lastCheck=now();invalidatePreview();}
-  if(r.status==='DOWNLOADED'){lastRead=now();lastCheck=now();invalidatePreview();}
+  if(['DOWNLOADED','REMOTE_MASTER_APPLIED'].includes(r.status)){lastRead=now();lastCheck=now();invalidatePreview();}
   if(r.status==='SYNCED')lastCheck=now();
   if(r.status==='PREVIEW'&&!r.differs)lastCheck=now();
-  if(['STOP','CONFLICT','REMOTE_PENDING_REVIEW','PENDING_LOCAL_UPDATE','PENDING_OFFLINE'].includes(r.status))invalidatePreview();
+  // An automatic conflict notice must not erase a user's inspected conflict
+  // while they check the downloaded backup. Every actual mutation is rechecked.
+  if(['STOP','CONFLICT','REMOTE_PENDING_REVIEW','PENDING_LOCAL_UPDATE','PENDING_OFFLINE'].includes(r.status)&&
+      !(r.status==='CONFLICT'&&previewOK&&previewAction==='CONFLICT'))invalidatePreview();
  }
  function report(n,r){
   const text=cloudResultText(r)+(r.message&&r.status==='STOP'?' '+r.message:'');
@@ -253,13 +289,14 @@ export function mountSyncPanel(root,{getState,replaceLocal,validateState,afterRe
    autoMessage=`${kind}の結果｜${dateText(now())}\n${text}`;auto.textContent=autoMessage;return;
   }
   const effect=n===4?'この確認操作によるクラウド書込み：なし／端末データ置換：なし':
+   n==='3b-backup'?'端末の置換・クラウド書込み：なし。保存先の確認後に承認操作を行ってください。':
    ['UPLOADED','INITIAL_UPLOADED'].includes(r.status)?'方向：この端末 → クラウド／書込み成功を確認':
-   r.status==='DOWNLOADED'?'方向：クラウド → この端末／読込み成功を確認':
+   r.status==='DOWNLOADED'||r.status==='REMOTE_MASTER_APPLIED'?'方向：クラウド → この端末／読込み成功を確認。クラウド書込み：なし':
    r.status==='SYNCED'?'変更はありません。新たな書込み・置換は不要でした。':
    r.status==='SIGNED_OUT'?'端末データと一括バックアップは削除していません。':
    n===1&&r.status==='ENROLLMENT_REQUIRED'?'初回設定前のため、クラウド書込み・端末データ置換は行っていません。':
    '成功を確認できない操作は、保存完了とは扱いません。';
-  manualMessage=`${numbers[n]}「${n===1&&authMode==='signed-in'?'自動保存を開始':CLOUD_ACTIONS[n]}」の結果｜${dateText(now())}\n${text}\n${effect}`;
+  manualMessage=`${n==='3b-backup'?'③-B-1':numbers[n]}「${n==='3b-backup'?'端末の一括JSONバックアップ':n===1&&authMode==='signed-in'?'自動保存を開始':CLOUD_ACTIONS[n]}」の結果｜${dateText(now())}\n${text}\n${effect}`;
   manual.textContent=manualMessage;
  }
  async function guarded(n,task){
@@ -269,7 +306,9 @@ export function mountSyncPanel(root,{getState,replaceLocal,validateState,afterRe
    if(localGeneration!==generation&&['PREVIEW','SYNCED','UPLOADED'].includes(result?.status)){
     invalidatePreview();result={status:'PENDING_LOCAL_UPDATE'};
    }
-   if(result){recordOutcome(result);report(n,result);}
+   // Export initiation is a button result, not a new cloud-sync status.
+   // Keep the unresolved CONFLICT visible until the cloud-master import succeeds.
+   if(result){if(result.status!=='BACKUP_STARTED')recordOutcome(result);report(n,result);}
   }catch(e){
    if(!destroyed&&token===epoch){const r={status:'STOP',message:safeError(e)};recordOutcome(r);report(n,r);}
   }finally{if(!destroyed&&token===epoch){working=false;render();}}
@@ -318,6 +357,29 @@ export function mountSyncPanel(root,{getState,replaceLocal,validateState,afterRe
  }));
  function requireManual(){if(!previewOK||!backupCheck.checked)throw Error('④の差分確認とバックアップ確認が必要です。');}
  function refuseUnsaved(){if(hasPendingEdits())throw Error('未保存入力を保護しています。必要な入力を保存・控えて画面を開き直し、④で再確認してください。');}
+ conflictExport.addEventListener('click',()=>guarded('3b-backup',async()=>{
+  if(!previewOK||previewAction!=='CONFLICT'||comparison?.remoteRevision<=marker()?.baseRevision)
+   throw Error('④の競合確認からやり直してください。');
+  refuseUnsaved();
+  if(typeof exportLocalBackup!=='function')throw Error('一括バックアップを作成できません。');
+  const local=getState();validateState(local);
+  // Start the browser download while the user's click activation is still live
+  // (not after an awaited WebCrypto operation; important on iPhone Safari).
+  await exportLocalBackup(structuredClone(local));
+  const digest=await snapshotDigest(local);
+  if(await snapshotDigest(getState())!==digest)throw Error('バックアップ中に端末の内容が変わりました。④で再確認してください。');
+  conflictBackupDigest=digest;fileCheck.checked=false;discardCheck.checked=false;
+  return {status:'BACKUP_STARTED'};
+ }));
+ actions['3b'].addEventListener('click',()=>guarded('3b',async()=>{
+  if(!previewOK||previewAction!=='CONFLICT'||!conflictBackupDigest||!fileCheck.checked||!discardCheck.checked)
+   throw Error('競合時のバックアップと置換承認が必要です。');
+  refuseUnsaved();
+  const r=await liveCoordinator().acceptRemoteAsMaster({backupConfirmed:fileCheck.checked,
+   discardLocalConfirmed:discardCheck.checked,backedUpLocalDigest:conflictBackupDigest});
+  if(r.status==='REMOTE_MASTER_APPLIED'){clearReviewBarrier();invalidatePreview();}
+  return r;
+ }));
  actions[2].addEventListener('click',()=>guarded(2,async()=>{
   requireManual();const r=await liveCoordinator().acceptLocalUpdate();
   if(r.status==='UPLOADED'||r.status==='SYNCED'){clearReviewBarrier();invalidatePreview();}return r;
@@ -345,6 +407,7 @@ export function mountSyncPanel(root,{getState,replaceLocal,validateState,afterRe
   return {status:'SIGNED_OUT'};
  }));
  backupCheck.addEventListener('change',render);
+ fileCheck.addEventListener('change',render);discardCheck.addEventListener('change',render);
  const noteEditorEdit=e=>{
   if(e?.target?.closest?.('#privateSyncContainer'))return;
   if(e?.target?.closest?.('#dashboard')){pendingEditorChange=true;invalidatePreview();render();}

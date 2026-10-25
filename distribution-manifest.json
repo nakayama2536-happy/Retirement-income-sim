@@ -1,6 +1,6 @@
 {
   "kind": "public-release",
-  "runtime": "v0.9.7-age100-20261025",
+  "runtime": "v0.9.7-cloud-master-20261025",
   "files": [
     {
       "name": "annual-cashflow.mjs",
@@ -14,13 +14,13 @@
     },
     {
       "name": "app.mjs",
-      "size": 65262,
-      "sha256": "461d66026b356c452d50ca8ee8165bed1642c6b67a938f6e56e45bfce10cbf0d"
+      "size": 65427,
+      "sha256": "b4fa84bde1dc9ff7ec173a4c066fa1aecb254a464e13b8582414311e9a9b5d1e"
     },
     {
       "name": "backup-compatibility.mjs",
-      "size": 7142,
-      "sha256": "d8a69bab29e43789c63dad9b96f7acac5dc9dad310d6ee2e26ef873d354df3ba"
+      "size": 7148,
+      "sha256": "2781fa83a5f7d20d002db6d5953d1e7ac007a3afcf53ef6f3c7e29a0cac7c14e"
     },
     {
       "name": "calc.mjs",
@@ -79,8 +79,8 @@
     },
     {
       "name": "docs/USER_GUIDE.md",
-      "size": 35582,
-      "sha256": "ae6966565806f6c8f30a040cfa67bcc399c33559bd59ee71fb5d867658598e2a"
+      "size": 38098,
+      "sha256": "a2417bb691598434f37305d1ddfd14c27bd737764c58cd372a7ba1f392ea0675"
     },
     {
       "name": "expense-display.mjs",
@@ -254,13 +254,13 @@
     },
     {
       "name": "sw.js",
-      "size": 3818,
-      "sha256": "035a3a457924f14c3c7c305ce75f02c8878b14af950aef69bb7a0207bee9aeae"
+      "size": 3824,
+      "sha256": "ca9f330b3aab16bd4819f06e5bb95e053c1a81538c0014d5003ffd584799f70d"
     },
     {
       "name": "sync-controller.mjs",
-      "size": 10644,
-      "sha256": "3d7138be156a25b619e31e9a600b1b5125b541d8b58a0f7d99cdc65d2559f61e"
+      "size": 13978,
+      "sha256": "c67de40394ad383426d2d21d649e7ec375c9c7d8b7b54628e820dd855402960a"
     },
     {
       "name": "sync-crypto.mjs",
@@ -274,8 +274,8 @@
     },
     {
       "name": "sync-panel.mjs",
-      "size": 33694,
-      "sha256": "2fb6b0e7435b62974e3668577711d13927023ead41bea5407068530837679a4b"
+      "size": 39322,
+      "sha256": "e014883ab45b1397a1b802b24fb13b6b4b896b0a07a7439575d1dc0da0bd1f94"
     },
     {
       "name": "sync-policy.mjs",
