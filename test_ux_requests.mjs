@@ -28,6 +28,7 @@ test('3-1 age100 reference goal is offered independently from adopted age95 calc
  const detail=text('./detail-ui.mjs'),d=text('./detail-settings.mjs');
  assert.match(detail,/100-Number\(c\.plan\.startAge\)/);
  assert.match(detail,/現在の計算期間外/);
+ assert.match(detail,/endAge=Number\(getState\(\)\.config\.plan\.endAge\)/); // Never reference out-of-scope c during form interaction.
  assert.match(d,/num\(d\.age,'目標年齢',Number\(c\.plan\.startAge\),100\)/);
  assert.match(detail,/全体シミュレーションに反映/);
 });
