@@ -325,7 +325,14 @@ export function mountSyncPanel(root,{getState,replaceLocal,validateState,afterRe
  }
  function liveCoordinator(){if(!coordinator)throw Error('①でロック解除してください。');return coordinator;}
  async function autoCheck(){return liveCoordinator().runAuto();}
- function trigger(){if(coordinator&&!working&&!destroyed)void guarded(0,autoCheck);}
+ function trigger(){
+  // Foreground events can run before the asynchronous Web Lock re-acquisition.
+  // A temporary lock gap is not a change in the reviewed data or backup receipt.
+  // Do not invoke a write-capable coordinator while hidden or without ownership;
+  // manual operations and the next eligible poll still revalidate all state.
+  if(coordinator&&!working&&!destroyed&&doc?.visibilityState!=='hidden'&&writeAllowed())
+   void guarded(0,autoCheck);
+ }
  function startTimer(){if(timer===null)timer=schedule(()=>{if(doc?.visibilityState!=='hidden')trigger();},30000);}
  async function begin(){
   const config=values();assertMarkerAndConfig(config);

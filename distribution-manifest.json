@@ -1,6 +1,6 @@
 {
   "kind": "public-release",
-  "runtime": "v0.9.7-lock-resume-20261025",
+  "runtime": "v0.9.7-checkbox-resume-20261025",
   "files": [
     {
       "name": "annual-cashflow.mjs",
@@ -14,13 +14,13 @@
     },
     {
       "name": "app.mjs",
-      "size": 65531,
-      "sha256": "eaac6a29c8a8e82d4f67a3864a28f45aabafbb422d1827176e8d7744bce23999"
+      "size": 65535,
+      "sha256": "88395e3337e0f3349a9e765db33e3d0feaedb4c5d80ec7d2d3d5f0acdd1ddcb0"
     },
     {
       "name": "backup-compatibility.mjs",
-      "size": 7147,
-      "sha256": "187e24cb0501353a4cb8dc8172ead62b22218cd32b9ae02b32143e6862a00c8e"
+      "size": 7151,
+      "sha256": "544ea98056dfa255ca035affc42b0ceeefe2f4c8341fe14c71f3decfbcf99a0e"
     },
     {
       "name": "calc.mjs",
@@ -79,8 +79,8 @@
     },
     {
       "name": "docs/USER_GUIDE.md",
-      "size": 38098,
-      "sha256": "a2417bb691598434f37305d1ddfd14c27bd737764c58cd372a7ba1f392ea0675"
+      "size": 38787,
+      "sha256": "acf76e6edd8196f1e3a1f0f69fc32961f7530b93283c1787e25e42847180d3db"
     },
     {
       "name": "expense-display.mjs",
@@ -254,8 +254,8 @@
     },
     {
       "name": "sw.js",
-      "size": 3823,
-      "sha256": "d5325b12d9ef0ae400567fe0c1dcfac151acef36173225fdd5020d12e45b5b5d"
+      "size": 3827,
+      "sha256": "de49da82a0d3b120b0059a6ae93c865cc6d583b4d8505f12272a8d1c4f266b44"
     },
     {
       "name": "sync-controller.mjs",
@@ -274,8 +274,8 @@
     },
     {
       "name": "sync-panel.mjs",
-      "size": 40102,
-      "sha256": "e1fb84730bd8a611f12a7350225d6e1231fad2cbbeefee64bcce031e04898bb0"
+      "size": 40482,
+      "sha256": "e7245f98fe48f7e4f913e68564be0c40d6dbe28cfe80afb9f49b4254f4184f5e"
     },
     {
       "name": "sync-policy.mjs",

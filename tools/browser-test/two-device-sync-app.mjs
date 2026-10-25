@@ -221,6 +221,28 @@ try{
  assert.deepEqual(backupJson.futureEnvelope,phoneOld.futureEnvelope);
  assert.equal(cloud.writes,cloudWritesBefore,'export must not send cloud writes');
  assert.equal(await action(phone,'3b').isDisabled(),true);
+ // Reproduce the installed-iPhone Files hand-off: the page releases its edit
+ // lease on pagehide, focus can arrive before asynchronous pageshow re-acquires
+ // the Web Lock. This transient lack of edit ownership must NOT invalidate the
+ // previously reviewed cloud revision or the user's newly exported local JSON.
+ await phone.evaluate(()=>{
+  window.dispatchEvent(new Event('pagehide'));
+  window.dispatchEvent(new Event('focus'));
+  window.dispatchEvent(new Event('pageshow'));
+  window.dispatchEvent(new Event('focus'));
+ });
+ await phone.waitForFunction(()=>{
+  const file=document.querySelector('[name="syncConflictFileVerified"]');
+  const exportButton=document.querySelector('[data-sync-conflict-backup="1"]');
+  return file && !file.disabled && exportButton && !exportButton.disabled;
+ },null,{timeout:20000});
+ assert.equal(await phone.locator('[name="syncConflictDiscardConfirmed"]').isEnabled(),true,
+  'discard confirmation remains available after Files-like app resume');
+ assert.equal(await action(phone,'3b').isDisabled(),true,
+  'the adoption action still requires explicit backup and discard consent');
+ assert.equal(cloud.writes,cloudWritesBefore,'resuming never writes to cloud');
+ assert.equal((await readState(phone)).config.plan.initialAsset,1040,'resuming must not replace local data');
+ mark('local-json-backup-consents-survive-background-and-web-lock-resume');
  await phone.locator('[name="syncConflictFileVerified"]').check();
  assert.equal(await action(phone,'3b').isDisabled(),true);
  await phone.locator('[name="syncConflictDiscardConfirmed"]').check();
