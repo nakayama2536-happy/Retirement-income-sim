@@ -27,7 +27,7 @@ jobs:
           git rev-parse HEAD > stage3-evidence/source-commit.txt
           git rev-parse HEAD^{tree} > stage3-evidence/source-tree.txt
           git archive --format=zip HEAD > stage3-evidence/committed-source-NOT-DEPLOYED.zip
-          echo 'a914d281aa98ca3e193bfda52e3648def8ee9d9c67136663a1e8a76d4c3d8416  distribution-manifest.json' | sha256sum -c -
+          echo '19005108eb42b353d33aa9314beefe5884ee1d2046c44a219f6947de515ddeea  distribution-manifest.json' | sha256sum -c -
           node --test test_cloud_login_candidate.mjs test_cloud_ui_interactions.mjs test_sync_panel.mjs test_sync_master_override.mjs test_sync_master_panel.mjs test_sync_firebase.mjs tools/retirement-comment/test_integration.mjs test_release_identity.mjs test_distribution_audit.mjs test_service_worker.mjs test_step8_main_mount.mjs | tee stage3-evidence/targeted.tap
           node tools/package-public.mjs . stage3-evidence/public-candidate-NOT-DEPLOYED
           git diff --exit-code
@@ -45,6 +45,7 @@ jobs:
         run: |
           node tools/browser-test/prepare.mjs
           node tools/browser-test/two-device-sync-app.mjs
+          node tools/browser-test/ux-review-ui-check.mjs
       - name: Keep synthetic evidence only
         if: always()
         uses: actions/upload-artifact@v4
@@ -55,5 +56,6 @@ jobs:
             stage2-evidence/
             tools/browser-test/mobile-results/actual-app-sync/
             tools/browser-test/mobile-results/write-access/
+            ux-review-browser-evidence/
           if-no-files-found: warn
           retention-days: 14

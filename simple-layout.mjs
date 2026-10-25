@@ -56,6 +56,34 @@ export function simplifyLayout(doc) {
   wrap(byId('exportBtn'), '補助：現在の設定だけを保存');
   byId('exportFullBtn').textContent = '一括バックアップを保存（推奨）';
   byId('exportFullBtn').className = 'primary';
+
+  // Settings have many independent controls. Group by user intent while keeping
+  // the original DOM nodes, IDs, handlers and adopted values unchanged.
+  const settings=byId('settings');
+  const group=(key,title,nodes,{open=false}={})=>{
+    const box=doc.createElement('details');box.className='card settings-category';
+    box.dataset.settingsGroup=key;box.id='settingsGroup-'+key;box.open=open;
+    const head=doc.createElement('summary');head.textContent=title;
+    const body=doc.createElement('div');body.className='settings-group-body';
+    box.append(head,body);settings.append(box);
+    for(const node of nodes)if(node)body.append(node);
+    return box;
+  };
+  const settingsOverview=byId('settingsCurrentSummary')?.closest('article');
+  const finance=byId('settingsForm')?.closest('article');
+  const backups=byId('exportFullBtn')?.closest('article');
+  const goals=byId('detail-goal')?.closest('article');
+  const display=byId('showActuals')?.closest('article');
+  const certainty=byId('certaintyForm')?.closest('article');
+  const undo=byId('detailUndo')?.closest('article');
+  const recovery=byId('calendarSheet')?.closest('details.card');
+  const settingsColumns=finance?.parentElement;
+  group('backup','クラウド・バックアップ｜普段の保存と確認',[byId('privateSyncCard'),backups],{open:true});
+  group('finance','計画の基本条件｜資産・利回り・物価',[settingsOverview,finance]);
+  group('goals','計算期間・年齢別目標',[byId('detail-horizon'),goals]);
+  group('compare','比較試算・未採用案',[byId('step8TrialCard')]);
+  group('maintenance','表示・確度・復旧などの補助機能',[display,certainty,recovery,undo]);
+  if(settingsColumns&&!settingsColumns.children.length)settingsColumns.remove();
 }
 
 export function annualCheckText(rows) {

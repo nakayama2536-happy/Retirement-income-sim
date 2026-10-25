@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createFirebaseStore,validateFirebaseConfig} from './sync-firebase.mjs';
 const config={apiKey:'synthetic-public-api-key',authDomain:'fictional.firebaseapp.com',projectId:'synthetic-proj',appId:'1:123:web:fake'};
-function mock(){
+function mock({serverReadTime=null}={}){
  let data=null,writes=0,authenticated=null,txs=0;
  const auth={get currentUser(){return authenticated;},async authStateReady(){}};
  const modules={
@@ -11,7 +11,7 @@ function mock(){
    setPersistence:async()=>{},signInWithEmailAndPassword:async(a,email,password)=>{if(password!=='test-only-password')throw Error('denied');authenticated={uid:'fictional-uid'};return {user:authenticated};},
    signOut:async()=>{authenticated=null;}},
   'firebase-firestore.js':{getFirestore:()=>({}),doc:(db,...parts)=>parts.join('/'),
-   getDocFromServer:async()=>({exists:()=>!!data,data:()=>structuredClone(data)}),
+   getDocFromServer:async()=>({exists:()=>!!data,data:()=>{const doc=structuredClone(data);if(doc?.updatedAt&&serverReadTime)doc.updatedAt={toDate:()=>new Date(serverReadTime)};return doc;}}),
    serverTimestamp:()=>({mockServerTime:true}),
    runTransaction:async(db,cb)=>{
     const transaction={get:async()=>({exists:()=>!!data,data:()=>structuredClone(data)}),
@@ -44,4 +44,19 @@ test('Firestore transaction CAS creates once and refuses stale overwrites',async
  const two=await store.compareAndSwap({revision:1,digest:'b'.repeat(64)},{...record(2),digest:'c'.repeat(64)});
  assert.equal(two.revision,2);assert.equal(m.writes,2);
  await store.signOut();await assert.rejects(store.read(),/ログイン/);
+});
+
+test('Cloud save timestamp comes from Firestore updatedAt; no estimate when missing',async()=>{
+ const exact='2026-10-25T04:32:15.000Z';
+ const m=mock({serverReadTime:exact}),store=await createFirebaseStore(config,{moduleLoader:m.loader});
+ await store.signIn('fictional@example.test','test-only-password');
+ await store.compareAndSwap({revision:0,digest:null},record(1));
+ const remote=await store.read();
+ assert.equal(remote.updatedAt,exact);
+ assert.equal(remote.revision,1);
+ assert.equal(m.writes,1,'Read-only date extraction must not add writes');
+ const without=mock(),old=await createFirebaseStore(config,{moduleLoader:without.loader});
+ await old.signIn('fictional@example.test','test-only-password');
+ await old.compareAndSwap({revision:0,digest:null},record(1));
+ assert.equal((await old.read()).updatedAt,null,'No fabricated timestamp for old/unknown data');
 });

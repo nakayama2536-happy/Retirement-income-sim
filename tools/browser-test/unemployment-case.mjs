@@ -26,7 +26,7 @@ export async function validateUnemploymentUi({browser,createTestServer,open,load
   assert.equal(await side.locator('[data-apply]').innerText(),'全体シミュレーションに反映');
   assert.deepEqual((await snapshot(page)).data,adopted.data);
 
-  await openTab(page,'settings');await page.locator('#detailUndo').click();assert.deepEqual((await snapshot(page)).data,before.data);
+  await openTab(page,'settings');await page.locator('#settingsGroup-maintenance').evaluate(el=>el.open=true);await page.locator('#detailUndo').click();assert.deepEqual((await snapshot(page)).data,before.data);
   await openTab(page,'unemployment');await form.locator('[data-reset]').click();await page.locator('#detail-unemployment [name=mode]').selectOption('none');await page.locator('#detail-unemployment [type=submit]').click();await page.locator('#detail-unemployment [data-apply]').click();
   await page.reload();await page.locator('#dashboard').waitFor({state:'visible'});assert.equal((await snapshot(page)).data.config.unemployment.receiptPlan.mode,'none');assert.deepEqual(errors,[]);record.status='pass';
  }catch(e){record.status='failed-or-harness-error';record.error=e.stack;throw Object.assign(e,{detailRecord:record});}finally{await context.close();await fixture.close();}return record;

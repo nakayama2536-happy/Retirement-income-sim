@@ -24,7 +24,7 @@ export async function validateDetailUi({browser,createTestServer,open,load,openT
   await openTab(page,'allcsv');assert((await page.locator('#detailCsvTable').innerText()).includes('架空保険'));
   const pending=page.waitForEvent('download');await page.locator('#downloadDetailedCsv').click();const download=await pending;assert((await download.suggestedFilename()).endsWith('.csv'));
   await openTab(page,'review');await page.locator('#makeReviewPrompt').click();assert((await page.locator('#reviewPromptText').inputValue()).includes('架空保険'));
-  await openTab(page,'settings');await page.locator('#detailUndo').click();const undone=(await snapshot(page)).data;assert.deepEqual(undone,before);
+  await openTab(page,'settings');await page.locator('#settingsGroup-maintenance').evaluate(el=>el.open=true);await page.locator('#detailUndo').click();const undone=(await snapshot(page)).data;assert.deepEqual(undone,before);
   await openTab(page,'rules');assert.equal(await page.locator('#rules input,#rules form').count(),0);
   await page.reload();await page.locator('#dashboard').waitFor({state:'visible'});assert.deepEqual((await snapshot(page)).data,before);assert.deepEqual(errors,[]);record.status='pass';
  }catch(e){record.status='failed-or-harness-error';record.error=e.stack;throw Object.assign(e,{detailRecord:record});}
@@ -109,7 +109,7 @@ export async function validateLaborTrendUi({browser,createTestServer,open,load,o
   await f.locator('[type=submit]').click();assert(await page.locator('#detail-laborSpouseRegular [data-apply]').isVisible());
   assert.deepEqual((await snapshot(page)).data,before);await openTab(page,'salary');await page.locator('#detail-laborSpouseRegular [data-apply]').click();
   const after=(await snapshot(page)).data;assert.equal(after.config.employment.spouse.regularWork.monthlyGross,4);assert.deepEqual(after.config.employment.primary,before.config.employment.primary);assert.deepEqual(after.scenarios,before.scenarios);
-  await openTab(page,'settings');await page.locator('#detailUndo').click();assert.deepEqual((await snapshot(page)).data,before);assert.deepEqual(errors,[]);record.status='pass';
+  await openTab(page,'settings');await page.locator('#settingsGroup-maintenance').evaluate(el=>el.open=true);await page.locator('#detailUndo').click();assert.deepEqual((await snapshot(page)).data,before);assert.deepEqual(errors,[]);record.status='pass';
  }catch(e){record.status='failed-or-harness-error';record.error=e.stack;throw Object.assign(e,{detailRecord:record});}
  finally{await context.close();await fixture.close();}
  return record;
