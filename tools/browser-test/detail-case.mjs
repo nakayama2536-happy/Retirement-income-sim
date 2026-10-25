@@ -43,6 +43,9 @@ export async function validateLaborTrendUi({browser,createTestServer,open,load,o
    for(const id of ['laborPrimaryRegular','laborPrimarySide','laborSpouseRegular','laborSpouseSide'])assert(await page.locator('#detail-'+id+' form').isVisible());
    assert.equal(await page.locator('#salary #salary_receipt_ideco').count(),0);
    assert.deepEqual(await page.locator('#salaryInputs > details.salary-step > fieldset > legend').allTextContents(),['1. 生活費の負担を切り替える月','2. 給与生活中の家計と資産の入出金','3. 切替後の生活費・労働収入','4. 年金・iDeCo・臨時収支の扱い']);
+   const laborStep=page.locator('#salaryInputs > details.salary-step').nth(2);
+   if(!await laborStep.evaluate(n=>n.open))await laborStep.locator('summary').click();
+   assert.equal(await laborStep.evaluate(n=>n.open),true);
    assert((await page.locator('#salaryExistingLabor').innerText()).includes('最終計上月'));
    assert((await page.locator('#salaryInputs').innerText()).includes('比較専用'));
    assert(await page.locator('#salaryForm').evaluate(n=>n.scrollWidth<=n.clientWidth+1));
