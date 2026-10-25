@@ -203,7 +203,8 @@ function renderHome() {
   el('status').textContent = target ? (result.finalAsset>=target.threshold?'達成':'未達') : '未設定';
   const below=result.keyAges.filter(k=>k.age!==end&&k.margin<0);
   el('targetStatusNote').textContent=below.length?`途中の目標未達：${below.map(k=>k.age+'歳末').join('・')}`:'最終年齢末だけの判定です';
-  el('initialAssetLabel').textContent=`${start}歳の開始資産`;
+  el('initialAssetLabel').textContent=`${start-1}歳期末資産`;
+  el('initialAssetHelp').textContent=`${start}歳期の計算開始残高として登録した計画値です。実績を確定した意味ではありません。`;
   el('finalTargetLabel').textContent=`${end}歳末の目標資産額`;
   el('finalPredictionLabel').textContent=`${end}歳末の予測資産額`;
   el('simulationPeriod').textContent=`保存済みの計画：${start}歳～${end}歳末（未反映の入力は含みません）`;
@@ -649,6 +650,7 @@ function escapeHtml(s=''){ return String(s).replace(/[&<>'"]/g,c=>({'&':'&amp;',
 
 function renderSettings(){
   const f=el('settingsForm'); const p=config.plan;
+  el('initialAssetSettingLabel').textContent=`${Number(p.startAge)-1}歳期末資産（計画開始残高・万円）`;
   f.initialAsset.value=p.initialAsset; f.afterTaxReturn.value=p.afterTaxReturn; f.inflation.value=p.inflation;
   f.laborAnnual.value=(Number(config.employment?.primary?.sideWork?.monthlyGross||0)+Number(config.employment?.spouse?.sideWork?.monthlyGross||0))*12;
   f.reserveTotal.value=config.reserve.total;
@@ -945,7 +947,7 @@ document.querySelectorAll('[data-help]').forEach(btn=>btn.addEventListener('clic
 }));
 el('helpClose').addEventListener('click',()=>el('helpDialog').close());
 
-el('appVersion').textContent='v0.9.7-hui02-20261025'; el('rulesVersion').textContent=RULES.asOf;
+el('appVersion').textContent='v0.9.7-ux-requests-20261025'; el('rulesVersion').textContent=RULES.asOf;
 if(startupError){setEmptyState();showNotice(`保存データを読み込めません。復元用バックアップを確認してください。${startupError}`,'error');}
 else refresh();
 if(!writeAccess.writable)showNotice('この画面は読み取り専用です。別の編集画面を閉じて再読み込みしてください。同時更新制御が利用できない場合も保存を停止します。','error');

@@ -50,7 +50,7 @@ export function mountSalarySheet({getState,onCommit,showNotice}){
   }
   function buildInputs(c){
     const s=draft.settings;
-    el('salaryInputs').innerHTML=`<fieldset class="pension-person"><legend>1. 生活費の負担を切り替える月</legend>
+    const salaryFieldsHtml=`<fieldset class="pension-person"><legend>1. 生活費の負担を切り替える月</legend>
       <p class="muted">比較専用の65歳基準（65歳到達月の前月まで給与生活）： <strong>${esc(dateWithAge(draft.baselineMonth,c))}</strong> まで、資産からの生活費負担は <strong>${esc(dateWithAge(nextMonth(draft.baselineMonth),c))}</strong> から。</p>
       <label>給与で生活費を賄う最終月（その月を含む）<input id="salary_lastSalaryMonth" type="month" required aria-describedby="salary_lastSalaryMonthAge"></label><p id="salary_lastSalaryMonthAge" class="muted" aria-live="polite"></p>
       <p>資産からの生活費負担開始月：<strong id="salary_switchMonth"></strong></p>
@@ -74,6 +74,13 @@ export function mountSalarySheet({getState,onCommit,showNotice}){
       ${(c.cashflow?.periodOverrides||[]).map((x,i)=>x.kind==='income'?`<label>${esc(x.label||x.key)}（${esc(x.fromAge)}～${esc(x.toAge)}歳）<select id="salary_period_${i}">${receiptOptions()}</select></label>`:'').join('')}
       </details>
     </fieldset>`;
+    let step=0;
+    el('salaryInputs').innerHTML=salaryFieldsHtml
+      .replace(/<fieldset class="pension-person"><legend>(.*?)<\/legend>/g,(_,title)=>{
+        step++;
+        return `<details class="salary-step" ${step===1?'open':''}><summary>${title}</summary><fieldset class="pension-person"><legend class="visually-hidden">${title}</legend>`;
+      })
+      .replace(/<\/fieldset>/g,'</fieldset></details>');
     el('salaryIdecoInputs').innerHTML=`<h2>掛金原資・給与生活中の受取</h2><p class="muted">この欄は給与生活シートと共通の試算条件です。入力後は「給与生活の条件と合わせて試算」へ進み、差分を確認して反映してください。</p>      <label>給与生活中のiDeCo掛金原資<select form="salaryForm" id="salary_funding_before">${option('','未確認／掛金なし')+option('salary','給与から支払う')+option('plan_asset:separate','投資資産から別枠で支払う')+option('plan_asset:withdrawal','給与生活シートの引出額に含める')}</select></label>
       <label>終了後も掛金が続く場合の原資<select form="salaryForm" id="salary_funding_after">${option('','未確認／終了後の掛金なし')+option('household','終了後の家計資金から支払う（別途確認済み）')+option('plan_asset:separate','投資資産から別枠で支払う')+option('plan_asset:budget','管理予算に含める')}</select></label>
       <p class="muted">掛金終了月・受取月は変えません。前倒し後の加入資格や支払原資は別途確認が必要です。</p>
@@ -114,6 +121,11 @@ export function mountSalarySheet({getState,onCommit,showNotice}){
   }
   function changed(){draft=read();invalidate();error('');persist();state();}
   function reset({forget=true}={}){invalidate();draft=null;hasUserSalaryDraft=false;error('');if(forget){try{clearSalaryDraft();}catch{}}}
+  // A required field inside a collapsed section must be revealed on validation.
+  el('salaryForm').addEventListener('invalid',event=>{
+    const section=event.target?.closest?.('details.salary-step');
+    if(section)section.open=true;
+  },true);
   el('salaryForm').addEventListener('input',event=>{if(event.target.id==='salary_lastSalaryMonth')el('salary_monthsConfirmed').value='';changed();});
   el('salaryIdecoInputs').addEventListener('input',()=>changed());
   el('salaryForm').addEventListener('submit',event=>{event.preventDefault();error('');draft=read();persist();try{preview=previewSalary(getState(),draft);renderPreview();}catch(e){invalidate();error(e.message);}});

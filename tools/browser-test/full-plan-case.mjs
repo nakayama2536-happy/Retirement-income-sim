@@ -16,13 +16,16 @@ export async function validateFullPlanUi({browser,createTestServer,open,load,ope
   const page=await open(context,fixture.url),errors=[];page.on('pageerror',e=>errors.push(e.message));
   await load(page,src);const before=(await snapshot(page)).data;
   await openTab(page,'settings');await page.locator('#settingsGroup-compare').evaluate(el=>el.open=true);await page.locator('#step8TrialCard details > summary').click();
+  await openTab(page,'backup');
   const syncCard=page.locator('#privateSyncCard');
   assert.equal(await syncCard.count(),1);
   await syncCard.locator(':scope > details > summary').click();
   assert(await syncCard.locator('[data-sync-action="1"]').isVisible());
   assert(await syncCard.locator('[data-sync-action="6"]').isDisabled());
   assert.deepEqual((await snapshot(page)).data,before,'optional sync UI must not change data or connect without configuration');
+  await openTab(page,'backup');
   await syncCard.locator(':scope > details > summary').click();
+  await openTab(page,'settings');
   const opening=page.locator('#step8TrialContainer'),full=page.locator('#fullPlanComparisonContainer');
   for(const [name,value] of [['startMonth','2044-09'],['salaryLastMonth','2044-08'],['priceBaseMonth','2044-08'],['openingAsOfMonth','2044-08'],['openingAmount','100'],['annuityStartMonth','2044-09']])await opening.locator('[name="'+name+'"]').fill(value);
   await opening.locator('[name="idecoAssetScope"]').selectOption('received-lump-only-v1');

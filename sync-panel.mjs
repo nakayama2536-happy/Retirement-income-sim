@@ -16,7 +16,8 @@ export const CLOUD_ACTIONS=Object.freeze({
  7:'クラウドのデータでこの端末を利用開始',
  '3b':'クラウドを採用し、この端末を置き換える'
 });
-const numbers={'1':'①','2':'②','3':'③','4':'④','5':'⑤','6':'⑥','7':'⑦','3b':'③-B'};
+export const CLOUD_DISPLAY_NUMBERS=Object.freeze({'1':'①','2':'③','3':'④','4':'②','5':'⑤','6':'⑥','7':'⑦','3b':'④-B'});
+const numbers=CLOUD_DISPLAY_NUMBERS;
 const parse=s=>{try{return s?JSON.parse(s):null;}catch{return null;}};
 const sameIdentity=(a,b)=>!!a&&!!b&&a.uid===b.uid&&a.projectId===b.projectId;
 export function hasExternalEditorFocus(doc){
@@ -40,9 +41,9 @@ export function cloudResultText(s){
   PENDING_OFFLINE:'通信待ちです。端末の保存データを保持しています。クラウド保存は未確認です。',
   ENROLLMENT_REQUIRED:'初回設定が必要です。下の「初回設定」を確認してください。',
   LOCKED:'暗号化ロックの解除待ちです。',REMOTE_EMPTY:'クラウドにデータがありません。自動で再登録しません。',
-  LOCAL_PENDING_REVIEW:'復元後の変更です。④で比較し、確認するまで自動書込みを保留します。',
+  LOCAL_PENDING_REVIEW:'復元後の変更です。②で比較し、確認するまで自動書込みを保留します。',
   REMOTE_PENDING_REVIEW:'未保存入力がある可能性があるため、自動読込みを保留します。',
-  STOP:'処理を保留しました。保存完了は確認できていません。④で状態を再確認してください。',
+  STOP:'処理を保留しました。保存完了は確認できていません。②で状態を再確認してください。',
   CONFLICT:'端末とクラウドの両方に変更があります。自動更新を保留します。',
   SIGNED_OUT:'自動保存を停止しログアウトしました。端末データは保持しています。',
   AUTH_READY:'ログイン済みです。メール・パスワードの再入力は不要です。暗号化解除が必要です。',
@@ -57,11 +58,11 @@ function safeError(e){
  if(e?.code){
   if(/network|unavailable|deadline/.test(e.code))return '通信に失敗しました。端末の保存を保持し、接続回復後に再確認してください。';
   if(/auth\//.test(e.code))return '本人認証を確認できません。ログイン情報または接続状態を確認してください。';
-  return 'クラウド処理を完了できません。保存完了は未確認です。④で再確認してください。';
+  return 'クラウド処理を完了できません。保存完了は未確認です。②で再確認してください。';
  }
  const s=String(e?.message||'');
  return /^[^\n]*(?:してください|必要です|できません|不足しています|不正です|保持しています|解除待ちです)[^\n]*。$/.test(s)&&s.length<240?s:
-  '処理を完了できません。保存完了は未確認です。④で再確認してください。';
+  '処理を完了できません。保存完了は未確認です。②で再確認してください。';
 }
 const panelStyle=`
 .cloud-panel{color:inherit;line-height:1.6}.cloud-panel [hidden]{display:none!important}
@@ -136,21 +137,21 @@ export function mountSyncPanel(root,{getState,replaceLocal,validateState,afterRe
  action(unlock,1,'submit');append(connection,el('h4','利用を開始する'),unlockHelp,login,unlock);root.appendChild(connection);
  const daily=el('section',null,{'aria-label':'よく使う操作'});
  const everyday=el('div',null,{class:'cloud-grid'});
- append(daily,el('h4','日常の確認'),el('p','通常のクラウド書込み・読込みは自動です。④だけで保存内容を確認でき、データは変更されません。番号は操作識別用です。',{class:'cloud-help'}));
+ append(daily,el('h4','日常の確認'),el('p','通常のクラウド書込み・読込みは自動です。②だけで保存内容を確認でき、データは変更されません。番号は操作識別用です。',{class:'cloud-help'}));
  const checkActions=el('div',null,{class:'cloud-check-actions'});action(checkActions,4);append(daily,checkActions);
- append(daily,el('h4','手動の書込み・読込み（必要な場合のみ）'),el('p','②・③は④で方向と差分を確認してから使用します。通常操作では不要です。',{class:'cloud-help'}));
+ append(daily,el('h4','手動の書込み・読込み（必要な場合のみ）'),el('p','③・④は②で方向と差分を確認してから使用します。通常操作では不要です。',{class:'cloud-help'}));
  for(const n of [2,3])action(everyday,n);append(daily,everyday);root.appendChild(daily);
  // Only for real divergent edits. A full portable local backup plus explicit
  // acknowledgement are required; the everyday ③ button remains fail-closed.
  const conflict=el('section',null,{class:'cloud-card cloud-conflict','aria-label':'競合時にクラウドを正とする'});
  const conflictHelp=el('p','端末・クラウドの両方に変更があります。クラウドを正として採用すると、この端末だけの変更は失われます。クラウドへ書込みはしません。',{class:'cloud-danger'});
- const conflictExport=el('button','③-B-1 現在の端末を一括JSONでバックアップ',{type:'button','data-sync-conflict-backup':'1'});
- const conflictExportNote=el('p','④で照合した端末の内容を、別ファイルに保存してください。',{class:'cloud-help'});
+ const conflictExport=el('button','④-B-1 現在の端末を一括JSONでバックアップ',{type:'button','data-sync-conflict-backup':'1'});
+ const conflictExportNote=el('p','②で照合した端末の内容を、別ファイルに保存してください。',{class:'cloud-help'});
  const fileCheckRow=el('label'),fileCheck=el('input',null,{type:'checkbox',name:'syncConflictFileVerified'});
  append(fileCheckRow,fileCheck,el('span','今回作成した一括JSONファイルが、安全な保存先に存在することを確認しました。'));
  const discardRow=el('label'),discardCheck=el('input',null,{type:'checkbox',name:'syncConflictDiscardConfirmed'});
  append(discardRow,discardCheck,el('span','iPhoneのクラウド未保存の変更は採用せず、クラウドの内容に置き換えることを承認します。'));
- append(conflict,el('h4','③-B 競合時の解決（通常は操作不要）'),conflictHelp,conflictExport,conflictExportNote,fileCheckRow,discardRow);
+ append(conflict,el('h4','④-B 競合時の解決（通常は操作不要）'),conflictHelp,conflictExport,conflictExportNote,fileCheckRow,discardRow);
  action(conflict,'3b');root.appendChild(conflict);
  const safety=el('div',null,{class:'cloud-safety'}),backupRow=el('label'),backupCheck=el('input',null,{type:'checkbox',name:'syncBackupConfirmed'});
  append(backupRow,backupCheck,el('span','手動更新・初回登録に備え、必要な一括バックアップを別の安全な場所に保管しました。'));
@@ -158,8 +159,8 @@ export function mountSyncPanel(root,{getState,replaceLocal,validateState,afterRe
  root.appendChild(safety);
  const manualCard=el('section',null,{class:'cloud-card','aria-label':'直前のボタン操作の結果'});
  const manual=el('p','まだボタン操作は実行していません。',{class:'cloud-result',role:'status','aria-live':'polite'});
- const staleNote=el('p','照合後に状態が変わりました。手動更新前に④で再確認してください。',{class:'cloud-help'});
- const diff=el('details'),diffBody=el('div',null,{class:'cloud-diff'});append(diff,el('summary','比較の詳細（④の確認時点）'),diffBody);
+ const staleNote=el('p','照合後に状態が変わりました。手動更新前に②で再確認してください。',{class:'cloud-help'});
+ const diff=el('details'),diffBody=el('div',null,{class:'cloud-diff'});append(diff,el('summary','比較の詳細（②の確認時点）'),diffBody);
  append(manualCard,el('h4','直前のボタン操作の結果'),manual,staleNote,diff);root.appendChild(manualCard);
  const automatic=el('details'),auto=el('p',autoMessage,{class:'cloud-result'});
  append(automatic,el('summary','直近の自動処理・ログイン確認'),auto);root.appendChild(automatic);
@@ -240,14 +241,14 @@ export function mountSyncPanel(root,{getState,replaceLocal,validateState,afterRe
   const editBlockReason=()=>{
    if(writeAllowed())return '';
    switch(writeAccessReason()){
-    case 'other-screen':return '別の画面が編集権限を持っています。重複画面を閉じてから④で再確認してください。';
+    case 'other-screen':return '別の画面が編集権限を持っています。重複画面を閉じてから②で再確認してください。';
     case 'lock-unavailable':return 'この起動環境では安全な編集ロックを利用できません。保存処理を停止しています。';
     case 'lock-failed':return '安全な編集ロックの取得に失敗しました。保存データは変更していません。';
     case 'page-hidden':case 'released':case 'initializing':return '画面復帰後の編集権限を確認中です。';
     default:return 'この画面は読み取り専用です。編集権限を確認してください。';
    }
   };
-  const checkFirst=!active?'①でロック解除してください。':!reg?'先に初回設定を完了してください。':remoteExists!==true?'クラウド状態を④で確認してください。':!writeAllowed()?editBlockReason():!previewOK?'手動更新は④の差分確認後に行えます。':'';
+  const checkFirst=!active?'①でロック解除してください。':!reg?'先に初回設定を完了してください。':remoteExists!==true?'クラウド状態を②で確認してください。':!writeAllowed()?editBlockReason():!previewOK?'手動更新は②の差分確認後に行えます。':'';
   function direction(action){
    if(previewAction==='UNCHANGED')return '端末とクラウドは一致しています。操作不要です。';
    if(previewAction==='CONFLICT'||previewAction==='STOP')return '双方の変更・状態の確認が必要です。無条件では上書きしません。';
@@ -261,9 +262,9 @@ export function mountSyncPanel(root,{getState,replaceLocal,validateState,afterRe
   conflictExport.disabled=working||!canResolve||hasPendingEdits()||!writeAllowed()||typeof exportLocalBackup!=='function';
   fileCheck.disabled=working||!conflictBackupDigest;
   discardCheck.disabled=working||!conflictBackupDigest;
-  const conflictReason=!canResolve?'④で新しいクラウド版との競合を確認してください。':
+  const conflictReason=!canResolve?'②で新しいクラウド版との競合を確認してください。':
    !writeAllowed()?editBlockReason():hasPendingEdits()?'未保存入力を保存・控えてから画面を開き直してください。':
-   !conflictBackupDigest?'③-B-1で新しい一括JSONを作成してください。':
+   !conflictBackupDigest?'④-B-1で新しい一括JSONを作成してください。':
    !fileCheck.checked?'作成したJSONファイルの保存先を確認してください。':
    !discardCheck.checked?'端末側の変更を採用しないことを確認してください。':'';
   set('3b',checkFirst||conflictReason);
@@ -271,10 +272,10 @@ export function mountSyncPanel(root,{getState,replaceLocal,validateState,afterRe
   set(5,!providerSession?'未接続です。':'');
   const start=!active?'①で接続してください。':reg?'初回設定は完了しています。':!writeAllowed()?editBlockReason():'';
   set(6,start||(remoteExists!==false?'クラウドにデータがあるか、まだ未確認です。既存データは上書きしません。':!backupCheck.checked?'バックアップ確認をチェックしてください。':''));
-  set(7,start||(remoteExists!==true?'読み込めるクラウドデータがありません。':!previewOK?'④でクラウドの内容を確認してください。':hasPendingEdits()?'未保存入力を保存・控えてから再確認してください。':!backupCheck.checked?'バックアップ確認をチェックしてください。':''));
+  set(7,start||(remoteExists!==true?'読み込めるクラウドデータがありません。':!previewOK?'②でクラウドの内容を確認してください。':hasPendingEdits()?'未保存入力を保存・控えてから再確認してください。':!backupCheck.checked?'バックアップ確認をチェックしてください。':''));
   safety.hidden=!active||(!reg?remoteExists===null:!previewOK||!['UPLOAD_CAS','DOWNLOAD_VALIDATED'].includes(previewAction));
   backupCheck.disabled=working;
-  initialNote.textContent=reg?'初回設定は完了しています。普段は上段の操作をご利用ください。':'⑥は最初の1台・クラウドが空のときだけ。別端末を追加する場合は④で確認して⑦を使用します。';
+  initialNote.textContent=reg?'初回設定は完了しています。普段は上段の操作をご利用ください。':'⑥は最初の1台・クラウドが空のときだけ。別端末を追加する場合は②で確認して⑦を使用します。';
   staleNote.hidden=!comparisonStale;diff.hidden=!comparison;first.hidden=reg;
  }
  function showComparison(s){
@@ -310,7 +311,7 @@ export function mountSyncPanel(root,{getState,replaceLocal,validateState,afterRe
    r.status==='SIGNED_OUT'?'端末データと一括バックアップは削除していません。':
    n===1&&r.status==='ENROLLMENT_REQUIRED'?'初回設定前のため、クラウド書込み・端末データ置換は行っていません。':
    '成功を確認できない操作は、保存完了とは扱いません。';
-  manualMessage=`${n==='3b-backup'?'③-B-1':numbers[n]}「${n==='3b-backup'?'端末の一括JSONバックアップ':n===1&&authMode==='signed-in'?'自動保存を開始':CLOUD_ACTIONS[n]}」の結果｜${dateText(now())}\n${text}\n${effect}`;
+  manualMessage=`${n==='3b-backup'?'④-B-1':numbers[n]}「${n==='3b-backup'?'端末の一括JSONバックアップ':n===1&&authMode==='signed-in'?'自動保存を開始':CLOUD_ACTIONS[n]}」の結果｜${dateText(now())}\n${text}\n${effect}`;
   manual.textContent=manualMessage;
  }
  async function guarded(n,task){
@@ -376,11 +377,11 @@ export function mountSyncPanel(root,{getState,replaceLocal,validateState,afterRe
   else if(s.status==='REMOTE_EMPTY')remoteExists=false;
   return s;
  }));
- function requireManual(){if(!previewOK||!backupCheck.checked)throw Error('④の差分確認とバックアップ確認が必要です。');}
- function refuseUnsaved(){if(hasPendingEdits())throw Error('未保存入力を保護しています。必要な入力を保存・控えて画面を開き直し、④で再確認してください。');}
+ function requireManual(){if(!previewOK||!backupCheck.checked)throw Error('②の差分確認とバックアップ確認が必要です。');}
+ function refuseUnsaved(){if(hasPendingEdits())throw Error('未保存入力を保護しています。必要な入力を保存・控えて画面を開き直し、②で再確認してください。');}
  conflictExport.addEventListener('click',()=>guarded('3b-backup',async()=>{
   if(!previewOK||previewAction!=='CONFLICT'||comparison?.remoteRevision<=marker()?.baseRevision)
-   throw Error('④の競合確認からやり直してください。');
+   throw Error('②の競合確認からやり直してください。');
   refuseUnsaved();
   if(typeof exportLocalBackup!=='function')throw Error('一括バックアップを作成できません。');
   const local=getState();validateState(local);
@@ -388,7 +389,7 @@ export function mountSyncPanel(root,{getState,replaceLocal,validateState,afterRe
   // (not after an awaited WebCrypto operation; important on iPhone Safari).
   await exportLocalBackup(structuredClone(local));
   const digest=await snapshotDigest(local);
-  if(await snapshotDigest(getState())!==digest)throw Error('バックアップ中に端末の内容が変わりました。④で再確認してください。');
+  if(await snapshotDigest(getState())!==digest)throw Error('バックアップ中に端末の内容が変わりました。②で再確認してください。');
   conflictBackupDigest=digest;fileCheck.checked=false;discardCheck.checked=false;
   return {status:'BACKUP_STARTED'};
  }));

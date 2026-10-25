@@ -25,7 +25,9 @@ async function snapshot(page){
  await openTab(page,'scenarios');
  const scenarios=await page.locator('.scenario-check').evaluateAll(nodes=>nodes.map(n=>({id:n.querySelector('input').dataset.scenarioSelect,selected:n.querySelector('input').checked,name:n.querySelector('strong').firstChild.textContent.trim()})));
  const comparison=await page.locator('#scenarioCompare tbody tr').evaluateAll(rows=>rows.map(row=>[...row.querySelectorAll('td')].map(cell=>cell.textContent)));
- await openTab(page,'settings');
+ const hasDedicatedBackupTab=(await page.locator('[data-tab="backup"]').count())===1;
+ await openTab(page,hasDedicatedBackupTab?'backup':'settings');
+ assert.equal(await page.locator(hasDedicatedBackupTab?'#backup #exportFullBtn':'#settings #exportFullBtn').count(),1,'backup export stays in the correct old/new tab');
  const pending=page.waitForEvent('download');
  await page.locator('#exportFullBtn').click();
  const download=await pending;
@@ -50,6 +52,8 @@ async function snapshot(page){
   assert.equal(home.finalThreshold,candidate?'未設定':'0万円');
   home.finalThreshold=null;
  }
+ // Preserve the original snapshot helper's postcondition for existing tests.
+ if(hasDedicatedBackupTab)await openTab(page,'settings');
  return {home,scenarios,comparison,data:normalize(data)};
 }
 async function open(context,url){
@@ -166,7 +170,7 @@ async function run(browser,id,mode){
    }finally{await restoreContext.close();await restoreServer.close();}
   }
   if(id==='C1'){
-   await openTab(page,'settings');
+   await openTab(page,'backup');
    const backup=page.locator('article').filter({has:page.locator('#exportFullBtn')});
    const recovery=page.locator('article').filter({has:page.locator('#recoveryCheckResult')});
    await page.locator('#recoveryCheckResult').evaluate(n=>{for(let p=n.parentElement;p;p=p.parentElement)if(p.tagName==='DETAILS')p.open=true;});
@@ -219,7 +223,9 @@ async function validateHomeUi(browser){
    await page.screenshot({path:path.join(out,'S1-home-'+width+'.png'),fullPage:true});
   }
   for(const id of ['spousePensionAmount','initialAssetInput','expenseKind','ruleCards']){
-   await openTab(page,'home');await page.locator(`[data-focus-target="${id}"]`).click();
+   await openTab(page,'home');
+   await page.locator('#home details.home-pending').evaluate(el=>el.open=true);
+   await page.locator(`[data-focus-target="${id}"]`).click();
    assert(await page.locator('#'+id).isVisible());assert.equal(await page.evaluate(()=>document.activeElement.id),id);
   }
   await openTab(page,'settings');await page.locator('#settingsGroup-maintenance').evaluate(el=>el.open=true);await page.locator('#showActuals').check();

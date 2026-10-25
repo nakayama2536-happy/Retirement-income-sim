@@ -55,7 +55,7 @@ export function currentSummaryRows(c,tab){
   for(const r of c.cashflow?.periodOverrides||[])if(r.kind==='income')rows.push([`継続収入：${r.label||r.key}`,`${r.fromAge}～${r.toAge}歳期 ／ ${amount(r.amount)}${r.unit==='monthly'?'／月':'／年'} ／ ${receipt(r.fundingTreatment)}`]);
   return rows.length?rows:[['臨時・追加収支','未登録']];
  }
- if(tab==='settings')return [['計画期間',`${date(c.plan.startDate)}、本人 ${c.plan.startAge}～${c.plan.endAge}歳期`],['開始資産',amount(c.plan.initialAsset)],['運用利回り・物価上昇率',`税引後年率 ${amount(c.plan.afterTaxReturn,'%')} ／ 物価年率 ${amount(c.plan.inflation,'%')}`],['予備枠',amount(c.reserve?.total)],['保存範囲','この端末のブラウザ内。別端末へは一括バックアップで手動引継ぎ。']];
+ if(tab==='settings')return [['計画期間',`${date(c.plan.startDate)}、本人 ${c.plan.startAge}～${c.plan.endAge}歳期`],[`${Number(c.plan.startAge)-1}歳期末資産（計画開始残高）`,amount(c.plan.initialAsset)],['運用利回り・物価上昇率',`税引後年率 ${amount(c.plan.afterTaxReturn,'%')} ／ 物価年率 ${amount(c.plan.inflation,'%')}`],['予備枠',amount(c.reserve?.total)],['保存範囲','この端末のブラウザ内。別端末へは一括バックアップで手動引継ぎ。']];
  return [];
 }
 export function currentSummaryHtml(c,tab){return `<h3>現在の設定の概要</h3><p class="muted">保存済みの条件です。入力途中・未反映の試算は含みません。</p><dl class="current-setting-list">${currentSummaryRows(c,tab).map(([k,v])=>`<div><dt>${esc(k)}</dt><dd>${esc(v)}</dd></div>`).join('')}</dl>`;}

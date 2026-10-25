@@ -105,7 +105,7 @@ async function open(ctx){
  await page.goto(origin+'/',{waitUntil:'domcontentloaded'});
  await page.locator('#privateSyncContainer [name="syncApiKey"]').waitFor({state:'attached'});
  await page.locator('[data-group="manage"]').click();
- await page.locator('[data-tab="settings"]').click();
+ await page.locator('[data-tab="backup"]').click();
  const details=page.locator('#privateSyncCard details').first();
  if(!(await details.getAttribute('open')))await details.locator('summary').first().click();
  return page;
@@ -173,13 +173,13 @@ try{
  const previous=await readState(phone);
  await phone.reload({waitUntil:'domcontentloaded'});
  await phone.locator('[data-group="manage"]').click();
- await phone.locator('[data-tab="settings"]').click();
+ await phone.locator('[data-tab="backup"]').click();
  await phone.locator('#privateSyncCard summary').first().click();
  assert.deepEqual(await readState(phone),previous);
  await login(phone,true);await wait(phone,'クラウドと一致しています');
  mark('mobile-restart-persistent-state-marker-and-auth');
  await edit(pc,1025);await pc.reload({waitUntil:'domcontentloaded'});
- await pc.locator('[data-group="manage"]').click();await pc.locator('[data-tab="settings"]').click();
+ await pc.locator('[data-group="manage"]').click();await pc.locator('[data-tab="backup"]').click();
  await pc.locator('#privateSyncCard summary').first().click();
  await login(pc,true);await wait(pc,'クラウドへの書込みが完了しました');
  assert.equal(cloud.document.revision,2);
@@ -205,7 +205,7 @@ try{
  assert.equal((await readState(phone)).config.reviews['70'].note,'架空PC年次点検');
  assert.equal((await readState(phone)).scenarios.length,2);
  mark('parallel-edits-stop-without-overwriting-or-merging');
- // ③ must remain locked; only ③-B may explicitly discard the fictional phone's
+ // Internal action ID 3 (display ④) must remain locked; only ID 3b (display ④-B) may explicitly discard the fictional phone's
  // conflicting edits after a fresh portable JSON backup and two acknowledgements.
  assert.equal(await action(phone,3).isDisabled(),true);
  assert.equal(await action(phone,'3b').isVisible(),false);

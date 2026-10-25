@@ -34,10 +34,10 @@ export function createSyncCoordinator({
    const current=getMarker();
    if(!validSyncMarker(current)||current.baseRevision!==expectedMarker?.baseRevision||
       current.baseRemoteDigest!==expectedMarker?.baseRemoteDigest||current.baseLocalDigest!==expectedMarker?.baseLocalDigest)
-    throw Error('同期基準が変更されました。④で差分を再確認してください。');
+    throw Error('同期基準が変更されました。②で差分を再確認してください。');
    const newest=await readRemote();
    if(!validRemoteRecord(newest)||newest.revision!==remote.revision||newest.digest!==remote.digest)
-    throw Error('クラウドが照合後に更新されました。④で差分を再確認してください。');
+    throw Error('クラウドが照合後に更新されました。②で差分を再確認してください。');
   }
   // Preserve the full device state independently before any replacement.
   await saveBeforeReplace(local);
@@ -46,10 +46,10 @@ export function createSyncCoordinator({
    const current=getMarker();
    if(!validSyncMarker(current)||current.baseRevision!==expectedMarker?.baseRevision||
       current.baseRemoteDigest!==expectedMarker?.baseRemoteDigest||current.baseLocalDigest!==expectedMarker?.baseLocalDigest)
-    throw Error('同期基準が変更されました。④で差分を再確認してください。');
+    throw Error('同期基準が変更されました。②で差分を再確認してください。');
    const newest=await readRemote();
    if(!validRemoteRecord(newest)||newest.revision!==remote.revision||newest.digest!==remote.digest)
-    throw Error('クラウドが照合後に更新されました。④で差分を再確認してください。');
+    throw Error('クラウドが照合後に更新されました。②で差分を再確認してください。');
   }
   writable();
   const applied=await applyLocal(decoded,local); // Atomic optimistic compare, not a partial import.
@@ -147,11 +147,11 @@ export function createSyncCoordinator({
     // Do not reinterpret same-revision remote mutations, tampering or rollbacks as
     // an ordinary cloud-master conflict. Only a strictly newer cloud revision qualifies.
     if(decision.action!=='CONFLICT'||!validRemoteRecord(remote)||remote.revision<=m.baseRevision)
-     throw Error('クラウドの採用条件が変わりました。④で差分を再確認してください。');
+     throw Error('クラウドの採用条件が変わりました。②で差分を再確認してください。');
     if(!reviewedRemote||reviewedRemote.action!=='CONFLICT'||
        reviewedRemote.revision!==remote.revision||reviewedRemote.digest!==remote.digest||
        reviewedRemote.localDigest!==digest)
-     throw Error('照合後に変更がありました。④で差分を再確認してください。');
+     throw Error('照合後に変更がありました。②で差分を再確認してください。');
     // No cloud CAS/write is ever used by this method. Existing encrypted
     // snapshot verification and optimistic local replacement are preserved.
     return download(remote,local,digest,{requireReview:true,masterOverride:true,expectedMarker:m});
