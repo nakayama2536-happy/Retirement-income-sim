@@ -1,6 +1,6 @@
 {
   "kind": "public-release",
-  "runtime": "v0.9.7-cloud-ui-comment-20261024",
+  "runtime": "v0.9.7-age100-20261025",
   "files": [
     {
       "name": "annual-cashflow.mjs",
@@ -14,13 +14,13 @@
     },
     {
       "name": "app.mjs",
-      "size": 64513,
-      "sha256": "f5d0df8d2de8b62103961de6c9d5593dd1d260821fd4869e2fd24bd80cdb115c"
+      "size": 65262,
+      "sha256": "461d66026b356c452d50ca8ee8165bed1642c6b67a938f6e56e45bfce10cbf0d"
     },
     {
       "name": "backup-compatibility.mjs",
-      "size": 7152,
-      "sha256": "6e11056418920173132a8597a9f92e5415bd532081723f27ffe224fa639c1671"
+      "size": 7142,
+      "sha256": "d8a69bab29e43789c63dad9b96f7acac5dc9dad310d6ee2e26ef873d354df3ba"
     },
     {
       "name": "calc.mjs",
@@ -64,13 +64,13 @@
     },
     {
       "name": "detail-settings.mjs",
-      "size": 20464,
-      "sha256": "ac77743506648f9d95abe9b502f397fe690dc952c53aaab41671fcec9a4acbc1"
+      "size": 23531,
+      "sha256": "31386234b64cf40766e95d0d05fa990155ae5c521a424c5d9f8cec86885b0228"
     },
     {
       "name": "detail-ui.mjs",
-      "size": 34000,
-      "sha256": "d1194ac2ace7eace7cec510858c49a787bc4d49569090c1117dbef5f1e788771"
+      "size": 36765,
+      "sha256": "b99e0c36fdbf1ca7c94cd0ef719a71c35a518cbe0f737cd557c8051a803347d9"
     },
     {
       "name": "detailed-report.mjs",
@@ -79,8 +79,8 @@
     },
     {
       "name": "docs/USER_GUIDE.md",
-      "size": 33836,
-      "sha256": "7818440344d7bbe16c7d8aa13b1ea43cb7cf384aecc454260b4e7dc8ae75af45"
+      "size": 35582,
+      "sha256": "ae6966565806f6c8f30a040cfa67bcc399c33559bd59ee71fb5d867658598e2a"
     },
     {
       "name": "expense-display.mjs",
@@ -109,8 +109,8 @@
     },
     {
       "name": "full-plan-comparison.mjs",
-      "size": 4046,
-      "sha256": "775127eb57ae0d8102094a10ff6a49f0760e6840977a1c617fadd6193c2c0130"
+      "size": 4050,
+      "sha256": "d3202d59fc1ebb5e161a8fea5228a5daae6dd0c29bb25b23741f51eaebf4d245"
     },
     {
       "name": "full-plan-saved.mjs",
@@ -149,8 +149,8 @@
     },
     {
       "name": "index.html",
-      "size": 58256,
-      "sha256": "8a07b1898ff9a8eb3786fada60ddd6aff71f98bc457f8315ff247d941074984c"
+      "size": 58376,
+      "sha256": "bf032bd8c2784280d9cbf689225d58252736904a21f0fd0e62e54c061dfbd445"
     },
     {
       "name": "manifest.webmanifest",
@@ -254,8 +254,8 @@
     },
     {
       "name": "sw.js",
-      "size": 3828,
-      "sha256": "551d3c3d8137402370912dc9cfca3b488f44f6d51965b141d8f197fca95c178f"
+      "size": 3818,
+      "sha256": "035a3a457924f14c3c7c305ce75f02c8878b14af950aef69bb7a0207bee9aeae"
     },
     {
       "name": "sync-controller.mjs",

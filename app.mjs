@@ -241,8 +241,8 @@ function renderHome() {
   const ideco=projectIdeco(config);
   if (ideco) check.push(`65歳iDeCo/DC見込は運用前提による試算です（約${formatMan(ideco.balance)}万円）`);
   if (!config.income?.pensions?.spouse?.annualAtStart || ['unknown','assumption'].includes(config.income?.pensions?.spouse?.certainty)) check.push('配偶者の公的年金額は未確認または仮定です');
-  if (config.reserve.total > 0 && result.finalAfterReserveUse < result.reserveUsedThreshold) check.push('予備枠全使用時は95歳の最低目安を下回ります');
-  if (showActuals && forecast && forecast.projection.finalAsset < result.finalThreshold) check.push('最新実績からの再予測が95歳管理基準を下回っています');
+  if (config.reserve.total > 0 && result.finalAfterReserveUse < result.reserveUsedThreshold) check.push(`予備枠全使用時は${end}歳末の最低目安を下回ります`);
+  if (showActuals && forecast && target && forecast.projection.finalAsset < result.finalThreshold) check.push(`最新実績からの再予測が${end}歳末管理基準を下回っています`);
   el('checks').innerHTML = check.length ? check.map(x=>`<li>${x}</li>`).join('') : '<li>主要な未確認事項はありません。</li>';
 
   renderReviewAlerts();
@@ -478,7 +478,7 @@ function renderActuals() {
   const box=el('actualSummary');
   if(!latest){ box.innerHTML='<p>まだ実績は登録されていません。</p>'; return; }
   const plan=planRowAtAge(result,latest.age); const diff=Number(latest.endAsset)-(plan?.endAsset||0); const pct=plan?.endAsset?diff/plan.endAsset*100:0;
-  box.innerHTML=`<dl><div><dt>最新実績</dt><dd>${latest.age}歳</dd></div><div><dt>計画資産</dt><dd>${money(plan?.endAsset||0)}</dd></div><div><dt>実績資産</dt><dd>${money(latest.endAsset)}</dd></div><div><dt>差額</dt><dd class="${diff<0?'neg':'pos'}">${diff>=0?'+':''}${money(diff)}（${pct>=0?'+':''}${pct.toFixed(1)}%）</dd></div><div><dt>95歳再予測</dt><dd>${forecast?money(forecast.projection.finalAsset):'—'}</dd></div></dl>`;
+  box.innerHTML=`<dl><div><dt>最新実績</dt><dd>${latest.age}歳</dd></div><div><dt>計画資産</dt><dd>${money(plan?.endAsset||0)}</dd></div><div><dt>実績資産</dt><dd>${money(latest.endAsset)}</dd></div><div><dt>差額</dt><dd class="${diff<0?'neg':'pos'}">${diff>=0?'+':''}${money(diff)}（${pct>=0?'+':''}${pct.toFixed(1)}%）</dd></div><div><dt>${config.plan.endAge}歳末再予測</dt><dd>${forecast?money(forecast.projection.finalAsset):'—'}</dd></div></dl>`;
 }
 
 
@@ -505,7 +505,7 @@ function saveActual(ev){
     safeAssetBalance:numOrBlank(f.safeAssetBalance.value), taxSocial:numOrBlank(f.taxSocial.value),
     note:f.note.value.trim(), updatedAt:new Date().toISOString()
   };
-  if(!commitState(config))return; el('actualAge').value=age; showNotice(`${age}歳の実績を保存し、95歳まで再予測しました。`);
+  if(!commitState(config))return; el('actualAge').value=age; showNotice(`${age}歳の実績を保存し、${config.plan.endAge}歳末まで再予測しました。`);
 }
 
 function deleteActual(age){
@@ -549,7 +549,7 @@ function renderScenarios(){
     const m=scenarioMetrics(s.config);
     const article=document.createElement('article'); article.className='scenario-item';
     const baseline=s.role==='baseline';
-    article.innerHTML=`<label class="scenario-check"><input type="checkbox" data-scenario-select="${s.id}" ${s.selected?'checked':''}><span><strong>${escapeHtml(s.name)} ${baseline?'<em class="baseline-badge">比較の基準案</em>':''}</strong><small>95歳 ${money(m.finalAsset)} / 80歳 ${m.age80Asset==null?'—':money(m.age80Asset)}</small></span></label>${baseline?'<span class="muted">固定</span>':`<button class="link-btn" data-scenario-delete="${s.id}">削除</button>`}`;
+    article.innerHTML=`<label class="scenario-check"><input type="checkbox" data-scenario-select="${s.id}" ${s.selected?'checked':''}><span><strong>${escapeHtml(s.name)} ${baseline?'<em class="baseline-badge">比較の基準案</em>':''}</strong><small>${s.config.plan.endAge}歳末 ${money(m.finalAsset)} / 80歳 ${m.age80Asset==null?'—':money(m.age80Asset)}</small></span></label>${baseline?'<span class="muted">固定</span>':`<button class="link-btn" data-scenario-delete="${s.id}">削除</button>`}`;
     wrap.appendChild(article);
   });
   renderScenarioCompare();
@@ -560,7 +560,10 @@ function renderScenarioCompare(){
   if(!selected.length){ el('scenarioCompare').innerHTML='<p class="muted">比較する保存済みの案を選択してください。</p>'; return; }
   const metrics=selected.map(s=>({s,m:scenarioMetrics(s.config)}));
   const rows=[
-    ['95歳末資産', x=>money(x.m.finalAsset)],
+    ['最終評価年齢', x=>`${x.s.config.plan.endAge}歳末`],
+    ['各案の最終年齢末資産（評価年齢に注意）', x=>money(x.m.finalAsset)],
+    ['95歳末資産', x=>{const r=runRetirementPlan(x.s.config).rows.find(r=>r.age===95);return r?money(r.endAsset):'対象外';}],
+    ['100歳末資産', x=>{const r=runRetirementPlan(x.s.config).rows.find(r=>r.age===100);return r?money(r.endAsset):'対象外';}],
     ['予備枠全使用後', x=>money(x.m.afterReserve)],
     ['80歳末資産', x=>x.m.age80Asset==null?'—':money(x.m.age80Asset)],
     ['90歳末資産', x=>x.m.age90Asset==null?'—':money(x.m.age90Asset)],
@@ -571,7 +574,7 @@ function renderScenarioCompare(){
   ];
   let html='<table><thead><tr><th>指標</th>'+metrics.map(x=>`<th>${escapeHtml(x.s.name)}</th>`).join('')+'</tr></thead><tbody>';
   html+=rows.map(([label,fn])=>`<tr><td>${label}</td>${metrics.map(x=>`<td>${escapeHtml(fn(x))}</td>`).join('')}</tr>`).join('');
-  html+='</tbody></table>'; el('scenarioCompare').innerHTML=html;
+  html+='</tbody></table>';if(new Set(selected.map(s=>s.config.plan.endAge)).size>1)html='<p class="muted">計算終了年齢が異なります。最終資産を同じ時点の比較とみなさず、95歳末など共通の年齢期末で比較してください。</p>'+html; el('scenarioCompare').innerHTML=html;
 }
 
 function saveCurrentScenario(){
@@ -631,7 +634,7 @@ function applySettings(ev){
   ev.preventDefault(); const f=ev.currentTarget;
   config.plan.initialAsset=+f.initialAsset.value; config.plan.afterTaxReturn=+f.afterTaxReturn.value; config.plan.inflation=+f.inflation.value;
   config.reserve.total=+f.reserveTotal.value;
-  if(!commitState(config))return; showNotice('設定を保存し、月次計算で95歳まで再計算しました。');
+  if(!commitState(config))return; showNotice(`設定を保存し、月次計算で${config.plan.endAge}歳末まで再計算しました。`);
 }
 
 
@@ -650,7 +653,7 @@ function renderCalculationBasis(){
     <div><dt>インフレ</dt><dd>${Number(config.plan?.inflation||0).toFixed(2)}%/年</dd></div>
     <div><dt>支出の正本</dt><dd>年代別年間予算（税・社保を含む）</dd></div>
     <div><dt>iDeCo一時金</dt><dd>${idecoTax}</dd></div>
-    <div><dt>95歳末</dt><dd>${money(result.finalAsset)}</dd></div>
+    <div><dt>${config.plan.endAge}歳末</dt><dd>${money(result.finalAsset)}</dd></div>
   </dl><p class="muted">月末資産＝月初資産＋月次運用益＋各種収入－インフレ調整後支出－臨時支出。制度ツールの税・社会保険詳細は手取・予算内訳確認用で、年代別年間予算へ重ねて加算しません。</p>`;
   if(config.cashflow?.salaryLife)box.innerHTML+='<p class="muted">給与生活中は家計からの追加・取崩しを計上し、給与を再加算しません。前倒し後65歳までの支出は給与生活シートの管理予算です。掛金・臨時収支は指定した計上先で一度だけ扱います。税社保の精密な手取計算・新方式の要因分解は未対応です。</p>';
   const entries=Object.values(RULES).filter(r=>r&&typeof r==='object'&&r.title);
@@ -862,7 +865,7 @@ document.querySelectorAll('[data-help]').forEach(btn=>btn.addEventListener('clic
 }));
 el('helpClose').addEventListener('click',()=>el('helpDialog').close());
 
-el('appVersion').textContent='v0.9.7-cloud-ui-comment-20261024'; el('rulesVersion').textContent=RULES_VERSION;
+el('appVersion').textContent='v0.9.7-age100-20261025'; el('rulesVersion').textContent=RULES_VERSION;
 if(startupError){setEmptyState();showNotice(`保存データを読み込めません。復元用バックアップを確認してください。${startupError}`,'error');}
 else refresh();
 if(!writeAccess.writable)showNotice('この画面は読み取り専用です。別の編集画面を閉じて再読み込みしてください。同時更新制御が利用できない場合も保存を停止します。','error');

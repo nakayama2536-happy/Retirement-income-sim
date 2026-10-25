@@ -28,6 +28,6 @@ export function compareFullPlan(config,request){
  let base,candidate;
  try{base=runRetirementPlan(config,{includeMonthlyDetails:true});candidate=runRetirementPlan(proposed,{includeMonthlyDetails:true});}catch(e){return fail('calculation',e.message);}
  if(JSON.stringify(config)!==before)return fail('source-mutated','保存済み設定が変更されました。');
- const ageRows=[70,75,80,85,90,95].map(age=>{const row=candidate.rows.find(r=>r.age===age),target=proposed.management?.thresholds?.[age];return {age,endAsset:row?.endAsset??null,referenceTarget:typeof target==='number'?target:null,met:row&&typeof target==='number'?row.endAsset>=target:null};});
+ const ageRows=[70,75,80,85,90,95,100].map(age=>{const row=candidate.rows.find(r=>r.age===age),target=proposed.management?.thresholds?.[age];return {age,endAsset:row?.endAsset??null,referenceTarget:typeof target==='number'?target:null,met:row&&typeof target==='number'?row.endAsset>=target:null};});
  return {ok:true,saved:false,adopted:false,baseFinalAsset:base.finalAsset,candidateFinalAsset:candidate.finalAsset,ageRows,monthlyCount:candidate.monthlyDetails.length,firstNegativeMonth:candidate.monthlyDetails.find(r=>r.endAsset<0)?.month??null,proposal:proposed,notes:['未反映比較であり、保存・採用は行っていません。','iDeCo年金手取・税社会保険・受給資格は別途検証が必要です。']};
 }

@@ -18,7 +18,7 @@ const dates=(c)=>num('fromAge','本人の開始年齢',c.plan.startAge)+num('toA
 const treatment=()=>select('fundingTreatment','給与生活中の扱い',[['separate','資産へ別枠計上'],['net_transfer','家計の入出金に含む（重ねて計上しない）']]);
 const profile=()=>select('profile','編集・集計する内訳',[['','保存元を選択'],['work-v0.9.7','標準の生活費内訳'],['public-v0.9','旧形式の生活費内訳']]);
 const laborEditors={laborPrimaryRegular:['primary','regularWork'],laborPrimarySide:['primary','sideWork'],laborSpouseRegular:['spouse','regularWork'],laborSpouseSide:['spouse','sideWork']};
-const fname={budgetTable:'年齢別の年間予算を入力',unemployment:'失業給付の受取予定を設定',goal:'年齢別の目標資産額を再設定',laborPrimaryRegular:'本人：正社員収入',laborPrimarySide:'本人：アルバイト収入',laborSpouseRegular:'配偶者：正社員収入',laborSpouseSide:'配偶者：アルバイト収入',nisa:'1. 開始時点のNISA残高',nisaWithdrawal:'2. 毎月の取り崩し設定',ideco:'iDeCoの残高・積立と基本条件',idecoWithdrawal:'iDeCoの取り崩し・受取プラン',retirement:'退職金の条件と受取',expense:'生活費・保険を項目ごとに設定',budget:'内訳合計を年間予算にする',event:'臨時収入・追加請求を設定',extra:'継続する追加収入を設定'};
+const fname={horizon:'計算終了年齢を延長（100歳末まで）',budgetTable:'年齢別の年間予算を入力',unemployment:'失業給付の受取予定を設定',goal:'年齢別の目標資産額を再設定',laborPrimaryRegular:'本人：正社員収入',laborPrimarySide:'本人：アルバイト収入',laborSpouseRegular:'配偶者：正社員収入',laborSpouseSide:'配偶者：アルバイト収入',nisa:'1. 開始時点のNISA残高',nisaWithdrawal:'2. 毎月の取り崩し設定',ideco:'iDeCoの残高・積立と基本条件',idecoWithdrawal:'iDeCoの取り崩し・受取プラン',retirement:'退職金の条件と受取',expense:'生活費・保険を項目ごとに設定',budget:'内訳合計を年間予算にする',event:'臨時収入・追加請求を設定',extra:'継続する追加収入を設定'};
 // Only data that supplies this editor's inputs/options. Other settings still
 // invalidate previews, but do not discard an unrelated draft.
 export function detailFormSourceSignature(kind,c){
@@ -28,6 +28,7 @@ export function detailFormSourceSignature(kind,c){
  else if(kind==='nisaWithdrawal')source=c;
  else if(kind==='nisa')source=c.nisa;
  else if(kind==='unemployment')source=[c.unemployment,c.employment?.primary?.mainRetirement];
+ else if(kind==='horizon')source=c;
  else if(kind==='goal')source=c.management?.thresholds;
  else if(kind==='event')source=c.events;
  else if(kind==='retirement')source=[c.retirement,c.events];
@@ -42,6 +43,17 @@ export function mountDetailUI({getState,commit,notice}){
  const forms=new Map();let undo=null,report=null,renderedSignature='',reportSignature='';const excluded=new Set();
  const el=id=>document.getElementById(id);
  function fields(kind,c){
+  if(kind==='horizon'){
+   const end=Number(c.plan.endAge),r=runRetirementPlan(c);
+   if(end>=100)return '<p>この計画は'+end+'歳末まで設定済みです。終了年齢の短縮や既存データの自動変更は行いません。</p>';
+   return select('endAge','計算する最終年齢（その年齢期の末まで）',Array.from({length:100-end},(_,i)=>[end+i+1,(end+i+1)+'歳末']))+
+    select('budgetMode','追加期間の年間管理予算',[['explicit','追加期間に共通の年間予算を入力'],['existing','追加期間に既に設定されている予算を使用']])+
+    num('extensionAnnualBudget','追加期間の年間管理予算（万円・元の物価基準）')+
+    '<p class="muted">現在は'+end+'歳末までです。延長する年齢期だけを設定します。新しい物価基準には変更せず、追加年齢の予算にも元の物価基準からインフレを適用します。空欄は0にしません。</p>'+
+    '<p class="muted">既存の95歳などの年齢別目標は移動しません。延長先の目標がなければ未設定と表示します。必要な目標は別の目標欄で設定してください。既存の比較案は変更しません。</p>'+
+    '<label class="check-label"><input type="checkbox" name="reviewed" required>収入・年金・取崩し等の終了日は自動延長しないこと、追加期間の予算、予備枠全使用後の最終目安（'+r.reserveUsedThreshold+'万円）を延長後の末時点にも用いることを確認した</label>';
+  }
+
   if(kind==='unemployment'){const p=c.unemployment?.receiptPlan||{};return select('mode','給付種類',[['','選択してください'],...Object.entries(UNEMPLOYMENT_MODES)])+input('retirementDate','離職日（本業退職の保存日と一致）','date',p.retirementDate||c.employment?.primary?.mainRetirement?.baseDate)+num('dailyYen','給付日額（円／日・確認額または仮置き）',p.dailyYen)+num('days','支給予定日数（高年齢は30日または50日）',p.days)+input('startMonth','受取開始月（離職月の翌月以降）','month',p.startMonth)+input('endMonth','受取終了月（この月を含む・一時金は開始月と同じ）','month',p.endMonth)+select('amountStatus','日額・日数の確度',[['','選択してください'],['estimate','仮置き'],['confirmed','確認済み']])+input('basis','根拠・確認日（例：確認した資料・窓口回答、仮置きの理由）','text',p.basis,'maxlength="300"')+'<label class="check-label"><input type="checkbox" name="seekingWork">退職後に就職する意思・能力があり、求職する予定</label><label class="check-label"><input type="checkbox" name="eligibilityChecked">加入期間・離職理由等の条件を確認した（仮置きなら上の根拠に記載）</label><p class="muted">基本手当は日数を指定月数で均等配分し、端数日を最終月に配分します。実際の認定・振込日とは異なります。待期7日・該当する給付制限・認定後の振込を見込んだ月を入力してください。</p>';}
 
   if(kind==='goal')return select('age','目標を設定する本人年齢（年齢期末）',Array.from({length:c.plan.endAge-c.plan.startAge+1},(_,i)=>{const a=Number(c.plan.startAge)+i;return [a,a+'歳末'];}))+num('amount','残したい資産額（万円）')+'<label class="check-label"><input type="checkbox" name="clearGoal">この年齢の目標を未設定にする</label><p class="muted">目標は各年齢期末の名目額です。空欄は0円として保存しません。参考目標の変更で、収支・資産予測や保存済み比較案は変わりません。</p>';
@@ -71,6 +83,7 @@ export function mountDetailUI({getState,commit,notice}){
   const tr=document.createElement('tr');tr.innerHTML=['fromAge','toAge','annualBudget'].map((k,i)=>`<td><input type="number" data-field="${k}" aria-label="${['開始年齢','終了年齢','年予算（万円）'][i]}" min="${i<2?65:0}" step="${i<2?1:'any'}" value="${esc(row[k]??'')}" required></td>`).join('')+'<td><button type="button" data-remove-budget>行を削除</button></td>';form.querySelector('[data-budget-rows]').append(tr);
  }
  function populate(kind,form,c){
+  if(kind==='horizon'&&form.elements.endAge){form.elements.endAge.value='100';}
   if(kind==='budgetTable')for(const row of budgetTableRows(c))appendBudgetRow(form,row);
   if(kind==='unemployment')fill(form,c.unemployment?.receiptPlan||{});
   if(kind==='goal'){form.elements.age.value=String(c.plan.endAge);fill(form,{amount:c.management?.thresholds?.[c.plan.endAge]??''});}
@@ -85,6 +98,7 @@ export function mountDetailUI({getState,commit,notice}){
  }
  function refreshTargets(form,c){const source=form.elements.profile.value;form.elements.target.innerHTML=opt([['','新しい項目を追加'],...expenseEntries(c,source).map(x=>[x.path,`${x.group} / ${x.label}`])]);}
  function updateWithdrawalFields(kind,form){
+  if(kind==='horizon'&&form.elements.extensionAnnualBudget){const explicit=form.elements.budgetMode.value==='explicit';form.elements.extensionAnnualBudget.disabled=!explicit;form.elements.extensionAnnualBudget.required=explicit;form.elements.extensionAnnualBudget.closest('label').hidden=!explicit;}
   if(kind==='goal'){form.elements.amount.disabled=form.elements.clearGoal.checked;form.elements.amount.required=!form.elements.clearGoal.checked;}
 
   const toggle=(name,show)=>{const node=form.elements.namedItem(name);node.disabled=!show;node.required=show;node.closest('label').hidden=!show;};
@@ -93,6 +107,7 @@ export function mountDetailUI({getState,commit,notice}){
   if(kind==='idecoWithdrawal'){const mode=form.elements.receiptMode.value;toggle('lumpPercent',mode==='combined');toggle('annuityYears',['annuity','combined'].includes(mode));toggle('annuityReturn',['annuity','combined'].includes(mode));form.elements.receiptMode.required=true;form.elements.annuityYears.min='5';form.elements.annuityYears.max='20';form.elements.annuityYears.step='1';form.elements.lumpPercent.max='100';}
  }
  function withdrawalPreview(c,kind){
+  if(kind==='horizon'){const old=getState().config.plan.endAge;return '<p>終了年齢：'+old+'歳末 → '+c.plan.endAge+'歳末。元の'+old+'歳末までの計算結果は変更していません。</p><p>'+c.plan.endAge+'歳末の参考目標：'+(c.management?.thresholds?.[c.plan.endAge]==null?'未設定（0円目標とは扱いません）':esc(c.management.thresholds[c.plan.endAge])+'万円')+'</p><p>下の最終資産額は評価年齢が異なります。変更前は'+old+'歳末、変更後は'+c.plan.endAge+'歳末です。</p>';}
   if(kind==='budgetTable')return '<div class="table-wrap"><table><thead><tr><th>年齢</th><th>反映後の年予算（元の物価基準・万円）</th></tr></thead><tbody>'+budgetTableRows(c).map(r=>`<tr><td>${r.fromAge}～${r.toAge}歳</td><td>${r.annualBudget}</td></tr>`).join('')+'</tbody></table></div>';
 
   if(kind==='unemployment'){const p=unemploymentPlan(c);return currentSummaryHtml(c,'unemployment').replace('現在の設定の概要','今回の試算プラン').replace('保存済みの条件です。入力途中・未反映の試算は含みません。','まだ保存していない候補です。')+'<ul>'+p.rows.map(r=>'<li>'+esc(r.month)+'：'+r.days+'日分 / '+r.amount.toLocaleString('ja-JP')+'万円</li>').join('')+'</ul><p>給付額は非課税収入として扱い、旧自動計上を置き換えます。受取予定と実際の振込は異なり得ます。就労・年金との調整は別途確認してください。</p>';}
@@ -112,8 +127,8 @@ export function mountDetailUI({getState,commit,notice}){
  }
  function initForm(kind,c){
   const host=el(`detail-${kind}`);if(!host)return;
-  host.innerHTML=`<h2>${fname[kind]}</h2><form id="detail-form-${kind}" class="detail-form"><div class="form-grid">${fields(kind,c)}</div><div class="pension-actions"><button type="submit" class="primary">変更後の結果を確認（未反映）</button><button type="button" class="secondary" data-reset>未反映の入力を取り消す</button></div><p class="muted">試算結果は、この入力欄のすぐ下に表示します。入力・試算だけでは保存しません。「全体シミュレーションに反映」で保存し、ホーム・収支表・CSVを更新します。「未反映の入力を取り消す」は入力欄だけを保存済みの値に戻します。</p></form><div class="detail-preview" hidden></div><p class="inline-error" role="alert" hidden></p>`;
-  const form=host.querySelector('form'),box=host.querySelector('.detail-preview'),error=host.querySelector('[role=alert]');const ctx={kind,form,box,error,proposal:null,sourceSignature:detailFormSourceSignature(kind,c),stale:false};forms.set(kind,ctx);populate(kind,form,c);ctx.initialValuesSignature=configSignature(values(form));
+  host.innerHTML=`<h2>${fname[kind]}</h2><form id="detail-form-${kind}" class="detail-form"><div class="form-grid">${fields(kind,c)}</div><div class="pension-actions"><button type="submit" class="primary">${kind==='horizon'?'延長を試算':'変更後の結果を確認（未反映）'}</button><button type="button" class="secondary" data-reset>${kind==='horizon'?'入力を取り消す':'未反映の入力を取り消す'}</button></div><p class="muted">試算結果は、この入力欄のすぐ下に表示します。入力・試算だけでは保存しません。「全体シミュレーションに反映」で保存し、ホーム・収支表・CSVを更新します。「未反映の入力を取り消す」は入力欄だけを保存済みの値に戻します。</p></form><div class="detail-preview" hidden></div><p class="inline-error" role="alert" hidden></p>`;
+  const form=host.querySelector('form'),box=host.querySelector('.detail-preview'),error=host.querySelector('[role=alert]');const ctx={kind,form,box,error,proposal:null,sourceSignature:detailFormSourceSignature(kind,c),stale:false};forms.set(kind,ctx);populate(kind,form,c);ctx.initialValuesSignature=configSignature(values(form));if(kind==='horizon'&&Number(c.plan.endAge)>=100)form.querySelector('[type=submit]').disabled=true;
   const invalidate=()=>{ctx.proposal=null;box.hidden=true;error.hidden=!ctx.stale;};
   if(kind==='budgetTable')form.addEventListener('click',e=>{if(e.target.closest('[data-add-budget]')){appendBudgetRow(form);invalidate();}if(e.target.closest('[data-remove-budget]')){e.target.closest('tr').remove();invalidate();}});
   form.addEventListener('input',()=>{invalidate();hint(form,getState().config);});

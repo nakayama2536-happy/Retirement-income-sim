@@ -104,7 +104,44 @@ function event(c,d){
  Object.assign(row,{label,date:day,amount,type:d.type,fundingTreatment:d.fundingTreatment,inflationAdjusted:d.type==='expense'&&d.inflationAdjusted===true});
  return row;
 }
+
+// Explicit horizon proposal only. No defaults are copied to additional years.
+export function extendPlanHorizon(config,d){
+ const c=structuredClone(config),oldEnd=Number(c.plan?.endAge);
+ const next=num(d.endAge,'終了年齢',oldEnd,100);
+ if(!Number.isInteger(oldEnd)||!Number.isInteger(next))throw Error('終了年齢は整数で指定してください。');
+ if(next===oldEnd)return c;
+ if(d.reviewed!==true)throw Error('追加期間の予算・収入等の終了日・予備枠の扱いを確認してください。');
+ const from=oldEnd+1;
+ const numberPresent=v=>v!==null&&v!==undefined&&String(v).trim()!==''&&Number.isFinite(Number(v))&&Number(v)>=0;
+ if(d.budgetMode==='existing'){
+  for(let age=from;age<=next;age++){
+   const base=(c.budgets||[]).filter(b=>age>=Number(b.fromAge)&&age<=Number(b.toAge));
+   const overrides=(c.cashflow?.periodOverrides||[]).filter(b=>b.kind==='budget'&&b.key==='budget'&&age>=Number(b.fromAge)&&age<=Number(b.toAge));
+   if(base.length!==1||!numberPresent(base[0].annualBudget)||overrides.length>1||overrides.some(b=>!numberPresent(b.amount)||!['annual','monthly'].includes(b.unit)))throw Error(`${age}歳の既存年間予算が未設定・重複・不正です。追加期間の予算を明示入力してください。`);
+  }
+ }else if(d.budgetMode==='explicit'){
+  const value=num(d.extensionAnnualBudget,'追加期間の年間管理予算');
+  if(typeof d.extensionAnnualBudget==='string'&&!d.extensionAnnualBudget.trim())throw Error('空欄の予算は0にしません。');
+  // Preserve all ranges outside the explicitly edited additional years.
+  function outside(row){
+   if(Number(row.toAge)<from||Number(row.fromAge)>next)return [row];
+   const out=[];
+   if(Number(row.fromAge)<from)out.push({...row,toAge:from-1});
+   if(Number(row.toAge)>next)out.push({...row,fromAge:next+1});
+   return out;
+  }
+  c.budgets=[...(c.budgets||[]).flatMap(outside),{fromAge:from,toAge:next,annualBudget:value}].sort((a,b)=>a.fromAge-b.fromAge);
+  if(c.cashflow?.periodOverrides)c.cashflow.periodOverrides=c.cashflow.periodOverrides.flatMap(b=>b.kind==='budget'&&b.key==='budget'?outside(b):[b]);
+ }else throw Error('追加期間の予算の扱いを選んでください。');
+ c.plan.endAge=next;
+ // Existing per-age goals (including the previous final goal) are not moved.
+ // Other dated income/withdrawal schedules and the original price base remain intact.
+ return c;
+}
+
 function mutate(c,kind,d){
+ if(kind==='horizon'){Object.assign(c,extendPlanHorizon(c,d));return;}
  if(kind==='unemployment'){
   c.unemployment||={};c.unemployment.receiptPlan={...(c.unemployment.receiptPlan||{}),...d,version:1};
   const p=unemploymentPlan(c),trace=runRetirementPlan(c,{includeMonthlyDetails:true}).monthlyDetails;
@@ -202,6 +239,7 @@ export function detailProposal(state,kind,values){
  const c=structuredClone(state.config);mutate(c,kind,values);
  projectNisaWithdrawal(c);
  const before=runRetirementPlan(state.config),after=runRetirementPlan(c);
+ if(kind==='horizon'&&JSON.stringify(before.rows)!==JSON.stringify(after.rows.filter(r=>r.age<=before.endAge)))throw Error('元の計画期間の計算が変わるため延長を停止しました。');
  if(!Number.isFinite(after.finalAsset))throw Error('試算結果が数値範囲を超えました。');
  return {kind,baseSignature:configSignature(state),candidate:c,candidateSignature:configSignature(c),values:structuredClone(values),before:before.finalAsset,after:after.finalAsset,rows:after.rows,changed:configSignature(c)!==configSignature(state.config)};
 }
@@ -213,6 +251,11 @@ export function changedPaths(before,after,path=[]){
 }
 export function undoDetail(config,patches){
  const c=structuredClone(config);
+ const horizon=patches.find(p=>p.path.join('/')==='plan/endAge');
+ if(horizon&&Number(horizon.before)<Number(horizon.after)){
+  const outside=Object.keys({...c.actuals,...c.reviews}).some(a=>Number(a)>Number(horizon.before));
+  if(outside)throw Error('追加期間の実績・点検記録があるため期間を元に戻せません。記録は保持します。');
+ }
  for(const p of patches){let o=c;for(const key of p.path.slice(0,-1)){if(!o||typeof o!=='object')throw Error('対象が変更されています。取消できません。');o=o[key];}const key=p.path.at(-1);
  if(!o||configSignature(o[key])!==configSignature(p.after))throw Error('対象が後から変更されています。取消できません。');
  if(p.before===undefined)delete o[key];else o[key]=structuredClone(p.before);
