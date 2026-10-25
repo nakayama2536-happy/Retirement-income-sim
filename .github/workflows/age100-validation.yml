@@ -1,0 +1,39 @@
+name: Age 100 horizon validation (synthetic, no deploy)
+on:
+  pull_request:
+    branches: [main]
+permissions:
+  contents: read
+concurrency:
+  group: age100-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  age100:
+    runs-on: ubuntu-latest
+    timeout-minutes: 16
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Localized age100 and release-identity checks
+        run: |
+          node --test test_age100_horizon.mjs test_release_identity.mjs test_distribution_audit.mjs test_service_worker.mjs test_full_plan_comparison.mjs
+      - name: Install pinned isolated test browser
+        working-directory: tools/browser-test
+        run: |
+          npm install --no-save --package-lock=false --ignore-scripts playwright@1.62.1
+          npx --no-install playwright install --with-deps chromium
+      - name: Test 95 to 100 proposal, adoption, undo and reload on fictional data
+        run: node tools/browser-test/age100-ui-check.mjs
+      - name: Keep fictional evidence only
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: age100-synthetic-browser-evidence
+          path: age100-browser-evidence/
+          if-no-files-found: warn
+          retention-days: 14

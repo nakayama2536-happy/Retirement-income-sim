@@ -40,7 +40,7 @@
 <article class="card"><span>予備枠</span><strong id="reserve"></strong><small>最低安全資産 <b id="safeAssetMinimum"></b> / 予備枠全使用後の最終資産 <b id="afterReserve"></b> / 全使用後の最低目安 <b id="reserveUsedThreshold"></b></small></article>
 <article class="card forecast-card actual-only"><span>実績反映後の最終予測資産額</span><strong id="forecastFinalAsset">未入力</strong><small id="forecastNote">実績入力後に自動更新</small></article>
 </div>
-<article class="card"><div class="section-title"><h2>資産推移</h2><button class="info" data-help="資産推移" data-help-text="現在の設定によるシミュレーションを表示します。実績の表示は設定で切り替えられます。表示切替で計算条件や保存データは変わりません。">ⓘ</button></div><svg id="assetChart" role="img" aria-label="64歳から95歳末までの資産推移"></svg><p class="muted">点線は各年齢末の目標を結んだ補助線です。途中の目標額を自動設定するものではありません。</p><div class="legend"><span><i class="legend-plan"></i>現在のシミュレーション</span><span><i class="legend-target"></i>設定した目標資産額</span><span class="actual-only"><i class="legend-forecast"></i>実績反映後予測</span><span class="actual-only"><i class="legend-actual"></i>実績</span></div></article>
+<article class="card"><div class="section-title"><h2>資産推移</h2><button class="info" data-help="資産推移" data-help-text="現在の設定によるシミュレーションを表示します。実績の表示は設定で切り替えられます。表示切替で計算条件や保存データは変わりません。">ⓘ</button></div><svg id="assetChart" role="img" aria-label="設定した計画期間の資産推移"></svg><p class="muted">点線は各年齢末の目標を結んだ補助線です。途中の目標額を自動設定するものではありません。</p><div class="legend"><span><i class="legend-plan"></i>現在のシミュレーション</span><span><i class="legend-target"></i>設定した目標資産額</span><span class="actual-only"><i class="legend-forecast"></i>実績反映後予測</span><span class="actual-only"><i class="legend-actual"></i>実績</span></div></article>
 <div class="two-col">
 <article class="card"><h2>年齢別の目標と予測</h2><p class="muted">現在の設定による予測です。差額は予測−目標。マイナスは設定した目安を下回ることを示し、資金不足とは区別します。</p><div class="table-wrap"><table><thead><tr><th>年齢末</th><th>目標資産額</th><th>予測資産額</th><th>差額</th></tr></thead><tbody id="keyAges"></tbody></table></div></article>
 <article class="card"><h2>確認事項</h2><ul id="checks" class="checks"></ul><h3>主要イベント</h3><p class="muted">左側は本人年齢です。配偶者の予定には配偶者年齢も併記します。年齢表示は誕生日基準で、制度上の年齢到達日とは区別します。</p><ol id="timeline" class="timeline"></ol></article>
@@ -50,7 +50,7 @@
 
 </div>
 <div class="two-col"><article class="card"><div class="section-title"><h2>データ整合性</h2><button class="info" data-help="データ整合性" data-help-text="年間予算の抜け・重複、予備枠内訳、生活費内訳、臨時イベントなどを自動点検します。計算を続けられる警告と、修正が必要なエラーを区別して表示します。">ⓘ</button></div><div id="integritySummary"></div></article><article class="card"><div class="section-title"><h2>見直し条件</h2><span id="reviewCount" class="pill"></span></div><div id="reviewAlerts" class="pending-list"></div></article></div>
-<div class="two-col"><article class="card"><div class="section-title"><h2>この結果の計算根拠</h2><button class="info" data-help="計算根拠" data-help-text="95歳末資産は月次計算で、運用益・就労収入・公的年金・iDeCo/DC受取・年代別年間予算・臨時イベントを同一時間軸に反映しています。税・社会保険は年代別年間予算に含むため、制度ツールの詳細額を別加算しません。">ⓘ</button></div><div id="calculationBasis" class="summary-box"></div></article><article class="card"><div class="section-title"><h2>制度根拠・更新状態</h2><button class="info" data-help="制度根拠" data-help-text="年金・NISA・iDeCo/DC・退職金・雇用保険・税社会保険について、制度基準日と公式出典を制度タブに保持します。将来時点では現在法を確定値として扱わず、受取・退職前に再確認します。">ⓘ</button></div><div id="sourceStatus"></div></article></div>
+<div class="two-col"><article class="card"><div class="section-title"><h2>この結果の計算根拠</h2><button class="info" data-help="計算根拠" data-help-text="最終年齢末資産は月次計算で、運用益・就労収入・公的年金・iDeCo/DC受取・年代別年間予算・臨時イベントを同一時間軸に反映しています。税・社会保険は年代別年間予算に含むため、制度ツールの詳細額を別加算しません。">ⓘ</button></div><div id="calculationBasis" class="summary-box"></div></article><article class="card"><div class="section-title"><h2>制度根拠・更新状態</h2><button class="info" data-help="制度根拠" data-help-text="年金・NISA・iDeCo/DC・退職金・雇用保険・税社会保険について、制度基準日と公式出典を制度タブに保持します。将来時点では現在法を確定値として扱わず、受取・退職前に再確認します。">ⓘ</button></div><div id="sourceStatus"></div></article></div>
 <article class="card"><div class="section-title"><h2>保留事項</h2><span id="pendingCount" class="pill"></span></div><p class="muted">変更できる項目は入力欄へ移動できます。移動だけでは保存・反映しません。外部確認や未対応項目は区別して表示します。</p><div id="pendingList" class="pending-list"></div></article>
 </section>
 
@@ -107,7 +107,7 @@
 <label>メモ<input name="note" type="text" maxlength="80"></label>
 <button class="primary" type="submit">実績を保存して再予測</button>
 </form></article>
-<article class="card"><h2>最新実績との差異</h2><div id="actualSummary" class="summary-box"></div><p class="muted">年末資産を保存すると、その時点を新しい出発点として95歳まで自動再予測します。当初計画は上書きしません。</p></article>
+<article class="card"><h2>最新実績との差異</h2><div id="actualSummary" class="summary-box"></div><p class="muted">年末資産を保存すると、その時点を新しい出発点として設定した終了年齢末まで自動再予測します。当初計画は上書きしません。</p></article>
 </div>
 <article class="card"><div class="section-title"><h2>年次点検チェックリスト</h2><button class="info" data-help="年次点検" data-help-text="毎年1回確認する項目を記録します。チェックは確認済みという意味で、数値を自動で変更しません。未確認項目を翌年へ持ち越さないための管理機能です。">ⓘ</button></div><div class="review-head"><label>対象年齢<select id="annualReviewAge"></select></label><span id="annualReviewProgress" class="pill"></span></div><div id="annualReviewList" class="annual-review-list"></div><label>年次点検メモ<textarea id="annualReviewNote" rows="3" maxlength="300"></textarea></label><button id="saveAnnualReviewBtn" class="primary">年次点検を保存</button></article>
 <article class="card"><h2>登録済み実績</h2><div class="table-wrap"><table><thead><tr><th>年齢</th><th>計画資産</th><th>実績資産</th><th>差</th><th>支出</th><th>税社保</th><th>安全資産</th><th>メモ</th><th></th></tr></thead><tbody id="actualRows"></tbody></table></div></article>
@@ -117,7 +117,7 @@
 <div class="two-col">
 <article class="card"><div class="section-title"><h2>比較案を保存</h2><button class="info" data-help="シナリオ比較" data-help-text="現在の設定を名前付きで保存し、最大3案を同時比較します。実績データはシナリオ条件から除外し、将来条件だけを比較します。">ⓘ</button></div>
 <label>比較案の名前<input id="scenarioName" type="text" value=""></label><button id="saveScenarioBtn" class="primary">現在の設定を比較案として保存</button><p class="muted">初回は読み込んだ条件を「基準ケース」という名前の比較の基準案として自動保存します。目標資産額とは別のものです。</p></article>
-<article class="card"><h2>比較ルール</h2><p>最大3案を選択すると、95歳資産、80歳・90歳資産、予備枠全使用後などを同じ計算式で比較します。</p><p class="muted">点数化や「最適案」の自動判定は行いません。判断に必要な数値だけを並べます。</p></article>
+<article class="card"><h2>比較ルール</h2><p>最大3案を選択すると、各案の最終年齢末資産、80歳・90歳・95歳・100歳末資産、予備枠全使用後などを同じ計算式で比較します。</p><p class="muted">点数化や「最適案」の自動判定は行いません。判断に必要な数値だけを並べます。</p></article>
 </div>
 <article class="card"><h2>保存した比較案</h2><div id="scenarioList" class="scenario-list"></div></article>
 <article class="card"><h2>選択した比較案のシミュレーション</h2><p class="muted">各案を保存した時点の条件で計算しています。ホームの現在設定とは異なる場合があります。</p><div id="scenarioCompare" class="table-wrap"></div></article>
@@ -182,6 +182,7 @@
 <article class="card" id="privateSyncCard"><details><summary>クラウド保存・読込み（PC・iPhone共通）</summary><div id="privateSyncContainer"></div></details></article>
 <article class="card" id="step8TrialCard"><details><summary>計算開始月・開始残高・iDeCo受取月の比較試算（未採用案の保存可）</summary><p class="muted">現在設定を変更しない比較入力です。開始残高の接続試算は保存しません。全条件比較案は明示保存できますが、採用・上書きはしません。制度・税の適合性は未検証です。</p><div id="step8TrialContainer"></div><div id="fullPlanComparisonContainer"></div></details></article>
 <article class="card"><h2>全般設定・バックアップ</h2><p>シミュレーション全体の条件と、この端末に保存したデータを確認・変更します。</p><div id="settingsCurrentSummary" class="current-setting-summary"></div></article>
+<article class="card" id="detail-horizon"></article>
 <article class="card"><div id="goalCurrentSummary"></div><div id="detail-goal"></div><p class="muted">直前の反映を取り消す場合は、画面下部の「この画面で直前に反映した詳細設定を元に戻す」を使用します。</p></article>
 <article class="card"><h2>表示する機能</h2><label class="display-toggle"><input id="showActuals" type="checkbox">実績入力・実績からの再予測も表示する</label><p class="muted">通常はシミュレーションだけを表示します。この切替は表示だけに適用し、保存済みの実績を削除しません。再起動すると通常表示に戻ります。</p><button class="link-btn actual-only" data-open-tab="actuals">実績入力を開く</button></article>
 
