@@ -128,9 +128,18 @@ async function run(browser,id,mode){
    // Only this expected provenance change is excluded from the stored-plan comparison.
    assert.equal(before.data.recoveryCompatibility.producerBuild,'v0.9.7-i08-recovery-1');
    assert.equal(after.data.recoveryCompatibility.producerBuild,APP_BUILD);
+   // New optional 100-year comparison rows extend the display without changing
+   // the previously persisted 95-year figures. Check the new rows first, then
+   // compare all existing rows and saved state exactly as before.
+   const age100Labels=['最終評価年齢','各案の最終年齢末資産（評価年齢に注意）','100歳末資産'];
+   const extra=after.comparison.filter(row=>age100Labels.includes(row[0]));
+   assert.deepEqual(extra.map(row=>row[0]),age100Labels);
+   assert.equal(extra[0][1],'95歳末');
+   assert.equal(extra[2][1],'対象外');
    const withoutProducer=snapshot=>{
     const copy=structuredClone(snapshot);
     delete copy.data.recoveryCompatibility.producerBuild;
+    copy.comparison=copy.comparison.filter(row=>!age100Labels.includes(row[0]));
     return copy;
    };
    assert.deepEqual(withoutProducer(after),withoutProducer(before));
