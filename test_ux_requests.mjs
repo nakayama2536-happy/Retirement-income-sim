@@ -32,20 +32,20 @@ test('3-1 age100 reference goal is offered independently from adopted age95 calc
  assert.match(d,/num\(d\.age,'目標年齢',Number\(c\.plan\.startAge\),100\)/);
  assert.match(detail,/全体シミュレーションに反映/);
 });
-test('4-1 numbered read-only inspection distinct from directional actions and ③-B retained',()=>{
+test('4-1 numbered read-only inspection distinct from directional actions and ④-B retained',()=>{
  assert.match(panel,/日常の確認/);assert.match(panel,/手動の書込み・読込み/);
  assert.match(panel,/action\(checkActions,4\)/);assert.match(panel,/for\(const n of \[2,3\]\)/);
- assert.match(panel,/data-sync-conflict-backup/);assert.match(panel,/③-B-1/);
+ assert.match(panel,/data-sync-conflict-backup/);assert.match(panel,/④-B-1/);
 });
 test('5-1 NISA/iDeCo monthly withdrawal labels and controls fit small screens',()=>{
  for(const kind of ['nisaWithdrawal','idecoWithdrawal','ideco'])assert.match(style,new RegExp(`data-detail-kind='${kind}'`));
  assert.match(style,/@media\(max-width:760px\)/);assert.match(style,/grid-template-columns:minmax\(0,1fr\)/);
  assert.match(style,/overflow-wrap:anywhere/);
 });
-test('6-1 all five settings groups reuse original editable nodes',()=>{
+test('6-1 four settings groups plus an independent backup tab reuse original controls',()=>{
  for(const group of ['backup','finance','goals','compare','maintenance'])assert.match(layout,new RegExp(`group\\('${group}'`));
  for(const original of ['privateSyncCard','settingsCurrentSummary','settingsForm','detail-horizon','detail-goal','step8TrialCard','detailUndo']){
   assert.match(html,new RegExp(`id="${original}"`));assert.match(layout,new RegExp(`byId\\('${original}'\\)`));
  }
- assert.match(layout,/settings\.append\(box\)/);assert.match(layout,/body\.append\(node\)/);
+ assert.match(layout,/host\.append\(box\)/);assert.match(layout,/body\.append\(node\)/);
 });

@@ -5,7 +5,7 @@ import {collect} from './tools/package-public.mjs';
 const read=f=>fs.readFileSync(new URL(f,import.meta.url),'utf8');
 const app=read('./app.mjs'),html=read('./index.html'),sw=read('./sw.js');
 
-test('step8 independent comparison card is mounted on the current main settings screen',()=>{
+test('step8 comparison card is retained on settings while backup uses its own tab',()=>{
   assert.match(html,/<section id="settings" class="panel" hidden>\s*<article[^>]*id="privateSyncCard"/);
   assert.match(html,/<article[^>]*id="step8TrialCard"/);
   assert.match(html,/<div id="privateSyncContainer"><\/div>/);
@@ -42,7 +42,7 @@ test('offline candidate assets and module dependency closure are included',()=>{
 });
 
 test('candidate service worker is versioned separately without cache deletion or forced update',()=>{
-  assert.match(sw,/const CACHE=`\$\{CACHE_PREFIX\}v0\.9\.7-hui02-20261025`/);
+  assert.match(sw,/const CACHE=`\$\{CACHE_PREFIX\}v0\.9\.7-ux-requests-20261025`/);
   assert.doesNotMatch(sw,/caches\.delete\(/);
   assert.doesNotMatch(sw,/skipWaiting\s*\(/);
 });

@@ -1,6 +1,6 @@
 {
   "kind": "public-release",
-  "runtime": "v0.9.7-hui02-20261025",
+  "runtime": "v0.9.7-ux-requests-20261025",
   "files": [
     {
       "name": "annual-cashflow.mjs",
@@ -14,13 +14,13 @@
     },
     {
       "name": "app.mjs",
-      "size": 70106,
-      "sha256": "2c0ea864a8088b4a2f77ff02846d93e32a3db3456b31b547f2613d0698bda7ef"
+      "size": 70397,
+      "sha256": "2a4dffa0750bd817abef4c849955fbd4df65ac3b6439b37c99646d71aad1962c"
     },
     {
       "name": "backup-compatibility.mjs",
-      "size": 7141,
-      "sha256": "9a0439f167a6de2e60cf41bc6eb4483bbb47ac948ccaf4e9db9cb09828b6f381"
+      "size": 7147,
+      "sha256": "95d84bf73dd72f986f75fa72fcacf6fe4e497c5a589676cfe7389ae2eed30a61"
     },
     {
       "name": "calc.mjs",
@@ -54,8 +54,8 @@
     },
     {
       "name": "current-summary.mjs",
-      "size": 9106,
-      "sha256": "181d8e97db0be8046cd9c8f410a3b80a96c6379c65713e6cc88b67bef16fb6e8"
+      "size": 9161,
+      "sha256": "887b8c233a5cbb7b4d04ab53e8b651af5fa5d306d7ba1083162d953c9c96b4ca"
     },
     {
       "name": "date-display.mjs",
@@ -79,8 +79,8 @@
     },
     {
       "name": "docs/USER_GUIDE.md",
-      "size": 41961,
-      "sha256": "9960105b0125eb5a864844184b21acb78ffa69b345323b8568662cf6c78bf4ec"
+      "size": 44022,
+      "sha256": "64bc490a79b874cfea6c50d04eb3a4e9217f653c4e518954a876f0e001c2a3ef"
     },
     {
       "name": "expense-display.mjs",
@@ -149,8 +149,8 @@
     },
     {
       "name": "index.html",
-      "size": 59187,
-      "sha256": "e534e32b59000bbd05958e38270c7a46a199b158473f52b1def1aae83adb96d5"
+      "size": 59750,
+      "sha256": "aa8ea83841ae10a383f71ec7371031e1a2e098d1a2e654da5884bca66f368ed0"
     },
     {
       "name": "manifest.webmanifest",
@@ -184,8 +184,8 @@
     },
     {
       "name": "README.md",
-      "size": 2513,
-      "sha256": "eb028f8570ba2dc67d5336fb6e1036ac5da228e07f4a07eab1bd8f298d684f91"
+      "size": 3032,
+      "sha256": "c6ba4e3fc4c0ee3e8a112164e2172e96596cbfbfd45b19301a94203d6ab1ccb7"
     },
     {
       "name": "recovery-ui.mjs",
@@ -214,8 +214,8 @@
     },
     {
       "name": "salary-ui.mjs",
-      "size": 18993,
-      "sha256": "17363ae6b144e179692a6c407921eb8b312cc265fd233123d298ec01fbe580d6"
+      "size": 19649,
+      "sha256": "ab2bbfbebcc639b7fcfd4b88e7628adf53b36a176c8302c7783df2a2482b605a"
     },
     {
       "name": "salary-workflow.mjs",
@@ -224,8 +224,8 @@
     },
     {
       "name": "simple-layout.mjs",
-      "size": 6646,
-      "sha256": "08bdb28413e4bd3e44b8fc369d9c8d64954d67679620aff984b07157d074e11e"
+      "size": 7521,
+      "sha256": "4feb7a48ded84733417f131976828ee1aa97bbd022e7c99ff927e83608fd4e31"
     },
     {
       "name": "state.mjs",
@@ -249,18 +249,18 @@
     },
     {
       "name": "styles.css",
-      "size": 20773,
-      "sha256": "08695ce34aa744e383f7bd124cbba14666834b95c57764c60ea76b0e8f801a5c"
+      "size": 23055,
+      "sha256": "c6550f56c42c9125d3e2f132407f5b33062625d5e21c2bd91b9c887f384f3796"
     },
     {
       "name": "sw.js",
-      "size": 3855,
-      "sha256": "3dfb3677bff538842e2e6037d7087a49fe720e266bb274038537673337104c7c"
+      "size": 3861,
+      "sha256": "1e5ecff47cdfbad4f8fd39371f3b3bfb615180cd7e0a53e2374374a66fdc1d02"
     },
     {
       "name": "sync-controller.mjs",
       "size": 13978,
-      "sha256": "c67de40394ad383426d2d21d649e7ec375c9c7d8b7b54628e820dd855402960a"
+      "sha256": "d69c7f40d7a6243c663845825b6e7943fef2a807e1fe98fb3fbbc07ae1e6077e"
     },
     {
       "name": "sync-crypto.mjs",
@@ -274,8 +274,8 @@
     },
     {
       "name": "sync-panel.mjs",
-      "size": 41561,
-      "sha256": "79d333b6574a1c9216f33f52831c6e10766da4da47a72c0f175f2eacedb804e4"
+      "size": 41634,
+      "sha256": "c9115ae53bd78261f55b1dfe241cdf43457608214912f7484e1e8b515a618b97"
     },
     {
       "name": "sync-policy.mjs",
