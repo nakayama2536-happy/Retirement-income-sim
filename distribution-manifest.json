@@ -1,6 +1,6 @@
 {
   "kind": "public-release",
-  "runtime": "v0.9.7-ux-review-20261025",
+  "runtime": "v0.9.7-hui02-20261025",
   "files": [
     {
       "name": "annual-cashflow.mjs",
@@ -14,13 +14,13 @@
     },
     {
       "name": "app.mjs",
-      "size": 65960,
-      "sha256": "d5a0298f500a1dc2019b3a3aff837500c3f3519b89dfc7af56230fb03af6ddec"
+      "size": 70106,
+      "sha256": "2c0ea864a8088b4a2f77ff02846d93e32a3db3456b31b547f2613d0698bda7ef"
     },
     {
       "name": "backup-compatibility.mjs",
-      "size": 7145,
-      "sha256": "919228d2a14faaa16c4d5dda39a0e04a8da606a0f992759adaf47341a80349d9"
+      "size": 7141,
+      "sha256": "9a0439f167a6de2e60cf41bc6eb4483bbb47ac948ccaf4e9db9cb09828b6f381"
     },
     {
       "name": "calc.mjs",
@@ -79,8 +79,8 @@
     },
     {
       "name": "docs/USER_GUIDE.md",
-      "size": 41255,
-      "sha256": "76bd8b526ce0ff7ac8fbb7dd73667fcbeff1dab0d4c6cc4a5453d803d4b30858"
+      "size": 41961,
+      "sha256": "9960105b0125eb5a864844184b21acb78ffa69b345323b8568662cf6c78bf4ec"
     },
     {
       "name": "expense-display.mjs",
@@ -149,8 +149,8 @@
     },
     {
       "name": "index.html",
-      "size": 58357,
-      "sha256": "89e47ae3f28f44062e93a10f24e0b469187ccd2d6e7b101df65373a991ed5b38"
+      "size": 59187,
+      "sha256": "e534e32b59000bbd05958e38270c7a46a199b158473f52b1def1aae83adb96d5"
     },
     {
       "name": "manifest.webmanifest",
@@ -249,13 +249,13 @@
     },
     {
       "name": "styles.css",
-      "size": 20495,
-      "sha256": "6abbd7df4d6b6752f7453a247f1b4ac71b608133e1f65cbdec7af272c3126460"
+      "size": 20773,
+      "sha256": "08695ce34aa744e383f7bd124cbba14666834b95c57764c60ea76b0e8f801a5c"
     },
     {
       "name": "sw.js",
-      "size": 3821,
-      "sha256": "32cb3c01c8d8ea3b9b04da61cb140806cb2e062a771d18cd88678c261880d7cb"
+      "size": 3855,
+      "sha256": "3dfb3677bff538842e2e6037d7087a49fe720e266bb274038537673337104c7c"
     },
     {
       "name": "sync-controller.mjs",
@@ -286,6 +286,11 @@
       "name": "tax-social-audit.mjs",
       "size": 11960,
       "sha256": "c60a42fc5a224f083db3e1ce3ab4bbed76df58eb03edef7ec9302217c60ee447"
+    },
+    {
+      "name": "ui-entry-guards.mjs",
+      "size": 5504,
+      "sha256": "8e81292e69c014232efc93c1fcfeca057e6716b966c0348925dc2812d5d64824"
     },
     {
       "name": "unemployment-plan.mjs",

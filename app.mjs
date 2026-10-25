@@ -12,6 +12,7 @@ import {mountIncomeSheet} from './income-ui.mjs';
 import {expenseDisplayModel,expenseDisplayHtml,expenseDisplayProfile} from './expense-display.mjs';
 import {annualCashflowSummaries} from './annual-cashflow.mjs';
 import {simplifyLayout,annualCheckText} from './simple-layout.mjs';
+import {basicSettingsValues,priceBaseExplanation,planPeriodUpdate,planPeriodDelete,verifyPeriodPlan,parsePeriodForm,proposalStamp,formatPeriodRow} from './ui-entry-guards.mjs';
 import {taxSocialMethodAudit,taxSocialMethodHtml} from './tax-social-audit.mjs';
 import {downloadAnnualCsv} from './annual-csv.mjs';
 import {createFullBackup,restoreFullBackup,isFullBackup} from './full-backup.mjs';
@@ -330,6 +331,9 @@ function renderExpenseDetail() {
 
 function renderPeriodOverrides(){
   const box=el('periodOverrideRows'); if(!box)return;
+  if(periodPreview&&periodPreview.baseStamp!==proposalStamp({config,scenarios}))invalidatePeriodPreview();
+  const price=priceBaseExplanation(config);
+  for(const name of ['expensesPriceBase','periodPriceBase','budgetPriceBase'])if(el(name))el(name).textContent=price;
   const carForm=el('carTransferForm');
   if(carForm&&!carForm.dataset.initialized){
     carForm.elements.disposeAge.value=config.car?.disposeAge??'';
@@ -348,16 +352,58 @@ function renderPeriodOverrides(){
   box.innerHTML='<table><thead><tr><th>種類</th><th>項目</th><th>年齢</th><th>金額</th><th></th></tr></thead><tbody>'+rows.map((x,i)=>'<tr><td>'+(names[x.kind]||x.kind)+'</td><td>'+escapeHtml(x.label||x.key)+'</td><td>'+x.fromAge+'〜'+x.toAge+'歳</td><td>'+formatMan(x.amount,1)+'万円/'+(x.unit==='monthly'?'月':'年')+'</td><td>'+(x.kind==='income'?'<span class="muted">専用画面で管理</span>':'<button class="link-btn" data-delete-period="'+i+'">削除</button>')+'</td></tr>').join('')+'</tbody></table>';
 }
 
+// The existing save/delete routes are now dry-run previews, never immediate commits.
+let periodPreview=null;
+function invalidatePeriodPreview(){
+  periodPreview=null;
+  el('periodChangePreview').hidden=true;
+  el('periodChangeReviewed').checked=false;
+  el('periodChangeApply').disabled=true;
+}
+function renderPeriodPreview(preview){
+  const title=preview.action==='delete'?'期間別設定を削除（未反映）':'期間別設定を追加・変更（未反映）';
+  const list=rows=>rows.length?rows.map(formatPeriodRow).join('\n'):'設定なし';
+  el('periodChangeSummary').textContent=[title,
+    '対象：'+formatPeriodRow(preview.selected),
+    '現在の該当行：\n'+list(preview.beforeRows),
+    '変更後の該当行：\n'+list(preview.afterRows),
+    '最終年齢末の資産見込（万円）：'+formatMan(preview.beforeFinal,2)+' → '+formatMan(preview.afterFinal,2),
+    preview.selected.kind==='budget'?'管理予算は資産推移の通常支出へ計上します。':'内訳・旅行費は参考情報です。管理予算に重ねて控除しません。',
+    priceBaseExplanation(config),
+    preview.changed?'内容と対象を確認し、チェック後に反映してください。':'変更はありません。保存は不要です。'
+  ].join('\n');
+  el('periodChangePreview').hidden=false;
+  el('periodChangeReviewed').checked=false;
+  el('periodChangeApply').disabled=true;
+  el('periodChangeSummary').setAttribute('tabindex','-1');
+  el('periodChangeSummary').focus({preventScroll:true});
+  el('periodChangePreview').scrollIntoView({block:'nearest',behavior:'auto'});
+}
 function savePeriodOverride(ev){
-  const config=structuredClone(currentConfig());
-  ev.preventDefault(); const f=ev.currentTarget;
-  const incoming={kind:f.kind.value,key:f.key.value.trim(),label:f.label.value.trim()||f.key.value.trim(),fromAge:+f.fromAge.value,toAge:+f.toAge.value,amount:+f.amount.value,unit:f.unit.value};
+  ev.preventDefault();
+  invalidatePeriodPreview();
   try{
-    if(incoming.kind==='income')throw new Error('追加収入は専用画面で差分を確認して反映してください。');
-    config.cashflow ||= {};
-    config.cashflow.periodOverrides=replaceAgeRangeOverride(config.cashflow.periodOverrides||[],incoming);
-    if(!commitState(config))return; showNotice('指定期間を更新し、全期間を再計算しました。');
+    const state={config,scenarios};
+    const candidate=planPeriodUpdate(state,ev.currentTarget);
+    periodPreview={...candidate,formStamp:JSON.stringify(parsePeriodForm(ev.currentTarget))};
+    renderPeriodPreview(periodPreview);
   }catch(e){showNotice(e.message,'error');}
+}
+function confirmPeriodOverride(){
+  if(!periodPreview||!el('periodChangeReviewed').checked)return;
+  const preview=periodPreview;
+  // Input edits, changed saved state or another device's edits invalidate preview.
+  try{
+    if(preview.action==='upsert'&&JSON.stringify(parsePeriodForm(el('periodEditForm')))!==preview.formStamp)
+      throw new Error('確認後に入力が変わりました。再度試算してください。');
+    const live=loadState();
+    if(proposalStamp(live)!==preview.baseStamp)throw new Error('別画面で設定が更新されました。再度試算してください。');
+    const candidate=verifyPeriodPlan({config,scenarios},preview);
+    el('periodChangeApply').disabled=true;
+    if(!commitState(candidate)){invalidatePeriodPreview();return;}
+    invalidatePeriodPreview();
+    showNotice(preview.action==='delete'?'指定した期間設定を削除・保存しました。':'指定期間を保存し、全期間を再計算しました。');
+  }catch(e){invalidatePeriodPreview();showNotice(e.message,'error');}
 }
 
 function derivePending() {
@@ -630,11 +676,21 @@ function saveCertainty(ev){
 }
 
 function applySettings(ev){
-  const config=structuredClone(currentConfig());
-  ev.preventDefault(); const f=ev.currentTarget;
-  config.plan.initialAsset=+f.initialAsset.value; config.plan.afterTaxReturn=+f.afterTaxReturn.value; config.plan.inflation=+f.inflation.value;
-  config.reserve.total=+f.reserveTotal.value;
-  if(!commitState(config))return; showNotice(`設定を保存し、月次計算で${config.plan.endAge}歳末まで再計算しました。`);
+  ev.preventDefault();
+  try{
+    // Empty is not a user-confirmed 0; this guard runs before touching saved state.
+    const values=basicSettingsValues(ev.currentTarget);
+    const config=structuredClone(currentConfig());
+    config.plan.initialAsset=values.initialAsset;
+    config.plan.afterTaxReturn=values.afterTaxReturn;
+    config.plan.inflation=values.inflation;
+    config.reserve.total=values.reserveTotal;
+    const errors=validateConfig(config);
+    if(errors.length)throw new Error(errors.join(' / '));
+    runRetirementPlan(config); // reject noncomputable assumptions before saving
+    if(!commitState(config))return;
+    showNotice(`設定を保存し、月次計算で${config.plan.endAge}歳末まで再計算しました。`);
+  }catch(e){showNotice('入力を保存しませんでした。'+e.message,'error');}
 }
 
 
@@ -772,6 +828,10 @@ async function importConfig(file){
 
 el('settingsForm').addEventListener('submit', applySettings);
 el('periodEditForm').addEventListener('submit', savePeriodOverride);
+for(const eventName of ['input','change'])el('periodEditForm').addEventListener(eventName,()=>invalidatePeriodPreview());
+el('periodChangeReviewed').addEventListener('change',e=>{el('periodChangeApply').disabled=!periodPreview||!periodPreview.changed||!e.target.checked;});
+el('periodChangeApply').addEventListener('click',confirmPeriodOverride);
+el('periodChangeCancel').addEventListener('click',()=>invalidatePeriodPreview());
 el('carTransferForm').addEventListener('submit',event=>{
   event.preventDefault();const form=event.currentTarget;
   try{
@@ -786,7 +846,15 @@ el('carTransferForm').addEventListener('submit',event=>{
 el('periodEditForm').elements.kind.addEventListener('change',e=>{
   const unit=el('periodEditForm').elements.unit;
   const monthly=unit.querySelector('option[value="monthly"]');
-  if(e.target.value==='budget'){unit.value='annual';monthly.disabled=true;}else monthly.disabled=false;
+  if(e.target.value==='budget'){
+    unit.value='annual';monthly.disabled=true;
+    const f=el('periodEditForm');f.elements.key.dataset.previousKey=f.elements.key.value;f.elements.key.value='budget';f.elements.key.readOnly=true;
+    f.elements.label.dataset.previousLabel=f.elements.label.value;f.elements.label.value='管理予算';f.elements.label.readOnly=true;
+  }else{
+    monthly.disabled=false;const f=el('periodEditForm');
+    if(f.elements.key.readOnly){f.elements.key.value=f.elements.key.dataset.previousKey||'';f.elements.key.readOnly=false;}
+    if(f.elements.label.readOnly){f.elements.label.value=f.elements.label.dataset.previousLabel||'';f.elements.label.readOnly=false;}
+  }
 });
 el('cashflowViewAge').addEventListener('change', renderExpenseDetail);
 el('expenseDisplaySource').addEventListener('change', renderExpenseDetail);
@@ -822,7 +890,11 @@ document.addEventListener('click', e=>{
   const da=e.target.closest('[data-delete-actual]'); if(da) deleteActual(Number(da.dataset.deleteActual));
   const ds=e.target.closest('[data-scenario-delete]'); if(ds) deleteScenario(ds.dataset.scenarioDelete);
   const dp=e.target.closest('[data-delete-period]');
-  if(dp){const next=structuredClone(config);next.cashflow.periodOverrides.splice(Number(dp.dataset.deletePeriod),1);if(!commitState(next))return;showNotice('期間別設定を削除し、再計算しました。');}
+  if(dp){
+    invalidatePeriodPreview();
+    try{periodPreview=planPeriodDelete({config,scenarios},Number(dp.dataset.deletePeriod));renderPeriodPreview(periodPreview);}
+    catch(error){showNotice(error.message,'error');}
+  }
 });
 document.addEventListener('change', e=>{
   if(e.target.matches('[data-scenario-select]')) toggleScenario(e.target.dataset.scenarioSelect,e.target.checked);
@@ -873,7 +945,7 @@ document.querySelectorAll('[data-help]').forEach(btn=>btn.addEventListener('clic
 }));
 el('helpClose').addEventListener('click',()=>el('helpDialog').close());
 
-el('appVersion').textContent='v0.9.7-ux-review-20261025'; el('rulesVersion').textContent=RULES.asOf;
+el('appVersion').textContent='v0.9.7-hui02-20261025'; el('rulesVersion').textContent=RULES.asOf;
 if(startupError){setEmptyState();showNotice(`保存データを読み込めません。復元用バックアップを確認してください。${startupError}`,'error');}
 else refresh();
 if(!writeAccess.writable)showNotice('この画面は読み取り専用です。別の編集画面を閉じて再読み込みしてください。同時更新制御が利用できない場合も保存を停止します。','error');

@@ -78,7 +78,7 @@ test('インストール済みの画面・全モジュールをオフライン�
   assert.equal(h.takeovers(),0);assert.deepEqual(h.network,[]);
 });
 test('HTTPキャッシュを再利用せず全ファイルを取得、配布ファイルの不足なし',async()=>{
-  const h=harness();await h.run('install');assert.equal(h.requests.length,58);
+  const h=harness();await h.run('install');assert.equal(h.requests.length,59);
   assert.ok(h.requests.some(r=>r.url===h.scope+'simple-layout.mjs'));
   assert.ok(h.requests.some(r=>r.url===h.scope+'annual-cashflow.mjs'));
   assert.ok(h.requests.some(r=>r.url===h.scope+'annual-csv.mjs'));

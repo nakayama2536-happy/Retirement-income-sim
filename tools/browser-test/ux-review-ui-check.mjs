@@ -37,7 +37,7 @@ try{
  assert.equal(beforeEnd,95);
  assert.equal(await page.locator('.topbar h1').innerText(),'ライフプランシミュレーター');
  assert.equal(await page.locator('.topbar p').count(),0);
- assert.match(await page.locator('#appVersion').innerText(),/^v0\.9\.7-ux-review-20261025$/);
+ assert.match(await page.locator('#appVersion').innerText(),/^v0\.9\.7-hui02-20261025$/);
  assert.match(await page.locator('#rulesVersion').innerText(),/2026-09-24/);
  assert.match(await page.locator('#cloudDataSavedAt').innerText(),/未確認/);
  mark('concise-header-build-rule-date-and-unverified-cloud-time');
@@ -106,6 +106,85 @@ try{
  }
  mark('nisa-ideco-withdrawal-fields-no-overlap-on-390-and-1280');
  assert.deepEqual(await snapshot(),adopted,'layout checks must not change saved data');
+
+ // H-UI-02 acceptance: actual form events and storage, not just source inspection.
+ // Run on the same fictional state in a separate view; no Firebase Auth/production.
+ await openTab('manage','settings');
+ if(!await page.locator('#settingsGroup-finance').evaluate(n=>n.open))await page.locator('#settingsGroup-finance > summary').click();
+ const financialForm=page.locator('#settingsForm');
+ await financialForm.locator('[name=initialAsset]').fill('');
+ await financialForm.locator('button[type=submit]').click();
+ assert.deepEqual(await snapshot(),adopted,'blank initial asset must be rejected without saving 0');
+ assert.match(await page.locator('#notice').innerText(),/未入力/);
+ await financialForm.locator('[name=initialAsset]').fill(String(adopted.config.plan.initialAsset));
+ mark('hui02-blank-number-rejected-without-touching-adopted-state');
+
+ await openTab('expense','expenses');
+ assert.match(await page.locator('#expensesPriceBase').innerText(),/2044年1月/);
+ assert.match(await page.locator('#expensesPriceBase').innerText(),/従来方式/);
+ await openTab('expense','budget');
+ assert.match(await page.locator('#budgetPriceBase').innerText(),/2044年1月/);
+ const periodForm=page.locator('#periodEditForm');
+ const periodDetails=periodForm.locator('xpath=ancestor::details[1]');
+ if(!await periodDetails.evaluate(n=>n.open))await periodDetails.locator('summary').first().click();
+ assert(await periodForm.isVisible());
+ assert.match(await page.locator('#periodPriceBase').innerText(),/2044年1月/);
+ await periodForm.locator('[name=kind]').selectOption('expense');
+ await periodForm.locator('[name=key]').fill('synthetic-ui-audit-expense');
+ await periodForm.locator('[name=label]').fill('架空の生活費内訳');
+ await periodForm.locator('[name=fromAge]').fill('65');
+ await periodForm.locator('[name=toAge]').fill('66');
+ await periodForm.locator('[name=amount]').fill('2.5');
+ await periodForm.locator('[name=unit]').selectOption('monthly');
+ await periodForm.locator('button[type=submit]').click();
+ assert(await page.locator('#periodChangePreview').isVisible());
+ assert.match(await page.locator('#periodChangeSummary').innerText(),/架空の生活費内訳/);
+ assert.equal(await page.locator('#periodChangeApply').isEnabled(),false);
+ assert.deepEqual(await snapshot(),adopted,'preview should not save the new expense');
+ await page.locator('#periodChangeCancel').click();
+ assert.deepEqual(await snapshot(),adopted,'cancel preview must not save');
+ mark('hui02-period-preview-and-cancel-do-not-save');
+
+ await periodForm.locator('button[type=submit]').click();
+ await page.locator('#periodChangeReviewed').check();
+ assert.equal(await page.locator('#periodChangeApply').isEnabled(),true);
+ // Changing the input must invalidate the checkbox and preview; then re-preview.
+ await periodForm.locator('[name=amount]').fill('3');
+ assert.equal(await page.locator('#periodChangePreview').isVisible(),false);
+ assert.equal(await page.locator('#periodChangeApply').isEnabled(),false);
+ assert.deepEqual(await snapshot(),adopted,'edited stale preview must not save');
+ await periodForm.locator('button[type=submit]').click();
+ await page.locator('#periodChangeReviewed').check();
+ await page.locator('#periodChangeApply').click();
+ await page.waitForFunction(()=>{
+  const s=JSON.parse(localStorage.getItem('lifeplan-sim-state-v1'));
+  return s.config.cashflow.periodOverrides.some(x=>x.key==='synthetic-ui-audit-expense'&&x.amount===3);
+ });
+ const afterInsert=await snapshot();
+ assert.deepEqual(afterInsert.scenarios,adopted.scenarios);
+ assert.equal(afterInsert.config.plan.initialAsset,adopted.config.plan.initialAsset);
+ assert.equal(afterInsert.config.budgets[0].annualBudget,adopted.config.budgets[0].annualBudget);
+ mark('hui02-expense-written-only-after-explicit-review-and-confirmation');
+
+ const remove=page.locator('#periodOverrideRows [data-delete-period]');
+ await remove.last().click();
+ assert(await page.locator('#periodChangePreview').isVisible());
+ assert.match(await page.locator('#periodChangeSummary').innerText(),/削除/);
+ assert.deepEqual(await snapshot(),afterInsert,'delete first click is non-destructive');
+ for(const width of [390,1280]){
+  await page.setViewportSize({width,height:900});
+  assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),`HUI02 preview overflow ${width}`);
+  await page.screenshot({path:resolve(out,`hui02-expense-preview-${width}.png`),fullPage:true});
+ }
+ await page.locator('#periodChangeReviewed').check();
+ await page.locator('#periodChangeApply').click();
+ await page.waitForFunction(()=>{
+  const s=JSON.parse(localStorage.getItem('lifeplan-sim-state-v1'));
+  return !s.config.cashflow.periodOverrides.some(x=>x.key==='synthetic-ui-audit-expense');
+ });
+ assert.deepEqual(await snapshot(),adopted,'explicit deletion must restore fictional state without disturbing scenarios');
+ mark('hui02-delete-requires-review-and-preserves-state-390-1280');
+
  assert.deepEqual(blocked,[],'no external Firebase or other network');
  assert.deepEqual(errors,[],'no browser page errors');
  mark('read-only-viewing-preserves-state-and-causes-no-external-network');
