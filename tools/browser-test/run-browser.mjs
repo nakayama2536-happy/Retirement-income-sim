@@ -25,7 +25,9 @@ async function snapshot(page){
  await openTab(page,'scenarios');
  const scenarios=await page.locator('.scenario-check').evaluateAll(nodes=>nodes.map(n=>({id:n.querySelector('input').dataset.scenarioSelect,selected:n.querySelector('input').checked,name:n.querySelector('strong').firstChild.textContent.trim()})));
  const comparison=await page.locator('#scenarioCompare tbody tr').evaluateAll(rows=>rows.map(row=>[...row.querySelectorAll('td')].map(cell=>cell.textContent)));
- await openTab(page,'backup');
+ const hasDedicatedBackupTab=(await page.locator('[data-tab="backup"]').count())===1;
+ await openTab(page,hasDedicatedBackupTab?'backup':'settings');
+ assert.equal(await page.locator(hasDedicatedBackupTab?'#backup #exportFullBtn':'#settings #exportFullBtn').count(),1,'backup export stays in the correct old/new tab');
  const pending=page.waitForEvent('download');
  await page.locator('#exportFullBtn').click();
  const download=await pending;
