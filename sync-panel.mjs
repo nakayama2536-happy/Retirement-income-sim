@@ -68,6 +68,7 @@ const panelStyle=`
 .cloud-panel h3,.cloud-panel h4{margin:0 0 .5rem}.cloud-panel p{margin:.4rem 0}
 .cloud-panel .cloud-lead{font-size:.92rem}.cloud-panel .cloud-card{border:1px solid #ccd7e2;border-radius:12px;padding:1rem;margin:1rem 0;background:#f6f9fc}
 .cloud-panel .cloud-current{border-left:4px solid #31638a}.cloud-panel .cloud-status{font-weight:700;font-size:1.05rem}
+.cloud-panel .cloud-check-actions{max-width:460px;margin:8px 0 22px}.cloud-panel .cloud-action-4 button{font-weight:750}.cloud-panel .cloud-check-actions .cloud-action small{font-size:.86rem}.cloud-panel .cloud-grid .cloud-action button{border:1px solid #c3d0dc}.cloud-panel .cloud-current p{margin:.22rem 0}.cloud-panel .cloud-times{border-top:1px solid #d7e1eb;padding-top:.5rem}
 .cloud-panel .cloud-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,230px),1fr));gap:.75rem}
 .cloud-panel .cloud-action button{width:100%;min-height:48px;white-space:normal;line-height:1.4;padding:.7rem .8rem}
 .cloud-panel .cloud-action small{display:block;line-height:1.5;margin:.35rem .1rem;font-size:.82rem}
@@ -84,7 +85,7 @@ const panelStyle=`
 .cloud-panel th,.cloud-panel td{border-bottom:1px solid #ccd7e2;text-align:left;padding:.4rem;overflow-wrap:anywhere}
 @media(max-width:480px){.cloud-panel .cloud-card,.cloud-panel details{padding:.8rem}.cloud-panel .cloud-grid{grid-template-columns:1fr}}
 `;
-export function mountSyncPanel(root,{getState,replaceLocal,validateState,afterReplace=()=>{},writeAllowed=()=>true,
+export function mountSyncPanel(root,{getState,replaceLocal,validateState,afterReplace=()=>{},writeAllowed=()=>true,onCloudMetadata=()=>{},
  exportLocalBackup=null,writeAccessReason=()=>null,
  createStore=createFirebaseStore,storage=globalThis.localStorage,windowRef=globalThis.window,documentRef=root?.ownerDocument??globalThis.document,
  clock=()=>new Date(),schedule=(fn,ms)=>setInterval(fn,ms),unschedule=id=>clearInterval(id)}={}){
@@ -112,7 +113,7 @@ export function mountSyncPanel(root,{getState,replaceLocal,validateState,afterRe
  const current=el('section',null,{class:'cloud-card cloud-current','aria-label':'現在の保存状態'});
  const authText=el('p'),modeText=el('p'),status=el('p',null,{class:'cloud-status',role:'status','aria-live':'polite'});
  const times=el('p',null,{class:'cloud-times'});
- append(current,el('h4','現在の状態'),authText,modeText,status,times);root.appendChild(current);
+ append(current,el('h4','状態表示（操作ボタンではありません）'),status,authText,modeText,times);root.appendChild(current);
  const connection=el('section',null,{class:'cloud-card','aria-label':'ログインと暗号化解除'});
  const login=el('form',null,{id:'lifeplanCloudLogin',method:'post',autocomplete:'on'});
  function field(parent,label,name,value,type='text',attrs={}){
@@ -129,14 +130,16 @@ export function mountSyncPanel(root,{getState,replaceLocal,validateState,afterRe
   {id:'syncPhraseHelp',class:'cloud-help'}));
  const actions={},reasons={};
  function action(parent,n,type='button'){
-  const box=el('div',null,{class:'cloud-action'}),button=el('button',`${numbers[n]} ${CLOUD_ACTIONS[n]}`,{type,class:n===1||n===4?'':'secondary','data-sync-action':n,'aria-describedby':`cloudReason${n}`});
+  const box=el('div',null,{class:'cloud-action cloud-action-'+n}),button=el('button',`${numbers[n]} ${CLOUD_ACTIONS[n]}`,{type,class:n===1||n===4?'primary':'secondary','data-sync-action':n,'aria-describedby':`cloudReason${n}`});
   const reason=el('small','',{id:`cloudReason${n}`});append(box,button,reason);parent.appendChild(box);actions[n]=button;reasons[n]=reason;return button;
  }
  action(unlock,1,'submit');append(connection,el('h4','利用を開始する'),unlockHelp,login,unlock);root.appendChild(connection);
  const daily=el('section',null,{'aria-label':'よく使う操作'});
  const everyday=el('div',null,{class:'cloud-grid'});
- append(daily,el('h4','よく使う操作'),el('p','通常は自動です。番号は操作の識別用で、順番にすべて押す必要はありません。',{class:'cloud-help'}));
- for(const n of [2,3,4])action(everyday,n);append(daily,everyday);root.appendChild(daily);
+ append(daily,el('h4','日常の確認'),el('p','通常のクラウド書込み・読込みは自動です。④だけで保存内容を確認でき、データは変更されません。番号は操作識別用です。',{class:'cloud-help'}));
+ const checkActions=el('div',null,{class:'cloud-check-actions'});action(checkActions,4);append(daily,checkActions);
+ append(daily,el('h4','手動の書込み・読込み（必要な場合のみ）'),el('p','②・③は④で方向と差分を確認してから使用します。通常操作では不要です。',{class:'cloud-help'}));
+ for(const n of [2,3])action(everyday,n);append(daily,everyday);root.appendChild(daily);
  // Only for real divergent edits. A full portable local backup plus explicit
  // acknowledgement are required; the everyday ③ button remains fail-closed.
  const conflict=el('section',null,{class:'cloud-card cloud-conflict','aria-label':'競合時にクラウドを正とする'});
@@ -201,6 +204,7 @@ export function mountSyncPanel(root,{getState,replaceLocal,validateState,afterRe
    if(expected&&!sameIdentity(identity,expected)){
     epoch++;working=false;stopAuto();password.value='';phrase.value='';
     authMode=identity?'mismatch':'signed-out';lastOutcome={status:identity?'IDENTITY_MISMATCH':'AUTH_REQUIRED'};
+    try{onCloudMetadata(null);}catch{}
     autoMessage='本人認証が変更・失効しました。自動更新を停止しました。端末データは保持しています。';auto.textContent=autoMessage;
    }else if(!coordinator){
     authMode=identity?(marker()&&!sameIdentity(marker(),identity)?'mismatch':'signed-in'):'signed-out';
@@ -283,7 +287,7 @@ export function mountSyncPanel(root,{getState,replaceLocal,validateState,afterRe
  }
  function recordOutcome(r){
   lastOutcome=r;
-  if(['UPLOADED','INITIAL_UPLOADED'].includes(r.status)){lastWrite=now();lastCheck=now();invalidatePreview();}
+  if(['UPLOADED','INITIAL_UPLOADED'].includes(r.status)){lastWrite=now();lastCheck=now();try{onCloudMetadata('pending-server-timestamp');}catch{}invalidatePreview();}
   if(['DOWNLOADED','REMOTE_MASTER_APPLIED'].includes(r.status)){lastRead=now();lastCheck=now();invalidatePreview();}
   if(r.status==='SYNCED')lastCheck=now();
   if(r.status==='PREVIEW'&&!r.differs)lastCheck=now();
@@ -348,7 +352,7 @@ export function mountSyncPanel(root,{getState,replaceLocal,validateState,afterRe
    applyLocal:(next,prior)=>{assertLive();return replaceLocal(next,prior);},
    saveBeforeReplace:oldState=>{assertLive();storage.setItem(SYNC_ROLLBACK_KEY,JSON.stringify({version:1,savedAt:now().toISOString(),state:structuredClone(oldState)}));},
    readMarker:marker,writeMarker:value=>{assertLive();storage.setItem(SYNC_MARKER_KEY,JSON.stringify(value));},
-   readRemote:()=>{assertLive();return provider.read();},casRemote:(expected,next)=>{assertLive();return provider.compareAndSwap(expected,next);},
+   readRemote:async()=>{assertLive();const remote=await provider.read();try{onCloudMetadata(remote?.updatedAt??null);}catch{}return remote;},casRemote:(expected,next)=>{assertLive();return provider.compareAndSwap(expected,next);},
    writeAllowed:()=>identityAlive(provider,identity,token)&&writeAllowed(),online:()=>windowRef?.navigator?.onLine!==false,
    canAutoImport:()=>!hasPendingEdits()&&!reviewBarrier(),canAutoUpload:()=>!reviewBarrier(),onApplied:afterReplace});
   const info=await c.inspect();if(info.status==='STOP')throw Error(info.message);
@@ -420,6 +424,7 @@ export function mountSyncPanel(root,{getState,replaceLocal,validateState,afterRe
   // Keep the provider available if sign-out fails so the user can retry ⑤.
   if(provider?.signOut)await provider.signOut();
   providerSession=null;providerConfig=null;remoteExists=null;authMode='signed-out';
+  try{onCloudMetadata(null);}catch{}
   if(preferenceError)throw Error('ログアウトしましたが、自動再接続停止の設定を保存できません。');
   return {status:'SIGNED_OUT'};
  }));

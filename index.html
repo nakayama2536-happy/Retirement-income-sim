@@ -7,7 +7,7 @@
 <link rel="manifest" href="manifest.webmanifest"><link rel="apple-touch-icon" href="icons/icon-192.png"><link rel="stylesheet" href="styles.css">
 </head>
 <body class="simulation-only">
-<header class="topbar"><div><h1>ライフプランシミュレーター</h1><p>条件を設定し、収支と資産の変化を確認</p></div><div class="version"><span id="appVersion"></span><span>制度 <b id="rulesVersion"></b></span></div></header>
+<header class="topbar"><h1>ライフプランシミュレーター</h1><div class="version" role="group" aria-label="アプリ・制度・クラウドの情報"><span>アプリ版：<b id="appVersion"></b></span><span>制度基準日：<b id="rulesVersion"></b></span><span>クラウド最終保存：<b id="cloudDataSavedAt">未確認（接続・解除後に確認）</b></span></div></header>
 <div id="notice" class="notice" role="status" hidden></div>
 <div class="navigation-sticky"><nav class="tab-groups" aria-label="大項目"><button data-group="results" class="active">結果を見る</button><button data-group="income">収入を設定</button><button data-group="expense">支出を設定</button><button data-group="manage">データ・設定</button></nav>
 <nav class="tabs" aria-label="中項目">
@@ -33,9 +33,8 @@
 </section>
 <div id="dashboard" hidden>
 <section id="home" class="panel">
-<article class="card simulation-context"><strong>表示中：現在の設定によるシミュレーション</strong><p>保存した比較案は「比較」で確認できます。年金・給与生活などの未反映の入力は、この結果に含まれません。</p><small id="simulationPeriod"></small></article>
 <div class="hero-grid">
-<article class="card target-overview"><h2 id="targetStatusLabel">最終年齢末の目標</h2><strong id="status"></strong><div class="target-metrics"><div><span id="finalPredictionLabel">予測資産額</span><strong id="finalAsset"></strong></div><div><span id="finalTargetLabel">目標資産額</span><strong id="finalThreshold"></strong></div><div><span>目標との差額</span><strong id="finalMargin"></strong></div></div><small>差額＝予測資産額 − 目標資産額。目標は参考の目安です。</small><small id="targetStatusNote"></small><button class="link-btn" data-open-tab="settings">目標額を再設定する</button></article>
+<article class="card target-overview"><h2 id="targetStatusLabel">最終年齢末の目標</h2><small id="simulationPeriod" class="home-plan-range"></small><strong id="status"></strong><div class="target-metrics"><div><span id="finalPredictionLabel">予測資産額</span><strong id="finalAsset"></strong></div><div><span id="finalTargetLabel">目標資産額</span><strong id="finalThreshold"></strong></div><div><span>目標との差額</span><strong id="finalMargin"></strong></div></div><small>差額＝予測資産額 − 目標資産額。目標は参考の目安です。</small><small id="targetStatusNote"></small><button class="link-btn" data-open-tab="settings" data-focus-target="detail-goal">目標額を再設定する</button></article>
 <article class="card"><span id="initialAssetLabel">開始資産</span><strong id="currentAsset"></strong><small>シミュレーション開始時点の設定額</small></article>
 <article class="card"><span>予備枠</span><strong id="reserve"></strong><small>最低安全資産 <b id="safeAssetMinimum"></b> / 予備枠全使用後の最終資産 <b id="afterReserve"></b> / 全使用後の最低目安 <b id="reserveUsedThreshold"></b></small></article>
 <article class="card forecast-card actual-only"><span>実績反映後の最終予測資産額</span><strong id="forecastFinalAsset">未入力</strong><small id="forecastNote">実績入力後に自動更新</small></article>
@@ -181,7 +180,7 @@
 <section id="settings" class="panel" hidden>
 <article class="card" id="privateSyncCard"><details><summary>クラウド保存・読込み（PC・iPhone共通）</summary><div id="privateSyncContainer"></div></details></article>
 <article class="card" id="step8TrialCard"><details><summary>計算開始月・開始残高・iDeCo受取月の比較試算（未採用案の保存可）</summary><p class="muted">現在設定を変更しない比較入力です。開始残高の接続試算は保存しません。全条件比較案は明示保存できますが、採用・上書きはしません。制度・税の適合性は未検証です。</p><div id="step8TrialContainer"></div><div id="fullPlanComparisonContainer"></div></details></article>
-<article class="card"><h2>全般設定・バックアップ</h2><p>シミュレーション全体の条件と、この端末に保存したデータを確認・変更します。</p><div id="settingsCurrentSummary" class="current-setting-summary"></div></article>
+<article class="card"><h2>現在の計画条件（保存済み）</h2><p>採用済みの条件です。変更は各設定の反映操作後に保存されます。</p><div id="settingsCurrentSummary" class="current-setting-summary"></div></article>
 <article class="card" id="detail-horizon"></article>
 <article class="card"><div id="goalCurrentSummary"></div><div id="detail-goal"></div><p class="muted">直前の反映を取り消す場合は、画面下部の「この画面で直前に反映した詳細設定を元に戻す」を使用します。</p></article>
 <article class="card"><h2>表示する機能</h2><label class="display-toggle"><input id="showActuals" type="checkbox">実績入力・実績からの再予測も表示する</label><p class="muted">通常はシミュレーションだけを表示します。この切替は表示だけに適用し、保存済みの実績を削除しません。再起動すると通常表示に戻ります。</p><button class="link-btn actual-only" data-open-tab="actuals">実績入力を開く</button></article>
@@ -190,7 +189,7 @@
 
 
 <div class="two-col"><article class="card"><h2>シミュレーション全体の条件</h2><form id="settingsForm" class="form-grid"><label>開始時点の対象資産（万円）<input id="initialAssetInput" name="initialAsset" type="number"></label><label>資産全体の税引後利回り（年率%）<input name="afterTaxReturn" type="number" step="0.00001"></label><label>物価上昇率（年率%）<input name="inflation" type="number" step="0.1"></label><label hidden>夫婦アルバイト年額（万円・参考）<input name="laborAnnual" type="number"></label><label>予定外の支出に備える予備枠（万円）<input name="reserveTotal" type="number"></label><button class="primary" type="submit">全体シミュレーションに反映</button></form><p class="muted">収入・支出は各専用タブで設定します。ここでは対象資産・利回り・物価・予備枠を設定します。このボタンは試算を挟まず、入力値を直接保存・反映します。NISAは対象資産の内数で、iDeCoは別枠です。</p></article>
-<article class="card"><h2>このブラウザの保存データ・バックアップ</h2><p>現在の設定・実績・年次点検・比較案を、この端末のブラウザ内に保存します。別端末へは自動同期されません。バックアップは下のボタンからファイルとして出力します。</p><label class="file-btn">保存済み設定・バックアップを読み込む<input id="importFile2" type="file" accept="application/json"></label><button id="exportBtn" class="secondary">現在の設定だけをファイルに保存</button><button id="exportFullBtn" class="secondary">設定・比較案などをまとめてバックアップ</button><p class="muted">一括バックアップには、保存済みの現在設定・実績・年次点検・比較案が含まれます。年金・給与生活の未反映の下書きや、入力途中の画面内容は含まれません。下書きを残すためだけに採用値へ反映せず、必要な入力は別途控えてください。出力後はファイルの保存先を確認してください。</p><p class="muted">バックアップJSONは公開リポジトリへ保存しないでください。</p></article></div>
+<article class="card"><h2>このブラウザの保存データ・バックアップ</h2><p>現在の設定・実績・年次点検・比較案を、この端末のブラウザ内に保存します。クラウド接続・暗号化解除が有効な間は自動書込み・読込みを行いますが、通信断や競合時には停止します。一括JSONバックアップは別に保管してください。</p><label class="file-btn">保存済み設定・バックアップを読み込む<input id="importFile2" type="file" accept="application/json"></label><button id="exportBtn" class="secondary">現在の設定だけをファイルに保存</button><button id="exportFullBtn" class="secondary">設定・比較案などをまとめてバックアップ</button><p class="muted">一括バックアップには、保存済みの現在設定・実績・年次点検・比較案が含まれます。年金・給与生活の未反映の下書きや、入力途中の画面内容は含まれません。下書きを残すためだけに採用値へ反映せず、必要な入力は別途控えてください。出力後はファイルの保存先を確認してください。</p><p class="muted">バックアップJSONは公開リポジトリへ保存しないでください。</p></article></div>
 <article class="card"><div class="section-title"><h2>入力した数値の確かさ</h2><button class="info" data-help="確度区分の変更" data-help-text="確度は計算値そのものを変更しません。後で公式資料や確定額が得られたときに、前提の信頼性を管理するためのラベルです。">ⓘ</button></div><form id="certaintyForm" class="form-grid"></form></article>
 <details class="card"><summary>詳細設定：計算期間・旧版への復旧</summary><article id="calendarSheet" class="card"><h2>計算期間の方式</h2><p id="calendarAdopted"></p><p id="calendarState" role="status"></p>
 <p class="muted">月末・閏日の計算日を調整する比較用機能です。方式を選んだだけでは集計表は変わりません。</p>

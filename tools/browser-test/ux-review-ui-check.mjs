@@ -1,0 +1,117 @@
+// Actual full-app rendering checks for the seven user UX improvement requests.
+// Synthetic local storage only. No Firebase logon, no personal data, no deploy.
+import assert from 'node:assert/strict';
+import {createServer} from 'node:http';
+import {readFile,writeFile,mkdir} from 'node:fs/promises';
+import {resolve,extname,sep} from 'node:path';
+import {chromium} from 'playwright';
+const root=resolve('.'),out=resolve('ux-review-browser-evidence');
+await mkdir(out,{recursive:true});
+const fixture=JSON.parse(await readFile('tools/browser-test/synthetic-full.json','utf8'));
+fixture.config.plan.endAge=95;
+const report={scope:'seven UX requests / full app / synthetic 95-year plan / no external network',status:'running',cases:[]};
+const mark=name=>{report.cases.push({name,status:'pass'});console.log('UX_REVIEW_PASS '+name);};
+const server=createServer(async(req,res)=>{
+ try{
+  if(req.method!=='GET'){res.writeHead(405);res.end();return;}
+  const loc=new URL(req.url,'http://localhost'),target=resolve(root,'.'+(loc.pathname==='/'?'/index.html':decodeURIComponent(loc.pathname)));
+  const type={'.html':'text/html','.mjs':'text/javascript','.js':'text/javascript','.css':'text/css','.json':'application/json','.webmanifest':'application/manifest+json','.png':'image/png','.ico':'image/x-icon'};
+  if(!target.startsWith(root+sep)||!type[extname(target)]||target.includes('/.git/')){res.writeHead(404);res.end();return;}
+  res.writeHead(200,{'Content-Type':type[extname(target)],'Cache-Control':'no-store'});res.end(await readFile(target));
+ }catch{res.writeHead(404);res.end();}
+});
+await new Promise(ok=>server.listen(0,'127.0.0.1',ok));
+const origin='http://127.0.0.1:'+server.address().port;
+let browser,context;
+try{
+ browser=await chromium.launch({headless:true});report.browser=browser.version();
+ context=await browser.newContext({viewport:{width:390,height:844},serviceWorkers:'block'});
+ const blocked=[],errors=[];
+ await context.route('**/*',route=>{if(new URL(route.request().url()).origin===origin)return route.continue();blocked.push(route.request().url());return route.abort();});
+ await context.addInitScript(seed=>{if(localStorage.getItem('lifeplan-sim-state-v1')===null)localStorage.setItem('lifeplan-sim-state-v1',JSON.stringify(seed));},fixture);
+ const page=await context.newPage();page.on('pageerror',e=>errors.push(e.message));
+ const snapshot=()=>page.evaluate(()=>JSON.parse(localStorage.getItem('lifeplan-sim-state-v1')));
+ const openTab=async(group,tab)=>{await page.locator(`[data-group="${group}"]`).click();await page.locator(`[data-tab="${tab}"]`).click();};
+ await page.goto(origin,{waitUntil:'networkidle'});await page.locator('#dashboard').waitFor({state:'visible'});
+ const before=await snapshot(),beforeEnd=before.config.plan.endAge;
+ assert.equal(beforeEnd,95);
+ assert.equal(await page.locator('.topbar h1').innerText(),'ライフプランシミュレーター');
+ assert.equal(await page.locator('.topbar p').count(),0);
+ assert.match(await page.locator('#appVersion').innerText(),/^v0\.9\.7-ux-review-20261025$/);
+ assert.match(await page.locator('#rulesVersion').innerText(),/2026-09-24/);
+ assert.match(await page.locator('#cloudDataSavedAt').innerText(),/未確認/);
+ mark('concise-header-build-rule-date-and-unverified-cloud-time');
+ assert.equal(await page.locator('.simulation-context').count(),0);
+ assert.match(await page.locator('#simulationPeriod').innerText(),/保存済みの計画/);
+ mark('compact-home-replaces-large-current-simulation-banner');
+ await openTab('manage','settings');
+ const expected=['backup','finance','goals','compare','maintenance'];
+ const groups=page.locator('#settings > .settings-category');
+ assert.deepEqual(await groups.evaluateAll(ns=>ns.map(n=>n.dataset.settingsGroup)),expected);
+ assert.equal(await page.locator('#settingsGroup-backup').evaluate(n=>n.open),true);
+ assert.equal(await page.locator('#settingsGroup-finance').evaluate(n=>n.open),false);
+ await page.locator('#settingsGroup-finance > summary').click();
+ assert(await page.locator('#settingsForm').isVisible());
+ await page.locator('#settingsGroup-finance > summary').click();
+ mark('settings-top-level-collapsible-sections-preserve-original-controls');
+ await page.locator('#settingsGroup-goals > summary').click();
+ const goal=page.locator('#detail-goal form');
+ assert.equal(await goal.locator('[name=age] option[value="100"]').count(),1);
+ await goal.locator('[name=age]').selectOption('100');
+ assert.match(await goal.locator('[data-goal-period-hint]').innerText(),/現在の計算対象外/);
+ await goal.locator('[name=amount]').fill('2345');
+ await goal.locator('button[type=submit]').click();
+ await page.locator('#detail-goal [data-apply]').waitFor({state:'visible'});
+ assert.deepEqual(await snapshot(),before,'goal preview must not save');
+ mark('age-100-goal-offered-when-current-horizon-95-preview-is-read-only');
+ await page.locator('#detail-goal [data-apply]').click();
+ await page.waitForFunction(()=>JSON.parse(localStorage.getItem('lifeplan-sim-state-v1')).config.management.thresholds[100]===2345);
+ const adopted=await snapshot();
+ assert.equal(adopted.config.plan.endAge,95);assert.deepEqual(adopted.scenarios,before.scenarios);
+ assert.deepEqual(adopted.config.management.thresholds[95],before.config.management.thresholds[95]);
+ assert.equal(adopted.config.management.thresholds[100],2345);
+ mark('age-100-goal-saved-without-extending-age-horizon-or-changing-scenarios');
+ await openTab('manage','settings');
+ await page.locator('#privateSyncCard > details > summary').click();
+ assert.match(await page.locator('#privateSyncContainer .cloud-current h4').innerText(),/状態表示/);
+ assert.match(await page.locator('#privateSyncContainer').innerText(),/日常の確認/);
+ assert.match(await page.locator('#privateSyncContainer').innerText(),/手動の書込み・読込み/);
+ assert(await page.locator('[data-sync-action="4"]').isVisible());
+ assert.equal(await page.locator('#privateSyncContainer [data-sync-action="2"]').count(),1);
+ assert.deepEqual(await snapshot(),adopted,'opening cloud UI must not write local state');
+ mark('cloud-state-and-action-groups-are-distinct-with-numbered-buttons');
+ for(const width of [390,1280]){
+  await page.setViewportSize({width,height:900});
+  assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),'settings overflow '+width);
+  await page.screenshot({path:resolve(out,'settings-'+width+'.png'),fullPage:true});
+  for(const tab of ['nisa','ideco']){
+   await openTab('income',tab);
+   const kind=tab==='nisa'?'nisaWithdrawal':'idecoWithdrawal';
+   const form=page.locator(`#detail-${kind} .form-grid`);
+   await form.waitFor({state:'visible'});
+   const valid=await form.evaluate(node=>{
+    const rect=node.getBoundingClientRect();
+    const labs=[...node.children].filter(x=>x.tagName==='LABEL'&&x.getClientRects().length);
+    const boxes=labs.map(x=>x.getBoundingClientRect());
+    const overlaps=boxes.some((a,i)=>boxes.slice(i+1).some(b=>a.left<b.right-1&&a.right>b.left+1&&a.top<b.bottom-1&&a.bottom>b.top+1));
+    const widgets=labs.flatMap(x=>[...x.querySelectorAll('input,select')]);
+    const within=widgets.every(el=>{const b=el.getBoundingClientRect();return b.left>=rect.left-2&&b.right<=rect.right+2;});
+    return {overlaps,within,labels:labs.length};
+   });
+   assert.equal(valid.overlaps,false,`${kind} overlaps on ${width}px: ${JSON.stringify(valid)}`);
+   assert.equal(valid.within,true,`${kind} input width on ${width}px`);
+   assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),`${kind} horizontal overflow ${width}`);
+   await page.screenshot({path:resolve(out,`${tab}-${width}.png`),fullPage:true});
+  }
+ }
+ mark('nisa-ideco-withdrawal-fields-no-overlap-on-390-and-1280');
+ assert.deepEqual(await snapshot(),adopted,'layout checks must not change saved data');
+ assert.deepEqual(blocked,[],'no external Firebase or other network');
+ assert.deepEqual(errors,[],'no browser page errors');
+ mark('read-only-viewing-preserves-state-and-causes-no-external-network');
+ report.status='passed';
+}catch(e){report.status='failed';report.error=e.stack;process.exitCode=1;console.error(e.stack);}
+finally{
+ await writeFile(resolve(out,'report.json'),JSON.stringify(report,null,2)+'\n');
+ if(context)await context.close();if(browser)await browser.close();await new Promise(ok=>server.close(ok));
+}

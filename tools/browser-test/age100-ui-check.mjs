@@ -32,9 +32,9 @@ try{
  const plan=()=>page.evaluate(async()=>{const {runRetirementPlan}=await import('/calc.mjs');return runRetirementPlan(JSON.parse(localStorage.getItem('lifeplan-sim-state-v1')).config,{includeMonthlyDetails:true});});
  const openSettings=async()=>{await page.locator('[data-group="manage"]').click();await page.locator('[data-tab="settings"]').click();};
  await page.goto(origin,{waitUntil:'networkidle'});await page.locator('#dashboard').waitFor({state:'visible'});
- assert.match(await page.locator('#appVersion').innerText(),/^v0\.9\.7-checkbox-resume-20261025$/);
+ assert.match(await page.locator('#appVersion').innerText(),/^v0\.9\.7-ux-review-20261025$/);
  let before=await snapshot(),beforePlan=await plan();assert.equal(before.config.plan.endAge,95);mark('existing-95-plan-preserved-on-first-open');
- await openSettings();const host=page.locator('#detail-horizon'),submit=host.locator('button[type="submit"]');await submit.waitFor({state:'visible'});
+ await openSettings();await page.locator('#settingsGroup-goals').evaluate(el=>el.open=true);const host=page.locator('#detail-horizon'),submit=host.locator('button[type="submit"]');await submit.waitFor({state:'visible'});
  assert.equal(await host.locator('[name="endAge"]').inputValue(),'100');
  await submit.click();assert(await host.locator('[name="extensionAnnualBudget"]').evaluate(el=>el.validity.valueMissing));assert.deepEqual(await snapshot(),before);mark('missing-budget-rejected');
  await host.locator('[name="extensionAnnualBudget"]').fill('10');await host.locator('[name="reviewed"]').check();
@@ -53,7 +53,7 @@ try{
  assert.deepEqual(after.scenarios,before.scenarios);assert.deepEqual(afterPlan.rows.slice(0,beforePlan.rows.length),beforePlan.rows);
  assert.deepEqual(afterPlan.monthlyDetails.slice(0,beforePlan.monthlyDetails.length),beforePlan.monthlyDetails);
  assert.equal(after.config.management.thresholds?.[100],undefined);mark('explicit-apply-keeps-95-years-and-saved-comparisons');
- await openSettings();await page.locator('#detailUndo').click();
+ await openSettings();await page.locator('#settingsGroup-maintenance').evaluate(el=>el.open=true);await page.locator('#detailUndo').click();
  await page.waitForFunction(()=>JSON.parse(localStorage.getItem('lifeplan-sim-state-v1')).config.plan.endAge===95);
  assert.deepEqual((await snapshot()).config,before.config);mark('undo-restores-only-extension');
  // Re-apply by explicit user action; only then test restart persistence.

@@ -1,6 +1,6 @@
 {
   "kind": "public-release",
-  "runtime": "v0.9.7-checkbox-resume-20261025",
+  "runtime": "v0.9.7-ux-review-20261025",
   "files": [
     {
       "name": "annual-cashflow.mjs",
@@ -14,13 +14,13 @@
     },
     {
       "name": "app.mjs",
-      "size": 65535,
-      "sha256": "88395e3337e0f3349a9e765db33e3d0feaedb4c5d80ec7d2d3d5f0acdd1ddcb0"
+      "size": 65960,
+      "sha256": "d5a0298f500a1dc2019b3a3aff837500c3f3519b89dfc7af56230fb03af6ddec"
     },
     {
       "name": "backup-compatibility.mjs",
-      "size": 7151,
-      "sha256": "544ea98056dfa255ca035affc42b0ceeefe2f4c8341fe14c71f3decfbcf99a0e"
+      "size": 7145,
+      "sha256": "919228d2a14faaa16c4d5dda39a0e04a8da606a0f992759adaf47341a80349d9"
     },
     {
       "name": "calc.mjs",
@@ -64,13 +64,13 @@
     },
     {
       "name": "detail-settings.mjs",
-      "size": 23531,
-      "sha256": "31386234b64cf40766e95d0d05fa990155ae5c521a424c5d9f8cec86885b0228"
+      "size": 23513,
+      "sha256": "9d07c3bd2abc88bce33a02f6a28f794a30e8cbb74f2ca181f34e28c9342fe386"
     },
     {
       "name": "detail-ui.mjs",
-      "size": 36765,
-      "sha256": "b99e0c36fdbf1ca7c94cd0ef719a71c35a518cbe0f737cd557c8051a803347d9"
+      "size": 37387,
+      "sha256": "24b481b657d01d2b34121d4fe9a034408f7d650b3b85e35338dad85229e8e94f"
     },
     {
       "name": "detailed-report.mjs",
@@ -79,8 +79,8 @@
     },
     {
       "name": "docs/USER_GUIDE.md",
-      "size": 38787,
-      "sha256": "acf76e6edd8196f1e3a1f0f69fc32961f7530b93283c1787e25e42847180d3db"
+      "size": 41255,
+      "sha256": "76bd8b526ce0ff7ac8fbb7dd73667fcbeff1dab0d4c6cc4a5453d803d4b30858"
     },
     {
       "name": "expense-display.mjs",
@@ -149,8 +149,8 @@
     },
     {
       "name": "index.html",
-      "size": 58376,
-      "sha256": "bf032bd8c2784280d9cbf689225d58252736904a21f0fd0e62e54c061dfbd445"
+      "size": 58357,
+      "sha256": "89e47ae3f28f44062e93a10f24e0b469187ccd2d6e7b101df65373a991ed5b38"
     },
     {
       "name": "manifest.webmanifest",
@@ -224,8 +224,8 @@
     },
     {
       "name": "simple-layout.mjs",
-      "size": 4869,
-      "sha256": "29ba92721ab717e812e4e46f649d672af4404b2e367aa48df85fc038824d9e8e"
+      "size": 6646,
+      "sha256": "08bdb28413e4bd3e44b8fc369d9c8d64954d67679620aff984b07157d074e11e"
     },
     {
       "name": "state.mjs",
@@ -249,13 +249,13 @@
     },
     {
       "name": "styles.css",
-      "size": 17518,
-      "sha256": "9b26c948a698913b146ad2b283497743d6f39ebf3b9c518bff1d9c34a073fb5c"
+      "size": 20495,
+      "sha256": "6abbd7df4d6b6752f7453a247f1b4ac71b608133e1f65cbdec7af272c3126460"
     },
     {
       "name": "sw.js",
-      "size": 3827,
-      "sha256": "de49da82a0d3b120b0059a6ae93c865cc6d583b4d8505f12272a8d1c4f266b44"
+      "size": 3821,
+      "sha256": "32cb3c01c8d8ea3b9b04da61cb140806cb2e062a771d18cd88678c261880d7cb"
     },
     {
       "name": "sync-controller.mjs",
@@ -269,13 +269,13 @@
     },
     {
       "name": "sync-firebase.mjs",
-      "size": 4861,
-      "sha256": "4c52895ae1cde9961fab348d21ecfa7674d6b762c2b500099d74b6de593b8553"
+      "size": 5068,
+      "sha256": "36b8832e3f0c8fd347c017b0081b4b5076d42f0e02d5f6bb47893c0ac81cce89"
     },
     {
       "name": "sync-panel.mjs",
-      "size": 40482,
-      "sha256": "e7245f98fe48f7e4f913e68564be0c40d6dbe28cfe80afb9f49b4254f4184f5e"
+      "size": 41561,
+      "sha256": "79d333b6574a1c9216f33f52831c6e10766da4da47a72c0f175f2eacedb804e4"
     },
     {
       "name": "sync-policy.mjs",

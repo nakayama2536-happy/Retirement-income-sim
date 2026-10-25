@@ -14,10 +14,10 @@ test('目標だけを変更し月次収支・予測・比較案を維持',()=>{
  assert.equal(runRetirementPlan(p.candidate).keyAges.find(x=>x.age===age).margin,p.after-1234);
  assert.deepEqual(verifyDetailProposal(s,p),p.candidate);
 });
-test('空欄・非数・負数・期間外・小数年齢を拒否',()=>{
+test('空欄・非数・負数・100歳を超える年齢・小数年齢を拒否',()=>{
  const s=fixture(),age=s.config.plan.endAge;
  for(const amount of ['',null,'NaN',-1,Infinity])assert.throws(()=>detailProposal(s,'goal',{age,amount}));
- for(const a of [s.config.plan.startAge-1,age+1,age-0.5,''])assert.throws(()=>detailProposal(s,'goal',{age:a,amount:1}));
+ for(const a of [s.config.plan.startAge-1,101,age-0.5,''])assert.throws(()=>detailProposal(s,'goal',{age:a,amount:1}));
 });
 test('明示的0と未設定を区別し再追加できる',()=>{
  const s=fixture(),age=s.config.plan.endAge;
@@ -44,4 +44,19 @@ test('目標はJSON往復で保存、他年齢の目標と管理条件を保持'
  const s=fixture(),age=s.config.plan.endAge,p=detailProposal(s,'goal',{age,amount:765.5});
  const restored=migrateConfig(JSON.parse(JSON.stringify(p.candidate)));assert.deepEqual(restored.management,p.candidate.management);
  for(const [a,v] of Object.entries(s.config.management.thresholds))if(Number(a)!==age)assert.equal(restored.management.thresholds[a],v);
+});
+
+test('95歳末計画のまま100歳末の参考目標を明示保存でき、予測と達成判定を作らない',()=>{
+ const s=fixture(),original=structuredClone(s),before=runRetirementPlan(s.config,{includeMonthlyDetails:true});
+ assert.equal(s.config.plan.endAge,95);
+ const p=detailProposal(s,'goal',{age:100,amount:'2468'});
+ assert.equal(p.changed,true);assert.equal(p.candidate.management.thresholds[100],2468);
+ assert.equal(p.candidate.plan.endAge,95);assert.deepEqual(p.candidate.management.thresholds[95],s.config.management.thresholds[95]);
+ assert.deepEqual(runRetirementPlan(p.candidate,{includeMonthlyDetails:true}).monthlyDetails,before.monthlyDetails);
+ assert.equal(runRetirementPlan(p.candidate).keyAges.some(row=>row.age===100),false);
+ assert.deepEqual(s,original);assert.deepEqual(verifyDetailProposal(s,p),p.candidate);
+ const backup=migrateConfig(JSON.parse(JSON.stringify(p.candidate)));
+ assert.equal(backup.management.thresholds[100],2468);
+ const next=detailProposal({...s,config:p.candidate},'goal',{age:100,clearGoal:true});
+ assert.equal(Object.hasOwn(next.candidate.management.thresholds,100),false);
 });

@@ -150,7 +150,7 @@ function mutate(c,kind,d){
  }
 
  if(kind==='goal'){
-  const age=num(d.age,'目標年齢',Number(c.plan.startAge),Number(c.plan.endAge));
+  const age=num(d.age,'目標年齢',Number(c.plan.startAge),100);
   if(!Number.isInteger(age))throw Error('目標年齢は整数で入力してください。');
   c.management||={};c.management.thresholds={...(c.management.thresholds||{})};
   if(d.clearGoal===true)delete c.management.thresholds[age];

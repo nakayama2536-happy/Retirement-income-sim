@@ -48,7 +48,7 @@ export async function validateWithdrawalUi({browser,createTestServer,open,load,o
   await openTab(page,'nisa');assert((await page.locator('#nisaCurrentSummary').innerText()).includes('毎月定額'));await page.screenshot({path:path.join(out,'W1-nisa.png'),fullPage:true});
   await openTab(page,'allcsv');assert((await page.locator('#detailCsvTable thead').innerText()).includes('NISA取崩し可能額（参考）'));await page.locator('#detailCsvPeriod').selectOption('annual');
   const pending=page.waitForEvent('download');await page.locator('#downloadDetailedCsv').click();const download=await pending,stream=await download.createReadStream(),chunks=[];for await(const chunk of stream)chunks.push(chunk);assert(Buffer.concat(chunks).toString().includes('NISA期末残高（参考）'));
-  await openTab(page,'settings');await page.locator('#detailUndo').click();assert.deepEqual((await snapshot(page)).data,before.data);
+  await openTab(page,'settings');await page.locator('#settingsGroup-maintenance').evaluate(el=>el.open=true);await page.locator('#detailUndo').click();assert.deepEqual((await snapshot(page)).data,before.data);
   for(const width of [390,1280]){
    await page.setViewportSize({width,height:900});await openTab(page,'budget');
    assert(await page.locator('#detail-budgetTable form').isVisible());assert(!await page.locator('#budget #expenseSheet').isVisible());assert(!await page.locator('#budget #detail-budget').isVisible());
@@ -84,11 +84,11 @@ export async function validateWithdrawalUi({browser,createTestServer,open,load,o
   await openTab(page,'ideco');const i=page.locator('#detail-idecoWithdrawal form');await i.locator('[name=receiptMode]').selectOption('annuity');await i.locator('[name=annuityYears]').fill('10');await i.locator('[name=annuityReturn]').fill('0');await i.locator('[type=submit]').click();assert(await page.locator('#detail-idecoWithdrawal [data-apply]').isVisible());assert.deepEqual((await snapshot(page)).data,before.data);
   await openTab(page,'ideco');await page.locator('#detail-idecoWithdrawal [data-apply]').click();const receipt=await snapshot(page);assert.equal(receipt.data.config.ideco.lumpPercent,0);assert.equal(receipt.data.config.ideco.annuityPercent,100);assert.equal(receipt.data.config.ideco.annuityYears,10);assert.deepEqual(receipt.data.scenarios,before.data.scenarios);
   await openTab(page,'ideco');assert((await page.locator('#idecoCurrentSummary').innerText()).includes('全額を年金'));await page.screenshot({path:path.join(out,'W1-ideco.png'),fullPage:true});
-  await openTab(page,'settings');await page.locator('#detailUndo').click();assert.deepEqual((await snapshot(page)).data,before.data);
+  await openTab(page,'settings');await page.locator('#settingsGroup-maintenance').evaluate(el=>el.open=true);await page.locator('#detailUndo').click();assert.deepEqual((await snapshot(page)).data,before.data);
   await openTab(page,'nisa');const nf=page.locator('#detail-nisaWithdrawal form');await nf.locator('[name=mode]').selectOption('all');await nf.locator('[name=startMonth]').fill(month);await nf.locator('[type=submit]').click();await page.locator('#detail-nisaWithdrawal [data-apply]').click();const saved=await snapshot(page);
   await page.reload();await page.locator('#dashboard').waitFor({state:'visible'});assert.deepEqual((await snapshot(page)).data,saved.data);assert.deepEqual(errors,[]);
   const goalBefore=await snapshot(page);
-  await openTab(page,'settings');const g=page.locator('#detail-goal form');
+  await openTab(page,'settings');await page.locator('#settingsGroup-goals').evaluate(el=>el.open=true);const g=page.locator('#detail-goal form');
   await g.locator('[name=amount]').fill('4321');await g.locator('[type=submit]').click();
   assert.deepEqual((await snapshot(page)).data,goalBefore.data);
   await page.locator('#detail-goal [data-apply]').click();
@@ -103,7 +103,7 @@ export async function validateWithdrawalUi({browser,createTestServer,open,load,o
   const colors=await page.evaluate(()=>({legend:getComputedStyle(document.querySelector('.legend-target')).borderTopColor,line:getComputedStyle(document.querySelector('.target-line')).stroke,style:getComputedStyle(document.querySelector('.legend-target')).borderTopStyle}));
   assert.equal(colors.legend,colors.line);assert.equal(colors.style,'dashed');
   assert.equal(await page.locator('#home #factorSummary').count(),0);
-  await openTab(page,'settings');await page.locator('#detailUndo').click();
+  await openTab(page,'settings');await page.locator('#settingsGroup-maintenance').evaluate(el=>el.open=true);await page.locator('#detailUndo').click();
   assert.deepEqual((await snapshot(page)).data,goalBefore.data);
   await g.locator('[name=amount]').fill('4321');await g.locator('[type=submit]').click();await page.locator('#detail-goal [data-apply]').click();
   await page.reload();await page.locator('#dashboard').waitFor({state:'visible'});

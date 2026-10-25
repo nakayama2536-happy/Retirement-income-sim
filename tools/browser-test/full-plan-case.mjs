@@ -15,7 +15,7 @@ export async function validateFullPlanUi({browser,createTestServer,open,load,ope
   const src=path.join(out,'F1-synthetic-input.json');await fs.writeFile(src,JSON.stringify(state));
   const page=await open(context,fixture.url),errors=[];page.on('pageerror',e=>errors.push(e.message));
   await load(page,src);const before=(await snapshot(page)).data;
-  await openTab(page,'settings');await page.locator('#step8TrialCard details > summary').click();
+  await openTab(page,'settings');await page.locator('#settingsGroup-compare').evaluate(el=>el.open=true);await page.locator('#step8TrialCard details > summary').click();
   const syncCard=page.locator('#privateSyncCard');
   assert.equal(await syncCard.count(),1);
   await syncCard.locator(':scope > details > summary').click();
@@ -67,7 +67,7 @@ export async function validateFullPlanUi({browser,createTestServer,open,load,ope
   assert.deepEqual((await snapshot(page)).data,saved);
   await page.reload();await page.locator('#dashboard').waitFor({state:'visible'});
   assert.deepEqual((await snapshot(page)).data,saved,'reload must retain the saved proposal');
-  await openTab(page,'settings');await page.locator('#step8TrialCard details > summary').click();
+  await openTab(page,'settings');await page.locator('#settingsGroup-compare').evaluate(el=>el.open=true);await page.locator('#step8TrialCard details > summary').click();
   await full.getByRole('button',{name:'架空比較A の差分を表示'}).click();
   assert.match(await full.innerText(),/現在の採用値と比較案の差分/);
   assert.deepEqual((await snapshot(page)).data,saved);assert.deepEqual(errors,[]);

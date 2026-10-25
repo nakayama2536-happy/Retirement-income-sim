@@ -54,7 +54,7 @@ try{
   await host.screenshot({path:resolve(out,'comment-'+width+'.png')});
  }
  mark('390-and-1280-layout-no-horizontal-overflow');
- await tab('settings');await page.locator('#detailUndo').click();
+ await tab('settings');await page.locator('#settingsGroup-maintenance').evaluate(el=>el.open=true);await page.locator('#detailUndo').click();
  assert.deepEqual((await state()).config.retirement,before.config.retirement);assert.deepEqual((await state()).scenarios,before.scenarios);mark('undo-applied-comment-restores-original-retirement');
  await tab('retirement');await field.fill(note);await host.locator('button[type="submit"]').click();await host.locator('[data-apply]').click();
  await page.reload({waitUntil:'networkidle'});await page.locator('#dashboard').waitFor({state:'visible'});await tab('retirement');

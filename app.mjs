@@ -205,7 +205,7 @@ function renderHome() {
   el('initialAssetLabel').textContent=`${start}歳の開始資産`;
   el('finalTargetLabel').textContent=`${end}歳末の目標資産額`;
   el('finalPredictionLabel').textContent=`${end}歳末の予測資産額`;
-  el('simulationPeriod').textContent=`対象：${start}歳から${end}歳末。「年齢末」は計算上の各年齢期の終了時点です。実績による再予測は含みません。`;
+  el('simulationPeriod').textContent=`保存済みの計画：${start}歳～${end}歳末（未反映の入力は含みません）`;
   el('assetChart').setAttribute('aria-label',`${start}歳から${end}歳末までの資産推移`);
   const margin=target?result.finalAsset-target.threshold:null;
   el('finalMargin').textContent=margin===null?'—':`${margin>=0?'+':''}${money(margin)}`;
@@ -849,7 +849,13 @@ syncPanel=mountSyncPanel(el('privateSyncContainer'),{
  exportLocalBackup:state=>downloadJson(createFullBackup(state),`lifeplan-conflict-device-before-cloud-${new Date().toISOString().replace(/[:.]/g,'-')}.json`),
  replaceLocal:(next,expected)=>replaceState(next,expected),
  afterReplace:()=>{const saved=loadState();config=saved.config;scenarios=saved.scenarios;refresh();},
- writeAllowed:()=>writeAccess.writable,writeAccessReason:()=>writeAccess.reason
+ writeAllowed:()=>writeAccess.writable,writeAccessReason:()=>writeAccess.reason,
+ onCloudMetadata:iso=>{
+  const node=el('cloudDataSavedAt');if(!node)return;
+  if(iso==='pending-server-timestamp'){node.textContent='書込み成功（保存時刻は再照合待ち）';return;}
+  const date=iso?new Date(iso):null;
+  node.textContent=date&&Number.isFinite(date.valueOf())?new Intl.DateTimeFormat('ja-JP',{timeZone:'Asia/Tokyo',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'}).format(date)+' JST':'未確認（保存時刻の記録なし）';
+ }
 });
 writeAccess.subscribe?.(()=>syncPanel?.refreshWriteAccess?.());
 mountRecoveryCheck();
@@ -867,7 +873,7 @@ document.querySelectorAll('[data-help]').forEach(btn=>btn.addEventListener('clic
 }));
 el('helpClose').addEventListener('click',()=>el('helpDialog').close());
 
-el('appVersion').textContent='v0.9.7-checkbox-resume-20261025'; el('rulesVersion').textContent=RULES_VERSION;
+el('appVersion').textContent='v0.9.7-ux-review-20261025'; el('rulesVersion').textContent=RULES.asOf;
 if(startupError){setEmptyState();showNotice(`保存データを読み込めません。復元用バックアップを確認してください。${startupError}`,'error');}
 else refresh();
 if(!writeAccess.writable)showNotice('この画面は読み取り専用です。別の編集画面を閉じて再読み込みしてください。同時更新制御が利用できない場合も保存を停止します。','error');

@@ -29,7 +29,9 @@ export async function createFirebaseStore(config,{moduleLoader=url=>import(url)}
  function verifyRemote(value){
   if(!value)return null;
   if(value.ownerUid!==user().uid||!validRemoteRecord(value))throw Error('同期先が本人の形式と一致しません。');
-  return {formatVersion:value.formatVersion,revision:value.revision,digest:value.digest,ciphertext:value.ciphertext};
+  const stamp=value.updatedAt;const date=stamp&&typeof stamp.toDate==='function'?stamp.toDate():null;
+ const updatedAt=date instanceof Date&&Number.isFinite(date.valueOf())?date.toISOString():null;
+ return {formatVersion:value.formatVersion,revision:value.revision,digest:value.digest,ciphertext:value.ciphertext,updatedAt};
  }
  return {
   async signIn(email,password){
