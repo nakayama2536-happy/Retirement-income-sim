@@ -53,7 +53,7 @@ export function mountMortalityComparison(root,{getConfig,getBaseline,runPlan}){
  <fieldset><legend>1．死亡月と遺族年金を含む収入（仮定）</legend>
  <div class="form-grid mortality-grid">
   <label>先に亡くなる方<select name="deceased"><option value="primary">本人</option><option value="spouse">配偶者</option></select></label>
-  <label>死亡を想定する月<input name="deathMonth" type="month" required><small id="mortalityAgeHint" class="muted">年月を入力すると年齢を表示します。</small></label>
+  <label>死亡を想定する月<input name="deathMonth" type="month" required aria-describedby="mortalityAgeHint"><small id="mortalityAgeHint" class="muted" aria-live="polite">年月を入力すると年齢を表示します。</small></label>
   <label>残された方の公的年金合計（老齢年金の受給開始後・万円／年、仮置き）<input name="survivorPension" type="number" step="any" min="0" required placeholder="年額を入力"></label>
   <label id="mortalityPreClaimRow" hidden>老齢年金開始前の公的年金合計（死亡翌月から・万円／年、仮置き）<input name="preClaimPension" type="number" step="any" min="0" placeholder="区間の仮年額を入力"><small id="mortalityPreClaimHint" class="muted">繰下げと受給権は別途確認</small></label>
   <label>死亡月に1度だけ加える費用（万円、仮置き）<input name="funeral" type="number" step="any" min="0" value="0" required></label>
