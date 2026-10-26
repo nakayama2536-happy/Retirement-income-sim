@@ -31,8 +31,8 @@ export function mountMortalityItemizedControls(root,{getConfig,runPlan,onChange}
       status.textContent='参考年月 '+next.month+'：夫婦健在時 '+format(next.expense)+'万円／月 − 減額 '+format(next.expense-revised)+'万円 ＝ 比較後 '+format(revised)+'万円。未照合残額 '+format(next.unallocated)+'万円にも倍率を適用します。';
     }catch(e){status.textContent='倍率の確認：'+e.message;}
   }
-  function refresh(){
-    for(const input of host.querySelectorAll('[data-mortality-itemfactor]'))savedFactors[input.dataset.mortalityItemfactor]=input.value;
+  function refresh({takeCurrent=true}={}){
+    if(takeCurrent)for(const input of host.querySelectorAll('[data-mortality-itemfactor]'))savedFactors[input.dataset.mortalityItemfactor]=input.value;
     host.replaceChildren();model=null;
     const cfg=getConfig();
     if(!cfg){status.textContent='現在の設定を読み込んでください。';return;}
@@ -69,11 +69,11 @@ export function mountMortalityItemizedControls(root,{getConfig,runPlan,onChange}
     if(typeof v.sourceProfile==='string'&&['','public-v0.9','work-v0.9.7'].includes(v.sourceProfile))select.value=v.sourceProfile;
     if(typeof v.residualFactor==='string')remain.value=v.residualFactor;
     savedFactors={...(draft.factors||{})};
-    refresh();
+    refresh({takeCurrent:false});
   }
   select.addEventListener('change',()=>{refresh();onChange();});
   remain.addEventListener('input',()=>{factorText();onChange();});
-  function clear(){savedFactors={};select.value='';remain.value='1.0';refresh();}
+  function clear(){savedFactors={};select.value='';remain.value='1.0';refresh({takeCurrent:false});}
   refresh();
   return {read,refresh,restore,clear, factorDraft:()=>{for(const input of host.querySelectorAll('[data-mortality-itemfactor]'))savedFactors[input.dataset.mortalityItemfactor]=input.value;return {...savedFactors};}};
 }
