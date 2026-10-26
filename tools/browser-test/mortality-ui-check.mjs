@@ -75,7 +75,7 @@ try{
   await page.goto(origin,{waitUntil:'networkidle'});await page.locator('#dashboard').waitFor({state:'visible'});
   assert.equal(await page.locator('#appVersion').innerText(),'v0.9.7-mortality-v2-candidate-20261027');
   const before=await saved(page);await open(page);await baselineInputs(page);
-  assert.equal(Number(await page.locator('#mortalityRemainderFactor').inputValue()),1,'クリア後の残額倍率は100%であること');
+  assert.equal(Number(await page.locator('#mortalityRemainderFactor').inputValue()),1,'初期の残額倍率は100%であること');
   for(const label of ['食費','水道光熱費','住居'])assert.ok(await factorRow(page,label).count()>0,label);
   mark(engine,'actual-saved-expense-items-loaded-without-fabricated-shares');
   await submit(page);
@@ -115,7 +115,7 @@ try{
   mark(engine,'reload-retains-draft-values-but-not-calculation-or-eligibility');
   await page.locator('#mortalityClearInputs').click();
   assert.equal(await input(page,'deathMonth').inputValue(),'');
-  assert.equal(await page.locator('#mortalityRemainderFactor').inputValue(),'1');
+  assert.equal(Number(await page.locator('#mortalityRemainderFactor').inputValue()),1,'入力クリア後の残額倍率は100%');
   assert.equal(await saved(page),before);
   mark(engine,'clear-draft-alone-preserves-adopted-plan');
   await baselineInputs(page);await factors(page);await submit(page);
