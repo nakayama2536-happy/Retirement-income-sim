@@ -19,8 +19,8 @@
     },
     {
       "name": "backup-compatibility.mjs",
-      "size": 7688,
-      "sha256": "dbc8233d98426d0178e6fac2818ed71e98e847c21904dfaa2bce60ceb04f843e"
+      "size": 7835,
+      "sha256": "21e19a7c2d3568afd5de295852efcadb6455a826c3d9e1f6a3c05438adf832fa"
     },
     {
       "name": "calc.mjs",
@@ -194,8 +194,8 @@
     },
     {
       "name": "mortality-ui.mjs",
-      "size": 35710,
-      "sha256": "59dce100b00e951f682ce0738d38b3e0b5d7cc2ed150e6f7a0c80ae84386b265"
+      "size": 35898,
+      "sha256": "400ed010f4c597e533752bb15bc0164cc9fcd80199a8924c4b798f361fe7041c"
     },
     {
       "name": "pension-estimate.mjs",
@@ -204,13 +204,13 @@
     },
     {
       "name": "pension-ui.mjs",
-      "size": 18659,
-      "sha256": "36acf69d6b613a6c3a5a3b6416348b485c278f66d46d698b8b604403b33d8942"
+      "size": 20970,
+      "sha256": "dc025d6e0f4f479c6ca8321d603ffcaae0954c35dce5eb8fadb5cefce075ebac"
     },
     {
       "name": "pension.mjs",
-      "size": 10053,
-      "sha256": "aea5fd402a4e03d5877bc6d10ba1f67205a5f98dfe55913a7bee4e71fd532d35"
+      "size": 11516,
+      "sha256": "544556aefc41f40f528dc615a762415e992977a5b8e77261d7bab3f61fcd74bf"
     },
     {
       "name": "README.md",
