@@ -19,8 +19,8 @@
     },
     {
       "name": "backup-compatibility.mjs",
-      "size": 7152,
-      "sha256": "d15563524ca71279b790685bb8ee0e1b7abec52e0356d7d9a365ef9b6e24a170"
+      "size": 7688,
+      "sha256": "dbc8233d98426d0178e6fac2818ed71e98e847c21904dfaa2bce60ceb04f843e"
     },
     {
       "name": "calc.mjs",
