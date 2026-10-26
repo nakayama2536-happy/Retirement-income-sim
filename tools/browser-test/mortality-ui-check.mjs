@@ -6,6 +6,11 @@ import {resolve,extname,sep} from 'node:path';
 import {chromium,webkit} from 'playwright';
 const root=resolve('.'),out=resolve('mortality-browser-evidence');await mkdir(out,{recursive:true});
 const seed=JSON.parse(await readFile(resolve(root,'tools/browser-test/mortality-synthetic.json'),'utf8'));
+/* This gate's independently expected 55→45 monthly example is nominal, with
+   zero inflation and return. Do not mix it with a 10-year inflated budget. */
+for(const c of [seed.config,...(seed.scenarios||[]).map(x=>x.config)]){
+  c.plan.inflation=0;c.plan.afterTaxReturn=0;
+}
 const report={scope:'H-MORT-07 real application; isolated synthetic inputs, no deploy',status:'running',checks:[],blockedExternal:[],pageErrors:[]};
 const mark=(engine,name)=>{report.checks.push({engine,name,status:'pass'});console.log('MORTALITY_UI_PASS',engine,name);};
 const server=createServer(async(req,res)=>{
