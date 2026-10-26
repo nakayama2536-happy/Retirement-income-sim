@@ -263,6 +263,14 @@ root.querySelector('#mortalityEstimatePension').addEventListener('click',()=>{
   }catch(e){root.querySelector('#mortalityEstimateNotice').textContent=e.message;invalid('概算を入力できません。未確認を0として置き換えません。');}
  });
  root.querySelector('#mortalityClear').addEventListener('click',()=>invalid('試算結果をクリアしました。保存済みの条件は変更していません。'));
+root.querySelector('#mortalityClearInputs')?.addEventListener('click',()=>{
+  clearMortalityDraft();
+  for(const key of ['deathMonth','survivorPension','preClaimPension','deceasedEarnings','survivorEmployee','survivorBasic'])form.elements[key].value='';
+  form.elements.deceased.value='primary';form.elements.funeral.value='0';
+  for(const k of ['reviewed','entitlement','claimed','deferral'])form.elements[k].checked=false;
+  itemizedControls?.clear();clearPensionReference();ageHint();
+  invalid('前回の比較入力のみを初期化しました。元の計画・年金・比較案・クラウドは変更していません。');
+});
  form.addEventListener('invalid',e=>{let node=e.target.parentElement;while(node&&node!==form){if(node.tagName==='DETAILS')node.open=true;node=node.parentElement;}},true);
  form.addEventListener('submit',e=>{
   e.preventDefault();invalid('架空または仮置き条件を照合しています。');
