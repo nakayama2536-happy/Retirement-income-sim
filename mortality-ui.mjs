@@ -5,6 +5,7 @@ import {MORTALITY_COSTS,blankMortalityAllocation,fictionalMortalityAllocation,
  calculateMortalityComparison,survivorPensionTiming,agePeriodComparisonRows,validateMortalityAllocation,ORIGINAL_BASIS} from './mortality-comparison.mjs';
 
 const escMoney=n=>Number.isFinite(n)?new Intl.NumberFormat('ja-JP',{maximumFractionDigits:1}).format(Math.abs(n)<1e-10?0:n):'未確認';
+const percent=n=>new Intl.NumberFormat('ja-JP',{maximumFractionDigits:6}).format(Math.abs(n)<1e-10?0:n);
 const requiredNumber=(element,label)=>{
  const raw=element.value.trim();
  if(!raw||!/^[+-]?(?:\d+\.?\d*|\.\d+)$/.test(raw))throw new MortalityPreviewError('input-missing',`${label}を入力してください。空欄は0として扱いません`);
@@ -17,8 +18,9 @@ function costInputRow(c,initial){
  const row=makeEl('div','mortality-cost-row');row.dataset.costKey=c.key;
  const label=makeEl('span','mortality-cost-name',c.label);
  const shareId=`mortality-share-${c.key}`,factorId=`mortality-factor-${c.key}`;
- const a=makeEl('label');a.append('配分（％）');const input=makeEl('input');input.id=shareId;input.type='number';input.step='any';input.min='0';input.max='100';input.value=String(initial.share);input.setAttribute('data-mortality-share',c.key);a.append(input);
+ const a=makeEl('label');a.append('管理予算の配分（％）');const input=makeEl('input');input.id=shareId;input.type='number';input.step='any';input.min='0';input.max='100';input.value=String(initial.share);input.setAttribute('data-mortality-share',c.key);a.append(input);
  const b=makeEl('label');b.append('倍率');const mult=makeEl('input');mult.id=factorId;mult.type='number';mult.step='0.01';mult.min='0';mult.max='3';mult.value=String(initial.factor);mult.setAttribute('data-mortality-factor',c.key);if(c.key==='unallocated'){mult.readOnly=true;mult.title='未配分の費用は変更しない';}b.append(mult);
+ const effect=makeEl('small','muted');effect.setAttribute('data-mortality-effect',c.key);b.append(effect);
  row.append(label,a,b);return row;
 }
 function currentAllocation(root){return MORTALITY_COSTS.map(c=>({key:c.key,share:requiredNumber(root.querySelector(`[data-mortality-share="${c.key}"]`),c.label+'の配分'),factor:requiredNumber(root.querySelector(`[data-mortality-factor="${c.key}"]`),c.label+'の倍率')}));}
@@ -26,11 +28,37 @@ function setAllocation(root,items){for(const x of items){root.querySelector(`[da
 function tableCell(tr,text,th=false){const td=makeEl(th?'th':'td');td.textContent=String(text);if(th)td.scope='col';tr.append(td);return td;}
 function formatTotal(a){return Number.isFinite(a)?`${escMoney(a)}万円`:'未確認';}
 
+function renderPensionBreakdown(target,reference){
+ target.replaceChildren();target.dataset.pensionState=reference?'reference':'unknown';
+ if(!reference){target.append(makeEl('p','muted','内訳未確認：入力した公的年金合計をそのまま試算に使います。自身の年金・遺族年金の内訳は推定せず、遺族年金を別途自動加算しません。'));return;}
+ const own=reference.ownBasicAnnual+reference.ownEmployeeAnnual;
+ target.append(makeEl('p','',`参考計算の内訳：自身の年金 ${formatTotal(own)} ＋ 遺族厚生年金の差額 ${formatTotal(reference.survivorTopUpAnnual)} ＝ 公的年金合計 ${formatTotal(reference.totalSurvivingPublicPensionAnnual)}／年。受給額の確定ではありません。`));
+ const wrap=makeEl('div','table-wrap'),table=makeEl('table'),head=makeEl('thead'),hr=makeEl('tr'),body=makeEl('tbody');
+ for(const label of ['残された方の年金内訳','参考年額（万円）'])tableCell(hr,label,true);head.append(hr);table.append(head);
+ for(const [key,label,value] of [
+  ['own-basic','自身の老齢基礎年金',reference.ownBasicAnnual],
+  ['own-employee','自身の老齢厚生年金',reference.ownEmployeeAnnual],
+  ['own-total','自身の年金小計（上の2項目）',own],
+  ['survivor-topup','追加される遺族厚生年金の差額',reference.survivorTopUpAnnual],
+  ['total','試算に使う公的年金合計',reference.totalSurvivingPublicPensionAnnual]]){
+  const row=makeEl('tr');tableCell(row,label);tableCell(row,escMoney(value)).setAttribute('data-pension-component',key);body.append(row);
+ }
+ table.append(body);wrap.append(table);target.append(wrap);
+}
+
 function renderTransition(root,baseline,mortality,allocation){
  const at=mortality.monthly.findIndex(r=>r.month===mortality.firstChangedMonth);
  if(at<0){root.append(makeEl('p','muted','死亡翌月が計画範囲外のため、死亡後の収入差は表示しません。'));return;}
  const b=baseline[at],t=mortality.monthly[at];
  root.append(...heading(`死亡翌月の収支変化（${t.month}）`,'同じ年月の基準案と比較案を比べます。万円／月。年金は仮置き合計で、遺族給付だけの金額ではありません。'));
+ const equation=makeEl('article','mortality-metric');equation.id='mortalityBudgetEquation';
+ equation.append(makeEl('span','',`管理予算支出：基準額 ${t.expenseReduction<0?'＋ 増額':'− 減額'} ＝ 死亡後の支出`));
+ const formula=makeEl('strong');
+ for(const [i,key,value] of [[0,'baseline',b.expense],[1,'reduction',Math.abs(t.expenseReduction)],[2,'result',t.expense]]){
+  if(i)formula.append(i===1?(t.expenseReduction<0?' ＋ ':' − '):' ＝ ');
+  const amount=makeEl('span','',formatTotal(value));amount.setAttribute('data-budget-term',key);formula.append(amount);
+ }
+ equation.append(formula,makeEl('span','',t.expenseReduction===0?'支出変更なし。配分と倍率による増減は0です。':'同じ月の管理予算から、配分と倍率で求めた減額を差し引いた月額です。負の減額は増額になります。'));root.append(equation);
  const wrap=makeEl('div','table-wrap'),table=makeEl('table');table.id='mortalityMonthlyTransition';
  const head=makeEl('thead'),hr=makeEl('tr');for(const name of ['項目','基準案','死亡想定案','差額'])tableCell(hr,name,true);head.append(hr);table.append(head);
  const body=makeEl('tbody');
@@ -40,8 +68,8 @@ function renderTransition(root,baseline,mortality,allocation){
  table.append(body);wrap.append(table);root.append(wrap);
  const detail=makeEl('details');detail.append(makeEl('summary','','死亡翌月の費目別支出（仮配分・倍率の内訳）'));
  const costs=makeEl('div','table-wrap'),ct=makeEl('table');ct.id='mortalityCostBreakdown';
- const ch=makeEl('thead'),cr=makeEl('tr');for(const v of ['費目','配分％','倍率','基準月額','比較月額'])tableCell(cr,v,true);ch.append(cr);ct.append(ch);const cb=makeEl('tbody');
- for(const row of allocation){const tr=makeEl('tr'),name=MORTALITY_COSTS.find(c=>c.key===row.key).label,amount=b.expense*row.share/100;tableCell(tr,name);for(const v of [row.share,row.factor,amount,amount*row.factor])tableCell(tr,escMoney(v));cb.append(tr);}
+ const ch=makeEl('thead'),cr=makeEl('tr');for(const v of ['費目','管理予算の配分％','倍率','基準月額','比較月額','減額（−は増額）'])tableCell(cr,v,true);ch.append(cr);ct.append(ch);const cb=makeEl('tbody');
+ for(const row of allocation){const tr=makeEl('tr'),name=MORTALITY_COSTS.find(c=>c.key===row.key).label,amount=b.expense*row.share/100;tr.dataset.costKey=row.key;tableCell(tr,name);tableCell(tr,percent(row.share));tableCell(tr,percent(row.factor));for(const v of [amount,amount*row.factor,amount-amount*row.factor])tableCell(tr,escMoney(v));cb.append(tr);}
  ct.append(cb);costs.append(ct);detail.append(costs);root.append(detail);
 }
 
@@ -54,13 +82,15 @@ export function mountMortalityComparison(root,{getConfig,getBaseline,runPlan}){
  <div class="form-grid mortality-grid">
   <label>先に亡くなる方<select name="deceased"><option value="primary">本人</option><option value="spouse">配偶者</option></select></label>
   <label>死亡を想定する月<input name="deathMonth" type="month" required aria-describedby="mortalityAgeHint"><small id="mortalityAgeHint" class="muted" aria-live="polite">年月を入力すると年齢を表示します。</small></label>
-  <label>残された方の公的年金合計（老齢年金の受給開始後・万円／年、仮置き）<input name="survivorPension" type="number" step="any" min="0" required placeholder="年額を入力"></label>
+  <label>残された方の公的年金合計（自身の年金＋遺族年金の差額・万円／年、老齢年金受給開始後の仮置き）<input name="survivorPension" type="number" step="any" min="0" required placeholder="遺族年金を含む合計年額"></label>
   <label id="mortalityPreClaimRow" hidden>老齢年金開始前の公的年金合計（死亡翌月から・万円／年、仮置き）<input name="preClaimPension" type="number" step="any" min="0" placeholder="区間の仮年額を入力"><small id="mortalityPreClaimHint" class="muted">繰下げと受給権は別途確認</small></label>
   <label>死亡月に1度だけ加える費用（万円、仮置き）<input name="funeral" type="number" step="any" min="0" value="0" required></label>
  </div>
- <p class="muted">年金欄は「残された方自身の老齢基礎＋老齢厚生＋遺族厚生の差額」を含む<strong>合計</strong>です。遺族年金だけを入力しません。死亡月は元の年金、翌月から仮年額を12等分する近似です。葬儀費0は「今回の比較に費用を入れない」仮定であり、実費0円の認定ではありません。</p>
+ <p class="mortality-warning">試算に使う年金は<strong>自身の老齢基礎＋自身の老齢厚生＋追加される遺族厚生年金の差額の合計</strong>です。入力した合計に遺族年金を自動で上乗せしません。内訳を確認して参考計算する場合は、下の「遺族厚生年金の差額と合計を参考計算する」を開いてください。</p>
+ <div id="mortalityPensionBreakdown" role="status" aria-live="polite"></div>
+ <p class="muted">死亡月は元の年金、翌月から仮年額を12等分する近似です。葬儀費0は「今回の比較に費用を入れない」仮定であり、実費0円の認定ではありません。</p>
  <button id="mortalitySuggestAge" type="button" class="secondary">本人80歳期の開始月を入力（未反映）</button>
- <details><summary>参考：65歳以上の遺族厚生年金の概算を手計算条件から入力</summary>
+ <details><summary>遺族厚生年金の差額と合計を参考計算する（65歳以上・資料確認が必要）</summary>
   <p class="muted">受給権・請求状況・繰下げの影響を資料で確認した場合のみ使用してください。死亡者の老齢厚生年金の繰下げ増額分は含めません。計算結果は本人の確定受給額ではありません。</p>
   <div class="form-grid mortality-grid">
    <label>亡くなる方の老齢厚生年金の報酬比例部分（繰下げ加算なし・万円／年）<input name="deceasedEarnings" type="number" step="any" min="0" placeholder="資料を確認して入力"></label>
@@ -70,12 +100,12 @@ export function mountMortalityComparison(root,{getConfig,getBaseline,runPlan}){
   <label class="check-label"><input name="entitlement" type="checkbox">遺族厚生年金の受給権を資料で確認した</label>
   <label class="check-label"><input name="claimed" type="checkbox">残された方の老齢年金請求・受給を確認した</label>
   <label class="check-label"><input name="deferral" type="checkbox">繰下げ待機中の受給権の影響を確認した</label>
-  <button id="mortalityEstimatePension" class="secondary" type="button">資料確認済みの内訳から参考年額を入力</button>
+  <button id="mortalityEstimatePension" class="secondary" type="button">自身の年金＋遺族厚生の差額を参考計算し、合計欄へ入力</button>
   <p id="mortalityEstimateNotice" class="muted" role="status"></p>
  </details>
  </fieldset>
  <fieldset><legend>2．死亡後の費用（管理予算を仮に費目配分）</legend>
- <p class="muted">${ORIGINAL_BASIS}。現在の生活費登録と一致していると判断しません。配分の合計は100％が必要で、未配分の税・社会保険・不明費用は必ず1.0倍にします。</p>
+ <p class="muted">${ORIGINAL_BASIS}。「配分」は管理予算全体のうち、その費目に割り当てる割合です。登録済みの費目金額を自動取得していません。<strong>配分0％の費目は、倍率を0.7にしても減額0です。</strong>配分の合計は100％が必要で、未配分の税・社会保険・不明費用は必ず1.0倍にします。初期値は未配分100％のため、支出変更なしです。</p>
  <div class="mortality-preset-controls"><button type="button" class="secondary" id="mortalityFictionalCosts">架空の費目配分例を入力（660万円モデル）</button><button type="button" class="secondary" id="mortalityResetCosts">全額を未配分へ戻す</button></div>
  <div id="mortalityCostRows" class="mortality-costs"></div>
  <p id="mortalityAllocationTotal" class="muted" role="status"></p>
@@ -89,14 +119,30 @@ export function mountMortalityComparison(root,{getConfig,getBaseline,runPlan}){
  `;
  const form=root.querySelector('#mortalityForm'),state=root.querySelector('#mortalityState'),results=root.querySelector('#mortalityResults'),costBox=root.querySelector('#mortalityCostRows');
  const initial=blankMortalityAllocation();for(const c of MORTALITY_COSTS)costBox.append(costInputRow(c,initial.find(x=>x.key===c.key)));
- let current=null,blockedExternal=false;
+ let current=null,blockedExternal=false,pensionReference=null;
  const externalUpdateMessage='別画面で保存済み条件が更新されました。再読み込みしてから死亡時期の比較を試算してください。';
  const requireFreshBaseline=()=>{if(blockedExternal)throw new MortalityPreviewError('external-state-changed',externalUpdateMessage);};
  const values=()=>({deceased:form.elements.deceased.value,deathMonth:form.elements.deathMonth.value,survivorPension:form.elements.survivorPension.value,funeral:form.elements.funeral.value});
  const invalid=msg=>{results.hidden=true;results.replaceChildren();current=null;state.textContent=blockedExternal?externalUpdateMessage:msg;state.className='muted';};
+ const pensionFields=['deceased','deathMonth','survivorPension','preClaimPension','deceasedEarnings','survivorEmployee','survivorBasic','entitlement','claimed','deferral'];
+ const pensionSignature=()=>JSON.stringify({config:getConfig(),fields:pensionFields.map(key=>[key,form.elements[key].value,form.elements[key].checked])});
+ const clearPensionReference=()=>{pensionReference=null;renderPensionBreakdown(root.querySelector('#mortalityPensionBreakdown'),null);root.querySelector('#mortalityEstimateNotice').textContent='';};
+ const validPensionReference=()=>{if(pensionReference&&pensionReference.signature!==pensionSignature())clearPensionReference();return pensionReference?.value??null;};
  const allocationInfo=()=>{
-  try{const v=validateMortalityAllocation(currentAllocation(root));root.querySelector('#mortalityAllocationTotal').textContent=`仮配分合計 ${v.total.toFixed(2)}％。未配分 ${root.querySelector('[data-mortality-share="unallocated"]').value}％は倍率1.0で維持。`;}
-  catch(e){root.querySelector('#mortalityAllocationTotal').textContent=e.message;}
+  for(const c of MORTALITY_COSTS){
+   const effect=root.querySelector(`[data-mortality-effect="${c.key}"]`);
+   try{
+    const share=requiredNumber(root.querySelector(`[data-mortality-share="${c.key}"]`),c.label+'の配分'),factor=requiredNumber(root.querySelector(`[data-mortality-factor="${c.key}"]`),c.label+'の倍率');
+    if(share<0||share>100||factor<0||factor>3||(c.key==='unallocated'&&factor!==1))throw Error('入力を確認してください');
+    const reduction=share*(1-factor);
+    effect.textContent=share===0?'配分0％：支出への影響0':Math.abs(reduction)<1e-10?'この費目の支出変更なし':`管理予算全体の ${percent(Math.abs(reduction))}％を${reduction>0?'減額':'増額'}`;
+   }catch{effect.textContent='支出への影響は未計算：入力を確認';}
+  }
+  try{
+   const allocation=currentAllocation(root),v=validateMortalityAllocation(allocation),effective=allocation.reduce((total,row)=>total+row.share*row.factor,0),reduction=100-effective;
+   const change=Math.abs(reduction)<1e-10?'支出変更なし（減額0％）':`管理予算全体から ${percent(Math.abs(reduction))}％${reduction>0?'減額':'増額'}`;
+   root.querySelector('#mortalityAllocationTotal').textContent=`仮配分合計 ${v.total.toFixed(2)}％。${change}。死亡翌月からの支出は基準管理予算の ${percent(effective)}％。未配分 ${percent(v.weights.unallocated*100)}％は倍率1.0で維持。`;
+  }catch(e){root.querySelector('#mortalityAllocationTotal').textContent=`支出への影響は未計算：${e.message}`;}
  };
  const ageHint=()=>{
   const c=getConfig(),p=form.elements.deceased.value,val=form.elements.deathMonth.value;
@@ -121,26 +167,29 @@ export function mountMortalityComparison(root,{getConfig,getBaseline,runPlan}){
   }
   results.append(summary);
   const diff=makeEl('p','muted',`${parameters.deceased==='primary'?'本人':'配偶者'}の死亡想定：${dateWithAge(parameters.deathMonth,getConfig(),parameters.deceased)}／年金合計の仮置き：${escMoney(parameters.survivorPension)}万円／年／死亡一時費用の仮置き：${escMoney(parameters.funeral)}万円。年金・通常費は翌月から変更。一時費用だけ死亡月に計上。`);results.append(diff);
+  const reference=validPensionReference();
+  results.append(makeEl('p','muted',reference?`試算に使った年金の参考内訳：自身の基礎 ${formatTotal(reference.ownBasicAnnual)} ＋ 自身の厚生 ${formatTotal(reference.ownEmployeeAnnual)} ＋ 遺族厚生の差額 ${formatTotal(reference.survivorTopUpAnnual)} ＝ 合計 ${formatTotal(parameters.survivorPension)}／年。`:'試算に使った年金合計の内訳は未確認です。手入力の合計に遺族年金を自動加算していません。'));
   renderTransition(results,original.monthlyDetails,mortality,allocation);
   const periods=agePeriodComparisonRows(original.monthlyDetails,{mortality});
-  const headingBlock=heading('年齢期別の収入・支出・残高の差','万円。収入・支出はその期の合計、資産は期末残高。年金は収入合計の内数です。');results.append(...headingBlock);
+  const headingBlock=heading('年齢期別の収入・支出・残高の差','万円。収入・支出はその期の合計、資産は期末残高。年金は収入合計の内数です。「管理予算の減額」は基準支出から差し引いた額で、負の値は増額です。');results.append(...headingBlock);
   const region=makeEl('div','table-wrap mortality-table-wrap');region.tabIndex=0;region.setAttribute('role','region');region.setAttribute('aria-label','死亡時期の年齢期別比較表');
-  const table=makeEl('table','mortality-table'),thead=makeEl('thead'),theadTr=makeEl('tr');
-  for(const label of ['本人年齢期','基準：公的年金','比較：公的年金','基準：総収入','比較：総収入','基準：管理予算支出','比較：管理予算支出','基準：臨時支出','比較：臨時支出（死亡費用込）','基準：期末資産','比較：期末資産','残高差'])tableCell(theadTr,label,true);
+  const table=makeEl('table','mortality-table'),thead=makeEl('thead'),theadTr=makeEl('tr');table.id='mortalityAnnualComparison';
+  for(const label of ['本人年齢期','基準：公的年金','比較：公的年金','基準：総収入','比較：総収入','基準：管理予算支出','比較：管理予算支出','管理予算の減額（−は増額）','基準：臨時支出','比較：臨時支出（死亡費用込）','基準：期末資産','比較：期末資産','残高差'])tableCell(theadTr,label,true);
   thead.append(theadTr);table.append(thead);const tbody=makeEl('tbody');
-  for(const p of periods){const tr=makeEl('tr');for(const v of [`${p.age}歳（${p.months}か月）`,p.baselinePension,p.previewPension,p.baselineIncome,p.previewIncome,p.baselineExpense,p.previewExpense,p.baselineExtraExpense,p.previewExtraExpense,p.baselineEndAsset,p.previewEndAsset,p.delta])tableCell(tr,typeof v==='number'?escMoney(v):v);tbody.append(tr);}
+  for(const p of periods){const tr=makeEl('tr');tr.dataset.age=String(p.age);tableCell(tr,`${p.age}歳（${p.months}か月）`);for(const key of ['baselinePension','previewPension','baselineIncome','previewIncome','baselineExpense','previewExpense','expenseReduction','baselineExtraExpense','previewExtraExpense','baselineEndAsset','previewEndAsset','delta'])tableCell(tr,escMoney(p[key])).setAttribute('data-field',key);tbody.append(tr);}
   table.append(tbody);region.append(table);results.append(region);
   const foot=makeEl('p','muted','既存の臨時支出はそのまま計上し、死亡月に指定した一時費用だけを追加します。死亡後の未帰属収入がある場合は計算を停止します。負の期末資産は借入や実際の不足額とは断定できません。');results.append(foot);
  }
- form.addEventListener('input',e=>{if(e.target!==form.elements.reviewed)form.elements.reviewed.checked=false;if(e.target.matches('[data-mortality-share],[data-mortality-factor]'))allocationInfo();ageHint();if(current)invalid('入力を変更したため、以前の試算は無効です。もう一度試算してください。');});
- form.addEventListener('change',e=>{if(e.target!==form.elements.reviewed)form.elements.reviewed.checked=false;ageHint();if(['deceased','deathMonth'].includes(e.target.name)){for(const key of ['entitlement','claimed','deferral'])form.elements[key].checked=false;root.querySelector('#mortalityEstimateNotice').textContent='死亡対象・年月が変わったため受給条件の確認を解除しました。';}if(current)invalid('条件が変わりました。再試算してください。');});
+ form.addEventListener('input',e=>{if(e.target!==form.elements.reviewed)form.elements.reviewed.checked=false;if(pensionFields.includes(e.target.name))clearPensionReference();else validPensionReference();if(e.target.matches('[data-mortality-share],[data-mortality-factor]'))allocationInfo();ageHint();if(current)invalid('入力を変更したため、以前の試算は無効です。もう一度試算してください。');});
+ form.addEventListener('change',e=>{if(e.target!==form.elements.reviewed)form.elements.reviewed.checked=false;if(pensionFields.includes(e.target.name))clearPensionReference();else validPensionReference();ageHint();if(['deceased','deathMonth'].includes(e.target.name)){for(const key of ['entitlement','claimed','deferral'])form.elements[key].checked=false;root.querySelector('#mortalityEstimateNotice').textContent='死亡対象・年月が変わったため受給条件の確認を解除しました。';}if(current)invalid('条件が変わりました。再試算してください。');});
  root.querySelector('#mortalityFictionalCosts').addEventListener('click',()=>{setAllocation(root,fictionalMortalityAllocation());allocationInfo();invalid('架空6,500万円世帯の660万円費目配分例を入力しました。本人の登録費用ではありません。');form.elements.reviewed.checked=false;});
  root.querySelector('#mortalityResetCosts').addEventListener('click',()=>{setAllocation(root,blankMortalityAllocation());allocationInfo();invalid('支出は全額を未配分・倍率1.0に戻しました。');form.elements.reviewed.checked=false;});
  root.querySelector('#mortalitySuggestAge').addEventListener('click',()=>{
-  try{requireFreshBaseline();const cfg=getConfig();if(!cfg)throw Error('設定を読み込んでください');const plan=runPlan(cfg,{includeMonthlyDetails:true});const row=plan.monthlyDetails.find(r=>r.age===80);if(!row)throw Error('80歳期が現在の計算対象外です');form.elements.deathMonth.value=row.month;form.elements.reviewed.checked=false;for(const key of ['entitlement','claimed','deferral'])form.elements[key].checked=false;ageHint();invalid('本人80歳期の最初の年月を候補にしました。死亡日・年金はまだ確認されていません。');}
+  try{requireFreshBaseline();const cfg=getConfig();if(!cfg)throw Error('設定を読み込んでください');const plan=runPlan(cfg,{includeMonthlyDetails:true});const row=plan.monthlyDetails.find(r=>r.age===80);if(!row)throw Error('80歳期が現在の計算対象外です');form.elements.deathMonth.value=row.month;form.elements.reviewed.checked=false;for(const key of ['entitlement','claimed','deferral'])form.elements[key].checked=false;clearPensionReference();ageHint();invalid('本人80歳期の最初の年月を候補にしました。死亡日・年金はまだ確認されていません。');}
   catch(e){invalid(e.message);}
  });
  root.querySelector('#mortalityEstimatePension').addEventListener('click',()=>{
+  clearPensionReference();
   try{
    requireFreshBaseline();const cfg=getConfig();if(!cfg)throw Error('採用条件を読み込んでください');
    const deceased=values().deceased,survivor=deceased==='primary'?'spouse':'primary';
@@ -150,7 +199,8 @@ export function mountMortalityComparison(root,{getConfig,getBaseline,runPlan}){
    if(minAge===null||maxAge===null||minAge<65||maxAge<65)throw Error('残された方の死亡月内年齢が確定しません。誕生日付近は年月だけで65歳要件を判定できません');
    const r=estimateSurvivorReference65({deceasedEmployeeEarningsAnnualBase:requiredNumber(form.elements.deceasedEarnings,'死亡者の報酬比例部分'),survivorOwnEmployeeAnnual:requiredNumber(form.elements.survivorEmployee,'生存者の老齢厚生年金'),survivorOwnBasicAnnual:requiredNumber(form.elements.survivorBasic,'生存者の老齢基礎年金'),survivorAge:minAge,entitlementConfirmed:form.elements.entitlement.checked,ownPensionClaimConfirmed:form.elements.claimed.checked,deferralConflictReviewed:form.elements.deferral.checked});
    form.elements.survivorPension.value=String(Number(r.totalSurvivingPublicPensionAnnual.toFixed(6)));
-   root.querySelector('#mortalityEstimateNotice').textContent=`参考：老齢基礎・厚生＋遺族厚生の差額を合わせて年${escMoney(r.totalSurvivingPublicPensionAnnual)}万円。実際の支給額、税社保、改定率は未確認です。`;
+   pensionReference={value:r,signature:pensionSignature()};renderPensionBreakdown(root.querySelector('#mortalityPensionBreakdown'),r);
+   root.querySelector('#mortalityEstimateNotice').textContent=`自身の年金と遺族厚生の差額の参考内訳を表示し、合計年${escMoney(r.totalSurvivingPublicPensionAnnual)}万円を仮入力しました。実際の支給額、税社保、改定率は未確認です。`;
    invalid('参考年額を仮入力しました。受給権・資料の適用可否は本人確認が必要です。');form.elements.reviewed.checked=false;
   }catch(e){root.querySelector('#mortalityEstimateNotice').textContent=e.message;invalid('概算を入力できません。未確認を0として置き換えません。');}
  });
@@ -159,12 +209,12 @@ export function mountMortalityComparison(root,{getConfig,getBaseline,runPlan}){
  form.addEventListener('submit',e=>{
   e.preventDefault();invalid('架空または仮置き条件を照合しています。');
   try{
-   requireFreshBaseline();const c=getConfig(),b=getBaseline();if(!c||!b)throw Error('現在設定を読み込んでください');
+   requireFreshBaseline();validPensionReference();const c=getConfig(),b=getBaseline();if(!c||!b)throw Error('現在設定を読み込んでください');
    const v=values();const x=calculateMortalityComparison({config:c,baseline:b,deathPerson:v.deceased,deathMonth:v.deathMonth,survivorTotalAnnual:requiredNumber(form.elements.survivorPension,'死亡後の年金年額'),survivorPensionBeforeClaimAnnual:form.elements.preClaimPension.required?requiredNumber(form.elements.preClaimPension,'老齢年金受給開始前の年金仮年額'):null,funeralExpenseMan:requiredNumber(form.elements.funeral,'死亡時一時費用'),allocation:currentAllocation(root),planCalculator:runPlan,acknowledged:form.elements.reviewed.checked});
    current=x;showResult(x,{...v,survivorPension:Number(v.survivorPension),funeral:Number(v.funeral)});
    state.textContent='比較計算が完了しました（採用・保存・クラウド書込みなし）。';
   }catch(error){invalid(`比較できません：${error.message}`);}
  });
- allocationInfo();ageHint();
- return {invalidate({external=false}={}){if(external===true)blockedExternal=true;ageHint();for(const key of ['entitlement','claimed','deferral'])form.elements[key].checked=false;for(const id of ['mortalityRun','mortalityEstimatePension','mortalitySuggestAge'])root.querySelector('#'+id).disabled=blockedExternal;root.querySelector('#mortalityEstimateNotice').textContent=blockedExternal?externalUpdateMessage:'保存済み条件の変更後は受給条件を再確認してください。';invalid('保存済みの条件が更新されたため、死亡時期の試算を無効にしました。必要なら再試算してください。');form.elements.reviewed.checked=false;},getCurrentComparison(){return current;}};
+ allocationInfo();ageHint();clearPensionReference();
+ return {invalidate({external=false}={}){if(external===true)blockedExternal=true;ageHint();clearPensionReference();for(const key of ['entitlement','claimed','deferral'])form.elements[key].checked=false;for(const id of ['mortalityRun','mortalityEstimatePension','mortalitySuggestAge'])root.querySelector('#'+id).disabled=blockedExternal;root.querySelector('#mortalityEstimateNotice').textContent=blockedExternal?externalUpdateMessage:'保存済み条件の変更後は受給条件を再確認してください。';invalid('保存済みの条件が更新されたため、死亡時期の試算を無効にしました。必要なら再試算してください。');form.elements.reviewed.checked=false;},getCurrentComparison(){return current;}};
 }

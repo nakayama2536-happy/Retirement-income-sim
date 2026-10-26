@@ -7,7 +7,7 @@ import {fileURLToPath} from 'node:url';
 import readline from 'node:readline';
 const here=path.dirname(fileURLToPath(import.meta.url));
 const root=path.resolve(here,'../..');
-const updateBases={legacy:'e886ef99097330ffbc76c1789439b850b05e5fbb',pr36:'2ad53c729ceded3d8d5895aca5d8a4d5e8a3e4f6'};
+const updateBases={legacy:'e886ef99097330ffbc76c1789439b850b05e5fbb',pr36:'2ad53c729ceded3d8d5895aca5d8a4d5e8a3e4f6',pr37:'8c8c1c0da892af35d7b1960081e40d7b278a4f99'};
 const gitText=(...args)=>execFileSync('git',args,{cwd:root,encoding:'utf8'}).trim();
 const mime={'.html':'text/html; charset=utf-8','.mjs':'text/javascript; charset=utf-8','.js':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8','.json':'application/json','.webmanifest':'application/manifest+json','.png':'image/png'};
 export async function createTestServer({crossRelease=false,baseline='legacy'}={}){

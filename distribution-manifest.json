@@ -1,6 +1,6 @@
 {
   "kind": "public-release",
-  "runtime": "v0.9.7-mortality-review-20261026",
+  "runtime": "v0.9.7-mortality-budget-20261026",
   "files": [
     {
       "name": "annual-cashflow.mjs",
@@ -15,12 +15,12 @@
     {
       "name": "app.mjs",
       "size": 70722,
-      "sha256": "cba0d018fe7b999f755df8c400859e15e5df9a7a6f4b1e9423e420c24024b207"
+      "sha256": "812141af473ff012be6f1b4bb0f4ff1df0f2dddd9d7ee125ed463ae1ca15a223"
     },
     {
       "name": "backup-compatibility.mjs",
       "size": 7152,
-      "sha256": "c0e979c70f4607323dba92e3b270ec96aee9d1696ae1f3be7a67a1edaec0459f"
+      "sha256": "d15563524ca71279b790685bb8ee0e1b7abec52e0356d7d9a365ef9b6e24a170"
     },
     {
       "name": "calc.mjs",
@@ -79,8 +79,8 @@
     },
     {
       "name": "docs/USER_GUIDE.md",
-      "size": 45153,
-      "sha256": "df53facc87af71ff27802dcf90c7de138c4dbe522b8d99e09a9e349240d99f40"
+      "size": 46457,
+      "sha256": "378e950d3992021dd1b3706e7f2152a1bd325519e12043b1140011f89c7cf189"
     },
     {
       "name": "expense-display.mjs",
@@ -169,18 +169,18 @@
     },
     {
       "name": "mortality-comparison.mjs",
-      "size": 8959,
-      "sha256": "e8e460af488bf1bdf6c464829651dbddb735d17541708224fd31100ee9998fd6"
+      "size": 9019,
+      "sha256": "0300b1d31d385282a6d9210389b17e552f28a839ce538198e7da183d1aed745e"
     },
     {
       "name": "mortality-preview.mjs",
-      "size": 13000,
-      "sha256": "0233b727bba3413c7fd6f9d5ba5baab4dce8e4fb44634056541fa444c353e911"
+      "size": 13299,
+      "sha256": "ff883b74881dc7321b2acb95a2e515cf2e57e5260743011c8ce9cd4659bbedeb"
     },
     {
       "name": "mortality-ui.mjs",
-      "size": 22759,
-      "sha256": "0b1f5f6d911f2268ab331be59ccccad602609f2584c3ad231ee5086681269403"
+      "size": 29498,
+      "sha256": "400287c84c441b15ecfadbab943938b2bfce51cdd08e3bd3d3058fe3be2b084c"
     },
     {
       "name": "pension-estimate.mjs",
@@ -199,8 +199,8 @@
     },
     {
       "name": "README.md",
-      "size": 4715,
-      "sha256": "d10515752ab7c812f2c5461c6fd51b93ac63cb8c09a4f67bc3e4fe3ef6efc88f"
+      "size": 5551,
+      "sha256": "1d2a67714926332429ea346a7655561ab0b31b48e6ed2a90a3bbeace6bf61a85"
     },
     {
       "name": "recovery-ui.mjs",
@@ -270,7 +270,7 @@
     {
       "name": "sw.js",
       "size": 3956,
-      "sha256": "d935989da72716982c86d27a8b86bc810e9802416207842c899038abe9eaca81"
+      "sha256": "04270ad9e799f39fb1da278f8506075716560e0e8ef14d505f44d1720d0e1d69"
     },
     {
       "name": "sync-controller.mjs",
