@@ -1,6 +1,8 @@
 /** Read-only, non-adopted mortality comparison UI. No storage/cloud/network calls. */
 import {dateWithAge,ageOn,dateParts} from './date-display.mjs';
 import {estimateSurvivorReference65,MortalityPreviewError} from './mortality-preview.mjs';
+import {mountMortalityItemizedControls} from './mortality-itemized-ui.mjs';
+import {readMortalityDraft,saveMortalityDraft,clearMortalityDraft} from './mortality-draft.mjs';
 import {MORTALITY_COSTS,blankMortalityAllocation,fictionalMortalityAllocation,
  calculateMortalityComparison,survivorPensionTiming,agePeriodComparisonRows,validateMortalityAllocation,ORIGINAL_BASIS} from './mortality-comparison.mjs';
 
@@ -100,19 +102,27 @@ export function mountMortalityComparison(root,{getConfig,getBaseline,runPlan}){
   <label class="check-label"><input name="entitlement" type="checkbox">遺族厚生年金の受給権を資料で確認した</label>
   <label class="check-label"><input name="claimed" type="checkbox">残された方の老齢年金請求・受給を確認した</label>
   <label class="check-label"><input name="deferral" type="checkbox">繰下げ待機中の受給権の影響を確認した</label>
+  <button id="mortalityUseRegisteredPension" class="secondary" type="button">年金シートの登録済み内訳を引用</button>
   <button id="mortalityEstimatePension" class="secondary" type="button">自身の年金＋遺族厚生の差額を参考計算し、合計欄へ入力</button>
   <p id="mortalityEstimateNotice" class="muted" role="status"></p>
  </details>
  </fieldset>
- <fieldset><legend>2．死亡後の費用（管理予算を仮に費目配分）</legend>
- <p class="muted">${ORIGINAL_BASIS}。「配分」は管理予算全体のうち、その費目に割り当てる割合です。登録済みの費目金額を自動取得していません。<strong>配分0％の費目は、倍率を0.7にしても減額0です。</strong>配分の合計は100％が必要で、未配分の税・社会保険・不明費用は必ず1.0倍にします。初期値は未配分100％のため、支出変更なしです。</p>
- <div class="mortality-preset-controls"><button type="button" class="secondary" id="mortalityFictionalCosts">架空の費目配分例を入力（660万円モデル）</button><button type="button" class="secondary" id="mortalityResetCosts">全額を未配分へ戻す</button></div>
+ <fieldset><legend>2．死亡後の支出（登録費目ごと・管理予算残額も倍率変更）</legend>
+ <p class="muted">夫婦健在時の登録費目の月額に、項目別の倍率を掛けます。<strong>配分％の入力は不要です。</strong>管理予算と確認済み費目の差額は「未照合の予算残額」とし、税社保・不明費用も含めて独立した倍率を指定できます。元の物価係数を二重適用しません。</p>
+ <label>登録費目の参照先<select id="mortalityExpenseSource"><option value="">現在の採用済み出典／唯一の出典を使用</option><option value="public-v0.9">旧形式の費目内訳</option><option value="work-v0.9.7">標準形式の費目内訳</option></select></label>
+ <p id="mortalityItemSourceNote" class="muted"></p>
+ <div id="mortalityItemHost" class="mortality-item-rows"></div>
+ <div class="mortality-item-row mortality-remainder-row"><strong>未照合の予算残額（税社保・不明費用を含む）</strong><span id="mortalityRemainderAmount">未計算</span><input id="mortalityRemainderFactor" type="number" min="0" max="3" step="0.05" value="1" aria-label="未照合の予算残額の倍率"><span>倍率を指定できます</span></div>
+ <p id="mortalityItemState" class="muted" role="status"></p>
+ <div hidden aria-hidden="true"><p>旧・未配分の仮配分方式は使用しません。</p>
+ <div class="mortality-preset-controls"><button type="button" class="secondary" id="mortalityFictionalCosts">旧・架空配分</button><button type="button" class="secondary" id="mortalityResetCosts">旧・未配分へ戻す</button></div>
  <div id="mortalityCostRows" class="mortality-costs"></div>
- <p id="mortalityAllocationTotal" class="muted" role="status"></p>
+ <p id="mortalityAllocationTotal" class="muted" role="status"></p></div>
  </fieldset>
- <label class="check-label"><input type="checkbox" name="reviewed" required> 年金年額・死亡月・費用配分と倍率が<strong>比較用の仮定</strong>で、現在の採用条件ではないことを確認しました。</label>
+ <label class="check-label"><input type="checkbox" name="reviewed" required> 年金年額・死亡月・費目別倍率と残額倍率が<strong>比較用の仮定</strong>で、現在の採用条件ではないことを確認しました。</label>
  <button id="mortalityRun" class="primary" type="submit">死亡後の収入・資産を試算（保存しない）</button>
  <button id="mortalityClear" class="secondary" type="button">試算結果をクリア（保存データ不変）</button>
+ <button id="mortalityClearInputs" class="secondary" type="button">前回の比較入力をクリア（採用値は不変）</button>
  </form>
  <p id="mortalityState" role="status" class="muted">まだ比較していません。現在の資産計算や保存データは変わりません。</p>
  <div id="mortalityResults" hidden></div>
