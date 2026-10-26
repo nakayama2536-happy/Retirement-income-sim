@@ -52,6 +52,14 @@ export function mountPensionSheet({getConfig,onCommit,showNotice}){
       const earnings=el(key+'PensionPreDeferral').value.trim(),referenceSource=el(key+'PensionPreDeferralSource').value.trim();
       if(earnings!==''||referenceSource)d.survivorReference={...(old.survivorReference||{}),earningsBeforeDeferralAnnual:earnings,source:referenceSource};
       else if(old.survivorReference)d.survivorReference=null;
+      const referenceValues=['65Basic','65Earnings','65Transitional','65Total'].map(k=>el(key+'Pension'+k).value.trim());
+      const referenceSource=el(key+'Pension65Source').value.trim();
+      if(referenceValues.some(v=>v!=='')||referenceSource)d.reference65={
+        ...(old.reference65||{}),
+        basicAnnual:referenceValues[0],employeeEarningsAnnual:referenceValues[1],
+        transitionalAnnual:referenceValues[2],totalAnnual:referenceValues[3],source:referenceSource
+      };
+      else if(old.reference65)d.reference65=null;
       return [key,d];
     }));
   }
@@ -97,6 +105,18 @@ export function mountPensionSheet({getConfig,onCommit,showNotice}){
         <p id="${key}PensionBreakdownHint" class="muted" role="status"></p>
         <p class="muted">遺族厚生年金は報酬比例部分をもとに条件付きで試算します。老齢厚生年金総額を報酬比例部分として自動転用しません。</p>
         </details>
+        <details class="pension-components" id="${key}Pension65Reference">
+         <summary>65歳基準の年金内訳（70歳・75歳開始額とは別）</summary>
+         <p class="muted">65歳時点のねんきん定期便などの数値を入力します。受給開始を70歳にした場合も、65歳の内訳を70歳年金へ上書きしません。死亡者の報酬比例部分を確認する参考情報です。</p>
+         <div class="form-grid pension-component-grid">
+          <label><span>65歳：老齢基礎年金（万円／年）</span><input id="${key}Pension65Basic" type="number" min="0" step="0.0001"></label>
+          <label><span>65歳：老齢厚生年金の報酬比例（万円／年）</span><input id="${key}Pension65Earnings" type="number" min="0" step="0.0001"></label>
+          <label><span>65歳：経過的加算等（万円／年）</span><input id="${key}Pension65Transitional" type="number" min="0" step="0.0001"></label>
+          <label><span>65歳：合計年額（万円／年）</span><input id="${key}Pension65Total" type="number" min="0" step="0.0001"></label>
+          <label><span>資料名・確認日</span><input id="${key}Pension65Source" type="text" maxlength="160"></label>
+         </div>
+         <p class="muted">65歳時点の基礎＋報酬比例＋経過的加算等＝65歳合計を照合します。未入力を0円として補いません。</p>
+        </details>
         <label>${names[key]}の金額の確度<select id="${key}PensionCertainty">${options}</select></label>
         <label>${names[key]}の出典・メモ<input id="${key}PensionSource" type="text" maxlength="160" placeholder="資料名・確認日など"></label>
       </fieldset>`).join('');
@@ -110,6 +130,10 @@ export function mountPensionSheet({getConfig,onCommit,showNotice}){
         el(key+'PensionBreakdownSource').value=b.source||'';
         el(key+'PensionPreDeferral').value=v.earningsBeforeDeferralAnnual??'';
         el(key+'PensionPreDeferralSource').value=v.source||'';
+        const ref65=draft[key].reference65||{};
+        for(const [suffix,field] of [['65Basic','basicAnnual'],['65Earnings','employeeEarningsAnnual'],['65Transitional','transitionalAnnual'],['65Total','totalAnnual']])
+          el(key+'Pension'+suffix).value=ref65[field]??'';
+        el(key+'Pension65Source').value=ref65.source||'';
         const base=c.income.pensions[key].alternatives?.['65'];
         el(`${key}PensionBase65`).value=typeof base==='number'&&Number.isFinite(base)&&base>=0?base:'';
         el(`${key}PensionUseEstimate`).addEventListener('click',()=>{
