@@ -20,6 +20,10 @@ on:
       - 'test_sync_public_probe.mjs'
       - 'test_sync_preview_approval.mjs'
       - 'tools/browser-test/mobile-sandbox-ui-check.mjs'
+      - 'mortality-comparison.mjs'
+      - 'mortality-preview.mjs'
+      - 'mortality-ui.mjs'
+      - 'tools/browser-test/mortality-ui-check.mjs'
       - '.github/workflows/mobile-sandbox-validation.yml'
 permissions:
   contents: read
@@ -33,7 +37,17 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
+          ref: ${{ github.event.pull_request.head.sha }}
           persist-credentials: false
+      - name: Record exact PR head used for mobile isolation checks
+        env:
+          EXPECTED_SOURCE_COMMIT: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$EXPECTED_SOURCE_COMMIT"
+          mkdir -p tools/browser-test/mobile-results
+          git rev-parse HEAD > tools/browser-test/mobile-results/source-commit.txt
+          git rev-parse HEAD^{tree} > tools/browser-test/mobile-results/source-tree.txt
       - uses: actions/setup-node@v4
         with:
           node-version: '22'

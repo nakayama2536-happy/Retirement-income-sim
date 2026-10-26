@@ -14,7 +14,7 @@ import {APP_BUILD} from '../../backup-compatibility.mjs';
 const here=path.dirname(fileURLToPath(import.meta.url));
 const out=path.join(here,'browser-results');
 await fs.mkdir(out,{recursive:true});
-const report={date:new Date().toISOString(),scope:'same-build lifecycle and pinned current-main to PR-candidate compatibility',cases:[],status:'not-run'};
+const report={date:new Date().toISOString(),scope:'same-build lifecycle, pinned legacy and PR #36 to candidate compatibility',cases:[],status:'not-run'};
 const normalize=x=>{const y=structuredClone(x);delete y.exportedAt;return y;};
 async function openTab(page,id){
  const button=page.locator(`[data-tab="${id}"]`);const group=await button.getAttribute('data-group-item');
@@ -81,9 +81,10 @@ async function update(page){return page.evaluate(async()=>{
  try{await r.update();return {ok:true};}catch(e){return {ok:false,error:String(e)};}
 });}
 async function run(browser,id,mode){
- const fixture=await createTestServer({crossRelease:id==='C1'});
+ const fixtureOptions={crossRelease:id==='C1'||id==='C2',baseline:id==='C2'?'pr36':'legacy'};
+ const fixture=await createTestServer(fixtureOptions);
  const context=await browser.newContext({acceptDownloads:true,serviceWorkers:'allow'});
- const record={id,status:'running'};report.cases.push(record);
+ const record={id,status:'running',mode,source:fixture.source};report.cases.push(record);
  try{
   let page=await open(context,fixture.url);
   await load(page,path.join(here,'synthetic-full.json'));await swReady(page);
@@ -147,6 +148,15 @@ async function run(browser,id,mode){
     return copy;
    };
    assert.deepEqual(withoutProducer(after),withoutProducer(before));
+  }else if(id==='C2'){
+   assert.equal(record.source.baselineCommit,'2ad53c729ceded3d8d5895aca5d8a4d5e8a3e4f6');
+   assert.equal(record.source.baselineRuntime,'v0.9.7-ux-requests-20261025');
+   assert.equal(before.data.recoveryCompatibility.producerBuild,'v0.9.7-ux-requests-20261025');
+   assert.equal(after.data.recoveryCompatibility.producerBuild,APP_BUILD);
+   // PR #36 already has the current comparison layout. Only the exported
+   // backup's producer label may differ; every displayed value and saved field remains exact.
+   const withoutProducer=value=>{const copy=structuredClone(value);delete copy.data.recoveryCompatibility.producerBuild;return copy;};
+   assert.deepEqual(withoutProducer(after),withoutProducer(before));
   }else assert.deepEqual(after,before);
   record.after=await state(page);
   assert(record.after.caches.some(x=>x.endsWith('isolated-test-old')));
@@ -159,14 +169,15 @@ async function run(browser,id,mode){
   await fs.writeFile(path.join(out,id+'-before.json'),JSON.stringify(before,null,2));
   await fs.writeFile(path.join(out,id+'-after.json'),JSON.stringify(after,null,2));
   await openTab(page,'home');await page.screenshot({path:path.join(out,id+'.png'),fullPage:true});
-  if(id==='U1'||id==='C1'){
+  if(id==='U1'||id==='C1'||id==='C2'){
    await context.setOffline(false);
-   const restoreServer=await createTestServer({crossRelease:id==='C1'});const restoreContext=await browser.newContext({acceptDownloads:true});
+   const restoreServer=await createTestServer(fixtureOptions);const restoreContext=await browser.newContext({acceptDownloads:true});
    try{
-    const backup=path.join(out,'recovery-input.json');await fs.writeFile(backup,JSON.stringify(before.data));
+    const backup=path.join(out,id+'-recovery-input.json');await fs.writeFile(backup,JSON.stringify(before.data));
     const restoredPage=await open(restoreContext,restoreServer.url);await load(restoredPage,backup);
     assert.deepEqual(await snapshot(restoredPage),before);
-    report.cases.push({id:id==='C1'?'C1-R':'R1',status:'pass',scope:'corresponding pre-update backup restored into original body, separate origin'});
+    assert.equal(restoreServer.source.baselineCommit,record.source.baselineCommit);
+    report.cases.push({id:id==='U1'?'R1':id+'-R',status:'pass',scope:'corresponding pre-update backup restored into original body, separate origin',source:restoreServer.source});
    }finally{await restoreContext.close();await restoreServer.close();}
   }
   if(id==='C1'){
@@ -294,7 +305,7 @@ try{
  if(executablePath)await fs.access(executablePath);
  browser=await chromium.launch({headless:true,...(executablePath?{executablePath}:{})});
  report.browser=browser.version();
- for(const [id,mode] of [['U1','new'],['U2','asset-failure'],['U3','worker-failure'],['C1','new']])await run(browser,id,mode);
+ for(const [id,mode] of [['U1','new'],['U2','asset-failure'],['U3','worker-failure'],['C1','new'],['C2','new']])await run(browser,id,mode);
  await validateHomeUi(browser);
  await validatePensionUi(browser);
  try{report.cases.push(await validateDetailUi({browser,createTestServer,open,load,openTab,snapshot,here,out,fs,path}));}catch(e){if(e.detailRecord)report.cases.push(e.detailRecord);throw e;}

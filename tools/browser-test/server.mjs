@@ -6,18 +6,24 @@ import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 import readline from 'node:readline';
 const here=path.dirname(fileURLToPath(import.meta.url));
+const root=path.resolve(here,'../..');
+const updateBases={legacy:'e886ef99097330ffbc76c1789439b850b05e5fbb',pr36:'2ad53c729ceded3d8d5895aca5d8a4d5e8a3e4f6'};
+const gitText=(...args)=>execFileSync('git',args,{cwd:root,encoding:'utf8'}).trim();
 const mime={'.html':'text/html; charset=utf-8','.mjs':'text/javascript; charset=utf-8','.js':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8','.json':'application/json','.webmanifest':'application/manifest+json','.png':'image/png'};
-export async function createTestServer({crossRelease=false}={}){
+export async function createTestServer({crossRelease=false,baseline='legacy'}={}){
  const manifest=JSON.parse(await fs.readFile(path.join(here,'manifest.json'),'utf8'));
  const files=new Map(await Promise.all(manifest.files.map(async item=>[item.path,await fs.readFile(path.join(here,'app',item.path))])));
  const sw=files.get('sw.js').toString();
  if(!sw.includes(manifest.cacheVersion))throw Error('Cache version mismatch');
- const base='e886ef99097330ffbc76c1789439b850b05e5fbb';
- const oldManifest=crossRelease?JSON.parse(execFileSync('git',['show',base+':distribution-manifest.json'],{cwd:path.resolve(here,'../..'),encoding:'utf8'})):null;
- const oldFiles=crossRelease?new Map(oldManifest.files.filter(item=>item.name!=='README.md'&&!item.name.startsWith('docs/')).map(item=>[item.name,execFileSync('git',['show',base+':'+item.name],{cwd:path.resolve(here,'../..')})])):files;
+ const base=crossRelease?updateBases[baseline]:null;
+ if(crossRelease&&!Object.hasOwn(updateBases,baseline))throw Error('Unknown pinned update baseline');
+ const oldManifest=crossRelease?JSON.parse(gitText('show',base+':distribution-manifest.json')):null;
+ const oldFiles=crossRelease?new Map(oldManifest.files.filter(item=>item.name!=='README.md'&&!item.name.startsWith('docs/')).map(item=>[item.name,execFileSync('git',['show',base+':'+item.name],{cwd:root})])):files;
  const oldSW=oldFiles.get('sw.js').toString();
  const oldVersion=crossRelease?oldManifest.runtime:manifest.cacheVersion;
  if(!oldSW.includes(oldVersion))throw Error('Baseline cache mismatch');
+ const source={candidateCommit:gitText('rev-parse','HEAD'),candidateTree:gitText('rev-parse','HEAD^{tree}'),candidateRuntime:manifest.cacheVersion,baselineCommit:crossRelease?gitText('rev-parse',base+'^{commit}'):gitText('rev-parse','HEAD'),baselineTree:crossRelease?gitText('rev-parse',base+'^{tree}'):gitText('rev-parse','HEAD^{tree}'),baselineRuntime:oldVersion};
+ if(crossRelease&&source.baselineCommit!==base)throw Error('Pinned baseline commit mismatch');
  let mode='old';const log=[];
  const modes=['old','new','asset-failure','worker-failure','offline'];
  const server=http.createServer((req,res)=>{
@@ -33,7 +39,7 @@ export async function createTestServer({crossRelease=false}={}){
   res.end(req.method==='HEAD'?undefined:body);
  });
  await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
- return {url:`http://127.0.0.1:${server.address().port}/`,setMode(value){if(!modes.includes(value))throw Error('Unknown mode');mode=value;},log,close:()=>new Promise(resolve=>server.close(resolve))};
+ return {url:`http://127.0.0.1:${server.address().port}/`,source,setMode(value){if(!modes.includes(value))throw Error('Unknown mode');mode=value;},log,close:()=>new Promise(resolve=>server.close(resolve))};
 }
 if(process.argv[1]&&path.resolve(process.argv[1])===fileURLToPath(import.meta.url)){
  const test=await createTestServer();
