@@ -27,7 +27,10 @@ export function pensionDraftMatches(config,draft){
       if(normalized[key][meta]===null){delete normalized[key][meta];continue;}
       if(normalized[key][meta]&&typeof normalized[key][meta]==='object'){
         for(const field of Object.keys(normalized[key][meta])){
-          if(field.endsWith('Annual')&&normalized[key][meta][field]!==''&&normalized[key][meta][field]!=null)normalized[key][meta][field]=Number(normalized[key][meta][field]);
+          if(field.endsWith('Annual')){
+            if(normalized[key][meta][field]==='')normalized[key][meta][field]=null;
+            else if(normalized[key][meta][field]!=null)normalized[key][meta][field]=Number(normalized[key][meta][field]);
+          }
         }
       }
     }
@@ -63,7 +66,7 @@ function candidateFromDraft(config,draft){
       else {
         const b=d.breakdownAtStart;
         if(!b||typeof b!=='object'||Array.isArray(b))throw new Error(name+'の年金内訳が不正です');
-        const nextBreak={};
+        const nextBreak={...structuredClone(b)};
         for(const field of ['basicAnnual','employeeAnnual','otherAnnual']){
           const x=b[field];
           if(x==null||x==='')nextBreak[field]=null;
@@ -85,7 +88,7 @@ function candidateFromDraft(config,draft){
         if(x.earningsBeforeDeferralAnnual===''||x.earningsBeforeDeferralAnnual==null||!Number.isFinite(Number(x.earningsBeforeDeferralAnnual))||Number(x.earningsBeforeDeferralAnnual)<0)
           throw new Error(name+'の繰下げ前報酬比例額を確認してください');
         if(typeof x.source!=='string'||x.source.length>160)throw new Error('報酬比例額の出典は160文字以内にしてください');
-        p.survivorReference={earningsBeforeDeferralAnnual:Number(x.earningsBeforeDeferralAnnual),source:x.source};
+        p.survivorReference={...structuredClone(x),earningsBeforeDeferralAnnual:Number(x.earningsBeforeDeferralAnnual),source:x.source};
       }
     }
     if(d.certainty!==(p.certainty||'unknown'))p.certainty=d.certainty;
