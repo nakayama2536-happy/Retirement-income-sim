@@ -1,6 +1,6 @@
 {
   "kind": "public-release",
-  "runtime": "v0.9.7-mortality-budget-20261026",
+  "runtime": "v0.9.7-mortality-v2-candidate-20261027",
   "files": [
     {
       "name": "annual-cashflow.mjs",
@@ -14,8 +14,8 @@
     },
     {
       "name": "app.mjs",
-      "size": 70722,
-      "sha256": "812141af473ff012be6f1b4bb0f4ff1df0f2dddd9d7ee125ed463ae1ca15a223"
+      "size": 70728,
+      "sha256": "10249fa6d485a3161215b8ce9ea848ec24d72b06c72067f9bc999a783a74b08b"
     },
     {
       "name": "backup-compatibility.mjs",
@@ -169,8 +169,23 @@
     },
     {
       "name": "mortality-comparison.mjs",
-      "size": 9019,
-      "sha256": "0300b1d31d385282a6d9210389b17e552f28a839ce538198e7da183d1aed745e"
+      "size": 9770,
+      "sha256": "1c8b562caf7fda6fd707a790eb6eaba88751ea92c9a06d57c090250c07dd14cb"
+    },
+    {
+      "name": "mortality-draft.mjs",
+      "size": 1850,
+      "sha256": "731d4fea9af40340653d40e103ffeb776a1839128ef3d6c365ddd56a71d255e9"
+    },
+    {
+      "name": "mortality-itemized-ui.mjs",
+      "size": 5553,
+      "sha256": "3be1a8bdb66ab81a7ca9017fb0fa9dad78657eb0cf7de45e2654277cc9ca3e8f"
+    },
+    {
+      "name": "mortality-itemized.mjs",
+      "size": 5544,
+      "sha256": "179c58da29bcc88fe874637815c9145b9833b7604ad19f1870dfded1404b416e"
     },
     {
       "name": "mortality-preview.mjs",
@@ -179,8 +194,8 @@
     },
     {
       "name": "mortality-ui.mjs",
-      "size": 29664,
-      "sha256": "f687cacc765d2c63e84e9439c3ff4d003d55cc4b0788d06ade0f048cfd36ddd6"
+      "size": 35677,
+      "sha256": "66dbc9fb57d473c9be783a28346da5e068a1aa50cf6122b0b539bf6762437217"
     },
     {
       "name": "pension-estimate.mjs",
@@ -189,13 +204,13 @@
     },
     {
       "name": "pension-ui.mjs",
-      "size": 14366,
-      "sha256": "e738da10833fe01ba0126b9c3ec06db1b4d3584ea412599100fca23cf64e4f4e"
+      "size": 18659,
+      "sha256": "36acf69d6b613a6c3a5a3b6416348b485c278f66d46d698b8b604403b33d8942"
     },
     {
       "name": "pension.mjs",
-      "size": 7130,
-      "sha256": "f9eee3d9267b25f291c5948ced7e9b97c94e412947a7c8a242cb3cebac2a5921"
+      "size": 10053,
+      "sha256": "aea5fd402a4e03d5877bc6d10ba1f67205a5f98dfe55913a7bee4e71fd532d35"
     },
     {
       "name": "README.md",
@@ -264,13 +279,13 @@
     },
     {
       "name": "styles.css",
-      "size": 25319,
-      "sha256": "accbc9dd1a9cf8eeb354e3108b14667f858b71627ac6f24970a0f8ea63706f02"
+      "size": 26785,
+      "sha256": "485515ba54916690c803c3d1782731bf9d4c50005b3a919b3957d1c106bef4f1"
     },
     {
       "name": "sw.js",
-      "size": 3956,
-      "sha256": "04270ad9e799f39fb1da278f8506075716560e0e8ef14d505f44d1720d0e1d69"
+      "size": 4043,
+      "sha256": "a6e538e10e1cbc659b20e67ad80992e7e7eb6684f20b6b35d610141d29d38b9b"
     },
     {
       "name": "sync-controller.mjs",
