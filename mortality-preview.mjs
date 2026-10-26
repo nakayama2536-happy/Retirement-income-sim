@@ -106,19 +106,23 @@ export function simulateMortalityPreview({
     const r=copy[i],index=indices[i],post=index>deathIdx;
     for(const key of ['startAsset','investmentGain','endAsset','totalIncome','expense','extraExpense','primaryPension','spousePension','primaryLabor','spouseLabor','idecoAnnuity','idecoLumpReceipt','extraIncome','labor','combinedLabor','unemployment'])finite(r[key],`base-month-${key}`);
     if(!r.expenseComponents||typeof r.expenseComponents!=='object')invalid('unreconciled-breakdown',`費目別内訳が未確認: ${r.month}`);
-    let expTotal=0,newExpense=0;
+    let expTotal=0,factoredExpense=0;
     for(const [key,amount] of Object.entries(r.expenseComponents)){
       finite(amount,`expense-${key}`);if(amount<0)invalid('negative-expense',`${key}: 内訳は非負額で指定してください`);
       expTotal+=amount;
       if(!Object.hasOwn(costFactors,key))invalid('missing-expense-factor',`${key}の生存者1人暮らし倍率が未指定です`);
       const fac=finite(costFactors[key],`factor-${key}`);
       if(fac<0||fac>3)invalid('factor-out-of-range',`${key} の倍率は0～3倍の範囲で入力してください`);
-      newExpense+=amount*(post?fac:1);
+      factoredExpense+=amount*(post?fac:1);
     }
     if(r.expense<0)invalid('negative-budget',`${r.month}: 管理予算の負値は対応していません`);
     const knownIncome=r.labor+r.primaryPension+r.spousePension+r.idecoAnnuity+r.unemployment+r.extraIncome;
     if(Number.isFinite(r.labor)&&Number.isFinite(r.unemployment)&&Math.abs(knownIncome-r.totalIncome)>TOLERANCE)invalid('income-breakdown-mismatch',`${r.month}: 基準案の収入内訳と合計が一致しません`);
     if(Math.abs(expTotal-r.expense)>TOLERANCE)invalid('budget-not-reconciled',`${r.month}: 月次内訳${expTotal}万円と管理予算${r.expense}万円が一致しません`);
+    // The management budget remains the source amount. Subtract the signed
+    // reduction once; a negative reduction increases cost. No change in death month.
+    const expenseReduction=post?r.expense-factoredExpense:0;
+    const newExpense=r.expense-expenseReduction;
     // If original ledger is not self-consistent, do not guess or reconstruct.
     if(i>0&&Math.abs(r.startAsset-copy[i-1].endAsset)>TOLERANCE)invalid('base-continuity',`${r.month}: 基準案の残高が連続していません`);
     const expectedBase=r.startAsset+r.investmentGain+r.totalIncome-r.expense-r.extraExpense;
@@ -150,7 +154,7 @@ export function simulateMortalityPreview({
     if(!keepOneOffExpenses&&post&&Math.abs(r.extraExpense)>TOLERANCE)invalid('one-off-expense','既存臨時支出の削除先が未確認です');
     const end=asset+gain+newIncome-newExpense-r.extraExpense-oneOff;
     if(!Number.isFinite(end))invalid('nonfinite-result','比較計算が有限範囲を超えました');
-    output.push({month:r.month,age:r.age,startAsset:asset,investmentGain:gain,income:newIncome,publicPension:previewPension,baselinePension:r.primaryPension+r.spousePension,baselineIncome:r.totalIncome,baselineExpense:r.expense,expense:newExpense,extraExpense:r.extraExpense,funeralExpense:oneOff,endAsset:end,deltaFromBaseline:end-r.endAsset,postDeath:post});
+    output.push({month:r.month,age:r.age,startAsset:asset,investmentGain:gain,income:newIncome,publicPension:previewPension,baselinePension:r.primaryPension+r.spousePension,baselineIncome:r.totalIncome,baselineExpense:r.expense,expenseReduction,expense:newExpense,extraExpense:r.extraExpense,funeralExpense:oneOff,endAsset:end,deltaFromBaseline:end-r.endAsset,postDeath:post});
     asset=end;
   }
   return {kind:'read-only-synthetic-or-unadopted-comparison',deceased:personLabel,deathMonth,

@@ -14,7 +14,11 @@ import {APP_BUILD} from '../../backup-compatibility.mjs';
 const here=path.dirname(fileURLToPath(import.meta.url));
 const out=path.join(here,'browser-results');
 await fs.mkdir(out,{recursive:true});
-const report={date:new Date().toISOString(),scope:'same-build lifecycle, pinned legacy and PR #36 to candidate compatibility',cases:[],status:'not-run'};
+const report={date:new Date().toISOString(),scope:'same-build lifecycle, pinned legacy, PR #36 and PR #37 to candidate compatibility',cases:[],status:'not-run'};
+const compatibilityBases={
+ C2:{fixture:'pr36',commit:'2ad53c729ceded3d8d5895aca5d8a4d5e8a3e4f6',runtime:'v0.9.7-ux-requests-20261025'},
+ C3:{fixture:'pr37',commit:'8c8c1c0da892af35d7b1960081e40d7b278a4f99',runtime:'v0.9.7-mortality-review-20261026'}
+};
 const normalize=x=>{const y=structuredClone(x);delete y.exportedAt;return y;};
 async function openTab(page,id){
  const button=page.locator(`[data-tab="${id}"]`);const group=await button.getAttribute('data-group-item');
@@ -81,7 +85,8 @@ async function update(page){return page.evaluate(async()=>{
  try{await r.update();return {ok:true};}catch(e){return {ok:false,error:String(e)};}
 });}
 async function run(browser,id,mode){
- const fixtureOptions={crossRelease:id==='C1'||id==='C2',baseline:id==='C2'?'pr36':'legacy'};
+ const compatibilityBase=compatibilityBases[id];
+ const fixtureOptions={crossRelease:id==='C1'||!!compatibilityBase,baseline:compatibilityBase?.fixture??'legacy'};
  const fixture=await createTestServer(fixtureOptions);
  const context=await browser.newContext({acceptDownloads:true,serviceWorkers:'allow'});
  const record={id,status:'running',mode,source:fixture.source};report.cases.push(record);
@@ -148,12 +153,13 @@ async function run(browser,id,mode){
     return copy;
    };
    assert.deepEqual(withoutProducer(after),withoutProducer(before));
-  }else if(id==='C2'){
-   assert.equal(record.source.baselineCommit,'2ad53c729ceded3d8d5895aca5d8a4d5e8a3e4f6');
-   assert.equal(record.source.baselineRuntime,'v0.9.7-ux-requests-20261025');
-   assert.equal(before.data.recoveryCompatibility.producerBuild,'v0.9.7-ux-requests-20261025');
+  }else if(compatibilityBase){
+   assert.equal(record.source.baselineCommit,compatibilityBase.commit);
+   assert.equal(record.source.baselineRuntime,compatibilityBase.runtime);
+   assert.equal(record.source.candidateRuntime,APP_BUILD);
+   assert.equal(before.data.recoveryCompatibility.producerBuild,compatibilityBase.runtime);
    assert.equal(after.data.recoveryCompatibility.producerBuild,APP_BUILD);
-   // PR #36 already has the current comparison layout. Only the exported
+   // PR #36 and PR #37 already have the current comparison layout. Only the exported
    // backup's producer label may differ; every displayed value and saved field remains exact.
    const withoutProducer=value=>{const copy=structuredClone(value);delete copy.data.recoveryCompatibility.producerBuild;return copy;};
    assert.deepEqual(withoutProducer(after),withoutProducer(before));
@@ -169,7 +175,7 @@ async function run(browser,id,mode){
   await fs.writeFile(path.join(out,id+'-before.json'),JSON.stringify(before,null,2));
   await fs.writeFile(path.join(out,id+'-after.json'),JSON.stringify(after,null,2));
   await openTab(page,'home');await page.screenshot({path:path.join(out,id+'.png'),fullPage:true});
-  if(id==='U1'||id==='C1'||id==='C2'){
+  if(id==='U1'||id==='C1'||compatibilityBase){
    await context.setOffline(false);
    const restoreServer=await createTestServer(fixtureOptions);const restoreContext=await browser.newContext({acceptDownloads:true});
    try{
@@ -305,7 +311,7 @@ try{
  if(executablePath)await fs.access(executablePath);
  browser=await chromium.launch({headless:true,...(executablePath?{executablePath}:{})});
  report.browser=browser.version();
- for(const [id,mode] of [['U1','new'],['U2','asset-failure'],['U3','worker-failure'],['C1','new'],['C2','new']])await run(browser,id,mode);
+ for(const [id,mode] of [['U1','new'],['U2','asset-failure'],['U3','worker-failure'],['C1','new'],['C2','new'],['C3','new']])await run(browser,id,mode);
  await validateHomeUi(browser);
  await validatePensionUi(browser);
  try{report.cases.push(await validateDetailUi({browser,createTestServer,open,load,openTab,snapshot,here,out,fs,path}));}catch(e){if(e.detailRecord)report.cases.push(e.detailRecord);throw e;}

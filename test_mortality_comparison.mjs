@@ -61,3 +61,53 @@ test('unknown one-off income after death stops instead of assigning to survivor'
 test('explicit acknowledgement is mandatory',()=>assert.throws(()=>compare(fixture(),{acknowledged:false}),{code:'not-reviewed'}));
 test('changed baseline final asset prevents stale comparison',()=>{const c=fixture(),b=runRetirementPlan(c);b.finalAsset++;assert.throws(()=>compare(c,{baseline:b}),{code:'baseline-stale'});});
 test('negative assets are only a depletion flag with first month recorded',()=>{const c=fixture();c.plan.initialAsset=10;const x=compare(c);assert.equal(x.mortality.firstNegativeMonth,x.mortality.monthly.find(r=>r.endAsset<0).month);assert.ok(x.mortality.warnings.some(s=>s.includes('借入')));});
+
+function flatExpenseCase(){const c=fixture();c.plan.afterTaxReturn=0;c.plan.inflation=0;return c;}
+function foodReductionAllocation(){const a=blankMortalityAllocation();a.find(r=>r.key==='food').share=20;a.find(r=>r.key==='unallocated').share=80;return a;}
+const expenseOnly={deathMonth:'2060-06',survivorTotalAnnual:440,funeralExpenseMan:0};
+test('food savings are deducted from budget once and propagate into assets with unchanged pension',()=>{
+ const c=flatExpenseCase(),b=runRetirementPlan(c),allocation=foodReductionAllocation(),snapshot=JSON.stringify([c,b,allocation]);
+ const unchanged=compare(c,{...expenseOnly,baseline:b,allocation:blankMortalityAllocation()});
+ const reduced=compare(c,{...expenseOnly,baseline:b,allocation});
+ const changed=reduced.mortality.monthly.filter(r=>r.postDeath);
+ // 660/year = 55/month. Food 20% = 11; 0.7x leaves 7.7, saving 3.3/month.
+ for(const r of changed){approx(r.baselineExpense,55);approx(r.expenseReduction,3.3);approx(r.expense,51.7);}
+ for(const r of reduced.mortality.monthly.filter(r=>!r.postDeath)){assert.equal(r.expenseReduction,0);assert.equal(r.expense,r.baselineExpense);}
+ assert.equal(reduced.mortality.firstChangedMonth,'2060-07');
+ approx(reduced.mortality.finalAsset-unchanged.mortality.finalAsset,changed.length*3.3);
+ for(let i=0;i<reduced.mortality.monthly.length;i++)approx(reduced.mortality.monthly[i].publicPension,unchanged.mortality.monthly[i].publicPension);
+ assert.equal(JSON.stringify([c,b,allocation]),snapshot);
+});
+test('partial death year and full later year expose only their actual budget reductions',()=>{
+ const x=compare(flatExpenseCase(),{...expenseOnly,allocation:foodReductionAllocation()}),rows=agePeriodComparisonRows(x.original.monthlyDetails,x);
+ const partial=rows.find(r=>r.age===80),full=rows.find(r=>r.age===81),prior=rows.find(r=>r.age===79);
+ approx(prior.expenseReduction,0);approx(prior.previewExpense,660);
+ approx(partial.expenseReduction,19.8);approx(partial.baselineExpense,660);approx(partial.previewExpense,640.2); // July–December: six months.
+ approx(full.expenseReduction,39.6);approx(full.baselineExpense,660);approx(full.previewExpense,620.4);
+});
+test('changing a zero-share factor has no budget reduction or asset effect',()=>{
+ const c=flatExpenseCase(),a=blankMortalityAllocation();a.find(r=>r.key==='food').factor=0;
+ const x=compare(c,{...expenseOnly,allocation:a});
+ for(const r of x.mortality.monthly){assert.equal(r.expenseReduction,0);assert.equal(r.expense,r.baselineExpense);}
+ approx(x.mortality.finalAsset,x.original.finalAsset);
+});
+test('higher medical cost is a negative reduction and lowers assets by that increase',()=>{
+ const c=flatExpenseCase(),a=blankMortalityAllocation();a.find(r=>r.key==='medical').share=20;a.find(r=>r.key==='medical').factor=1.5;a.find(r=>r.key==='unallocated').share=80;
+ const x=compare(c,{...expenseOnly,allocation:a}),months=x.mortality.monthly.filter(r=>r.postDeath),full=agePeriodComparisonRows(x.original.monthlyDetails,x).find(r=>r.age===81);
+ for(const r of months){approx(r.expenseReduction,-5.5);approx(r.expense,60.5);}
+ approx(full.expenseReduction,-66);approx(full.previewExpense,726);
+ approx(x.mortality.finalAsset-x.original.finalAsset,-5.5*months.length);
+});
+test('age-period reductions equal monthly sums with inflation, return and one-off costs preserved',()=>{
+ const c=fixture();c.events=[{date:'2060-08-01',label:'Synthetic one-off repair',type:'expense',amount:25}];
+ const x=compare(c,{deathMonth:'2060-06',funeralExpenseMan:80}),periods=agePeriodComparisonRows(x.original.monthlyDetails,x);
+ for(const [index,p] of periods.entries()){
+  const months=x.mortality.monthly.filter((_,i)=>x.original.monthlyDetails[i].annualRowIndex===index);
+  approx(p.expenseReduction,months.reduce((sum,r)=>sum+r.expenseReduction,0));
+  approx(p.baselineExpense-p.expenseReduction,p.previewExpense);
+ }
+ for(const r of x.mortality.monthly){approx(r.baselineExpense-r.expenseReduction,r.expense);approx(r.startAsset+r.investmentGain+r.income-r.expense-r.extraExpense-r.funeralExpense,r.endAsset);}
+ approx(x.mortality.monthly.reduce((sum,r)=>sum+r.funeralExpense,0),80);
+ approx(x.mortality.monthly.reduce((sum,r)=>sum+r.extraExpense,0),25);
+ approx(periods.reduce((sum,p)=>sum+p.expenseReduction,0),x.mortality.monthly.reduce((sum,r)=>sum+r.expenseReduction,0));
+});

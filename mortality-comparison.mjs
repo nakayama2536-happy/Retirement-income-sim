@@ -116,13 +116,13 @@ export function agePeriodComparisonRows(monthlyRows,comparison){
   const b=monthlyRows[i],x=m[i],idx=b.annualRowIndex;
   if(!Number.isInteger(idx)||idx<lastIndex)fail('invalid-age-group','年齢期と月次行の対応が不正です');
   if(!agg||idx!==lastIndex){
-   agg={age:b.annualAge,monthStart:x.month,monthEnd:x.month,months:0,baselineIncome:0,previewIncome:0,baselinePension:0,previewPension:0,baselineExpense:0,previewExpense:0,baselineExtraExpense:0,previewExtraExpense:0,oneOffAfterDeath:0,baselineEndAsset:b.endAsset,previewEndAsset:x.endAsset,delta:x.deltaFromBaseline};
+   agg={age:b.annualAge,monthStart:x.month,monthEnd:x.month,months:0,baselineIncome:0,previewIncome:0,baselinePension:0,previewPension:0,baselineExpense:0,expenseReduction:0,previewExpense:0,baselineExtraExpense:0,previewExtraExpense:0,oneOffAfterDeath:0,baselineEndAsset:b.endAsset,previewEndAsset:x.endAsset,delta:x.deltaFromBaseline};
    aggs.push(agg);lastIndex=idx;
   }
   agg.monthEnd=x.month;agg.months++;
   agg.baselineIncome+=b.totalIncome;agg.previewIncome+=x.income;
   agg.baselinePension+=b.primaryPension+b.spousePension;agg.previewPension+=x.publicPension;
-  agg.baselineExpense+=b.expense;agg.previewExpense+=x.expense;
+  agg.baselineExpense+=b.expense;agg.expenseReduction+=x.expenseReduction;agg.previewExpense+=x.expense;
   agg.baselineExtraExpense+=b.extraExpense;agg.previewExtraExpense+=x.extraExpense+x.funeralExpense;
   agg.oneOffAfterDeath+=x.funeralExpense;
   agg.baselineEndAsset=b.endAsset;agg.previewEndAsset=x.endAsset;agg.delta=x.deltaFromBaseline;
