@@ -53,11 +53,11 @@ export function mountPensionSheet({getConfig,onCommit,showNotice}){
       if(earnings!==''||referenceSource)d.survivorReference={...(old.survivorReference||{}),earningsBeforeDeferralAnnual:earnings,source:referenceSource};
       else if(old.survivorReference)d.survivorReference=null;
       const referenceValues=['65Basic','65Earnings','65Transitional','65Total'].map(k=>el(key+'Pension'+k).value.trim());
-      const referenceSource=el(key+'Pension65Source').value.trim();
-      if(referenceValues.some(v=>v!=='')||referenceSource)d.reference65={
+      const sourceAt65=el(key+'Pension65Source').value.trim();
+      if(referenceValues.some(v=>v!=='')||sourceAt65)d.reference65={
         ...(old.reference65||{}),
         basicAnnual:referenceValues[0],employeeEarningsAnnual:referenceValues[1],
-        transitionalAnnual:referenceValues[2],totalAnnual:referenceValues[3],source:referenceSource
+        transitionalAnnual:referenceValues[2],totalAnnual:referenceValues[3],source:sourceAt65
       };
       else if(old.reference65)d.reference65=null;
       return [key,d];
