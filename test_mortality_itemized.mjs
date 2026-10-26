@@ -35,6 +35,20 @@ test('the adopted plan remains unchanged when pension evidence only is edited',(
  assert.equal(undone.income.pensions.primary.breakdownAtStart,undefined);
  near(runRetirementPlan(undone).finalAsset,before);
 });
+test('65-year base evidence is distinct from 70-year adopted pension amount',()=>{
+ const c=fixture(),d=pensionDraftFromConfig(c),old=structuredClone(c);
+ // 65-year estimate is 210, but selected claim-year amount stays 300.
+ d.primary.reference65={
+   basicAnnual:80,employeeEarningsAnnual:129.9,transitionalAnnual:.1,totalAnnual:210,
+   source:'Synthetic age-65 statement'
+ };
+ const trial=previewPension(c,d);
+ assert.equal(trial.candidate.income.pensions.primary.annualAtStart,300);
+ assert.equal(trial.candidate.income.pensions.primary.reference65.employeeEarningsAnnual,129.9);
+ assert.deepEqual(c,old);
+ d.primary.reference65.totalAnnual=211;
+ assert.throws(()=>previewPension(c,d),/65歳年金内訳.*一致/);
+});
 test('pension split mismatch, negative evidence, blank/zero are distinguished',()=>{
  const c=fixture(),d=pensionDraftFromConfig(c);
  d.primary.breakdownAtStart={basicAnnual:90,employeeAnnual:210,otherAnnual:1,source:'Synthetic'};
