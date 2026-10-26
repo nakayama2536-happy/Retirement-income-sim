@@ -2,7 +2,7 @@ import {runRetirementPlan,runForecastFromLatestActual,integrityChecks,CERTAINTY_
 import {configSignature} from './storage.mjs';
 
 export const PENSION_PEOPLE=['primary','spouse'];
-const fields=['startDate','annualAtStart','certainty','adoptionSource'];
+const fields=['startDate','annualAtStart','certainty','adoptionSource','breakdownAtStart','survivorReference'];
 const names={primary:'本人',spouse:'配偶者'};
 const pick=p=>Object.fromEntries(fields.filter(k=>Object.hasOwn(p||{},k)).map(k=>[k,structuredClone(p[k])]));
 const validDate=value=>typeof value==='string'&&/^[1-9]\d{3}-\d{2}-\d{2}$/.test(value)&&Number.isFinite(Date.parse(value))&&new Date(value).toISOString().slice(0,10)===value;
@@ -10,7 +10,7 @@ const validDate=value=>typeof value==='string'&&/^[1-9]\d{3}-\d{2}-\d{2}$/.test(
 export function pensionDraftFromConfig(config){
   return Object.fromEntries(PENSION_PEOPLE.map(key=>{
     const p=config.income?.pensions?.[key]||{};
-    return [key,{startMonth:p.startDate?.slice(0,7)||'',annualAtStart:p.annualAtStart??0,certainty:p.certainty||'unknown',adoptionSource:p.adoptionSource||''}];
+    return [key,{startMonth:p.startDate?.slice(0,7)||'',annualAtStart:p.annualAtStart??0,certainty:p.certainty||'unknown',adoptionSource:p.adoptionSource||'',...(p.breakdownAtStart?{breakdownAtStart:structuredClone(p.breakdownAtStart)}:{}),...(p.survivorReference?{survivorReference:structuredClone(p.survivorReference)}:{})}];
   }));
 }
 
@@ -23,6 +23,14 @@ export function pensionDraftMatches(config,draft){
   for(const key of PENSION_PEOPLE){
     if(normalized[key]?.annualAtStart===''||normalized[key]?.annualAtStart==null)return false;
     normalized[key].annualAtStart=Number(normalized[key].annualAtStart);
+    for(const meta of ['breakdownAtStart','survivorReference']){
+      if(normalized[key][meta]===null){delete normalized[key][meta];continue;}
+      if(normalized[key][meta]&&typeof normalized[key][meta]==='object'){
+        for(const field of Object.keys(normalized[key][meta])){
+          if(field.endsWith('Annual')&&normalized[key][meta][field]!==''&&normalized[key][meta][field]!=null)normalized[key][meta][field]=Number(normalized[key][meta][field]);
+        }
+      }
+    }
   }
   return configSignature(normalized)===configSignature(pensionDraftFromConfig(config));
 }
@@ -48,6 +56,38 @@ function candidateFromDraft(config,draft){
       if(month)p.startDate=month+'-01';else delete p.startDate;
     }
     p.annualAtStart=amount;
+    // Optional evidence fields never backfill the original pension total or turn
+    // absent legacy data into a fabricated split. Explicit null removes only metadata.
+    if(Object.hasOwn(d,'breakdownAtStart')){
+      if(d.breakdownAtStart===null)delete p.breakdownAtStart;
+      else {
+        const b=d.breakdownAtStart;
+        if(!b||typeof b!=='object'||Array.isArray(b))throw new Error(name+'の年金内訳が不正です');
+        const nextBreak={};
+        for(const field of ['basicAnnual','employeeAnnual','otherAnnual']){
+          const x=b[field];
+          if(x==null||x==='')nextBreak[field]=null;
+          else if(!Number.isFinite(Number(x))||Number(x)<0)throw new Error(name+'の年金内訳額が不正です');
+          else nextBreak[field]=Number(x);
+        }
+        if(typeof b.source!=='string'||b.source.length>160)throw new Error('年金内訳の出典は160文字以内にしてください');
+        nextBreak.source=b.source;
+        const nums=['basicAnnual','employeeAnnual','otherAnnual'].map(k=>nextBreak[k]);
+        if(nums.every(x=>x!==null)&&Math.abs(nums.reduce((a,b)=>a+b,0)-amount)>0.01)throw new Error(name+'の年金内訳合計が元の年金合計と一致しません');
+        p.breakdownAtStart=nextBreak;
+      }
+    }
+    if(Object.hasOwn(d,'survivorReference')){
+      if(d.survivorReference===null)delete p.survivorReference;
+      else {
+        const x=d.survivorReference;
+        if(!x||typeof x!=='object'||Array.isArray(x))throw new Error(name+'の遺族年金参考資料が不正です');
+        if(x.earningsBeforeDeferralAnnual===''||x.earningsBeforeDeferralAnnual==null||!Number.isFinite(Number(x.earningsBeforeDeferralAnnual))||Number(x.earningsBeforeDeferralAnnual)<0)
+          throw new Error(name+'の繰下げ前報酬比例額を確認してください');
+        if(typeof x.source!=='string'||x.source.length>160)throw new Error('報酬比例額の出典は160文字以内にしてください');
+        p.survivorReference={earningsBeforeDeferralAnnual:Number(x.earningsBeforeDeferralAnnual),source:x.source};
+      }
+    }
     if(d.certainty!==(p.certainty||'unknown'))p.certainty=d.certainty;
     if(d.adoptionSource!==(p.adoptionSource||'')){
       if(d.adoptionSource)p.adoptionSource=d.adoptionSource;else delete p.adoptionSource;
