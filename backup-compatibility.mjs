@@ -36,9 +36,10 @@ function requiredFeatures(value){
   for(const key of ['primary','spouse']){
     const p=c?.income?.pensions?.[key];
     if(!p)continue;
-    if(has(p,'breakdownAtStart')||has(p,'survivorReference')){
+    if(has(p,'breakdownAtStart')||has(p,'survivorReference')||has(p,'reference65')){
       if(has(p,'breakdownAtStart')&&!object(p.breakdownAtStart))throw new Error('年金内訳の保存形式が不正です。');
       if(has(p,'survivorReference')&&!object(p.survivorReference))throw new Error('遺族年金参考情報の形式が不正です。');
+      if(has(p,'reference65')&&!object(p.reference65))throw new Error('65歳基準年金資料の形式が不正です。');
       features.add('pension-breakdown-reference-v1');
     }
   }
