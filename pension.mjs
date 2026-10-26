@@ -2,7 +2,7 @@ import {runRetirementPlan,runForecastFromLatestActual,integrityChecks,CERTAINTY_
 import {configSignature} from './storage.mjs';
 
 export const PENSION_PEOPLE=['primary','spouse'];
-const fields=['startDate','annualAtStart','certainty','adoptionSource','breakdownAtStart','survivorReference'];
+const fields=['startDate','annualAtStart','certainty','adoptionSource','breakdownAtStart','survivorReference','reference65'];
 const names={primary:'本人',spouse:'配偶者'};
 const pick=p=>Object.fromEntries(fields.filter(k=>Object.hasOwn(p||{},k)).map(k=>[k,structuredClone(p[k])]));
 const validDate=value=>typeof value==='string'&&/^[1-9]\d{3}-\d{2}-\d{2}$/.test(value)&&Number.isFinite(Date.parse(value))&&new Date(value).toISOString().slice(0,10)===value;
@@ -10,7 +10,7 @@ const validDate=value=>typeof value==='string'&&/^[1-9]\d{3}-\d{2}-\d{2}$/.test(
 export function pensionDraftFromConfig(config){
   return Object.fromEntries(PENSION_PEOPLE.map(key=>{
     const p=config.income?.pensions?.[key]||{};
-    return [key,{startMonth:p.startDate?.slice(0,7)||'',annualAtStart:p.annualAtStart??0,certainty:p.certainty||'unknown',adoptionSource:p.adoptionSource||'',...(p.breakdownAtStart?{breakdownAtStart:structuredClone(p.breakdownAtStart)}:{}),...(p.survivorReference?{survivorReference:structuredClone(p.survivorReference)}:{})}];
+    return [key,{startMonth:p.startDate?.slice(0,7)||'',annualAtStart:p.annualAtStart??0,certainty:p.certainty||'unknown',adoptionSource:p.adoptionSource||'',...(p.breakdownAtStart?{breakdownAtStart:structuredClone(p.breakdownAtStart)}:{}),...(p.survivorReference?{survivorReference:structuredClone(p.survivorReference)}:{}),...(p.reference65?{reference65:structuredClone(p.reference65)}:{})}];
   }));
 }
 
@@ -23,7 +23,7 @@ export function pensionDraftMatches(config,draft){
   for(const key of PENSION_PEOPLE){
     if(normalized[key]?.annualAtStart===''||normalized[key]?.annualAtStart==null)return false;
     normalized[key].annualAtStart=Number(normalized[key].annualAtStart);
-    for(const meta of ['breakdownAtStart','survivorReference']){
+    for(const meta of ['breakdownAtStart','survivorReference','reference65']){
       if(normalized[key][meta]===null){delete normalized[key][meta];continue;}
       if(normalized[key][meta]&&typeof normalized[key][meta]==='object'){
         for(const field of Object.keys(normalized[key][meta])){
@@ -89,6 +89,29 @@ function candidateFromDraft(config,draft){
           throw new Error(name+'の繰下げ前報酬比例額を確認してください');
         if(typeof x.source!=='string'||x.source.length>160)throw new Error('報酬比例額の出典は160文字以内にしてください');
         p.survivorReference={...structuredClone(x),earningsBeforeDeferralAnnual:Number(x.earningsBeforeDeferralAnnual),source:x.source};
+      }
+    }
+    // This snapshot is the 65-year reference, not the pension annualAtStart
+    // when the person chooses a deferred claim at 70 or 75.
+    if(Object.hasOwn(d,'reference65')){
+      if(d.reference65===null)delete p.reference65;
+      else {
+        const b=d.reference65;
+        if(!b||typeof b!=='object'||Array.isArray(b))throw new Error(name+'の65歳基準資料の形式が不正です');
+        const values={...structuredClone(b)};
+        for(const field of ['basicAnnual','employeeEarningsAnnual','transitionalAnnual','totalAnnual']){
+          const n=b[field];
+          if(n==null||n==='')values[field]=null;
+          else if(!Number.isFinite(Number(n))||Number(n)<0)throw new Error(name+'の65歳基準額に不正な数値があります');
+          else values[field]=Number(n);
+        }
+        if(typeof b.source!=='string'||b.source.length>160)throw new Error('65歳基準額の出典は160文字以内にしてください');
+        values.source=b.source;
+        const fields65=['basicAnnual','employeeEarningsAnnual','transitionalAnnual'];
+        if(fields65.every(k=>values[k]!==null)&&values.totalAnnual!==null&&
+           Math.abs(fields65.reduce((sum,k)=>sum+values[k],0)-values.totalAnnual)>.01)
+          throw new Error(name+'の65歳年金内訳と65歳合計が一致しません');
+        p.reference65=values;
       }
     }
     if(d.certainty!==(p.certainty||'unknown'))p.certainty=d.certainty;
