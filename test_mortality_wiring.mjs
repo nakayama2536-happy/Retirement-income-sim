@@ -105,6 +105,17 @@ for(const [name,value,type] of [
  assert.equal(find(panel,'[data-pension-component="survivor-topup"]'),undefined);
 }));
 
+for(const [name,value] of [['deathMonth','2060-02'],['deceased','spouse']])test(`input-only ${name} invalidates pension confirmations before blur`,()=>withMortalityUI(({form,card,ids,run,estimate,dispatch})=>{
+ estimate();assert.ok(run());
+ for(const key of ['entitlement','claimed','deferral'])assert.equal(form.elements[key].checked,true);
+ assert.equal(ids.get('#mortalityPensionBreakdown').dataset.pensionState,'reference');
+ form.elements[name].value=value;dispatch(name,'input');
+ for(const key of ['entitlement','claimed','deferral'])assert.equal(form.elements[key].checked,false,`${name}: ${key}`);
+ assert.equal(form.elements.reviewed.checked,false);assert.equal(card.getCurrentComparison(),null);
+ assert.equal(ids.get('#mortalityPensionBreakdown').dataset.pensionState,'unknown');
+ assert.match(ids.get('#mortalityEstimateNotice').textContent,/死亡対象・年月.*確認を解除/);
+}));
+
 test('zero-allocation cost has no effect and weighted budget display preserves a valid pension reference',()=>withMortalityUI(({root,ids,run,estimate,dispatch,content,find})=>{
  estimate();const foodEffect=root.querySelector('[data-mortality-effect="food"]');assert.ok(foodEffect);assert.match(content(foodEffect),/配分0％.*影響0/);
  assert.match(ids.get('#mortalityAllocationTotal').textContent,/変更なし/);

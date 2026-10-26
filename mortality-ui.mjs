@@ -128,6 +128,15 @@ export function mountMortalityComparison(root,{getConfig,getBaseline,runPlan}){
  const pensionSignature=()=>JSON.stringify({config:getConfig(),fields:pensionFields.map(key=>[key,form.elements[key].value,form.elements[key].checked])});
  const clearPensionReference=()=>{pensionReference=null;renderPensionBreakdown(root.querySelector('#mortalityPensionBreakdown'),null);root.querySelector('#mortalityEstimateNotice').textContent='';};
  const validPensionReference=()=>{if(pensionReference&&pensionReference.signature!==pensionSignature())clearPensionReference();return pensionReference?.value??null;};
+ const pensionInputChanged=target=>{
+  if(pensionFields.includes(target.name))clearPensionReference();else validPensionReference();
+  // A month edit may emit input before change/blur. Old eligibility checks must
+  // already be cleared while the edited month is still focused.
+  if(['deceased','deathMonth'].includes(target.name)){
+   for(const key of ['entitlement','claimed','deferral'])form.elements[key].checked=false;
+   root.querySelector('#mortalityEstimateNotice').textContent='死亡対象・年月が変わったため受給条件の確認を解除しました。';
+  }
+ };
  const allocationInfo=()=>{
   for(const c of MORTALITY_COSTS){
    const effect=root.querySelector(`[data-mortality-effect="${c.key}"]`);
@@ -180,8 +189,8 @@ export function mountMortalityComparison(root,{getConfig,getBaseline,runPlan}){
   table.append(tbody);region.append(table);results.append(region);
   const foot=makeEl('p','muted','既存の臨時支出はそのまま計上し、死亡月に指定した一時費用だけを追加します。死亡後の未帰属収入がある場合は計算を停止します。負の期末資産は借入や実際の不足額とは断定できません。');results.append(foot);
  }
- form.addEventListener('input',e=>{if(e.target!==form.elements.reviewed)form.elements.reviewed.checked=false;if(pensionFields.includes(e.target.name))clearPensionReference();else validPensionReference();if(e.target.matches('[data-mortality-share],[data-mortality-factor]'))allocationInfo();ageHint();if(current)invalid('入力を変更したため、以前の試算は無効です。もう一度試算してください。');});
- form.addEventListener('change',e=>{if(e.target!==form.elements.reviewed)form.elements.reviewed.checked=false;if(pensionFields.includes(e.target.name))clearPensionReference();else validPensionReference();ageHint();if(['deceased','deathMonth'].includes(e.target.name)){for(const key of ['entitlement','claimed','deferral'])form.elements[key].checked=false;root.querySelector('#mortalityEstimateNotice').textContent='死亡対象・年月が変わったため受給条件の確認を解除しました。';}if(current)invalid('条件が変わりました。再試算してください。');});
+ form.addEventListener('input',e=>{if(e.target!==form.elements.reviewed)form.elements.reviewed.checked=false;pensionInputChanged(e.target);if(e.target.matches('[data-mortality-share],[data-mortality-factor]'))allocationInfo();ageHint();if(current)invalid('入力を変更したため、以前の試算は無効です。もう一度試算してください。');});
+ form.addEventListener('change',e=>{if(e.target!==form.elements.reviewed)form.elements.reviewed.checked=false;pensionInputChanged(e.target);ageHint();if(current)invalid('条件が変わりました。再試算してください。');});
  root.querySelector('#mortalityFictionalCosts').addEventListener('click',()=>{setAllocation(root,fictionalMortalityAllocation());allocationInfo();invalid('架空6,500万円世帯の660万円費目配分例を入力しました。本人の登録費用ではありません。');form.elements.reviewed.checked=false;});
  root.querySelector('#mortalityResetCosts').addEventListener('click',()=>{setAllocation(root,blankMortalityAllocation());allocationInfo();invalid('支出は全額を未配分・倍率1.0に戻しました。');form.elements.reviewed.checked=false;});
  root.querySelector('#mortalitySuggestAge').addEventListener('click',()=>{
