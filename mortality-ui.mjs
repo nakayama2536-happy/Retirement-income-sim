@@ -48,7 +48,7 @@ function renderPensionBreakdown(target,reference){
  table.append(body);wrap.append(table);target.append(wrap);
 }
 
-function renderTransition(root,baseline,mortality,allocation){
+function renderTransition(root,baseline,mortality,allocation,itemized=null,itemFactors=null){
  const at=mortality.monthly.findIndex(r=>r.month===mortality.firstChangedMonth);
  if(at<0){root.append(makeEl('p','muted','死亡翌月が計画範囲外のため、死亡後の収入差は表示しません。'));return;}
  const b=baseline[at],t=mortality.monthly[at];
@@ -68,10 +68,28 @@ function renderTransition(root,baseline,mortality,allocation){
   const tr=makeEl('tr');tableCell(tr,label);for(const v of [x,y,y-x])tableCell(tr,escMoney(v));body.append(tr);
  }
  table.append(body);wrap.append(table);root.append(wrap);
- const detail=makeEl('details');detail.append(makeEl('summary','','死亡翌月の費目別支出（仮配分・倍率の内訳）'));
+ const detail=makeEl('details');detail.append(makeEl('summary','','死亡翌月の費目別支出（登録内訳・未照合残額の倍率）'));
  const costs=makeEl('div','table-wrap'),ct=makeEl('table');ct.id='mortalityCostBreakdown';
  const ch=makeEl('thead'),cr=makeEl('tr');for(const v of ['費目','管理予算の配分％','倍率','基準月額','比較月額','減額（−は増額）'])tableCell(cr,v,true);ch.append(cr);ct.append(ch);const cb=makeEl('tbody');
- for(const row of allocation){const tr=makeEl('tr'),name=MORTALITY_COSTS.find(c=>c.key===row.key).label,amount=b.expense*row.share/100;tr.dataset.costKey=row.key;tableCell(tr,name);tableCell(tr,percent(row.share));tableCell(tr,percent(row.factor));for(const v of [amount,amount*row.factor,amount-amount*row.factor])tableCell(tr,escMoney(v));cb.append(tr);}
+ if(itemized){
+  const basis=itemized.months[at];
+  const rows=[
+    ...itemized.items.map(item=>({id:item.id,label:item.label,amount:basis.amounts[item.id]||0,factor:itemFactors[item.id]})),
+    {id:'unallocated',label:'未照合の管理予算残額',amount:basis.unallocated,factor:itemFactors.unallocated}
+  ];
+  for(const row of rows){
+    const tr=makeEl('tr');tr.dataset.costKey=row.id;
+    tableCell(tr,row.label);tableCell(tr,'登録額');tableCell(tr,percent(row.factor));
+    for(const v of [row.amount,row.amount*row.factor,row.amount-row.amount*row.factor])tableCell(tr,escMoney(v));
+    cb.append(tr);
+  }
+ }else{
+  for(const row of allocation){
+    const tr=makeEl('tr'),name=MORTALITY_COSTS.find(c=>c.key===row.key).label,amount=b.expense*row.share/100;
+    tr.dataset.costKey=row.key;tableCell(tr,name);tableCell(tr,percent(row.share));tableCell(tr,percent(row.factor));
+    for(const v of [amount,amount*row.factor,amount-amount*row.factor])tableCell(tr,escMoney(v));cb.append(tr);
+  }
+ }
  ct.append(cb);costs.append(ct);detail.append(costs);root.append(detail);
 }
 
@@ -192,7 +210,7 @@ export function mountMortalityComparison(root,{getConfig,getBaseline,runPlan}){
   form.elements.preClaimPension.required=early;
   root.querySelector('#mortalityPreClaimHint').textContent=early?`残された方の年金開始月 ${start.slice(0,7)} の前月まで別の仮額を指定してください。受給資格や繰下げ調整を自動判定しません。`:'繰下げと受給権は別途確認';
  };
- function showResult({mortality,original,allocation},parameters){
+ function showResult({mortality,original,allocation,itemized,itemFactors},parameters){
   results.replaceChildren();results.hidden=false;
   const warn=makeEl('p','mortality-warning','仮置き・未反映の比較です。年金資格、税社保、二人死亡後の相続・精算は未計算です。');results.append(warn);
   const summary=makeEl('div','mortality-metrics');
@@ -207,7 +225,7 @@ export function mountMortalityComparison(root,{getConfig,getBaseline,runPlan}){
   const diff=makeEl('p','muted',`${parameters.deceased==='primary'?'本人':'配偶者'}の死亡想定：${dateWithAge(parameters.deathMonth,getConfig(),parameters.deceased)}／年金合計の仮置き：${escMoney(parameters.survivorPension)}万円／年／死亡一時費用の仮置き：${escMoney(parameters.funeral)}万円。年金・通常費は翌月から変更。一時費用だけ死亡月に計上。`);results.append(diff);
   const reference=validPensionReference();
   results.append(makeEl('p','muted',reference?`試算に使った年金の参考内訳：自身の基礎 ${formatTotal(reference.ownBasicAnnual)} ＋ 自身の厚生 ${formatTotal(reference.ownEmployeeAnnual)} ＋ 遺族厚生の差額 ${formatTotal(reference.survivorTopUpAnnual)} ＝ 合計 ${formatTotal(parameters.survivorPension)}／年。`:'試算に使った年金合計の内訳は未確認です。手入力の合計に遺族年金を自動加算していません。'));
-  renderTransition(results,original.monthlyDetails,mortality,allocation);
+  renderTransition(results,original.monthlyDetails,mortality,allocation,itemized,itemFactors);
   const periods=agePeriodComparisonRows(original.monthlyDetails,{mortality});
   const headingBlock=heading('年齢期別の収入・支出・残高の差','万円。収入・支出はその期の合計、資産は期末残高。年金は収入合計の内数です。「管理予算の減額」は基準支出から差し引いた額で、負の値は増額です。');results.append(...headingBlock);
   const region=makeEl('div','table-wrap mortality-table-wrap');region.tabIndex=0;region.setAttribute('role','region');region.setAttribute('aria-label','死亡時期の年齢期別比較表');
