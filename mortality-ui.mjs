@@ -248,7 +248,11 @@ export function mountMortalityComparison(root,{getConfig,getBaseline,runPlan}){
   try{
     requireFreshBaseline();
     const cfg=getConfig(),who=values().deceased==='primary'?'primary':'spouse',survivor=who==='primary'?'spouse':'primary';
-    const own=cfg.income?.pensions?.[survivor],dead=cfg.income?.pensions?.[who],b=own?.breakdownAtStart,ref=dead?.survivorReference;
+    const own=cfg.income?.pensions?.[survivor],dead=cfg.income?.pensions?.[who],b=own?.breakdownAtStart;
+    const ref=dead?.survivorReference||(dead?.reference65?.employeeEarningsAnnual!=null?{
+      earningsBeforeDeferralAnnual:dead.reference65.employeeEarningsAnnual,
+      source:dead.reference65.source
+    }:null);
     if(!b||!ref||!b.source||!ref.source)throw Error('年金シートに内訳と出典を登録し、受給開始時点を確認してください');
     const parts=[b.basicAnnual,b.employeeAnnual,b.otherAnnual];
     if(!parts.every(x=>typeof x==='number'&&Number.isFinite(x))||Math.abs(parts.reduce((a,b)=>a+b,0)-Number(own.annualAtStart))>.01)
