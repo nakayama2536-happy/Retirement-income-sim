@@ -14,8 +14,18 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
+          ref: ${{ github.event.pull_request.head.sha }}
           persist-credentials: false
           fetch-depth: 0
+      - name: Record exact PR head used for update and restore checks
+        env:
+          EXPECTED_SOURCE_COMMIT: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$EXPECTED_SOURCE_COMMIT"
+          mkdir -p tools/browser-test/browser-results
+          git rev-parse HEAD > tools/browser-test/browser-results/source-commit.txt
+          git rev-parse HEAD^{tree} > tools/browser-test/browser-results/source-tree.txt
       - uses: actions/setup-node@v4
         with:
           node-version: '22'

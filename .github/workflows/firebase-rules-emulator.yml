@@ -9,6 +9,10 @@ on:
       - 'sync-*.mjs'
       - 'tools/firebase-mobile/mobile-policy.mjs'
       - 'tools/firebase-emulator/**'
+      - 'mortality-comparison.mjs'
+      - 'mortality-preview.mjs'
+      - 'mortality-ui.mjs'
+      - 'tools/browser-test/mortality-ui-check.mjs'
       - '.github/workflows/firebase-rules-emulator.yml'
   workflow_dispatch:
 
@@ -26,6 +30,18 @@ jobs:
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+      - name: Record exact source used for isolated emulator checks
+        env:
+          EXPECTED_SOURCE_COMMIT: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$EXPECTED_SOURCE_COMMIT"
+          mkdir -p firebase-rules-evidence
+          git rev-parse HEAD > firebase-rules-evidence/source-commit.txt
+          git rev-parse HEAD^{tree} > firebase-rules-evidence/source-tree.txt
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
@@ -48,3 +64,11 @@ jobs:
       - name: Verify appId-present and appId-absent configs with real local Auth and Firestore
         working-directory: tools/firebase-emulator
         run: npx --no-install firebase emulators:exec --only auth,firestore --project demo-lifeplan-encrypted-sync --config config-compat.firebase.json "node sdk-config-compat.test.mjs"
+      - name: Keep isolated emulator source identity
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: firebase-rules-source-evidence
+          path: firebase-rules-evidence/
+          if-no-files-found: warn
+          retention-days: 7

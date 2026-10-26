@@ -105,3 +105,27 @@
 .salary-step>fieldset{border:0;margin:0;padding:0 14px 14px;min-width:0}
 #backup .settings-group-body>article{margin-top:8px}
 @media(max-width:760px){.cashflow-table-scroll{max-height:60vh}.home-explanation>summary,.salary-step>summary{padding:13px 12px}}
+
+/* Isolated mortality sensitivity only: does not write or adopt any condition. */
+.mortality-form fieldset{border:1px solid #cbd9e2;border-radius:10px;padding:14px;margin:12px 0 18px}
+.mortality-form legend{font-weight:700;color:#243c56;padding:0 5px}
+.mortality-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+.mortality-form label{min-width:0}
+.mortality-form input,.mortality-form select{max-width:100%;box-sizing:border-box}
+.mortality-preset-controls{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0}
+.mortality-costs{display:grid;gap:6px}
+.mortality-cost-row{display:grid;grid-template-columns:minmax(150px,2fr) minmax(105px,1fr) minmax(90px,1fr);gap:10px;align-items:center;border-bottom:1px solid #e5ebf0;padding:6px 0}
+.mortality-cost-name{font-weight:600}
+.mortality-cost-row label{display:flex;flex-direction:column;font-size:.8rem;color:#36536b}
+.mortality-warning{background:#fff5e2;border:1px solid #dbc58e;border-radius:8px;padding:12px;line-height:1.55}
+.mortality-metrics{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:14px 0}
+.mortality-metric{display:flex;flex-direction:column;gap:6px;padding:12px;border:1px solid #cbd9e2;border-radius:10px;background:#f1f6fa}
+.mortality-metric span{color:#3c556a;font-size:.82rem}
+.mortality-metric strong{font-size:1.2rem;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.mortality-table-wrap{max-height:65vh;isolation:isolate;border:1px solid #cbd9e2;border-radius:8px}
+.mortality-table{border-collapse:separate;border-spacing:0;min-width:max-content}
+.mortality-table th{position:sticky;top:0;z-index:2;background:#e8f0f7;min-width:126px;text-align:center}
+.mortality-table td{min-width:126px;font-variant-numeric:tabular-nums;background:white}
+.mortality-table th:first-child,.mortality-table td:first-child{position:sticky;left:0;min-width:130px;background:#e8f0f7;z-index:1}
+.mortality-table thead th:first-child{z-index:3}
+@media(max-width:760px){.mortality-grid{grid-template-columns:1fr}.mortality-cost-row{grid-template-columns:minmax(96px,1.35fr) minmax(72px,1fr) minmax(65px,1fr);gap:6px}.mortality-cost-row label{font-size:.73rem}.mortality-metrics{grid-template-columns:1fr}.mortality-table-wrap{max-height:57vh}.mortality-form fieldset{padding:9px}}

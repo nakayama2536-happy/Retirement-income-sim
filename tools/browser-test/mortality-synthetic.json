@@ -1,0 +1,219 @@
+{
+  "schemaVersion": "0.9",
+  "config": {
+    "meta": {
+      "label": "架空検証専用",
+      "schemaVersion": "0.9"
+    },
+    "people": {
+      "primary": {
+        "birthDate": "1980-01-15"
+      },
+      "spouse": {
+        "birthDate": "1981-04-20"
+      }
+    },
+    "plan": {
+      "startAge": 70,
+      "endAge": 95,
+      "startDate": "2050-01-15",
+      "initialAsset": 6500,
+      "initialAssetIncludesIdeco": false,
+      "afterTaxReturn": 2.4,
+      "inflation": 1,
+      "priceBaseMonth": "2050-01",
+      "calendarMode": "anchored-months-v1"
+    },
+    "employment": {
+      "primary": {
+        "mainRetirement": {
+          "baseDate": "2045-01-15"
+        },
+        "sideWork": {
+          "monthlyGross": 0,
+          "startDate": "2050-01-01",
+          "endDate": "2055-01-01"
+        }
+      },
+      "spouse": {
+        "sideWork": {
+          "monthlyGross": 0,
+          "startDate": "2050-01-01",
+          "endDate": "2055-01-01"
+        }
+      }
+    },
+    "income": {
+      "pensions": {
+        "primary": {
+          "startDate": "2050-01-01",
+          "annualAtStart": 300
+        },
+        "spouse": {
+          "startDate": "2050-01-01",
+          "annualAtStart": 140
+        }
+      }
+    },
+    "unemployment": {
+      "baselineMode": "none"
+    },
+    "budgets": [
+      {
+        "fromAge": 65,
+        "toAge": 95,
+        "annualBudget": 660
+      }
+    ],
+    "events": [],
+    "actuals": {},
+    "reviews": {},
+    "pendingDecisions": [],
+    "cashflow": {
+      "periodOverrides": []
+    },
+    "reserve": {
+      "total": 0,
+      "minimumSafeAsset": 0,
+      "warningStrongBelow": 0,
+      "refillTarget": 0
+    },
+    "management": {
+      "thresholds": {},
+      "reserveUsedFinalThreshold": 0
+    },
+    "certainty": {
+      "initialAsset": "plan",
+      "returnRate": "scenario",
+      "inflation": "scenario",
+      "laborIncome": "plan",
+      "pension": "assumption",
+      "dc": "assumption",
+      "budgets": "plan",
+      "retirement": "company_estimate"
+    },
+    "taxPolicy": {
+      "budgetIncludesTaxSocial": true,
+      "reviewDeltaAnnual": 0,
+      "municipality": "未設定",
+      "rulesAsOf": "2026-09-24"
+    }
+  },
+  "scenarios": [
+    {
+      "id": "mortality-fixture-baseline",
+      "name": "架空の保存済み基準案",
+      "selected": true,
+      "role": "baseline",
+      "config": {
+        "meta": {
+          "label": "架空検証専用",
+          "schemaVersion": "0.9"
+        },
+        "people": {
+          "primary": {
+            "birthDate": "1980-01-15"
+          },
+          "spouse": {
+            "birthDate": "1981-04-20"
+          }
+        },
+        "plan": {
+          "startAge": 70,
+          "endAge": 95,
+          "startDate": "2050-01-15",
+          "initialAsset": 6500,
+          "initialAssetIncludesIdeco": false,
+          "afterTaxReturn": 2.4,
+          "inflation": 1,
+          "priceBaseMonth": "2050-01",
+          "calendarMode": "anchored-months-v1"
+        },
+        "employment": {
+          "primary": {
+            "mainRetirement": {
+              "baseDate": "2045-01-15"
+            },
+            "sideWork": {
+              "monthlyGross": 0,
+              "startDate": "2050-01-01",
+              "endDate": "2055-01-01"
+            }
+          },
+          "spouse": {
+            "sideWork": {
+              "monthlyGross": 0,
+              "startDate": "2050-01-01",
+              "endDate": "2055-01-01"
+            }
+          }
+        },
+        "income": {
+          "pensions": {
+            "primary": {
+              "startDate": "2050-01-01",
+              "annualAtStart": 300
+            },
+            "spouse": {
+              "startDate": "2050-01-01",
+              "annualAtStart": 140
+            }
+          }
+        },
+        "unemployment": {
+          "baselineMode": "none"
+        },
+        "budgets": [
+          {
+            "fromAge": 65,
+            "toAge": 95,
+            "annualBudget": 660
+          }
+        ],
+        "events": [],
+        "actuals": {},
+        "reviews": {},
+        "pendingDecisions": [],
+        "cashflow": {
+          "periodOverrides": []
+        },
+        "reserve": {
+          "total": 0,
+          "minimumSafeAsset": 0,
+          "warningStrongBelow": 0,
+          "refillTarget": 0
+        },
+        "management": {
+          "thresholds": {},
+          "reserveUsedFinalThreshold": 0
+        },
+        "certainty": {
+          "initialAsset": "plan",
+          "returnRate": "scenario",
+          "inflation": "scenario",
+          "laborIncome": "plan",
+          "pension": "assumption",
+          "dc": "assumption",
+          "budgets": "plan",
+          "retirement": "company_estimate"
+        },
+        "taxPolicy": {
+          "budgetIncludesTaxSocial": true,
+          "reviewDeltaAnnual": 0,
+          "municipality": "未設定",
+          "rulesAsOf": "2026-09-24"
+        }
+      }
+    }
+  ],
+  "syntheticEvidence": {
+    "tag": "SYSTEM-TEST-ONLY",
+    "keepUnknown": true
+  },
+  "recoveryCompatibility": {
+    "protocol": 1,
+    "producerBuild": "v0.9.7-i08-recovery-1",
+    "requiredFeatures": []
+  },
+  "exportedAt": "2026-10-10T08:50:28.451Z"
+}

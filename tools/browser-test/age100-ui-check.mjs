@@ -32,7 +32,7 @@ try{
  const plan=()=>page.evaluate(async()=>{const {runRetirementPlan}=await import('/calc.mjs');return runRetirementPlan(JSON.parse(localStorage.getItem('lifeplan-sim-state-v1')).config,{includeMonthlyDetails:true});});
  const openSettings=async()=>{await page.locator('[data-group="manage"]').click();await page.locator('[data-tab="settings"]').click();};
  await page.goto(origin,{waitUntil:'networkidle'});await page.locator('#dashboard').waitFor({state:'visible'});
- assert.match(await page.locator('#appVersion').innerText(),/^v0\.9\.7-ux-requests-20261025$/);
+ assert.match(await page.locator('#appVersion').innerText(),/^v0\.9\.7-mortality-review-20261026$/);
  let before=await snapshot(),beforePlan=await plan();assert.equal(before.config.plan.endAge,95);mark('existing-95-plan-preserved-on-first-open');
  await openSettings();await page.locator('#settingsGroup-goals').evaluate(el=>el.open=true);const host=page.locator('#detail-horizon'),submit=host.locator('button[type="submit"]');await submit.waitFor({state:'visible'});
  assert.equal(await host.locator('[name="endAge"]').inputValue(),'100');

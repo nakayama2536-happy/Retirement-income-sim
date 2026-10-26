@@ -32,17 +32,17 @@ test('trial modules have no persistence or adopting save/import actions',()=>{
 
 test('offline candidate assets and module dependency closure are included',()=>{
   const {out,runtime}=collect(new URL('.',import.meta.url).pathname);
-  for(const name of ['step8-trial-ui.mjs','step8-trial-workflow.mjs','full-plan-ui.mjs','full-plan-comparison.mjs','full-plan-saved.mjs','app.mjs','calc.mjs','retirement-comment.mjs']){
+  for(const name of ['step8-trial-ui.mjs','step8-trial-workflow.mjs','full-plan-ui.mjs','full-plan-comparison.mjs','full-plan-saved.mjs','app.mjs','calc.mjs','retirement-comment.mjs','mortality-preview.mjs','mortality-comparison.mjs','mortality-ui.mjs']){
     assert.ok(out.has(name),name);
     assert.ok(runtime.includes(name),name);
     assert.match(sw,new RegExp("\\./"+name.replaceAll('.','\\.')));
   }
-  assert.equal(runtime.length,59);
-  assert.equal(out.size,62);
+  assert.equal(runtime.length,62);
+  assert.equal(out.size,65);
 });
 
 test('candidate service worker is versioned separately without cache deletion or forced update',()=>{
-  assert.match(sw,/const CACHE=`\$\{CACHE_PREFIX\}v0\.9\.7-ux-requests-20261025`/);
+  assert.match(sw,/const CACHE=`\$\{CACHE_PREFIX\}v0\.9\.7-mortality-review-20261026`/);
   assert.doesNotMatch(sw,/caches\.delete\(/);
   assert.doesNotMatch(sw,/skipWaiting\s*\(/);
 });

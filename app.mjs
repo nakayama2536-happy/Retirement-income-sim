@@ -5,6 +5,7 @@ import {compareFullPlan} from './full-plan-comparison.mjs';
 import {prepareSavedComparison,comparisonSourceFingerprint} from './full-plan-saved.mjs';
 import {createConfigBackup} from './backup-compatibility.mjs';
 import {mountDetailUI} from './detail-ui.mjs';
+import {mountMortalityComparison} from './mortality-ui.mjs';
 import {dateWithAge,ageOn} from './date-display.mjs';
 import {mountCalendarSheet} from './calendar-ui.mjs';
 import {mountExpenseSheet} from './expense-ui.mjs';
@@ -50,10 +51,11 @@ let result = null;
 let forecast = null;
 let showActuals = false;
 let renderedInputValues=new Map();
+const mortalityCard=mountMortalityComparison(document.getElementById('mortalityComparisonContainer'),{getConfig:()=>config,getBaseline:()=>result,runPlan:runRetirementPlan});
 
 function inputValues(){
   return new Map([...document.querySelectorAll('#dashboard input, #dashboard select, #dashboard textarea')]
-    .filter(input=>input.id!=='expenseDisplaySource'&&!input.closest('#pension, #salary, #salaryIdecoInputs, #calendarSheet, #expenseSheet, #incomeSheet, .detail-form, #step8TrialContainer, #fullPlanComparisonContainer, #privateSyncContainer'))
+    .filter(input=>input.id!=='expenseDisplaySource'&&!input.closest('#mortality, #pension, #salary, #salaryIdecoInputs, #calendarSheet, #expenseSheet, #incomeSheet, .detail-form, #step8TrialContainer, #fullPlanComparisonContainer, #privateSyncContainer'))
     .map(input=>[input.id||(input.dataset.reviewKey?`review/${input.dataset.reviewKey}`:input.form?.id&&input.name?`${input.form.id}/${input.name}`:''),{input,value:input.type==='checkbox'?input.checked:input.value}])
     .filter(([key])=>key));
 }
@@ -192,6 +194,7 @@ function refresh({calculated=null}={}) {
   detailUI.render();
   step8TrialCard.reset();
   fullPlanCard.reset();
+  mortalityCard.invalidate();
   renderedInputValues=new Map([...inputValues()].map(([key,{value}])=>[key,value]));
   migrationPanel.render();
 }
@@ -936,7 +939,7 @@ mountRecoveryCheck();
 window.addEventListener('storage',event=>{
   migrationPanel.invalidate(event);
   if(event.key===null||MIGRATION_KEYS.includes(event.key)){
-    fullPlanCard.invalidate();detailUI.invalidate();pensionSheet.invalidate();salarySheet.invalidate();calendarSheet.invalidate();expenseSheet.invalidate();incomeSheet.invalidate();showNotice('別画面で設定が更新されました。再読み込みしてから編集してください。','error');
+    fullPlanCard.invalidate();mortalityCard.invalidate({external:true});detailUI.invalidate();pensionSheet.invalidate();salarySheet.invalidate();calendarSheet.invalidate();expenseSheet.invalidate();incomeSheet.invalidate();showNotice('別画面で設定が更新されました。再読み込みしてから編集してください。','error');
   }
 });
 
@@ -947,7 +950,7 @@ document.querySelectorAll('[data-help]').forEach(btn=>btn.addEventListener('clic
 }));
 el('helpClose').addEventListener('click',()=>el('helpDialog').close());
 
-el('appVersion').textContent='v0.9.7-ux-requests-20261025'; el('rulesVersion').textContent=RULES.asOf;
+el('appVersion').textContent='v0.9.7-mortality-review-20261026'; el('rulesVersion').textContent=RULES.asOf;
 if(startupError){setEmptyState();showNotice(`保存データを読み込めません。復元用バックアップを確認してください。${startupError}`,'error');}
 else refresh();
 if(!writeAccess.writable)showNotice('この画面は読み取り専用です。別の編集画面を閉じて再読み込みしてください。同時更新制御が利用できない場合も保存を停止します。','error');
