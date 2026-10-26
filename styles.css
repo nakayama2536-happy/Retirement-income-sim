@@ -129,3 +129,26 @@
 .mortality-table th:first-child,.mortality-table td:first-child{position:sticky;left:0;min-width:130px;background:#e8f0f7;z-index:1}
 .mortality-table thead th:first-child{z-index:3}
 @media(max-width:760px){.mortality-grid{grid-template-columns:1fr}.mortality-cost-row{grid-template-columns:minmax(96px,1.35fr) minmax(72px,1fr) minmax(65px,1fr);gap:6px}.mortality-cost-row label{font-size:.73rem}.mortality-metrics{grid-template-columns:1fr}.mortality-table-wrap{max-height:57vh}.mortality-form fieldset{padding:9px}}
+
+
+/* H-MORT-07: aligned year/pension inputs and itemized death-expense control. */
+.mortality-grid>label{display:grid;grid-template-rows:minmax(3.5rem,auto) 46px auto;gap:6px;align-content:start}
+.mortality-grid>label>input,.mortality-grid>label>select{height:46px;min-height:46px;width:100%;min-width:0;align-self:start}
+.mortality-item-rows{display:grid;gap:2px;margin:14px 0 0}
+.mortality-item-row{display:grid;grid-template-columns:minmax(160px,2.2fr) minmax(110px,1fr) minmax(90px,.8fr) minmax(120px,1.15fr);gap:10px;align-items:center;padding:9px 6px;border-bottom:1px solid #e4eaf0;font-size:.87rem}
+.mortality-item-row input{width:100%;min-width:0;min-height:44px}
+.mortality-item-row strong{white-space:normal}
+.mortality-item-head{background:#f0f4f8}
+.mortality-remainder-row{background:#fff8e9}
+.pension-component-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.pension-component-grid label{display:flex;flex-direction:column;gap:5px}
+.pension-component-grid label>span{min-height:2.6rem}
+.pension-component-grid input{min-width:0;width:100%;min-height:44px}
+@media(max-width:760px){
+ .mortality-grid>label{grid-template-rows:auto 46px auto}
+ .mortality-item-row{grid-template-columns:minmax(130px,1.5fr) minmax(90px,1fr);gap:6px}
+ .mortality-item-head{display:none}
+ .mortality-remainder-row{grid-template-columns:1fr 1fr}
+ .pension-component-grid{grid-template-columns:1fr}
+ .pension-component-grid label>span{min-height:0}
+}
