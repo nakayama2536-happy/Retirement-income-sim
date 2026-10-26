@@ -70,7 +70,7 @@ function renderTransition(root,baseline,mortality,allocation,itemized=null,itemF
  table.append(body);wrap.append(table);root.append(wrap);
  const detail=makeEl('details');detail.append(makeEl('summary','','死亡翌月の費目別支出（登録内訳・未照合残額の倍率）'));
  const costs=makeEl('div','table-wrap'),ct=makeEl('table');ct.id='mortalityCostBreakdown';
- const ch=makeEl('thead'),cr=makeEl('tr');for(const v of ['費目','管理予算の配分％','倍率','基準月額','比較月額','減額（−は増額）'])tableCell(cr,v,true);ch.append(cr);ct.append(ch);const cb=makeEl('tbody');
+ const ch=makeEl('thead'),cr=makeEl('tr');for(const v of ['費目','金額の出典','倍率','基準月額','比較月額','減額（−は増額）'])tableCell(cr,v,true);ch.append(cr);ct.append(ch);const cb=makeEl('tbody');
  if(itemized){
   const basis=itemized.months[at];
   const rows=[
@@ -113,7 +113,7 @@ export function mountMortalityComparison(root,{getConfig,getBaseline,runPlan}){
  <details><summary>遺族厚生年金の差額と合計を参考計算する（65歳以上・資料確認が必要）</summary>
   <p class="muted">受給権・請求状況・繰下げの影響を資料で確認した場合のみ使用してください。死亡者の老齢厚生年金の繰下げ増額分は含めません。計算結果は本人の確定受給額ではありません。</p>
   <div class="form-grid mortality-grid">
-   <label>亡くなる方の老齢厚生年金の報酬比例部分（繰下げ加算なし・万円／年）<input name="deceasedEarnings" type="number" step="any" min="0" placeholder="資料を確認して入力"></label>
+   <label>死亡者の報酬比例部分（繰下げ前・万円／年）<input name="deceasedEarnings" type="number" step="any" min="0" placeholder="資料を確認して入力"></label>
    <label>残された方自身の老齢厚生年金（万円／年）<input name="survivorEmployee" type="number" step="any" min="0"></label>
    <label>残された方自身の老齢基礎年金（万円／年）<input name="survivorBasic" type="number" step="any" min="0"></label>
   </div>
