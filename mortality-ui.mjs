@@ -226,7 +226,27 @@ export function mountMortalityComparison(root,{getConfig,getBaseline,runPlan}){
   try{requireFreshBaseline();const cfg=getConfig();if(!cfg)throw Error('設定を読み込んでください');const plan=runPlan(cfg,{includeMonthlyDetails:true});const row=plan.monthlyDetails.find(r=>r.age===80);if(!row)throw Error('80歳期が現在の計算対象外です');form.elements.deathMonth.value=row.month;form.elements.reviewed.checked=false;for(const key of ['entitlement','claimed','deferral'])form.elements[key].checked=false;clearPensionReference();ageHint();itemizedControls?.refresh();saveInputs();invalid('本人80歳期の最初の年月を候補にしました。死亡日・年金はまだ確認されていません。');}
   catch(e){invalid(e.message);}
  });
- root.querySelector('#mortalityEstimatePension').addEventListener('click',()=>{
+ root.querySelector('#mortalityUseRegisteredPension')?.addEventListener('click',()=>{
+  try{
+    requireFreshBaseline();
+    const cfg=getConfig(),who=values().deceased==='primary'?'primary':'spouse',survivor=who==='primary'?'spouse':'primary';
+    const own=cfg.income?.pensions?.[survivor],dead=cfg.income?.pensions?.[who],b=own?.breakdownAtStart,ref=dead?.survivorReference;
+    if(!b||!ref||!b.source||!ref.source)throw Error('年金シートに内訳と出典を登録し、受給開始時点を確認してください');
+    const parts=[b.basicAnnual,b.employeeAnnual,b.otherAnnual];
+    if(!parts.every(x=>typeof x==='number'&&Number.isFinite(x))||Math.abs(parts.reduce((a,b)=>a+b,0)-Number(own.annualAtStart))>.01)
+      throw Error('自身の基礎・厚生・その他の年金合計が登録済み年額と一致しません');
+    if(!Number.isFinite(ref.earningsBeforeDeferralAnnual)||ref.earningsBeforeDeferralAnnual<0)
+      throw Error('死亡者の報酬比例部分（繰下げ前）を資料で確認してください');
+    form.elements.deceasedEarnings.value=String(ref.earningsBeforeDeferralAnnual);
+    form.elements.survivorEmployee.value=String(b.employeeAnnual);
+    form.elements.survivorBasic.value=String(b.basicAnnual);
+    for(const k of ['entitlement','claimed','deferral'])form.elements[k].checked=false;
+    clearPensionReference();invalid('保存済み内訳を参考欄へ引用しました。受給権・請求・繰下げ影響は改めて確認してください。');
+    root.querySelector('#mortalityEstimateNotice').textContent='年金シートの出典付き内訳を引用しました。制度の受給資格まで自動認定したものではありません。';
+    saveInputs();
+  }catch(e){root.querySelector('#mortalityEstimateNotice').textContent=e.message;}
+});
+root.querySelector('#mortalityEstimatePension').addEventListener('click',()=>{
   clearPensionReference();
   try{
    requireFreshBaseline();const cfg=getConfig();if(!cfg)throw Error('採用条件を読み込んでください');
