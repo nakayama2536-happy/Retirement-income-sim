@@ -147,7 +147,26 @@ export function mountMortalityComparison(root,{getConfig,getBaseline,runPlan}){
    root.querySelector('#mortalityEstimateNotice').textContent='死亡対象・年月が変わったため受給条件の確認を解除しました。';
   }
  };
- const allocationInfo=()=>{
+ const previous=readMortalityDraft(getConfig());
+  if(previous?.values)for(const [key,value] of Object.entries(previous.values)){
+    if(form.elements[key]&&typeof value==='string')form.elements[key].value=value;
+  }
+  let itemizedControls=null;
+  const saveInputs=()=>{
+    if(!itemizedControls)return; // simulated legacy harness lacks a DOM HTML parser
+    const fields=['deceased','deathMonth','survivorPension','preClaimPension','funeral','deceasedEarnings','survivorEmployee','survivorBasic'];
+    const values=Object.fromEntries(fields.map(k=>[k,form.elements[k]?.value||'']));
+    values.sourceProfile=root.querySelector('#mortalityExpenseSource').value;
+    values.residualFactor=root.querySelector('#mortalityRemainderFactor').value;
+    saveMortalityDraft(getConfig(),values,itemizedControls.factorDraft());
+  };
+  itemizedControls=mountMortalityItemizedControls(root,{getConfig,runPlan,onChange:()=>{
+    form.elements.reviewed.checked=false;
+    if(current)invalid('死亡後の倍率が変わりました。もう一度試算してください。');
+    saveInputs();
+  }});
+  if(itemizedControls)itemizedControls.restore(previous);
+  const allocationInfo=()=>{
   for(const c of MORTALITY_COSTS){
    const effect=root.querySelector(`[data-mortality-effect="${c.key}"]`);
    try{
