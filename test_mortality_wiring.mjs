@@ -11,7 +11,7 @@ test('mortality modules have no persistent data, network, adoption or restore ca
 test('full browser gate uses synthetic file and disallows external origins',()=>{const t=read('tools/browser-test/mortality-ui-check.mjs');assert.match(t,/mortality-synthetic\.json/);assert.match(t,/r\.abort\(\)/);assert.match(t,/__mortalityWrites/);assert.match(t,/\['webkit',webkit\]/);});
 test('new cached assets have matching manifest entries and source bytes',()=>{const {out,runtime}=collect(new URL('.',import.meta.url).pathname),manifest=JSON.parse(out.get('distribution-manifest.json'));for(const name of ['mortality-preview.mjs','mortality-comparison.mjs','mortality-ui.mjs']){assert.ok(runtime.includes(name));const row=manifest.files.find(x=>x.name===name);assert.ok(row);assert.equal(row.sha256,crypto.createHash('sha256').update(out.get(name)).digest('hex'));}});
 test('UI uses shared stage boundary, no age or 70-year pension inferred from existing totals',()=>{assert.match(ui,/survivorPensionTiming\(c,p,val\)/);assert.match(comparison,/needsPreClaim:monthlyIndex\(start\)>firstIndex/);assert.match(ui,/未配分/);});
-test('totals explain extra expenses and same-month income change',()=>{assert.match(ui,/mortalityMonthlyTransition/);assert.match(ui,/mortalityCostBreakdown/);assert.match(ui,/比較：臨時支出（死亡費用込）/);assert.match(ui,/同じ年月の基準案と比較案/);});
+test('totals explain extra expenses and same-month income change',()=>{assert.match(ui,/mortalityMonthlyTransition/);assert.match(ui,/mortalityCostBreakdown/);assert.match(ui,/比較：臨時支出（一時費用込）/);assert.match(ui,/同じ年月の基準案と比較案/);});
 
 // Small event/element model: exercises the actual UI handlers and real monthly
 // calculator without claiming browser or persistent-storage integration coverage.
@@ -113,7 +113,7 @@ for(const [name,value] of [['deathMonth','2060-02'],['deceased','spouse']])test(
  for(const key of ['entitlement','claimed','deferral'])assert.equal(form.elements[key].checked,false,`${name}: ${key}`);
  assert.equal(form.elements.reviewed.checked,false);assert.equal(card.getCurrentComparison(),null);
  assert.equal(ids.get('#mortalityPensionBreakdown').dataset.pensionState,'unknown');
- assert.match(ids.get('#mortalityEstimateNotice').textContent,/死亡対象・年月.*確認を解除/);
+ assert.match(ids.get('#mortalityEstimateNotice').textContent,/対象の方・年月.*確認を解除/);
 }));
 
 test('zero-allocation cost has no effect and weighted budget display preserves a valid pension reference',()=>withMortalityUI(({root,ids,run,estimate,dispatch,content,find})=>{

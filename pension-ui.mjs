@@ -24,12 +24,44 @@ export function mountPensionSheet({getConfig,onCommit,showNotice}){
     if(changed)el(`${key}PensionEstimateDetails`).open=true;
     el(`${key}PensionAmountNote`).textContent=changed?'開始月を変更しています。見込額を年額欄へ入れるか、公式資料の金額を直接入力してください。':'年額は公式資料の金額を直接入力することもできます。';
   }
+  function renderBreakdown(key){
+    const p=getConfig().income.pensions[key];
+    if(!el(key+'PensionBasic'))return;
+    const fields=['Basic','Employee','Other'].map(k=>el(key+'Pension'+k).value.trim());
+    const amounts=fields.map(v=>v===''?null:Number(v));
+    const total=Number(el(key+'PensionAmount').value);
+    const hint=el(key+'PensionBreakdownHint');
+    if(amounts.every(x=>x===null)){hint.textContent='内訳未入力です。従来の年金合計額から推定分割しません。';return;}
+    const sum=amounts.filter(x=>x!==null&&Number.isFinite(x)).reduce((a,b)=>a+b,0);
+    const full=amounts.every(x=>x!==null&&Number.isFinite(x));
+    hint.textContent=full?(Math.abs(sum-total)<=.01?'内訳合計と年金合計が一致しています。':'内訳合計 '+yen(sum)+'／年と年金合計 '+yen(total)+'／年が一致しません。反映できません。'):'入力済み内訳の小計 '+yen(sum)+'／年。未入力項目は0円とみなさず、年金合計は現在の値を維持します。';
+    if(p.startDate?.slice(0,7)!==el(key+'PensionMonth').value)hint.textContent+=' 受給開始月の変更後は内訳の対象時点も確認してください。';
+  }
   const error=message=>{el('pensionError').textContent=message;el('pensionError').hidden=!message;};
   function readDraft(){
-    return Object.fromEntries(PENSION_PEOPLE.map(key=>[key,{
-      startMonth:el(`${key}PensionMonth`).value,annualAtStart:el(`${key}PensionAmount`).value,
-      certainty:el(`${key}PensionCertainty`).value,adoptionSource:el(`${key}PensionSource`).value
-    }]));
+    const c=getConfig();
+    return Object.fromEntries(PENSION_PEOPLE.map(key=>{
+      const old=c.income.pensions[key],d={
+        startMonth:el(key+'PensionMonth').value,annualAtStart:el(key+'PensionAmount').value,
+        certainty:el(key+'PensionCertainty').value,adoptionSource:el(key+'PensionSource').value
+      };
+      const v=['Basic','Employee','Other'].map(k=>el(key+'Pension'+k).value.trim());
+      const source=el(key+'PensionBreakdownSource').value.trim();
+      if(v.some(x=>x!=='')||source)d.breakdownAtStart={...(old.breakdownAtStart||{}),basicAnnual:v[0],employeeAnnual:v[1],otherAnnual:v[2],source};
+      else if(old.breakdownAtStart)d.breakdownAtStart=null;
+      const earnings=el(key+'PensionPreDeferral').value.trim(),referenceSource=el(key+'PensionPreDeferralSource').value.trim();
+      if(earnings!==''||referenceSource)d.survivorReference={...(old.survivorReference||{}),earningsBeforeDeferralAnnual:earnings,source:referenceSource};
+      else if(old.survivorReference)d.survivorReference=null;
+      const referenceValues=['65Basic','65Earnings','65Transitional','65Total'].map(k=>el(key+'Pension'+k).value.trim());
+      const sourceAt65=el(key+'Pension65Source').value.trim();
+      if(referenceValues.some(v=>v!=='')||sourceAt65)d.reference65={
+        ...(old.reference65||{}),
+        basicAnnual:referenceValues[0],employeeEarningsAnnual:referenceValues[1],
+        transitionalAnnual:referenceValues[2],totalAnnual:referenceValues[3],source:sourceAt65
+      };
+      else if(old.reference65)d.reference65=null;
+      return [key,d];
+    }));
   }
   function saveDraft(){
     try{savePensionDraft({context:pensionDraftContext(getConfig()),draft});el('pensionDraftNote').textContent='開始月・年額などの入力途中の内容は、このブラウザに下書き保存します。「全体シミュレーションに反映」を押すまで、ホームや年間収支は変わりません。';}
@@ -60,6 +92,31 @@ export function mountPensionSheet({getConfig,onCommit,showNotice}){
         </details>
         <label>${names[key]}の年金年額（税引前・万円）<input id="${key}PensionAmount" type="number" min="0" step="0.0001" required inputmode="decimal"></label>
         <p id="${key}PensionAmountNote" class="muted"></p>
+        <details class="pension-components" id="${key}PensionComponents"><summary>基礎年金・厚生年金を分けて入力（遺族年金計算の参考資料）</summary>
+        <p class="muted">未入力は未確認のまま保持します。既存の合計額を自動分割せず、内訳を入力しても合計年金や資産計算を自動変更しません。全額入力した場合は元の合計年額と照合します。</p>
+        <div class="form-grid pension-component-grid">
+        <label><span>老齢基礎年金（万円／年）</span><input id="${key}PensionBasic" type="number" min="0" step="0.0001" inputmode="decimal"></label>
+        <label><span>老齢厚生年金（万円／年）</span><input id="${key}PensionEmployee" type="number" min="0" step="0.0001" inputmode="decimal"></label>
+        <label><span>その他加算・調整（万円／年）</span><input id="${key}PensionOther" type="number" min="0" step="0.0001" inputmode="decimal"></label>
+        <label><span>内訳の資料名・確認日</span><input id="${key}PensionBreakdownSource" type="text" maxlength="160" placeholder="ねんきんネットなど"></label>
+        <label><span>報酬比例部分・繰下げ加算前（万円／年）</span><input id="${key}PensionPreDeferral" type="number" min="0" step="0.0001" inputmode="decimal"></label>
+        <label><span>報酬比例部分の資料名・確認日</span><input id="${key}PensionPreDeferralSource" type="text" maxlength="160"></label>
+        </div>
+        <p id="${key}PensionBreakdownHint" class="muted" role="status"></p>
+        <p class="muted">遺族厚生年金は報酬比例部分をもとに条件付きで試算します。老齢厚生年金総額を報酬比例部分として自動転用しません。</p>
+        </details>
+        <details class="pension-components" id="${key}Pension65Reference">
+         <summary>65歳基準の年金内訳（70歳・75歳開始額とは別）</summary>
+         <p class="muted">65歳時点のねんきん定期便などの数値を入力します。受給開始を70歳にした場合も、65歳の内訳を70歳年金へ上書きしません。先に旅立つ方の報酬比例部分を確認する参考情報です。</p>
+         <div class="form-grid pension-component-grid">
+          <label><span>65歳：老齢基礎年金（万円／年）</span><input id="${key}Pension65Basic" type="number" min="0" step="0.0001"></label>
+          <label><span>65歳：老齢厚生年金の報酬比例（万円／年）</span><input id="${key}Pension65Earnings" type="number" min="0" step="0.0001"></label>
+          <label><span>65歳：経過的加算等（万円／年）</span><input id="${key}Pension65Transitional" type="number" min="0" step="0.0001"></label>
+          <label><span>65歳：合計年額（万円／年）</span><input id="${key}Pension65Total" type="number" min="0" step="0.0001"></label>
+          <label><span>資料名・確認日</span><input id="${key}Pension65Source" type="text" maxlength="160"></label>
+         </div>
+         <p class="muted">65歳時点の基礎＋報酬比例＋経過的加算等＝65歳合計を照合します。未入力を0円として補いません。</p>
+        </details>
         <label>${names[key]}の金額の確度<select id="${key}PensionCertainty">${options}</select></label>
         <label>${names[key]}の出典・メモ<input id="${key}PensionSource" type="text" maxlength="160" placeholder="資料名・確認日など"></label>
       </fieldset>`).join('');
@@ -68,6 +125,15 @@ export function mountPensionSheet({getConfig,onCommit,showNotice}){
         el(`${key}PensionAmount`).value=draft[key].annualAtStart??'';
         el(`${key}PensionCertainty`).value=draft[key].certainty||'unknown';
         el(`${key}PensionSource`).value=draft[key].adoptionSource||'';
+        const b=draft[key].breakdownAtStart||{},v=draft[key].survivorReference||{};
+        for(const [suffix,field] of [['Basic','basicAnnual'],['Employee','employeeAnnual'],['Other','otherAnnual']])el(key+'Pension'+suffix).value=b[field]??'';
+        el(key+'PensionBreakdownSource').value=b.source||'';
+        el(key+'PensionPreDeferral').value=v.earningsBeforeDeferralAnnual??'';
+        el(key+'PensionPreDeferralSource').value=v.source||'';
+        const ref65=draft[key].reference65||{};
+        for(const [suffix,field] of [['65Basic','basicAnnual'],['65Earnings','employeeEarningsAnnual'],['65Transitional','transitionalAnnual'],['65Total','totalAnnual']])
+          el(key+'Pension'+suffix).value=ref65[field]??'';
+        el(key+'Pension65Source').value=ref65.source||'';
         const base=c.income.pensions[key].alternatives?.['65'];
         el(`${key}PensionBase65`).value=typeof base==='number'&&Number.isFinite(base)&&base>=0?base:'';
         el(`${key}PensionUseEstimate`).addEventListener('click',()=>{
@@ -84,7 +150,7 @@ export function mountPensionSheet({getConfig,onCommit,showNotice}){
     for(const key of PENSION_PEOPLE){
       const p=c.income.pensions[key];
       el(`${key}PensionAdopted`).textContent=`現在のシミュレーションで使用中：${month(p,c,key)}から ${yen(p.annualAtStart)}/年（${CERTAINTY_LABELS[p.certainty]||'未確認'}）`;
-      renderEstimate(key);
+      renderEstimate(key);renderBreakdown(key);
       const refs=Object.entries(p.alternatives||{}).filter(([age,value])=>/^\d+$/.test(age)&&typeof value==='number'&&Number.isFinite(value));
       el(`${key}PensionReferences`).innerHTML=refs.length?`<details><summary>登録済みの比較値を見る</summary><ul class="pension-reference">${refs.map(([age,value])=>`<li>${esc(age)}歳：${yen(value)}/年</li>`).join('')}</ul><p class="muted">${esc(p.note||'出典・受給条件は元の資料で確認してください。')}<br>比較値は今回の反映では変更しません。</p></details>`:'<p class="muted">比較用の見込額は未登録です。</p>';
     }
@@ -127,7 +193,7 @@ export function mountPensionSheet({getConfig,onCommit,showNotice}){
       if([`${key}PensionMonth`,`${key}PensionAmount`].includes(event.target.id)&&['confirmed','official_estimate'].includes(el(`${key}PensionCertainty`).value))
         el(`${key}PensionCertainty`).value='scenario';
     }
-    draft=readDraft();invalidate();error('');saveDraft();state();PENSION_PEOPLE.forEach(renderEstimate);
+    draft=readDraft();invalidate();error('');saveDraft();state();PENSION_PEOPLE.forEach(k=>{renderEstimate(k);renderBreakdown(k);});
   });
   el('pensionForm').addEventListener('submit',event=>{
     event.preventDefault();error('');draft=readDraft();saveDraft();

@@ -70,7 +70,8 @@
     "reviews": {},
     "pendingDecisions": [],
     "cashflow": {
-      "periodOverrides": []
+      "periodOverrides": [],
+      "detailSourceProfile": "work-v0.9.7"
     },
     "reserve": {
       "total": 0,
@@ -97,6 +98,32 @@
       "reviewDeltaAnnual": 0,
       "municipality": "未設定",
       "rulesAsOf": "2026-09-24"
+    },
+    "expenseDetail": {
+      "monthlyCategories": [
+        {
+          "key": "house",
+          "label": "不動産",
+          "items": [
+            {
+              "key": "housing",
+              "label": "住居",
+              "amount": 15
+            }
+          ]
+        },
+        {
+          "key": "food",
+          "label": "食費",
+          "amount": 10
+        },
+        {
+          "key": "utilities",
+          "label": "水道光熱費",
+          "amount": 5
+        }
+      ],
+      "travelAnnualBase": 0
     }
   },
   "scenarios": [
@@ -175,7 +202,8 @@
         "reviews": {},
         "pendingDecisions": [],
         "cashflow": {
-          "periodOverrides": []
+          "periodOverrides": [],
+          "detailSourceProfile": "work-v0.9.7"
         },
         "reserve": {
           "total": 0,
@@ -202,6 +230,32 @@
           "reviewDeltaAnnual": 0,
           "municipality": "未設定",
           "rulesAsOf": "2026-09-24"
+        },
+        "expenseDetail": {
+          "monthlyCategories": [
+            {
+              "key": "house",
+              "label": "不動産",
+              "items": [
+                {
+                  "key": "housing",
+                  "label": "住居",
+                  "amount": 15
+                }
+              ]
+            },
+            {
+              "key": "food",
+              "label": "食費",
+              "amount": 10
+            },
+            {
+              "key": "utilities",
+              "label": "水道光熱費",
+              "amount": 5
+            }
+          ],
+          "travelAnnualBase": 0
         }
       }
     }

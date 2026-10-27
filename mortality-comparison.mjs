@@ -6,6 +6,7 @@
  */
 import {dateParts} from './date-display.mjs';
 import {MortalityPreviewError,simulateMortalityPreview,PROPOSAL_FACTORS,monthlyIndex} from './mortality-preview.mjs';
+import {inspectMortalityExpenseBudget,applyMortalityExpenseMultipliers} from './mortality-itemized.mjs';
 
 export const MORTALITY_COSTS=Object.freeze([
  {key:'food',label:'食費',exampleAnnual:120,factor:.7},
@@ -78,8 +79,8 @@ export function survivorPensionTiming(config,deathPerson,deathMonth){
 }
 
 /** Recomputes on the existing adopted monthly ledger without storing changes. */
-export function calculateMortalityComparison({config,baseline,deathPerson,deathMonth,survivorTotalAnnual,survivorPensionBeforeClaimAnnual=null,funeralExpenseMan,allocation,planCalculator,acknowledged}){
- if(acknowledged!==true)fail('not-reviewed','費目配分と遺族年金が仮定であることを確認してください');
+export function calculateMortalityComparison({config,baseline,deathPerson,deathMonth,survivorTotalAnnual,survivorPensionBeforeClaimAnnual=null,funeralExpenseMan,allocation=null,itemFactors=null,unallocatedFactor=1,expenseSourceProfile='',planCalculator,acknowledged}){
+ if(acknowledged!==true)fail('not-reviewed','死亡月・年金・死亡後の費目倍率が比較用の仮定であることを確認してください');
  if(!config||!baseline||typeof planCalculator!=='function')fail('missing-baseline','現在条件の計算結果がありません');
  if(!['primary','spouse'].includes(deathPerson))fail('person','死亡する方を選択してください');
  const timing=survivorPensionTiming(config,deathPerson,deathMonth);
@@ -98,14 +99,16 @@ export function calculateMortalityComparison({config,baseline,deathPerson,deathM
  const original=planCalculator(config,{includeMonthlyDetails:true});
  if(!Array.isArray(original.monthlyDetails)||!original.monthlyDetails.length)fail('monthly-details','計算の月次台帳が取得できません');
  if(Math.abs(original.finalAsset-baseline.finalAsset)>1e-5)fail('baseline-stale','画面の採用値が更新されました。現在条件を読み直してください');
- const monthlyRows=allocateMortalityBudgetRows(original.monthlyDetails,allocation);
- const safe=validateMortalityAllocation(allocation);
+ const itemized=itemFactors!==null?inspectMortalityExpenseBudget(config,original.monthlyDetails,{sourceProfile:expenseSourceProfile}):null;
+ const computed=itemized?applyMortalityExpenseMultipliers(original.monthlyDetails,itemized,{factors:itemFactors,unallocatedFactor}):null;
+ const monthlyRows=computed?computed.monthlyRows:allocateMortalityBudgetRows(original.monthlyDetails,allocation);
+ const safe=computed?null:validateMortalityAllocation(allocation);
  const mortality=simulateMortalityPreview({monthlyRows,deceased:deathPerson,deathMonth,
-  survivorPublicPensionAnnual:survivorAnnual,pensionEvidence:'assumption',costFactors:safe.factors,
+  survivorPublicPensionAnnual:survivorAnnual,pensionEvidence:'assumption',costFactors:computed?computed.costFactors:safe.factors,
   survivorPublicPensionStages:stagedPension,
   funeralExpenseMan:funeral,annualAfterTaxReturnPct:config.plan?.afterTaxReturn==null||String(config.plan.afterTaxReturn).trim()===''?NaN:Number(config.plan.afterTaxReturn),
   continueUnattributedIncome:false,keepOneOffExpenses:true});
- return {mortality,original,allocation:structuredClone(allocation),survivor,totalExpenseBasis:ORIGINAL_BASIS};
+ return {mortality,original,allocation:allocation?structuredClone(allocation):null,itemized:itemized?structuredClone(itemized):null,itemFactors:computed?structuredClone(computed.costFactors):null,survivor,totalExpenseBasis:itemized?'登録済み内訳と管理予算残額の費目別倍率':ORIGINAL_BASIS};
 }
 
 export function agePeriodComparisonRows(monthlyRows,comparison){

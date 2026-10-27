@@ -1,6 +1,6 @@
 // Compatibility is evaluated before normalization, calculation or any write.
-export const APP_BUILD='v0.9.7-mortality-budget-20261026';
-export const CURRENT_FEATURES=['salary-net-transfer-v1','anchored-months-v1','expense-adoption-v1','income-adoption-v1','nisa-withdrawal-reference-v1','nisa-budget-shortfall-v1','unemployment-receipt-plan-v1','price-base-month-v1','opening-balance-prior-month-close-v1','ideco-received-lump-scope-v1','ideco-annuity-start-month-v1','full-plan-comparison-saved-v1'];
+export const APP_BUILD='v0.9.7-mortality-v2-candidate-20261027';
+export const CURRENT_FEATURES=['salary-net-transfer-v1','anchored-months-v1','expense-adoption-v1','income-adoption-v1','nisa-withdrawal-reference-v1','nisa-budget-shortfall-v1','unemployment-receipt-plan-v1','price-base-month-v1','opening-balance-prior-month-close-v1','ideco-received-lump-scope-v1','ideco-annuity-start-month-v1','full-plan-comparison-saved-v1','pension-breakdown-reference-v1'];
 const object=x=>x!==null&&typeof x==='object'&&!Array.isArray(x);
 const has=(o,key)=>Object.prototype.hasOwnProperty.call(o??{},key);
 const validMonth=v=>typeof v==='string'&&/^\d{4}-(0[1-9]|1[0-2])$/.test(v);
@@ -32,6 +32,16 @@ function requiredFeatures(value){
   if(has(c?.ideco,'annuityStartMonth')){
    if(!validMonth(c.ideco.annuityStartMonth))throw new Error('iDeCo年金初回月の保存形式が不正です。');
    features.add('ideco-annuity-start-month-v1');
+  }
+  for(const key of ['primary','spouse']){
+    const p=c?.income?.pensions?.[key];
+    if(!p)continue;
+    if(has(p,'breakdownAtStart')||has(p,'survivorReference')||has(p,'reference65')){
+      if(has(p,'breakdownAtStart')&&!object(p.breakdownAtStart))throw new Error('年金内訳の保存形式が不正です。');
+      if(has(p,'survivorReference')&&!object(p.survivorReference))throw new Error('遺族年金参考情報の形式が不正です。');
+      if(has(p,'reference65')&&!object(p.reference65))throw new Error('65歳基準年金資料の形式が不正です。');
+      features.add('pension-breakdown-reference-v1');
+    }
   }
   if(c?.expenseWorkflow)features.add('expense-adoption-v1');
   if(c?.incomeWorkflow||c?.cashflow?.periodOverrides?.some(row=>row?.source==='income-adoption-v1'||row?.incomeAdoption))features.add('income-adoption-v1');
