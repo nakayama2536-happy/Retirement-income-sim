@@ -42,7 +42,7 @@ export function mountMortalityItemizedControls(root,{getConfig,runPlan,onChange}
       const month=model.months.find(m=>dateInput.value&&m.month>dateInput.value)||
         model.months.find(m=>m.expense>0)||model.months[0];
       const header=el('div','mortality-item-row mortality-item-head');
-      for(const h of ['登録済み費目','夫婦健在（月額）','死亡後倍率','死亡後の概算額'])header.append(el('strong','',h));
+      for(const h of ['登録済み費目','夫婦健在（月額）','万一の後の倍率','万一の後の概算額'])header.append(el('strong','',h));
       host.append(header);
       for(const item of model.items){
         const amount=month.amounts[item.id]||0, row=el('div','mortality-item-row');
