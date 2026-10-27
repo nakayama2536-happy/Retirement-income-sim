@@ -107,7 +107,7 @@ export function mountPensionSheet({getConfig,onCommit,showNotice}){
         </details>
         <details class="pension-components" id="${key}Pension65Reference">
          <summary>65歳基準の年金内訳（70歳・75歳開始額とは別）</summary>
-         <p class="muted">65歳時点のねんきん定期便などの数値を入力します。受給開始を70歳にした場合も、65歳の内訳を70歳年金へ上書きしません。死亡者の報酬比例部分を確認する参考情報です。</p>
+         <p class="muted">65歳時点のねんきん定期便などの数値を入力します。受給開始を70歳にした場合も、65歳の内訳を70歳年金へ上書きしません。先に旅立つ方の報酬比例部分を確認する参考情報です。</p>
          <div class="form-grid pension-component-grid">
           <label><span>65歳：老齢基礎年金（万円／年）</span><input id="${key}Pension65Basic" type="number" min="0" step="0.0001"></label>
           <label><span>65歳：老齢厚生年金の報酬比例（万円／年）</span><input id="${key}Pension65Earnings" type="number" min="0" step="0.0001"></label>
