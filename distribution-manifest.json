@@ -149,8 +149,8 @@
     },
     {
       "name": "index.html",
-      "size": 60056,
-      "sha256": "8de98b7a3145f8848145ff48875451a6a90e60c4350d0595a2e1a39c9255d8d6"
+      "size": 60053,
+      "sha256": "1329c7d4e9a73a0153505a3bcda0e63ec2b114fad60ff95a4dc6fa928c233523"
     },
     {
       "name": "manifest.webmanifest",
@@ -179,8 +179,8 @@
     },
     {
       "name": "mortality-itemized-ui.mjs",
-      "size": 5627,
-      "sha256": "1932abba4ff734cc63f92fb135e0684e3fcd0ef7310c64a71c8ca0ae96c2cd47"
+      "size": 5636,
+      "sha256": "1a4111f9937b2c42fcef55f3e65750a040dfd9935977b00766a7983e56fb533c"
     },
     {
       "name": "mortality-itemized.mjs",
@@ -194,8 +194,8 @@
     },
     {
       "name": "mortality-ui.mjs",
-      "size": 35898,
-      "sha256": "400ed010f4c597e533752bb15bc0164cc9fcd80199a8924c4b798f361fe7041c"
+      "size": 36030,
+      "sha256": "e404c6a427fac6ebe2c75545d3859e2d330ff06300eb96a5c202775c64709e8f"
     },
     {
       "name": "pension-estimate.mjs",
@@ -204,8 +204,8 @@
     },
     {
       "name": "pension-ui.mjs",
-      "size": 20955,
-      "sha256": "9559129d137422df19f584fd8b797806f30ce852af7ade9dfe7b6a872f174ce5"
+      "size": 20964,
+      "sha256": "1599be9f1ea796c1f18c54d4cec11cae611e2bc98c550eaddb7fe77cc3f0c4e7"
     },
     {
       "name": "pension.mjs",
