@@ -255,6 +255,44 @@ export function mountMortalityComparison(root,{getConfig,getBaseline,runPlan}){
   for(const p of periods){const tr=makeEl('tr');tr.dataset.age=String(p.age);tableCell(tr,`${p.age}歳（${p.months}か月）`);for(const key of ['baselinePension','previewPension','baselineIncome','previewIncome','baselineExpense','previewExpense','expenseReduction','baselineExtraExpense','previewExtraExpense','baselineEndAsset','previewEndAsset','delta'])tableCell(tr,escMoney(p[key])).setAttribute('data-field',key);tbody.append(tr);}
   table.append(tbody);region.append(table);results.append(region);
   const foot=makeEl('p','muted','既存の臨時支出はそのまま計上し、万一の月に指定した一時費用だけを追加します。万一の後の未帰属収入がある場合は計算を停止します。負の期末資産は借入や実際の不足額とは断定できません。');results.append(foot);
+  // Both result tabs use the SAME immutable baseline and the SAME trial computation.
+  // No second plan is adopted or persisted by switching the visible view.
+  const worstPanel=makeEl('section');worstPanel.id='mortalityWorstResultPanel';
+  worstPanel.append(...Array.from(results.childNodes));
+  const standardPanel=makeEl('section');standardPanel.id='mortalityStandardResultPanel';
+  standardPanel.append(makeEl('h3','','標準シミュレーション'));
+  standardPanel.append(makeEl('p','muted','ご夫婦が現在の採用計画どおり暮らす場合の基準案です。万一の仮定は反映していません。計算期間は元の設定に従い、自動で100歳まで延長しません。'));
+  const standardSummary=makeEl('p','',`標準案の計画終期末資産：${formatTotal(mortality.baselineFinalAsset)}`);
+  standardSummary.id='mortalityStandardFinalAsset';standardPanel.append(standardSummary);
+  const standardRegion=makeEl('div','table-wrap mortality-table-wrap');standardRegion.tabIndex=0;
+  const stdTable=makeEl('table','mortality-table');stdTable.id='mortalityStandardAnnual';
+  const sth=makeEl('thead'),shr=makeEl('tr');
+  for(const label of ['本人年齢期','総収入（万円）','公的年金（万円）','管理予算支出（万円）','臨時支出（万円）','期末資産（万円）'])tableCell(shr,label,true);
+  sth.append(shr);stdTable.append(sth);
+  const stb=makeEl('tbody');
+  for(const p of periods){const tr=makeEl('tr');tr.dataset.age=String(p.age);
+    for(const value of [`${p.age}歳（${p.months}か月）`,escMoney(p.baselineIncome),escMoney(p.baselinePension),escMoney(p.baselineExpense),escMoney(p.baselineExtraExpense),escMoney(p.baselineEndAsset)])tableCell(tr,value);
+    stb.append(tr);
+  }
+  stdTable.append(stb);standardRegion.append(stdTable);standardPanel.append(standardRegion);
+  const stdAt100=periods.find(p=>p.age===100);
+  standardPanel.append(makeEl('p','muted',stdAt100
+    ?`100歳期末の基準資産：${formatTotal(stdAt100.baselineEndAsset)}。上の表で年齢期ごとの推移を確認できます。`
+    :'基準案に100歳期がありません。計算期間を変更する場合は別画面で明示的に設定してください。'));
+  const nav=makeEl('div','mortality-view-tabs');nav.setAttribute('role','tablist');nav.setAttribute('aria-label','シミュレーション結果の表示切替');
+  const stdBtn=makeEl('button','secondary','標準シミュレーション');
+  const worstBtn=makeEl('button','primary','最悪シミュレーション');
+  stdBtn.type='button';worstBtn.type='button';stdBtn.setAttribute('role','tab');worstBtn.setAttribute('role','tab');
+  stdBtn.id='mortalityStandardTab';worstBtn.id='mortalityWorstTab';
+  stdBtn.setAttribute('aria-controls',standardPanel.id);worstBtn.setAttribute('aria-controls',worstPanel.id);
+  const activate=worst=>{
+    standardPanel.hidden=worst;worstPanel.hidden=!worst;
+    stdBtn.setAttribute('aria-selected',String(!worst));worstBtn.setAttribute('aria-selected',String(worst));
+    stdBtn.className=worst?'secondary':'primary';worstBtn.className=worst?'primary':'secondary';
+  };
+  stdBtn.addEventListener('click',()=>activate(false));worstBtn.addEventListener('click',()=>activate(true));
+  nav.append(stdBtn,worstBtn);results.replaceChildren(nav,standardPanel,worstPanel);activate(true);
+
  }
  form.addEventListener('input',e=>{if(e.target!==form.elements.reviewed)form.elements.reviewed.checked=false;pensionInputChanged(e.target);if(e.target.matches('[data-mortality-share],[data-mortality-factor]'))allocationInfo();ageHint();saveInputs();if(current)invalid('入力を変更したため、以前の試算は無効です。もう一度試算してください。');});
  form.addEventListener('change',e=>{if(e.target!==form.elements.reviewed)form.elements.reviewed.checked=false;pensionInputChanged(e.target);ageHint();if(itemizedControls&&['deathMonth','deceased'].includes(e.target.name))itemizedControls.refresh();saveInputs();if(current)invalid('条件が変わりました。再試算してください。');});
