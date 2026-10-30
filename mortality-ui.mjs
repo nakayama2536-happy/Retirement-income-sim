@@ -258,7 +258,7 @@ export function mountMortalityComparison(root,{getConfig,getBaseline,runPlan}){
   // Both result tabs use the SAME immutable baseline and the SAME trial computation.
   // No second plan is adopted or persisted by switching the visible view.
   const worstPanel=makeEl('section');worstPanel.id='mortalityWorstResultPanel';
-  worstPanel.append(...Array.from(results.childNodes));
+  worstPanel.append(...Array.from(results.children));
   const standardPanel=makeEl('section');standardPanel.id='mortalityStandardResultPanel';
   standardPanel.append(makeEl('h3','','標準シミュレーション'));
   standardPanel.append(makeEl('p','muted','ご夫婦が現在の採用計画どおり暮らす場合の基準案です。万一の仮定は反映していません。計算期間は元の設定に従い、自動で100歳まで延長しません。'));
