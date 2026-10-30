@@ -950,7 +950,27 @@ document.querySelectorAll('[data-help]').forEach(btn=>btn.addEventListener('clic
 }));
 el('helpClose').addEventListener('click',()=>el('helpDialog').close());
 
-el('appVersion').textContent='v0.9.7-mortality-v2-candidate-20261027'; el('rulesVersion').textContent=RULES.asOf;
+const CURRENT_RUNTIME_BUILD='v0.9.8-runtime-identification-20261031';
+el('appVersion').textContent=CURRENT_RUNTIME_BUILD+'（端末で実行中）';
+const freshness=el('runtimeFreshness');
+(async()=>{
+ try{
+  // Query parameter bypasses the exact-URL offline cache and no-store asks
+  // the public server for its current marker, not the installed bundle.
+  const url=new URL('./release-info.json',import.meta.url);
+  url.searchParams.set('verify',String(Date.now()));
+  const response=await fetch(url,{cache:'no-store',credentials:'omit'});
+  if(!response.ok)throw Error('public-release-unavailable');
+  const release=await response.json();
+  if(typeof release.appBuild!=='string'||!/^v[0-9]+[.][0-9]+[.][0-9]+-/.test(release.appBuild))
+   throw Error('release-format-invalid');
+  freshness.textContent=release.appBuild===CURRENT_RUNTIME_BUILD?'最新公開版と一致': '更新あり（公開：'+release.appBuild+'）';
+  freshness.dataset.status=release.appBuild===CURRENT_RUNTIME_BUILD?'current':'outdated';
+ }catch{
+  freshness.textContent='照合不可（通信・キャッシュを確認）';
+  freshness.dataset.status='unknown';
+ }
+})(); el('rulesVersion').textContent=RULES.asOf;
 if(startupError){setEmptyState();showNotice(`保存データを読み込めません。復元用バックアップを確認してください。${startupError}`,'error');}
 else refresh();
 if(!writeAccess.writable)showNotice('この画面は読み取り専用です。別の編集画面を閉じて再読み込みしてください。同時更新制御が利用できない場合も保存を停止します。','error');

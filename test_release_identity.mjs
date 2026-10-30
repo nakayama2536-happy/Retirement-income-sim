@@ -14,7 +14,7 @@ const deployed=JSON.parse(read('./distribution-manifest.json'));
 // The display, backup contract, offline scope, and deployed manifest must all
 // describe the SAME build. A prior discrepancy was only detected on-device.
 test('公開候補の版番号は画面・バックアップ・SW・manifest・配布生成で一致',()=>{
-  const ui=app.match(/el\('appVersion'\)\.textContent='([^']+)'/)?.[1];
+  const ui=app.match(/const CURRENT_RUNTIME_BUILD='([^']+)'/)?.[1];
   const cache=sw.match(/const CACHE=`\$\{CACHE_PREFIX\}([^`]+)`/)?.[1];
   const packaged=packager.match(/runtime:'([^']+)',files/)?.[1];
   assert.ok(ui&&cache&&packaged,'missing release identity');
@@ -22,12 +22,15 @@ test('公開候補の版番号は画面・バックアップ・SW・manifest・�
   assert.equal(cache,APP_BUILD);
   assert.equal(packaged,APP_BUILD);
   assert.equal(deployed.runtime,APP_BUILD);
+  assert.equal(JSON.parse(read('./release-info.json')).appBuild,APP_BUILD);
+  assert.match(app,/cache:'no-store'/);
+  assert.match(app,/公開版との照合|最新公開版と一致/);
 });
 
 test('本番候補に旧公開版・RC・未公開の誤認ラベルを残さない',()=>{
-  assert.equal(APP_BUILD,'v0.9.7-mortality-v2-candidate-20261027');
+  assert.equal(APP_BUILD,'v0.9.8-runtime-identification-20261031');
   assert.notEqual(APP_BUILD,'v0.9.7-ui-simple-20261012');
-  for(const value of [APP_BUILD,app.match(/el\('appVersion'\)\.textContent='([^']+)'/)?.[1],sw.match(/const CACHE=`\$\{CACHE_PREFIX\}([^`]+)`/)?.[1],deployed.runtime]){
+  for(const value of [APP_BUILD,app.match(/const CURRENT_RUNTIME_BUILD='([^']+)'/)?.[1],sw.match(/const CACHE=`\$\{CACHE_PREFIX\}([^`]+)`/)?.[1],deployed.runtime]){
     assert.ok(value);
     assert.doesNotMatch(value,/-draft-|\brc\b|未公開|\bdev\b/);
   }
@@ -38,7 +41,7 @@ test('登録済み配布manifestと実際の資材はバイト一致',()=>{
   const expected=out.get('distribution-manifest.json');
   assert.ok(expected);
   assert.equal(read('./distribution-manifest.json'),expected.toString('utf8'));
-  assert.equal(deployed.files.length,67);
+  assert.equal(deployed.files.length,68);
   for(const entry of deployed.files){assert.ok(out.has(entry.name),entry.name);}
 });
 

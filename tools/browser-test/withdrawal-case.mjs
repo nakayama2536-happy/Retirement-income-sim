@@ -10,7 +10,7 @@ export async function validateWithdrawalUi({browser,createTestServer,open,load,o
   data.config.nisa={marketValue:100,usageYear:2044,tsumitateUsed:0,growthUsed:0,lifetimeBookUsed:80};
   data.config.ideco={asOfDate:'2044-01-01',contributionEndDate:'2045-01-01',joinDate:'2010-01-01',lumpDate:'2045-01-01',currentBalance:120,monthlyContribution:0,accumulationReturn:0,lumpPercent:50,annuityPercent:50,annuityYears:10,annuityReturn:0};
   const file=path.join(out,'withdrawal-synthetic.json');await fs.writeFile(file,JSON.stringify(data));
-  const page=await open(context,fixture.url),errors=[];page.on('pageerror',e=>errors.push(e.message));await load(page,file);assert.equal(await page.locator('#appVersion').innerText(),APP_BUILD);const before=await snapshot(page);await validateSimpleLayout(page);
+  const page=await open(context,fixture.url),errors=[];page.on('pageerror',e=>errors.push(e.message));await load(page,file);assert.equal(await page.locator('#appVersion').innerText(),APP_BUILD+'（端末で実行中）');const before=await snapshot(page);await validateSimpleLayout(page);
   for(const width of [390,1280]){
    await page.setViewportSize({width,height:900});
    for(const id of ['salary','nisa','ideco','pension','retirement','expenses','events','settings']){
