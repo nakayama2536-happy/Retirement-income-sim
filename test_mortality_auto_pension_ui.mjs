@@ -4,7 +4,7 @@ import {readFileSync} from 'node:fs';
 const source=readFileSync(new URL('./mortality-ui.mjs',import.meta.url),'utf8');
 test('死亡月から既存65歳内訳を参照する画面を保持',()=>{
  assert.match(source,/id="mortalityPensionAuto"/);
- assert.match(source,/own\?\.reference65,dead65=dead\?\.reference65/);
+ assert.match(source,/a=own\?\.reference65,b=dead\?\.reference65/);
  assert.match(source,/estimateSurvivorReference65\(/);
  assert.match(source,/autoPension\(\)/);
 });
