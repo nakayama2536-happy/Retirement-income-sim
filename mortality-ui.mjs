@@ -4,7 +4,7 @@ import {estimateSurvivorReference65,MortalityPreviewError} from './mortality-pre
 import {mountMortalityItemizedControls} from './mortality-itemized-ui.mjs';
 import {readMortalityDraft,saveMortalityDraft,clearMortalityDraft} from './mortality-draft.mjs';
 import {MORTALITY_COSTS,blankMortalityAllocation,fictionalMortalityAllocation,
- calculateMortalityComparison,survivorPensionTiming,agePeriodComparisonRows,validateMortalityAllocation,ORIGINAL_BASIS} from './mortality-comparison.mjs';
+ calculateMortalityComparison,survivorPensionTiming,agePeriodComparisonRows,requiredAdditionalCapitalAt64,validateMortalityAllocation,ORIGINAL_BASIS} from './mortality-comparison.mjs';
 
 const escMoney=n=>Number.isFinite(n)?new Intl.NumberFormat('ja-JP',{maximumFractionDigits:1}).format(Math.abs(n)<1e-10?0:n):'未確認';
 const percent=n=>new Intl.NumberFormat('ja-JP',{maximumFractionDigits:6}).format(Math.abs(n)<1e-10?0:n);
@@ -235,6 +235,18 @@ export function mountMortalityComparison(root,{getConfig,getBaseline,runPlan}){
   coverage.id='mortalityHorizonNotice';results.append(coverage);
   if(at100){const msg=makeEl('p','',`100歳期末資産：基準 ${formatTotal(at100.baselineEndAsset)}／比較 ${formatTotal(at100.previewEndAsset)}／差 ${formatTotal(at100.delta)}。負残高があれば、追加資金・支出見直しを検討する参考値です。`);msg.id='mortalityAge100Balance';results.append(msg);}
   if(mortality.firstNegativeMonth){const warning=makeEl('p','mortality-warning',`比較案では${mortality.firstNegativeMonth}に初めて資産残高が負になります。追加資金・支出削減などの条件を見直す必要性を検討してください。負残高は借入額や資金不足総額とは限りません。`);warning.id='mortalityFundingWarning';results.append(warning);}
+  const capital=requiredAdditionalCapitalAt64(original.monthlyDetails,{mortality},getConfig()?.plan?.afterTaxReturn);
+  const funding=makeEl('section','mortality-funding');funding.id='mortalityAge64Prefunding';
+  funding.append(makeEl('h3','','64歳末に必要な追加資金（参考試算）'));
+  if(!capital.available)funding.append(makeEl('p','muted',capital.reason));
+  else{
+    funding.append(makeEl('p','',`100歳期末の不足だけを解消する追加資金：${escMoney(capital.terminalOnlyCapital)}万円`));
+    funding.append(makeEl('p','',`65歳以降の途中も含め残高を0以上に保つ追加資金：${escMoney(capital.wholePeriodCapital)}万円`));
+    funding.append(makeEl('p','muted',`資金投入の想定時点：${capital.boundaryMonth}の月末（本人64歳期末）。評価時点：${capital.terminalMonth}（100歳期末）。現在の運用利回りを毎月適用し、月初残高への運用益→当月入出金の順序で逆算。既存資産への振替や入金は行いません。`));
+    if(capital.firstNegativeBefore64)funding.append(makeEl('p','mortality-warning',`64歳末より前にも${capital.firstNegativeBefore64}の負残高があります。この追加資金だけではその期間は解消できません。`));
+    funding.append(makeEl('p','muted','試算上の運用益が将来保証されるものではありません。負残高は借入額や実際の資金不足額を示すものではなく、追加資金の必要額も制度・税社保等の未対応部分で変わります。'));
+  }
+  results.append(funding);
   const headingBlock=heading('年齢期別の収入・支出・残高の差','万円。収入・支出はその期の合計、資産は期末残高。年金は収入合計の内数です。「管理予算の減額」は基準支出から差し引いた額で、負の値は増額です。');results.append(...headingBlock);
   const region=makeEl('div','table-wrap mortality-table-wrap');region.tabIndex=0;region.setAttribute('role','region');region.setAttribute('aria-label','万一の時期の年齢期別比較表');
   const table=makeEl('table','mortality-table'),thead=makeEl('thead'),theadTr=makeEl('tr');table.id='mortalityAnnualComparison';
