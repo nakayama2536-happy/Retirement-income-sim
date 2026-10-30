@@ -179,3 +179,8 @@
 #mortalityComparisonContainer button:disabled{opacity:.52;box-shadow:none;border:2px solid #a7b2bd}
 #mortalityComparisonContainer .mortality-view-tabs{display:flex;gap:8px;flex-wrap:wrap;margin:14px 0}
 @media(prefers-reduced-motion:reduce){#mortalityComparisonContainer button{transition:none}}
+
+/* Current public release check distinguishes cached execution from deployed bytes. */
+#runtimeFreshness[data-status="current"]{color:#a5e7bd}
+#runtimeFreshness[data-status="outdated"]{color:#ffd58b}
+#runtimeFreshness[data-status="unknown"]{color:#e5d8bd}
