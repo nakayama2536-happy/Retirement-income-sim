@@ -37,7 +37,7 @@ function withMortalityUI(check){
  globalThis.document={createElement:tag=>new Element(tag)};
  try{
   const root=new Element(),form=new Element('form');ids.set('#mortalityForm',form);root.append(form);
-  for(const id of ['mortalityState','mortalityResults','mortalityCostRows','mortalityAllocationTotal','mortalityAgeHint','mortalityPreClaimRow','mortalityPreClaimHint','mortalityEstimateNotice','mortalityPensionBreakdown','mortalityFictionalCosts','mortalityResetCosts','mortalitySuggestAge','mortalityEstimatePension','mortalityClear','mortalityRun']){const element=new Element();element.id=id;ids.set('#'+id,element);root.append(element);}
+  for(const id of ['mortalityState','mortalityResults','mortalityCostRows','mortalityAllocationTotal','mortalityAgeHint','mortalityPreClaimRow','mortalityPreClaimHint','mortalityEstimateNotice','mortalityPensionBreakdown','mortalityFictionalCosts','mortalityResetCosts','mortalityEstimatePension','mortalityClear','mortalityRun']){const element=new Element();element.id=id;ids.set('#'+id,element);root.append(element);}
   form.elements={};
   for(const name of ['deceased','deathMonth','survivorPension','preClaimPension','funeral','deceasedEarnings','survivorEmployee','survivorBasic','entitlement','claimed','deferral','reviewed']){form.elements[name]=new Element('input');form.elements[name].name=name;form.append(form.elements[name]);}
   const source={config:JSON.parse(read('tools/browser-test/mortality-synthetic.json')).config};source.baseline=runRetirementPlan(source.config);
@@ -56,12 +56,12 @@ test('external invalidation blocks stale retry and cached reference actions unti
  assert.ok(run());card.invalidate({external:true});
  assert.equal(card.getCurrentComparison(),null);assert.equal(form.elements.reviewed.checked,false);
  assert.equal(ids.get('#mortalityPensionBreakdown').dataset.pensionState,'unknown');
- for(const id of ['mortalityRun','mortalityEstimatePension','mortalitySuggestAge'])assert.equal(ids.get('#'+id).disabled,true);
+ for(const id of ['mortalityRun','mortalityEstimatePension'])assert.equal(ids.get('#'+id).disabled,true);
  assert.equal(run(),null);assert.match(ids.get('#mortalityState').textContent,/別画面.*再読み込み/);
  form.elements.survivorPension.value='999';form.elements.deceasedEarnings.value='160';form.elements.survivorEmployee.value='50';form.elements.survivorBasic.value='90';
  for(const key of ['entitlement','claimed','deferral'])form.elements[key].checked=true;
  ids.get('#mortalityEstimatePension').handlers.click();assert.equal(form.elements.survivorPension.value,'999');
- form.elements.deathMonth.value='2061-01';ids.get('#mortalitySuggestAge').handlers.click();assert.equal(form.elements.deathMonth.value,'2061-01');
+ form.elements.deathMonth.value='2061-01';assert.equal(form.elements.deathMonth.value,'2061-01');
  card.invalidate();assert.equal(run(),null);assert.equal(ids.get('#mortalityRun').disabled,true);
 }));
 test('same-screen adopted-condition refresh permits a new calculation on the latest baseline',()=>withMortalityUI(({source,form,card,ids,run,estimate})=>{
