@@ -10,6 +10,15 @@ test('refresh invalidates a trial and external saved-state notifications block t
 test('mortality modules have no persistent data, network, adoption or restore calls',()=>{for(const n of ['mortality-ui.mjs','mortality-comparison.mjs','mortality-preview.mjs'])assert.doesNotMatch(read(n),/\b(?:localStorage|sessionStorage|indexedDB)\s*[.\[]|\b(?:fetch|commitState|replaceState|restoreFullBackup|setItem)\s*\(/);});
 test('full browser gate uses synthetic file and disallows external origins',()=>{const t=read('tools/browser-test/mortality-ui-check.mjs');assert.match(t,/mortality-synthetic\.json/);assert.match(t,/r\.abort\(\)/);assert.match(t,/__mortalityWrites/);assert.match(t,/\['webkit',webkit\]/);});
 test('new cached assets have matching manifest entries and source bytes',()=>{const {out,runtime}=collect(new URL('.',import.meta.url).pathname),manifest=JSON.parse(out.get('distribution-manifest.json'));for(const name of ['mortality-preview.mjs','mortality-comparison.mjs','mortality-ui.mjs']){assert.ok(runtime.includes(name));const row=manifest.files.find(x=>x.name===name);assert.ok(row);assert.equal(row.sha256,crypto.createHash('sha256').update(out.get(name)).digest('hex'));}});
+test('65-year pension is the default source for survivor reference without deriving deferred pension',()=>{
+ assert.match(ui,/own\?\.reference65/);
+ assert.match(ui,/dead\?\.reference65/);
+ assert.match(ui,/form\.elements\.survivorBasic\.value=String\(basic\)/);
+ assert.match(ui,/form\.elements\.survivorEmployee\.value=String\(employee\)/);
+ assert.match(ui,/form\.elements\.deceasedEarnings\.value=String\(deceasedBase\)/);
+ assert.match(ui,/65歳基準の参考内訳/);
+ assert.match(ui,/70歳以降の実際の年金内訳ではなく/);
+});
 test('UI uses shared stage boundary, no age or 70-year pension inferred from existing totals',()=>{assert.match(ui,/survivorPensionTiming\(c,p,val\)/);assert.match(comparison,/needsPreClaim:monthlyIndex\(start\)>firstIndex/);assert.match(ui,/未配分/);});
 test('totals explain extra expenses and same-month income change',()=>{assert.match(ui,/mortalityMonthlyTransition/);assert.match(ui,/mortalityCostBreakdown/);assert.match(ui,/比較：臨時支出（一時費用込）/);assert.match(ui,/同じ年月の基準案と比較案/);});
 
