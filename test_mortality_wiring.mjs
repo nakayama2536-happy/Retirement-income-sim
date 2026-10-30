@@ -20,6 +20,17 @@ test('65-year pension is the default source for survivor reference without deriv
  assert.match(ui,/65歳基準の参考内訳/);
  assert.match(ui,/70歳以降の実際の年金内訳ではなく/);
 });
+test('standard and worst simulation results are separate switchable panels',()=>withMortalityUI(({ids,run,find,content})=>{
+ assert.ok(run());
+ const root=ids.get('#mortalityResults');
+ const standard=find(root,'#mortalityStandardResultPanel'),worst=find(root,'#mortalityWorstResultPanel');
+ const stdTab=find(root,'#mortalityStandardTab'),worstTab=find(root,'#mortalityWorstTab');
+ assert.ok(standard&&worst&&stdTab&&worstTab);
+ assert.equal(standard.hidden,true);assert.equal(worst.hidden,false);
+ assert.match(content(standard),/標準シミュレーション/);
+ stdTab.handlers.click();assert.equal(standard.hidden,false);assert.equal(worst.hidden,true);
+ worstTab.handlers.click();assert.equal(standard.hidden,true);assert.equal(worst.hidden,false);
+}));
 test('UI uses shared stage boundary, no age or 70-year pension inferred from existing totals',()=>{assert.match(ui,/survivorPensionTiming\(c,p,val\)/);assert.match(comparison,/needsPreClaim:monthlyIndex\(start\)>firstIndex/);assert.match(ui,/未配分/);});
 test('totals explain extra expenses and same-month income change',()=>{assert.match(ui,/mortalityMonthlyTransition/);assert.match(ui,/mortalityCostBreakdown/);assert.match(ui,/比較：臨時支出（一時費用込）/);assert.match(ui,/同じ年月の基準案と比較案/);});
 
