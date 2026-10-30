@@ -1,6 +1,7 @@
 import test from 'node:test';import assert from 'node:assert/strict';import fs from 'node:fs';import crypto from 'node:crypto';
 import {collect} from './tools/package-public.mjs';
 import {mountMortalityComparison} from './mortality-ui.mjs';
+import {requiredAdditionalCapitalAt64} from './mortality-comparison.mjs';
 import {runRetirementPlan} from './calc.mjs';
 const read=n=>fs.readFileSync(new URL(n,import.meta.url),'utf8');
 const app=read('app.mjs'),html=read('index.html'),ui=read('mortality-ui.mjs'),comparison=read('mortality-comparison.mjs');
@@ -148,3 +149,16 @@ test('reference signature rejects an unannounced adopted-config change on the ne
  const current=run();assert.ok(current);assert.equal(current.original.finalAsset,source.baseline.finalAsset);
  assert.equal(ids.get('#mortalityPensionBreakdown').dataset.pensionState,'unknown');
 }));
+
+test('64-year prefunding separates age-100 terminal shortfall from worst interim negative',()=>{
+ const rows=[{annualAge:64,month:'2039-07'},{annualAge:65,month:'2040-07'},{annualAge:80,month:'2055-07'},{annualAge:100,month:'2075-07'}];
+ const comparison={mortality:{monthly:[{endAsset:100},{endAsset:-100},{endAsset:50},{endAsset:-20}]}};
+ const result=requiredAdditionalCapitalAt64(rows,comparison,0);
+ assert.equal(result.available,true);
+ assert.equal(result.boundaryMonth,'2039-07');
+ assert.equal(result.terminalOnlyCapital,20);
+ assert.equal(result.wholePeriodCapital,100);
+ assert.equal(result.monthsAfter64,3);
+ assert.equal(requiredAdditionalCapitalAt64(rows.slice(1),{mortality:{monthly:comparison.mortality.monthly.slice(1)}},0).available,false);
+ assert.equal(requiredAdditionalCapitalAt64(rows.slice(0,3),{mortality:{monthly:comparison.mortality.monthly.slice(0,3)}},0).available,false);
+});
