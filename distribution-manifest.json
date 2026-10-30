@@ -169,8 +169,8 @@
     },
     {
       "name": "mortality-comparison.mjs",
-      "size": 9803,
-      "sha256": "6851884d795b6e21ecf3c998402bc6ce2d3fb64c5683499ee90ca5c23e50b610"
+      "size": 12340,
+      "sha256": "19e8b5a94215b9a032806d2d44037be91cb79c7971c397daf7655d81e135683f"
     },
     {
       "name": "mortality-draft.mjs",
@@ -194,8 +194,8 @@
     },
     {
       "name": "mortality-ui.mjs",
-      "size": 36680,
-      "sha256": "12859559a62532c733a4d1403aaee4e6ac6a2982729b4489d37dd1aa642cbe2a"
+      "size": 38304,
+      "sha256": "a7d3d543900e6c46344d366a5c4ed7d2b839b9359175c1067e084485312ae85a"
     },
     {
       "name": "pension-estimate.mjs",
