@@ -34,13 +34,13 @@ function renderPensionBreakdown(target,reference){
  target.replaceChildren();target.dataset.pensionState=reference?'reference':'unknown';
  if(!reference){target.append(makeEl('p','muted','内訳未確認：入力した公的年金合計をそのまま試算に使います。自身の年金・遺族年金の内訳は推定せず、遺族年金を別途自動加算しません。'));return;}
  const own=reference.ownBasicAnnual+reference.ownEmployeeAnnual;
- target.append(makeEl('p','',`参考計算の内訳：自身の年金 ${formatTotal(own)} ＋ 遺族厚生年金の差額 ${formatTotal(reference.survivorTopUpAnnual)} ＝ 公的年金合計 ${formatTotal(reference.totalSurvivingPublicPensionAnnual)}／年。受給額の確定ではありません。`));
+ target.append(makeEl('p','',`65歳基準の参考内訳：自身の年金 ${formatTotal(own)} ＋ 遺族厚生年金の差額 ${formatTotal(reference.survivorTopUpAnnual)} ＝ 公的年金合計 ${formatTotal(reference.totalSurvivingPublicPensionAnnual)}／年。繰下げ後の実受給額や確定給付額ではありません。`));
  const wrap=makeEl('div','table-wrap'),table=makeEl('table'),head=makeEl('thead'),hr=makeEl('tr'),body=makeEl('tbody');
  for(const label of ['残された方の年金内訳','参考年額（万円）'])tableCell(hr,label,true);head.append(hr);table.append(head);
  for(const [key,label,value] of [
   ['own-basic','自身の老齢基礎年金',reference.ownBasicAnnual],
   ['own-employee','自身の老齢厚生年金',reference.ownEmployeeAnnual],
-  ['own-total','自身の年金小計（上の2項目）',own],
+  ['own-total','自身の年金小計（65歳基準）',own],
   ['survivor-topup','追加される遺族厚生年金の差額',reference.survivorTopUpAnnual],
   ['total','試算に使う公的年金合計',reference.totalSurvivingPublicPensionAnnual]]){
   const row=makeEl('tr');tableCell(row,label);tableCell(row,escMoney(value)).setAttribute('data-pension-component',key);body.append(row);
@@ -224,7 +224,7 @@ export function mountMortalityComparison(root,{getConfig,getBaseline,runPlan}){
   results.append(summary);
   const diff=makeEl('p','muted',`${parameters.deceased==='primary'?'本人':'配偶者'}の万一の想定：${dateWithAge(parameters.deathMonth,getConfig(),parameters.deceased)}／年金合計の仮置き：${escMoney(parameters.survivorPension)}万円／年／一時費用の仮置き：${escMoney(parameters.funeral)}万円。年金・通常費は翌月から変更。一時費用だけ万一の月に計上。`);results.append(diff);
   const reference=validPensionReference();
-  results.append(makeEl('p','muted',reference?`試算に使った年金の参考内訳：自身の基礎 ${formatTotal(reference.ownBasicAnnual)} ＋ 自身の厚生 ${formatTotal(reference.ownEmployeeAnnual)} ＋ 遺族厚生の差額 ${formatTotal(reference.survivorTopUpAnnual)} ＝ 合計 ${formatTotal(parameters.survivorPension)}／年。`:'試算に使った年金合計の内訳は未確認です。手入力の合計に遺族年金を自動加算していません。'));
+  results.append(makeEl('p','muted',reference?`試算に使った年金の参考内訳：65歳基準・自身の基礎 ${formatTotal(reference.ownBasicAnnual)} ＋ 自身の厚生 ${formatTotal(reference.ownEmployeeAnnual)} ＋ 遺族厚生の差額 ${formatTotal(reference.survivorTopUpAnnual)} ＝ 合計 ${formatTotal(parameters.survivorPension)}／年。`:'試算に使った年金合計の内訳は未確認です。手入力の合計に遺族年金を自動加算していません。'));
   renderTransition(results,original.monthlyDetails,mortality,allocation,itemized,itemFactors);
   const periods=agePeriodComparisonRows(original.monthlyDetails,{mortality});
   // The adopted 95/100-year horizon stays authoritative. Never silently extend it.
@@ -252,23 +252,24 @@ export function mountMortalityComparison(root,{getConfig,getBaseline,runPlan}){
   try{
     requireFreshBaseline();
     const cfg=getConfig(),who=values().deceased==='primary'?'primary':'spouse',survivor=who==='primary'?'spouse':'primary';
-    const own=cfg.income?.pensions?.[survivor],dead=cfg.income?.pensions?.[who],b=own?.breakdownAtStart;
-    const ref=dead?.survivorReference||(dead?.reference65?.employeeEarningsAnnual!=null?{
-      earningsBeforeDeferralAnnual:dead.reference65.employeeEarningsAnnual,
-      source:dead.reference65.source
-    }:null);
-    if(!b||!ref||!b.source||!ref.source)throw Error('年金シートに内訳と出典を登録し、受給開始時点を確認してください');
-    const parts=[b.basicAnnual,b.employeeAnnual,b.otherAnnual];
-    if(!parts.every(x=>typeof x==='number'&&Number.isFinite(x))||Math.abs(parts.reduce((a,b)=>a+b,0)-Number(own.annualAtStart))>.01)
-      throw Error('自身の基礎・厚生・その他の年金合計が登録済み年額と一致しません');
-    if(!Number.isFinite(ref.earningsBeforeDeferralAnnual)||ref.earningsBeforeDeferralAnnual<0)
-      throw Error('先に旅立つ方の報酬比例部分（繰下げ前）を資料で確認してください');
-    form.elements.deceasedEarnings.value=String(ref.earningsBeforeDeferralAnnual);
-    form.elements.survivorEmployee.value=String(b.employeeAnnual);
-    form.elements.survivorBasic.value=String(b.basicAnnual);
+    const own=cfg.income?.pensions?.[survivor],dead=cfg.income?.pensions?.[who];
+    // Official 65-year evidence is the default reference. It does not replace
+    // a deferred 70/71-year pension or assert entitlement to survivor benefits.
+    const own65=own?.reference65,dead65=dead?.reference65;
+    if(!own65||!dead65||!own65.source||!dead65.source)
+      throw Error('ご夫婦双方の65歳基準の年金内訳と出典を年金シートに登録してください');
+    const basic=Number(own65.basicAnnual),employee=Number(own65.employeeEarningsAnnual);
+    const deceasedBase=Number(dead65.employeeEarningsAnnual);
+    if(![basic,employee,deceasedBase].every(Number.isFinite)||
+       [own65.basicAnnual,own65.employeeEarningsAnnual,dead65.employeeEarningsAnnual].some(x=>x===null||x===undefined||x==='')||
+       Math.min(basic,employee,deceasedBase)<0)
+      throw Error('65歳基準の老齢基礎・報酬比例部分が未確認です');
+    form.elements.deceasedEarnings.value=String(deceasedBase);
+    form.elements.survivorEmployee.value=String(employee);
+    form.elements.survivorBasic.value=String(basic);
     for(const k of ['entitlement','claimed','deferral'])form.elements[k].checked=false;
-    clearPensionReference();invalid('保存済み内訳を参考欄へ引用しました。受給権・請求・繰下げ影響は改めて確認してください。');
-    root.querySelector('#mortalityEstimateNotice').textContent='年金シートの出典付き内訳を引用しました。制度の受給資格まで自動認定したものではありません。';
+    clearPensionReference();invalid('65歳基準の内訳を参考欄に引用しました。繰下げ後の受給年額とは別です。受給権・請求・繰下げ影響を確認してください。');
+    root.querySelector('#mortalityEstimateNotice').textContent='年金シートの65歳基準の老齢基礎・報酬比例部分を引用しました。70歳以降の実際の年金内訳ではなく、制度上の受給資格も未認定です。';
     saveInputs();
   }catch(e){root.querySelector('#mortalityEstimateNotice').textContent=e.message;}
 });
