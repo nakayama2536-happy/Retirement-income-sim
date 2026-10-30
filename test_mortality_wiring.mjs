@@ -1,6 +1,7 @@
 import test from 'node:test';import assert from 'node:assert/strict';import fs from 'node:fs';import crypto from 'node:crypto';
 import {collect} from './tools/package-public.mjs';
 import {mountMortalityComparison} from './mortality-ui.mjs';
+import {requiredAdditionalCapitalAt64} from './mortality-comparison.mjs';
 import {runRetirementPlan} from './calc.mjs';
 const read=n=>fs.readFileSync(new URL(n,import.meta.url),'utf8');
 const app=read('app.mjs'),html=read('index.html'),ui=read('mortality-ui.mjs'),comparison=read('mortality-comparison.mjs');
@@ -10,6 +11,26 @@ test('refresh invalidates a trial and external saved-state notifications block t
 test('mortality modules have no persistent data, network, adoption or restore calls',()=>{for(const n of ['mortality-ui.mjs','mortality-comparison.mjs','mortality-preview.mjs'])assert.doesNotMatch(read(n),/\b(?:localStorage|sessionStorage|indexedDB)\s*[.\[]|\b(?:fetch|commitState|replaceState|restoreFullBackup|setItem)\s*\(/);});
 test('full browser gate uses synthetic file and disallows external origins',()=>{const t=read('tools/browser-test/mortality-ui-check.mjs');assert.match(t,/mortality-synthetic\.json/);assert.match(t,/r\.abort\(\)/);assert.match(t,/__mortalityWrites/);assert.match(t,/\['webkit',webkit\]/);});
 test('new cached assets have matching manifest entries and source bytes',()=>{const {out,runtime}=collect(new URL('.',import.meta.url).pathname),manifest=JSON.parse(out.get('distribution-manifest.json'));for(const name of ['mortality-preview.mjs','mortality-comparison.mjs','mortality-ui.mjs']){assert.ok(runtime.includes(name));const row=manifest.files.find(x=>x.name===name);assert.ok(row);assert.equal(row.sha256,crypto.createHash('sha256').update(out.get(name)).digest('hex'));}});
+test('65-year pension is the default source for survivor reference without deriving deferred pension',()=>{
+ assert.match(ui,/own\?\.reference65/);
+ assert.match(ui,/dead\?\.reference65/);
+ assert.match(ui,/form\.elements\.survivorBasic\.value=String\(basic\)/);
+ assert.match(ui,/form\.elements\.survivorEmployee\.value=String\(employee\)/);
+ assert.match(ui,/form\.elements\.deceasedEarnings\.value=String\(deceasedBase\)/);
+ assert.match(ui,/65歳基準の参考内訳/);
+ assert.match(ui,/70歳以降の実際の年金内訳ではなく/);
+});
+test('standard and worst simulation results are separate switchable panels',()=>withMortalityUI(({ids,run,find,content})=>{
+ assert.ok(run());
+ const root=ids.get('#mortalityResults');
+ const standard=find(root,'#mortalityStandardResultPanel'),worst=find(root,'#mortalityWorstResultPanel');
+ const stdTab=find(root,'#mortalityStandardTab'),worstTab=find(root,'#mortalityWorstTab');
+ assert.ok(standard&&worst&&stdTab&&worstTab);
+ assert.equal(standard.hidden,true);assert.equal(worst.hidden,false);
+ assert.match(content(standard),/標準シミュレーション/);
+ stdTab.handlers.click();assert.equal(standard.hidden,false);assert.equal(worst.hidden,true);
+ worstTab.handlers.click();assert.equal(standard.hidden,true);assert.equal(worst.hidden,false);
+}));
 test('UI uses shared stage boundary, no age or 70-year pension inferred from existing totals',()=>{assert.match(ui,/survivorPensionTiming\(c,p,val\)/);assert.match(comparison,/needsPreClaim:monthlyIndex\(start\)>firstIndex/);assert.match(ui,/未配分/);});
 test('totals explain extra expenses and same-month income change',()=>{assert.match(ui,/mortalityMonthlyTransition/);assert.match(ui,/mortalityCostBreakdown/);assert.match(ui,/比較：臨時支出（一時費用込）/);assert.match(ui,/同じ年月の基準案と比較案/);});
 
@@ -37,7 +58,7 @@ function withMortalityUI(check){
  globalThis.document={createElement:tag=>new Element(tag)};
  try{
   const root=new Element(),form=new Element('form');ids.set('#mortalityForm',form);root.append(form);
-  for(const id of ['mortalityState','mortalityResults','mortalityCostRows','mortalityAllocationTotal','mortalityAgeHint','mortalityPreClaimRow','mortalityPreClaimHint','mortalityEstimateNotice','mortalityPensionBreakdown','mortalityFictionalCosts','mortalityResetCosts','mortalitySuggestAge','mortalityEstimatePension','mortalityClear','mortalityRun']){const element=new Element();element.id=id;ids.set('#'+id,element);root.append(element);}
+  for(const id of ['mortalityState','mortalityResults','mortalityCostRows','mortalityAllocationTotal','mortalityAgeHint','mortalityPreClaimRow','mortalityPreClaimHint','mortalityEstimateNotice','mortalityPensionBreakdown','mortalityFictionalCosts','mortalityResetCosts','mortalityEstimatePension','mortalityClear','mortalityRun']){const element=new Element();element.id=id;ids.set('#'+id,element);root.append(element);}
   form.elements={};
   for(const name of ['deceased','deathMonth','survivorPension','preClaimPension','funeral','deceasedEarnings','survivorEmployee','survivorBasic','entitlement','claimed','deferral','reviewed']){form.elements[name]=new Element('input');form.elements[name].name=name;form.append(form.elements[name]);}
   const source={config:JSON.parse(read('tools/browser-test/mortality-synthetic.json')).config};source.baseline=runRetirementPlan(source.config);
@@ -56,12 +77,12 @@ test('external invalidation blocks stale retry and cached reference actions unti
  assert.ok(run());card.invalidate({external:true});
  assert.equal(card.getCurrentComparison(),null);assert.equal(form.elements.reviewed.checked,false);
  assert.equal(ids.get('#mortalityPensionBreakdown').dataset.pensionState,'unknown');
- for(const id of ['mortalityRun','mortalityEstimatePension','mortalitySuggestAge'])assert.equal(ids.get('#'+id).disabled,true);
+ for(const id of ['mortalityRun','mortalityEstimatePension'])assert.equal(ids.get('#'+id).disabled,true);
  assert.equal(run(),null);assert.match(ids.get('#mortalityState').textContent,/別画面.*再読み込み/);
  form.elements.survivorPension.value='999';form.elements.deceasedEarnings.value='160';form.elements.survivorEmployee.value='50';form.elements.survivorBasic.value='90';
  for(const key of ['entitlement','claimed','deferral'])form.elements[key].checked=true;
  ids.get('#mortalityEstimatePension').handlers.click();assert.equal(form.elements.survivorPension.value,'999');
- form.elements.deathMonth.value='2061-01';ids.get('#mortalitySuggestAge').handlers.click();assert.equal(form.elements.deathMonth.value,'2061-01');
+ form.elements.deathMonth.value='2061-01';assert.equal(form.elements.deathMonth.value,'2061-01');
  card.invalidate();assert.equal(run(),null);assert.equal(ids.get('#mortalityRun').disabled,true);
 }));
 test('same-screen adopted-condition refresh permits a new calculation on the latest baseline',()=>withMortalityUI(({source,form,card,ids,run,estimate})=>{
@@ -139,3 +160,16 @@ test('reference signature rejects an unannounced adopted-config change on the ne
  const current=run();assert.ok(current);assert.equal(current.original.finalAsset,source.baseline.finalAsset);
  assert.equal(ids.get('#mortalityPensionBreakdown').dataset.pensionState,'unknown');
 }));
+
+test('64-year prefunding separates age-100 terminal shortfall from worst interim negative',()=>{
+ const rows=[{annualAge:64,month:'2039-07'},{annualAge:65,month:'2040-07'},{annualAge:80,month:'2055-07'},{annualAge:100,month:'2075-07'}];
+ const comparison={mortality:{monthly:[{endAsset:100},{endAsset:-100},{endAsset:50},{endAsset:-20}]}};
+ const result=requiredAdditionalCapitalAt64(rows,comparison,0);
+ assert.equal(result.available,true);
+ assert.equal(result.boundaryMonth,'2039-07');
+ assert.equal(result.terminalOnlyCapital,20);
+ assert.equal(result.wholePeriodCapital,100);
+ assert.equal(result.monthsAfter64,3);
+ assert.equal(requiredAdditionalCapitalAt64(rows.slice(1),{mortality:{monthly:comparison.mortality.monthly.slice(1)}},0).available,false);
+ assert.equal(requiredAdditionalCapitalAt64(rows.slice(0,3),{mortality:{monthly:comparison.mortality.monthly.slice(0,3)}},0).available,false);
+});

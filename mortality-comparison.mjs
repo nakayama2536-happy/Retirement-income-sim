@@ -70,7 +70,7 @@ const startMonthOf=(value)=>{
 /** Shared UI/engine boundary. An intermediate month exists only BEFORE the
  * first regular pension month, starting the month AFTER death. */
 export function survivorPensionTiming(config,deathPerson,deathMonth){
- if(!['primary','spouse'].includes(deathPerson))fail('person','死亡する方を選択してください');
+ if(!['primary','spouse'].includes(deathPerson))fail('person','万一を想定する方を選択してください');
  const survivor=deathPerson==='primary'?'spouse':'primary';
  const start=startMonthOf(config?.income?.pensions?.[survivor]?.startDate ?? config?.income?.pensions?.[survivor]?.startMonth);
  if(!start)fail('survivor-pension-unset','残された方の年金開始月が確認できません');
@@ -80,9 +80,9 @@ export function survivorPensionTiming(config,deathPerson,deathMonth){
 
 /** Recomputes on the existing adopted monthly ledger without storing changes. */
 export function calculateMortalityComparison({config,baseline,deathPerson,deathMonth,survivorTotalAnnual,survivorPensionBeforeClaimAnnual=null,funeralExpenseMan,allocation=null,itemFactors=null,unallocatedFactor=1,expenseSourceProfile='',planCalculator,acknowledged}){
- if(acknowledged!==true)fail('not-reviewed','死亡月・年金・死亡後の費目倍率が比較用の仮定であることを確認してください');
+ if(acknowledged!==true)fail('not-reviewed','万一を想定する月・年金・その後の費目倍率が比較用の仮定であることを確認してください');
  if(!config||!baseline||typeof planCalculator!=='function')fail('missing-baseline','現在条件の計算結果がありません');
- if(!['primary','spouse'].includes(deathPerson))fail('person','死亡する方を選択してください');
+ if(!['primary','spouse'].includes(deathPerson))fail('person','万一を想定する方を選択してください');
  const timing=survivorPensionTiming(config,deathPerson,deathMonth);
  const survivor=timing.survivor,survivorStart=timing.start;
  let stagedPension=null;
@@ -131,4 +131,37 @@ export function agePeriodComparisonRows(monthlyRows,comparison){
   agg.baselineEndAsset=b.endAsset;agg.previewEndAsset=x.endAsset;agg.delta=x.deltaFromBaseline;
  }
  return aggs;
+}
+
+/** Read-only counterfactual: capital contributed immediately AFTER the final month
+ * of the adopted 64-year period. Investment is applied to each following month's
+ * opening balance before its income and spending. No actual transfer is performed.
+ * Any unavailable boundary or incomplete 100-year period is explicitly unsupported.
+ */
+export function requiredAdditionalCapitalAt64(monthlyRows,comparison,annualAfterTaxReturnPct){
+ const preview=comparison?.mortality?.monthly;
+ if(!Array.isArray(monthlyRows)||!Array.isArray(preview)||monthlyRows.length!==preview.length||!preview.length)
+   fail('capital-ledger','計算対象の月次台帳が一致しません');
+ const rate=Number(annualAfterTaxReturnPct);
+ if(!Number.isFinite(rate)||rate<=-100)fail('capital-rate','運用利回りを確認できません');
+ const months=monthlyRows.map((r,i)=>({age:r.annualAge,month:r.month,amount:preview[i].endAsset}));
+ const index64=months.findLastIndex(r=>r.age===64);
+ const index100=months.findLastIndex(r=>r.age===100);
+ if(index64<0)return {available:false,reason:'計画に本人64歳期末の実残高がありません。65歳開始前の資産へ逆算することはできません。'};
+ if(index100<0)return {available:false,reason:'計画の計算範囲が本人100歳期までありません。期間を自動延長せず、設定を確認してください。'};
+ if(index100!==months.length-1)return {available:false,reason:'100歳期より後にも計算行があります。評価対象の終期を確認してください。'};
+ if(index64>=index100)return {available:false,reason:'64歳末から100歳期末までの計算期間がありません。'};
+ const monthlyFactor=Math.pow(1+rate/100,1/12);
+ let factor=1,terminalNeed=0,wholePeriodNeed=0,firstNegativeBefore64=null;
+ for(let i=0;i<=index64;i++)if(months[i].amount<0){firstNegativeBefore64=months[i].month;break;}
+ for(let i=index64+1;i<=index100;i++){
+   factor*=monthlyFactor;
+   const need=Math.max(0,-months[i].amount/factor);
+   wholePeriodNeed=Math.max(wholePeriodNeed,need);
+   if(i===index100)terminalNeed=need;
+ }
+ if(!Number.isFinite(wholePeriodNeed)||!Number.isFinite(terminalNeed))fail('capital-overflow','必要資金の逆算が数値範囲を超えました');
+ return {available:true,boundaryMonth:months[index64].month,terminalMonth:months[index100].month,
+  terminalAsset:months[index100].amount,terminalOnlyCapital:terminalNeed,wholePeriodCapital:wholePeriodNeed,
+  monthlyFactor,monthsAfter64:index100-index64,firstNegativeBefore64};
 }

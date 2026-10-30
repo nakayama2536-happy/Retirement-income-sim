@@ -169,8 +169,8 @@
     },
     {
       "name": "mortality-comparison.mjs",
-      "size": 9770,
-      "sha256": "1c8b562caf7fda6fd707a790eb6eaba88751ea92c9a06d57c090250c07dd14cb"
+      "size": 12340,
+      "sha256": "19e8b5a94215b9a032806d2d44037be91cb79c7971c397daf7655d81e135683f"
     },
     {
       "name": "mortality-draft.mjs",
@@ -184,8 +184,8 @@
     },
     {
       "name": "mortality-itemized.mjs",
-      "size": 5544,
-      "sha256": "179c58da29bcc88fe874637815c9145b9833b7604ad19f1870dfded1404b416e"
+      "size": 5574,
+      "sha256": "a70cd5c5ecec8ea8c5480a251724ee4eb37c6c70ba142afb567794db42d80721"
     },
     {
       "name": "mortality-preview.mjs",
@@ -194,8 +194,8 @@
     },
     {
       "name": "mortality-ui.mjs",
-      "size": 36030,
-      "sha256": "e404c6a427fac6ebe2c75545d3859e2d330ff06300eb96a5c202775c64709e8f"
+      "size": 42023,
+      "sha256": "3153fdacb8d537c9630f816e656925e0c1d3826f4fcee9619fe6c2707cef2e88"
     },
     {
       "name": "pension-estimate.mjs",
@@ -279,8 +279,8 @@
     },
     {
       "name": "styles.css",
-      "size": 26785,
-      "sha256": "485515ba54916690c803c3d1782731bf9d4c50005b3a919b3957d1c106bef4f1"
+      "size": 28042,
+      "sha256": "72dd017134c5c465a26ad71fbe015543b94eba57283520dc896004c6af9ab271"
     },
     {
       "name": "sw.js",

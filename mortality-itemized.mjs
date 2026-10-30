@@ -20,7 +20,7 @@ export function selectMortalityExpenseProfile(config,selection=''){
   const selected=String(selection||config?.cashflow?.detailSourceProfile||'');
   if(selected){if(!profiles.includes(selected))stop('expense-source-invalid','費目内訳の出典を確認してください');return selected;}
   const available=inspectCashflowSources(config,{sourceProfile:'unknown'}).availableProfiles.filter(p=>profiles.includes(p));
-  if(available.length>1)stop('expense-source-ambiguous','登録済み内訳が複数あります。死亡比較に使う出典を選択してください。');
+  if(available.length>1)stop('expense-source-ambiguous','登録済みの支出内訳が複数あります。「万一のときの比較」に使う参照先を選択してください。');
   return available[0]||null;
 }
 function actualLeaves(node,output){
