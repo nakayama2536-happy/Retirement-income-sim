@@ -169,8 +169,8 @@
     },
     {
       "name": "mortality-comparison.mjs",
-      "size": 9770,
-      "sha256": "1c8b562caf7fda6fd707a790eb6eaba88751ea92c9a06d57c090250c07dd14cb"
+      "size": 9803,
+      "sha256": "6851884d795b6e21ecf3c998402bc6ce2d3fb64c5683499ee90ca5c23e50b610"
     },
     {
       "name": "mortality-draft.mjs",
@@ -184,8 +184,8 @@
     },
     {
       "name": "mortality-itemized.mjs",
-      "size": 5544,
-      "sha256": "179c58da29bcc88fe874637815c9145b9833b7604ad19f1870dfded1404b416e"
+      "size": 5574,
+      "sha256": "a70cd5c5ecec8ea8c5480a251724ee4eb37c6c70ba142afb567794db42d80721"
     },
     {
       "name": "mortality-preview.mjs",
