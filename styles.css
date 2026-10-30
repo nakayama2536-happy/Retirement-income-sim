@@ -184,3 +184,59 @@
 #runtimeFreshness[data-status="current"]{color:#a5e7bd}
 #runtimeFreshness[data-status="outdated"]{color:#ffd58b}
 #runtimeFreshness[data-status="unknown"]{color:#e5d8bd}
+
+/* Shared action-button clarity for all tabs; navigation tabs keep their own styles. */
+.panel button.primary,.panel button.secondary,.panel .file-btn,
+#migrationPanel button.primary,#migrationPanel button.secondary,
+#emptyState button.primary,#emptyState button.secondary{
+  min-height:44px;
+  max-width:100%;
+  border-radius:9px;
+  font-weight:700;
+  line-height:1.35;
+  white-space:normal;
+  overflow-wrap:anywhere;
+  transition:background-color .15s ease,border-color .15s ease,box-shadow .15s ease;
+}
+.panel button.primary:not(:disabled),#migrationPanel button.primary:not(:disabled),#emptyState button.primary:not(:disabled){
+  color:#fff;
+  background:#24537e;
+  border:2px solid #153a5f;
+  box-shadow:inset 0 0 0 2px #fff,0 2px 4px rgba(20,48,78,.17);
+}
+.panel button.secondary:not(:disabled),.panel .file-btn,
+#migrationPanel button.secondary:not(:disabled),#emptyState button.secondary:not(:disabled){
+  color:#203e5e;
+  background:#f3f6fa;
+  border:2px solid #6d849c;
+  box-shadow:0 1px 2px rgba(20,48,78,.12);
+}
+.panel button.primary:not(:disabled):hover{background:#173c62}
+.panel button.secondary:not(:disabled):hover,.panel .file-btn:hover{background:#e5edf5;border-color:#345a7c}
+.panel button.primary:disabled,.panel button.secondary:disabled,
+#migrationPanel button:disabled,#emptyState button:disabled{
+  color:#55616f;
+  background:#e8ecf0;
+  opacity:1;
+  border:2px solid #adb8c3;
+  box-shadow:none;
+  cursor:not-allowed;
+}
+.panel button.link-btn:not(:disabled){
+  min-height:40px;
+  padding:8px 10px;
+  text-underline-offset:3px;
+  font-weight:650;
+}
+.panel button:focus-visible,#migrationPanel button:focus-visible,#emptyState button:focus-visible{
+  outline:3px solid #d48e18;
+  outline-offset:3px;
+}
+@media(max-width:760px){
+ .panel button.primary,.panel button.secondary,.panel .file-btn{
+   min-height:44px;
+ }
+}
+@media(prefers-reduced-motion:reduce){
+ .panel button.primary,.panel button.secondary,.panel .file-btn{transition:none}
+}
