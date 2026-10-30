@@ -70,7 +70,7 @@ const startMonthOf=(value)=>{
 /** Shared UI/engine boundary. An intermediate month exists only BEFORE the
  * first regular pension month, starting the month AFTER death. */
 export function survivorPensionTiming(config,deathPerson,deathMonth){
- if(!['primary','spouse'].includes(deathPerson))fail('person','死亡する方を選択してください');
+ if(!['primary','spouse'].includes(deathPerson))fail('person','万一を想定する方を選択してください');
  const survivor=deathPerson==='primary'?'spouse':'primary';
  const start=startMonthOf(config?.income?.pensions?.[survivor]?.startDate ?? config?.income?.pensions?.[survivor]?.startMonth);
  if(!start)fail('survivor-pension-unset','残された方の年金開始月が確認できません');
@@ -80,9 +80,9 @@ export function survivorPensionTiming(config,deathPerson,deathMonth){
 
 /** Recomputes on the existing adopted monthly ledger without storing changes. */
 export function calculateMortalityComparison({config,baseline,deathPerson,deathMonth,survivorTotalAnnual,survivorPensionBeforeClaimAnnual=null,funeralExpenseMan,allocation=null,itemFactors=null,unallocatedFactor=1,expenseSourceProfile='',planCalculator,acknowledged}){
- if(acknowledged!==true)fail('not-reviewed','死亡月・年金・死亡後の費目倍率が比較用の仮定であることを確認してください');
+ if(acknowledged!==true)fail('not-reviewed','万一を想定する月・年金・その後の費目倍率が比較用の仮定であることを確認してください');
  if(!config||!baseline||typeof planCalculator!=='function')fail('missing-baseline','現在条件の計算結果がありません');
- if(!['primary','spouse'].includes(deathPerson))fail('person','死亡する方を選択してください');
+ if(!['primary','spouse'].includes(deathPerson))fail('person','万一を想定する方を選択してください');
  const timing=survivorPensionTiming(config,deathPerson,deathMonth);
  const survivor=timing.survivor,survivorStart=timing.start;
  let stagedPension=null;
