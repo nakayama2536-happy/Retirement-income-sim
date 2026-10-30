@@ -258,6 +258,8 @@ export function mountMortalityComparison(root,{getConfig,getBaseline,runPlan}){
   // Both result tabs use the SAME immutable baseline and the SAME trial computation.
   // No second plan is adopted or persisted by switching the visible view.
   const worstPanel=makeEl('section');worstPanel.id='mortalityWorstResultPanel';
+  worstPanel.append(makeEl('h3','','最悪シミュレーション（比較用の仮定）'));
+  worstPanel.append(makeEl('p','muted',`対象：${parameters.deceased==='primary'?'本人':'配偶者'}／万一を想定する月：${parameters.deathMonth}。本人70歳の例は2044年8月です。別の月を選ぶと、その月の比較案になります。`));
   worstPanel.append(...Array.from(results.children));
   const standardPanel=makeEl('section');standardPanel.id='mortalityStandardResultPanel';
   standardPanel.append(makeEl('h3','','標準シミュレーション'));
