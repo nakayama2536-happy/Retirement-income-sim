@@ -141,6 +141,7 @@ export function mountSalarySheet({getState,onCommit,showNotice}){
       <p>更新対象：給与生活の条件と、変更した臨時収支・期間別収入の計上先${p.owned.patches.length}件。</p>
       <p class="muted">${p.result.limitations.map(esc).join('<br>')}<br>新方式の増減要因分解は未対応です。管理予算内の税社保・内訳を別加算しません。精密な税引後比較ではありません。</p>`;
     el('salaryApply').disabled=!p.changed;el('salarySaveScenario').disabled=false;el('salaryPreview').hidden=false;
+    state();
     el('salaryPreview').scrollIntoView?.({block:'start',behavior:'smooth'});
   }
   function changed(){draft=read();invalidate();error('');persist();state();}
