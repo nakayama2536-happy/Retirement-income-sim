@@ -26,7 +26,10 @@ export function reconcileCashflow(config,{sourceProfile='unknown',identityBindin
   const calendarMode=calculation.calendarMode||'legacy';
   const activeVariants=item=>item.variants.filter(v=>sourceProfile==='unknown'||v.profile===sourceProfile);
   const roots=view.items.filter(i=>i.route==='budget-detail'&&activeVariants(i).some(v=>!v.parentId));
-  const diagnostics=view.diagnostics.filter(d=>!d.profile||sourceProfile==='unknown'||d.profile===sourceProfile);
+  // Older source diagnostics omit profile; their paths still identify the owner.
+  // Do not allow WORK expense diagnostics to block a PUBLIC-only comparison.
+  const diagnosticProfile=d=>d.profile||((d.path||'').startsWith('/expenseDetail')?'work-v0.9.7':(d.path||'').startsWith('/cashflow/expenseCategories')?'public-v0.9':null);
+  const diagnostics=view.diagnostics.filter(d=>sourceProfile==='unknown'||!diagnosticProfile(d)||diagnosticProfile(d)===sourceProfile);
   const comparisonDiagnostics=diagnostics.filter(d=>!/^\/(events|ideco)(\/|$)|^\/cashflow\/manualIncomeItems(\/|$)/.test(d.path||''));
   const blockers=view.blockers.filter(d=>sourceProfile==='unknown'||d.profile===sourceProfile);
   const resolve=(id,age)=>resolveBaseAmount(view,{itemId:id,age});
