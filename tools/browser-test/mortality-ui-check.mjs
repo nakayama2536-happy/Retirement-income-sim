@@ -41,6 +41,8 @@ const init=ctx=>ctx.addInitScript(data=>{
  }
 },seed);
 async function baselineInputs(page){
+ const settings=page.locator('#mortalityPensionSettings');
+ if(!await settings.evaluate(n=>n.open))await settings.locator('summary').click();
  await input(page,'deathMonth').fill('2060-01');
  await input(page,'survivorPension').fill('210');
  await page.locator('#mortalityItemState').waitFor({state:'visible'});
