@@ -41,7 +41,7 @@ test('登録済み配布manifestと実際の資材はバイト一致',()=>{
   const expected=out.get('distribution-manifest.json');
   assert.ok(expected);
   assert.equal(read('./distribution-manifest.json'),expected.toString('utf8'));
-  assert.equal(deployed.files.length,68);
+  assert.equal(deployed.files.length,69);
   for(const entry of deployed.files){assert.ok(out.has(entry.name),entry.name);}
 });
 
