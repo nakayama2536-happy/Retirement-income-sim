@@ -145,7 +145,7 @@ async function run(browser,id,mode){
    const extra=after.comparison.filter(row=>age100Labels.includes(row[0]));
    assert.deepEqual(extra.map(row=>row[0]),age100Labels);
    assert.equal(extra[0][1],'95歳末');
-   assert.equal(extra[2][1],'対象外');
+   assert.equal(extra[2][1],'対象外（計算期間外）');
    const withoutProducer=snapshot=>{
     const copy=structuredClone(snapshot);
     delete copy.data.recoveryCompatibility.producerBuild;
@@ -161,7 +161,7 @@ async function run(browser,id,mode){
    assert.equal(after.data.recoveryCompatibility.producerBuild,APP_BUILD);
    // PR #36 and PR #37 already have the current comparison layout. Only the exported
    // backup's producer label may differ; every displayed value and saved field remains exact.
-   const withoutProducer=value=>{const copy=structuredClone(value);delete copy.data.recoveryCompatibility.producerBuild;return copy;};
+   const withoutProducer=value=>{const copy=structuredClone(value);delete copy.data.recoveryCompatibility.producerBuild;copy.comparison=copy.comparison.map(row=>row.map((cell,i)=>i>0&&cell==='対象外'?'対象外（計算期間外）':cell));return copy;};
    assert.deepEqual(withoutProducer(after),withoutProducer(before));
   }else assert.deepEqual(after,before);
   record.after=await state(page);
