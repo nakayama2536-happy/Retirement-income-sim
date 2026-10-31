@@ -38,7 +38,17 @@ export function inspectMortalityExpenseBudget(config,monthlyRows,{sourceProfile=
   const blocked=trace?.blockers||[];
   if(issues.length||blocked.length){
     const evidence=[...issues.map(d=>({code:d.code,path:d.path})),...blocked.map(d=>({code:'invalid-source-container',path:d.path}))];
-    const locations=evidence.slice(0,5).map(d=>String(d.code)+' @ '+String(d.path||'位置未確認'));
+    // Only display the local category/item name alongside the source pointer.
+    // No user-entered labels or amounts are written to GitHub, network, or logs.
+    const localLabel=path=>{
+      const match=/^\/expenseDetail\/monthlyCategories\/(\d+)(?:\/items\/(\d+))?$/.exec(String(path||''));
+      if(!match)return '';
+      const cat=config?.expenseDetail?.monthlyCategories?.[Number(match[1])];
+      const item=match[2]===undefined?cat:cat?.items?.[Number(match[2])];
+      const label=typeof item?.label==='string'?item.label.trim():typeof item?.name==='string'?item.name.trim():'';
+      return label?'（'+label.slice(0,40)+'）':'';
+    };
+    const locations=evidence.slice(0,5).map(d=>String(d.code)+' @ '+String(d.path||'位置未確認')+localLabel(d.path));
     stop('expense-source-conflict','費目の登録に不整合 '+evidence.length+'件：'+locations.join(' ／ ')+(evidence.length>5?' ／ ほか'+(evidence.length-5)+'件':'')+'。元の登録データは変更しません');
   }
   const labels=new Map();
