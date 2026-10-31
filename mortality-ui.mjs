@@ -130,7 +130,7 @@ export function mountMortalityComparison(root,{getConfig,getBaseline,runPlan}){
  </fieldset>
  <fieldset><legend>2．残された人の生活費（費目別の変更）</legend>
  <p class="muted">登録済みの生活費を費目別に参照し、残された人の生活費倍率を設定します。支出は「元の管理予算 − 減額分」で計算し、物価係数の二重適用を防ぎます。</p>
- <label>登録費目の参照先<select id="mortalityExpenseSource"><option value="">現在の採用済み出典／唯一の出典を使用</option><option value="public-v0.9">旧形式の費目内訳</option><option value="work-v0.9.7">標準形式の費目内訳</option></select></label>
+ <input type="hidden" id="mortalityExpenseSource" value="work-v0.9.7"><p class="muted">登録済みの現行形式の費目内訳を参照します。旧形式との選択・比較は行いません。</p>
  <p id="mortalityItemSourceNote" class="muted"></p>
  <div id="mortalityItemHost" class="mortality-item-rows"></div>
  <div class="mortality-item-row mortality-remainder-row"><strong>内訳に含まれない管理予算の支出（税社保・不明費用を含む）</strong><span id="mortalityRemainderAmount">未計算</span><input id="mortalityRemainderFactor" type="number" min="0" max="3" step="0.05" value="1" aria-label="未照合の予算残額の倍率"><span>倍率を指定できます</span></div>
