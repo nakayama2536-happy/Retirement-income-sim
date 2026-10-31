@@ -220,11 +220,34 @@ export function mountMortalityComparison(root,{getConfig,getBaseline,runPlan}){
   const dp=dateParts(death),last=ageOn(death+'-'+String(dp.days).padStart(2,'0'),cfg?.people?.[other]?.birthDate);
   if(first===null||last===null||first<65||last<65){target.textContent='65歳未満または誕生日境界のため、65歳以上用の遺族厚生年金概算を自動適用しません。';return;}
   const start=own?.startDate??own?.startMonth;
-  if(!dateParts(start)||start.slice(0,7)>death){target.textContent='残された方の老齢年金は受給開始前です。繰下げ待機・受給権の確認が必要なため、年金合計を自動採用しません。';return;}
+  const beforeClaim=!dateParts(start)||start.slice(0,7)>death;
   const a=own?.reference65,b=dead?.reference65;
   const values=[a?.basicAnnual,a?.employeeEarningsAnnual,b?.employeeEarningsAnnual];
   if(!a?.source||!b?.source||values.some(v=>v==null||v==='')||!values.every(v=>Number.isFinite(Number(v))&&Number(v)>=0)){
     target.textContent='年金シートの65歳基準内訳・出典が不足しています。未確認項目を0円で補完せず、参考計算を停止しました。';return;
+  }
+  if(beforeClaim){
+    // An old-age pension claim may be deferred; do not misrepresent its 65-year
+    // basis as payable in the selected month, or certify survivor entitlement.
+    const ownBasic=Number(a.basicAnnual),ownEmployee=Number(a.employeeEarningsAnnual);
+    const deceasedEmployee=Number(b.employeeEarningsAnnual);
+    const entitlement=Math.max(deceasedEmployee*.75,deceasedEmployee*.5+ownEmployee*.5);
+    const topUp65=Math.max(0,entitlement-ownEmployee);
+    target.replaceChildren();
+    target.append(makeEl('strong','','万一の月の公的年金内訳（登録済み65歳基準・受給前）'));
+    const table=makeEl('table'),body=makeEl('tbody');
+    const rows=[
+      ['老齢基礎年金・65歳基準',formatTotal(ownBasic)],
+      ['老齢厚生年金・65歳基準',formatTotal(ownEmployee)],
+      ['老齢年金・想定月の受給額','受給開始前（計上なし）'],
+      ['遺族厚生年金・65歳基準の参考受給権額',formatTotal(entitlement)],
+      ['遺族厚生年金・65歳基準の参考差額',formatTotal(topUp65)],
+      ['死亡翌月からの公的年金合計','受給権・繰下げ影響未確認のため未確定']
+    ];
+    for(const [label,value] of rows){const tr=makeEl('tr');tableCell(tr,label);tableCell(tr,value);body.append(tr);}
+    table.append(body);target.append(table);
+    target.append(makeEl('p','mortality-warning',`万一の月 ${death} は、残された方の老齢年金受給開始 ${dateParts(start)?start.slice(0,7):'未確認'} より前です。65歳基準額から遺族厚生年金の条件付き参考額は計算できますが、繰下げ待機中の受給権・支給開始月が確認できないため、受給前の合計を自動入力しません。未確認を0円とは扱いません。`));
+    return;
   }
   try{
    const estimate=estimateSurvivorReference65({
