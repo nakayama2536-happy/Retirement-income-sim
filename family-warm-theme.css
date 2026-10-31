@@ -34,7 +34,7 @@ th,td,.timeline li,.summary-box dl div,.certainty-row,.expense-list details{bord
 .asset-line{stroke:#477460}.grid{stroke:#e8e8dd}.axis{fill:#5b6a5e}.key-point{fill:#3a5846}
 .legend i.legend-plan{border-color:#477460!important}
 .legend i.legend-target{border-color:#ba8243!important}
-.target-point{stroke:#ba8243}
+.target-line{stroke:#ba8243}.target-point{stroke:#ba8243}
 .pos,.integrity-ok{color:#236344}.neg{color:#a33f38}
 .certainty-high{background:#e2f0e4;color:#285b3f}
 .certainty-mid{background:#e9eee8;color:#405b4b}
