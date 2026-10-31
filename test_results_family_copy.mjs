@@ -7,7 +7,7 @@ test('six results pages use family-readable labels and preserve tab ids',()=>{
    assert.match(html,new RegExp('data-tab="'+id+'"[^>]*>'+label));
    assert.ok(html.includes('<section id="'+id+'"'));
  }
- assert.match(html,/自動送信されません/);
+ assert.match(html,/AIには送信されません/);
  assert.match(html,/実際の将来の金額を保証するものではありません/);
  assert.match(html,/現在の計画や保存済みの設定は変更されません/);
 });
