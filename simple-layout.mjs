@@ -67,7 +67,14 @@ export function simplifyLayout(doc) {
   // Keep the live count visible while closed; no second ID or copied state.
   pendingBox.querySelector('summary').append(byId('pendingCount'));
   pending.querySelector('h2')?.classList.add('visually-hidden');
-  explanation.before(pendingBox);
+  (byId('homeTimelineGuide') || explanation).after(pendingBox);
+  // Keep technical checks available, but not expanded in the family's everyday view.
+  for (const [id,title] of [['integritySummary','計算データの整合性を確認'],['reviewAlerts','見直し条件を確認']]) {
+    const article=byId(id).closest('article');
+    const box=wrap(article,title);
+    box.classList.add('home-explanation');
+    article.querySelector('h2')?.classList.add('visually-hidden');
+  }
   // Preserve individual warning categories and all existing updates.
   for (const grid of home.querySelectorAll('.two-col')) if (!grid.children.length) grid.remove();
   wrap(byId('exportBtn'), '補助：現在の設定だけを保存');
