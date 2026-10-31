@@ -244,14 +244,14 @@ export function mountMortalityComparison(root,{getConfig,getBaseline,runPlan}){
    const total65=own65Basic+own65Employee;
    const startMonth=start.slice(0,7),age65Month=(()=>{
      const birth=cfg.people?.[other]?.birthDate;
-     const parts=birth?.match(/^(\\d{4})-(\\d{2})-(\\d{2})$/);
+     const parts=birth?.match(/^(\d{4})-(\d{2})-(\d{2})$/);
      if(!parts)return null;
      const y=Number(parts[1])+65,m=Number(parts[2]),d=Number(parts[3]);
      const due=new Date(Date.UTC(y,m-1,d));
      due.setUTCDate(due.getUTCDate()-1);
      return due.getUTCFullYear()*12+due.getUTCMonth();
    })();
-   const startMatch=startMonth.match(/^(\\d{4})-(\\d{2})$/);
+   const startMatch=startMonth.match(/^(\d{4})-(\d{2})$/);
    const startIndex=startMatch?Number(startMatch[1])*12+Number(startMatch[2])-1:null;
    const deferredMonths=age65Month!==null&&startIndex!==null?Math.max(0,startIndex-age65Month-1):null;
    const deferralEligible=deferredMonths!==null&&deferredMonths<=120;
@@ -291,7 +291,7 @@ export function mountMortalityComparison(root,{getConfig,getBaseline,runPlan}){
    target.append(title,wrap,notice,caution);
    // Set only a previously blank hypothetical amount; never overwrite a draft
    // or an adopted state. Manual review remains mandatory before simulation.
-   if(hypotheticalTotal!==null&&form.elements.survivorPension.value===''){
+   if(hypotheticalTotal!==null&&!hasGap&&actualValid&&form.elements.survivorPension.value===''){
      form.elements.survivorPension.value=String(Number(hypotheticalTotal.toFixed(6)));
      target.append(makeEl('p','muted','参考合計を未反映の入力欄に補完しました。採用済み条件は変更しません。'));
    }
