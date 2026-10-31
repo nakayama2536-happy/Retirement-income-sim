@@ -15,7 +15,10 @@ export async function validateAgeInputUi({browser,createTestServer,open,load,ope
    await page.setViewportSize({width,height:900});
    for(const tab of ['salary','nisa','ideco','retirement','pension','unemployment','events']){await openTab(page,tab);assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));}
   }
-  await openTab(page,'salary');const f=page.locator('#detail-laborSpouseSide form');
+  await openTab(page,'salary');
+  const optionalLabor=page.locator('#salary details.salary-optional-labor');
+  if(!await optionalLabor.evaluate(n=>n.open))await optionalLabor.locator('summary').click();
+  const f=page.locator('#detail-laborSpouseSide form');
   await f.locator('[name=endDate]').fill('2057-02-01');
   assert.match(await f.locator('[name=endDate]').locator('..').locator('.date-age-hint').innerText(),/配偶者.*収入の最終月：2057年1月/);
   await f.locator('[data-reset]').click();assert.deepEqual((await snapshot(page)).data,before);
