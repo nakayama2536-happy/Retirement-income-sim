@@ -1,6 +1,6 @@
 {
   "kind": "public-release",
-  "runtime": "v0.9.19-family-results-20261031",
+  "runtime": "v0.9.20-family-warm-20261031",
   "files": [
     {
       "name": "annual-cashflow.mjs",
@@ -14,13 +14,13 @@
     },
     {
       "name": "app.mjs",
-      "size": 71799,
-      "sha256": "d680f9135514fb904540cfe2cb97aa0d68290ac37281b591b69a5d31f42154c5"
+      "size": 71796,
+      "sha256": "05483f6f4fde5f5c93cc018846dfa94fe29c8fd262d067b1bc3b5a1aad88cb8f"
     },
     {
       "name": "backup-compatibility.mjs",
-      "size": 7828,
-      "sha256": "84372cef10fd17a1c82c4572870016923d6f95976a6a552cfc0417da60f2cbf7"
+      "size": 7825,
+      "sha256": "5b8efc2f6ed61717175e68908fb396ccdb72e132efe03347c46139f41ae20e09"
     },
     {
       "name": "calc.mjs",
@@ -103,6 +103,11 @@
       "sha256": "2116cc44aca5fa27a0b6ad88dfd9a32a0fb284ede0a9aaca92bcfa4b0f3fd2ca"
     },
     {
+      "name": "family-warm-theme.css",
+      "size": 3930,
+      "sha256": "2abd08474e6f0b69d30ba871b2658742145b37bb6acef231717040adf395759c"
+    },
+    {
       "name": "full-backup.mjs",
       "size": 1286,
       "sha256": "21428054e8f31445304cbe7ad1a5f53e47bb60ffac332e72da2d77933ae648f6"
@@ -149,8 +154,8 @@
     },
     {
       "name": "index.html",
-      "size": 62799,
-      "sha256": "cdbea7d9876d257479bc9c697ab89bf8f3edda3748dc5a48a2e1c1fffcda55f2"
+      "size": 62851,
+      "sha256": "90f113bdb5ee56aecbbe6b65b0348155c77526a92bedb55731e8e89e9c95ef41"
     },
     {
       "name": "manifest.webmanifest",
@@ -224,8 +229,8 @@
     },
     {
       "name": "release-info.json",
-      "size": 120,
-      "sha256": "a0295a6df6793a52c855eb5262bc71cd224893f9911cccd420448ad95e2ab600"
+      "size": 117,
+      "sha256": "75ebf1edce5fc48d18865fe1088e162afa421eca316be285c37ec7cdf62bdd09"
     },
     {
       "name": "retirement-comment.mjs",
@@ -289,8 +294,8 @@
     },
     {
       "name": "sw.js",
-      "size": 4072,
-      "sha256": "65d2702adccf12d79b672082b733dd3a70f6971c5056747ed68cb04d6bb28486"
+      "size": 4095,
+      "sha256": "0f96912f524fd38270fd088d935e2b619e8780c7ef05912d003d35b36954502e"
     },
     {
       "name": "sync-controller.mjs",
