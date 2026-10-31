@@ -42,7 +42,7 @@ try{
  assert.match(await page.locator('#cloudDataSavedAt').innerText(),/未確認/);
  mark('concise-header-build-rule-date-and-unverified-cloud-time');
  assert.equal(await page.locator('.simulation-context').count(),0);
- assert.match(await page.locator('#simulationPeriod').innerText(),/保存済みの計画/);
+ assert.match(await page.locator('#simulationPeriod').innerText(),/現在の計画/);
  mark('compact-home-replaces-large-current-simulation-banner');
  assert.equal(await page.locator('#initialAssetLabel').innerText(),`${before.config.plan.startAge-1}歳期末資産`);
  assert.match(await page.locator('#initialAssetHelp').innerText(),/計算開始残高/);
