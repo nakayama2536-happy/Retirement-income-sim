@@ -14,8 +14,8 @@
     },
     {
       "name": "app.mjs",
-      "size": 72123,
-      "sha256": "d06bfa6bad367d024f99f69c3376e8f6a04124b967dac2fdacde8c72611b3ca7"
+      "size": 72177,
+      "sha256": "cd6e4302cc3c160ff37f0dec026f0dcefba63e291b52beae1b1d62efefba5883"
     },
     {
       "name": "backup-compatibility.mjs",
@@ -154,8 +154,8 @@
     },
     {
       "name": "index.html",
-      "size": 65918,
-      "sha256": "c6e0350ea46968184afc4a5d5da532a8af63bbafcad52e4887869884c74bb18c"
+      "size": 66576,
+      "sha256": "51242dae09c274d5075957e42c8eeec242f243c3c9dd2f8b74460eacc22a5856"
     },
     {
       "name": "manifest.webmanifest",
