@@ -950,7 +950,7 @@ document.querySelectorAll('[data-help]').forEach(btn=>btn.addEventListener('clic
 }));
 el('helpClose').addEventListener('click',()=>el('helpDialog').close());
 
-const CURRENT_RUNTIME_BUILD='v0.9.17-unidentified-expense-20261031';
+const CURRENT_RUNTIME_BUILD='v0.9.18-stale-budget-guard-20261031';
 el('appVersion').textContent=CURRENT_RUNTIME_BUILD+'（端末で実行中）';
 const freshness=el('runtimeFreshness');
 (async()=>{
