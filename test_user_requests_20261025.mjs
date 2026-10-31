@@ -8,7 +8,7 @@ const salary=txt('./salary-ui.mjs'),css=txt('./styles.css');
 const controller=txt('./sync-controller.mjs'),ui=txt('./sync-panel.mjs');
 
 test('R01: starting asset is correctly labeled as previous-age year-end, not the first simulated year-end',()=>{
- assert.match(app,/initialAssetLabel'\)\.textContent=`\$\{start-1\}歳期末資産`/);
+ assert.match(app,/initialAssetLabel'\)\.textContent=`\$\{start-1\}歳期末想定資産`/);
  assert.match(app,/initialAssetHelp'\)\.textContent=`\$\{start\}歳期の計算開始残高/);
  assert.match(app,/initialAssetSettingLabel'\)\.textContent=`\$\{Number\(p.startAge\)-1\}歳期末資産/);
  assert.match(html,/id="currentAsset"/);

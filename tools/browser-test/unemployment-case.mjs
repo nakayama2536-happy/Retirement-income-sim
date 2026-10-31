@@ -10,7 +10,7 @@ export async function validateUnemploymentUi({browser,createTestServer,open,load
   await form.locator('[name=amountStatus]').selectOption('estimate');await form.locator('[name=seekingWork]').check();await form.locator('[name=eligibilityChecked]').check();
   await form.locator('[type=submit]').click();assert.deepEqual((await snapshot(page)).data,before.data);
   await openTab(page,'unemployment');await page.locator('#detail-unemployment [data-apply]').click();const adopted=await snapshot(page);assert.equal(adopted.data.config.unemployment.receiptPlan.dailyYen,'6000');assert.deepEqual(adopted.data.scenarios,before.data.scenarios);
-  await openTab(page,'home');assert((await page.locator('#timeline').innerText()).includes('高年齢求職者給付金'));
+  await openTab(page,'home');await page.locator('#homeTimelineGuide summary').click();assert((await page.locator('#timeline').textContent()).includes('高年齢求職者給付金'));
   await openTab(page,'salary');const side=page.locator('#detail-laborPrimarySide');
   assert((await side.locator('.labor-date-recommendation').innerText()).includes('2045年4月'));
   const input=side.locator('[name=monthlyGross]'),old=await input.inputValue();await input.fill('9');

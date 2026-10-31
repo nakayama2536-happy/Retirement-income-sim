@@ -88,3 +88,17 @@ button,input,select,textarea{font-family:inherit}
 #home .home-explanation{margin-top:10px}
 #home .home-explanation>summary{cursor:pointer}
 @media(min-width:800px){#home .home-result-lead{padding:2px 10px 4px}}
+
+/* Goal-first home summary: three distinct figures, little explanatory clutter. */
+#home .target-overview .target-metrics{margin:18px 0 12px}
+#home .target-overview .target-metrics>div{padding:6px 3px}
+#home .target-overview .target-metrics>div+div{border-left:1px solid #f0dfd2;padding-left:18px}
+#home .target-overview .target-metrics span{font-size:.91rem;color:#4f5960}
+#home .target-overview .home-goal-status{margin:5px 0 7px;font-size:.93rem;color:#4c5960}
+#home .target-overview .home-goal-status strong{color:#78452b;font-weight:650}
+#home .target-overview #targetStatusNote{display:block;line-height:1.65;color:#58636b}
+#home .target-overview .link-btn{margin-top:8px}
+@media(max-width:600px){#home .target-overview .target-metrics>div+div{border-left:0;border-top:1px solid #f0dfd2;padding:12px 3px 4px}}
+
+/* Do not let inherited display rules reveal intentionally hidden plan metadata. */
+#simulationPeriod[hidden]{display:none!important}

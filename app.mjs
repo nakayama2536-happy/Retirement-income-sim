@@ -206,13 +206,14 @@ function renderHome() {
   el('status').textContent = target ? (result.finalAsset>=target.threshold?'目標額以上':'目標額未満') : '未設定';
   const below=result.keyAges.filter(k=>k.age!==end&&k.margin<0);
   el('targetStatusNote').textContent=below.length?`途中の参考目標を下回る年齢：${below.map(k=>k.age+'歳末').join('・')}。生活費の不足とは別に確認してください。`:'この判定は最終年齢末の目標額との比較です。途中の資金不足や将来の安心を保証しません。';
-  el('initialAssetLabel').textContent=`${start-1}歳期末資産`;
+  el('initialAssetLabel').textContent=`${start-1}歳期末想定資産`;
   el('initialAssetHelp').textContent=`${start}歳期の計算開始残高として登録した計画値です。実績を確定した意味ではありません。`;
   el('finalTargetLabel').textContent=`${end}歳末の目標資産額`;
   el('finalPredictionLabel').textContent=`${end}歳末の予測資産額`;
   el('simulationPeriod').textContent=`現在の計画：${start}歳～${end}歳末（入力途中の変更は含みません）`;
   el('assetChart').setAttribute('aria-label',`${start}歳から${end}歳末までの資産推移`);
   const margin=target?result.finalAsset-target.threshold:null;
+  el('finalMarginLabel').textContent=margin===null?'目標との差':'目標'+(margin>=0?'を上回る金額':'に足りない金額');
   el('finalMargin').textContent=margin===null?'—':`${margin>=0?'+':''}${money(margin)}`;
   el('finalMargin').className=margin===null?'':margin<0?'neg':'pos';
   el('status').dataset.status = target ? result.status : '';
@@ -246,7 +247,7 @@ function renderHome() {
   const ideco=projectIdeco(config);
   if (ideco) check.push(`65歳iDeCo/DC見込は運用前提による試算です（約${formatMan(ideco.balance)}万円）`);
   if (!config.income?.pensions?.spouse?.annualAtStart || ['unknown','assumption'].includes(config.income?.pensions?.spouse?.certainty)) check.push('配偶者の公的年金額は未確認または仮定です');
-  if (config.reserve.total > 0 && result.finalAfterReserveUse < result.reserveUsedThreshold) check.push(`予備枠全使用時は${end}歳末の最低目安を下回ります`);
+  if (config.reserve.total > 0 && result.finalAfterReserveUse < result.reserveUsedThreshold) check.push(`急な出費に備えた予備枠をすべて使うと、${end}歳末の資産が設定した目安を下回る想定です`);
   if (showActuals && forecast && target && forecast.projection.finalAsset < result.finalThreshold) check.push(`最新実績からの再予測が${end}歳末管理基準を下回っています`);
   el('checks').innerHTML = check.length ? check.map(x=>`<li>${x}</li>`).join('') : '<li>主要な未確認事項はありません。</li>';
 
@@ -950,7 +951,7 @@ document.querySelectorAll('[data-help]').forEach(btn=>btn.addEventListener('clic
 }));
 el('helpClose').addEventListener('click',()=>el('helpDialog').close());
 
-const CURRENT_RUNTIME_BUILD='v0.9.25-results-first-pc-20261031';
+const CURRENT_RUNTIME_BUILD='v0.9.26-goal-first-pc-20261031';
 el('appVersion').textContent=CURRENT_RUNTIME_BUILD+'（端末で実行中）';
 const freshness=el('runtimeFreshness');
 (async()=>{
