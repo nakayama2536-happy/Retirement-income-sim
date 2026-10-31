@@ -60,7 +60,7 @@ export function mountMortalityItemizedControls(root,{getConfig,runPlan,onChange}
         host.append(row);
       }
       root.querySelector('#mortalityRemainderAmount').textContent=format(month.unallocated)+'万円／月';
-      root.querySelector('#mortalityItemSourceNote').textContent='現行形式の登録内訳を使用。未確認費用は予算残額に含みます。';
+      root.querySelector('#mortalityItemSourceNote').textContent='現行形式の登録内訳を使用。'+(model.unidentifiedItemCount?'識別情報がない費目 '+model.unidentifiedItemCount+'件は個別倍率の対象にせず、未照合予算残額として扱います。':'')+'未確認費用は予算残額に含みます。';
       factorText();
     }catch(e){status.textContent='費目の取込みを確認してください：'+e.message;root.querySelector('#mortalityItemSourceNote').textContent='内訳の出典・管理予算との整合を確認するまで比較を停止します。';}
   }
