@@ -46,3 +46,13 @@ th,td,.timeline li,.summary-box dl div,.certainty-row,.expense-list details{bord
 #runtimeFreshness[data-status="unknown"]{color:#62606a}
 @media(max-width:760px){.card{box-shadow:0 2px 9px #9b61350c}}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important}}
+
+/* Desktop family orientation: consistent hierarchy, readable actions and consequences. */
+.family-result-guide{border-left:5px solid #b95f32;padding:16px 20px;background:#fffaf5}
+.family-result-guide>strong{display:block;font-size:1.06rem;color:#633a25;line-height:1.6}
+.family-result-guide>p{margin:7px 0;line-height:1.75}
+.family-result-guide>p.muted{padding-top:9px;border-top:1px solid #efdfd0;color:#4d5760}
+.family-guide-content li{margin-bottom:9px;line-height:1.7}
+#scenarios #saveScenarioBtn{margin-top:10px}
+#scenarios #scenarioName{max-width:100%}
+@media(min-width:900px){.family-result-guide{max-width:100%;padding:18px 24px}.family-result-guide>p{max-width:74ch}}
