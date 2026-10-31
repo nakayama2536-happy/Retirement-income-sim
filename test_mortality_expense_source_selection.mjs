@@ -7,5 +7,5 @@ test('only a unique reconciled comparison source may be auto-selected',()=>{
  assert.match(ui,/if\(valid\.length===1\)/);
  assert.match(ui,/else if\(valid\.length>1\)/);
  assert.match(ui,/どの費目内訳も検証に通りません/);
- assert.match(ui,/採用済みの採用条件には反映しません/);
+ assert.match(ui,/保存済みの採用条件には反映しません/);
 });
