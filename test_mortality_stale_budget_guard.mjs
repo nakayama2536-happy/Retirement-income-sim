@@ -1,0 +1,30 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import {runRetirementPlan} from './calc.mjs';
+import {migrateConfig} from './storage.mjs';
+import {inspectMortalityExpenseBudget,applyMortalityExpenseMultipliers} from './mortality-itemized.mjs';
+const original=JSON.parse(fs.readFileSync(new URL('./tools/browser-test/mortality-synthetic.json',import.meta.url),'utf8')).config;
+test('all current expense identities missing: full budget remains unallocated and inputs unmodified',()=>{
+  const c=migrateConfig(structuredClone(original));
+  c.plan.afterTaxReturn=0;c.plan.inflation=0;
+  c.budgets=[{fromAge:65,toAge:95,annualBudget:660}];
+  c.cashflow||={};c.cashflow.detailSourceProfile='work-v0.9.7';c.cashflow.periodOverrides=[];
+  c.expenseDetail={monthlyCategories:[{label:'例示費目A',amount:10},{label:'例示費目B',amount:20}],travelAnnualBase:0};
+  const before=structuredClone(c);
+  const rows=runRetirementPlan(c,{includeMonthlyDetails:true}).monthlyDetails;
+  const model=inspectMortalityExpenseBudget(c,rows,{sourceProfile:'work-v0.9.7'});
+  assert.equal(model.unidentifiedItemCount,2);
+  const m=model.months.find(x=>x.expense===55);
+  assert.ok(m);
+  assert.equal(m.known,0);
+  assert.equal(m.unallocated,55);
+  const adjusted=applyMortalityExpenseMultipliers(rows,model,{factors:{},unallocatedFactor:0.8});
+  const after=adjusted.monthlyRows.find(x=>x.month===m.month);
+  assert.ok(Math.abs(after.itemizedExpensePreview-44)<1e-8);
+  assert.deepEqual(c,before);
+});
+test('failed refresh invalidates stale remainder display',()=>{
+  const s=fs.readFileSync(new URL('./mortality-itemized-ui.mjs',import.meta.url),'utf8');
+  assert.match(s,/host\.replaceChildren\(\);model=null;\s*root\.querySelector\('#mortalityRemainderAmount'\)\.textContent='未計算'/);
+});
