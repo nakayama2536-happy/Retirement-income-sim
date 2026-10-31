@@ -194,8 +194,8 @@
     },
     {
       "name": "mortality-ui.mjs",
-      "size": 49280,
-      "sha256": "da42abe595925174aca718ffc1c8e0e8b083bd0603e6050d2a1de2fb605fb1a9"
+      "size": 49564,
+      "sha256": "b60dbc1cef8ec53850b484217531cf5c249d7f5ca6c384fe6461b88c52f2e02c"
     },
     {
       "name": "pension-estimate.mjs",
