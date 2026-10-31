@@ -99,3 +99,6 @@ button,input,select,textarea{font-family:inherit}
 #home .target-overview #targetStatusNote{display:block;line-height:1.65;color:#58636b}
 #home .target-overview .link-btn{margin-top:8px}
 @media(max-width:600px){#home .target-overview .target-metrics>div+div{border-left:0;border-top:1px solid #f0dfd2;padding:12px 3px 4px}}
+
+/* Do not let inherited display rules reveal intentionally hidden plan metadata. */
+#simulationPeriod[hidden]{display:none!important}
