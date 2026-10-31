@@ -28,7 +28,7 @@ test('公開候補の版番号は画面・バックアップ・SW・manifest・�
 });
 
 test('本番候補に旧公開版・RC・未公開の誤認ラベルを残さない',()=>{
-  assert.equal(APP_BUILD,'v0.9.27-family-home-clarity-20261031');
+  assert.equal(APP_BUILD,'v0.9.28-cashflow-family-pc-20261031');
   assert.notEqual(APP_BUILD,'v0.9.7-ui-simple-20261012');
   for(const value of [APP_BUILD,app.match(/const CURRENT_RUNTIME_BUILD='([^']+)'/)?.[1],sw.match(/const CACHE=`\$\{CACHE_PREFIX\}([^`]+)`/)?.[1],deployed.runtime]){
     assert.ok(value);
