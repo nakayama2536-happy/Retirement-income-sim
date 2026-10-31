@@ -1,6 +1,6 @@
 {
   "kind": "public-release",
-  "runtime": "v0.9.21-family-apricot-b-20261031",
+  "runtime": "v0.9.22-family-results-plain-20261031",
   "files": [
     {
       "name": "annual-cashflow.mjs",
@@ -14,13 +14,13 @@
     },
     {
       "name": "app.mjs",
-      "size": 71801,
-      "sha256": "54107cd7c6f22d1d9c5ed209d9a2550601014f151f7927915b8971e6d8fe686f"
+      "size": 71805,
+      "sha256": "99191092ef1eb2ec13641f1db3e36f67348a84ea22760b805994b353359af718"
     },
     {
       "name": "backup-compatibility.mjs",
-      "size": 7830,
-      "sha256": "411915431e29dcd1c173df3a5b6def1192c2f43f95bc9a2e8028ecdf3f0600f5"
+      "size": 7834,
+      "sha256": "7d5c11486cc18697e27e6aa8e37028b5d67d685e300d626392b78ce22dc0607e"
     },
     {
       "name": "calc.mjs",
@@ -154,8 +154,8 @@
     },
     {
       "name": "index.html",
-      "size": 62851,
-      "sha256": "90f113bdb5ee56aecbbe6b65b0348155c77526a92bedb55731e8e89e9c95ef41"
+      "size": 63414,
+      "sha256": "3dc873ee24f91051da9df98d9c758e0dda4149b32ac3d617ecb028aeb8a2c119"
     },
     {
       "name": "manifest.webmanifest",
@@ -229,8 +229,8 @@
     },
     {
       "name": "release-info.json",
-      "size": 122,
-      "sha256": "ed41aed42da5ce9453b10391164a740c22bc0f2c4654446759ac7d44b599699f"
+      "size": 126,
+      "sha256": "e1cb6ee94bba34f988dd95bba2ea85d809e4b0e3b7d5106369dbd8637fbb4b52"
     },
     {
       "name": "retirement-comment.mjs",
@@ -294,8 +294,8 @@
     },
     {
       "name": "sw.js",
-      "size": 4100,
-      "sha256": "c7cc5a335e445b28328e57e4f54eee2765e462b54f00e8d527871ef83da88486"
+      "size": 4104,
+      "sha256": "a01adac286472be2f80546f1cef472fc8cc931639ab46d1dfdcdf1402ae96600"
     },
     {
       "name": "sync-controller.mjs",
