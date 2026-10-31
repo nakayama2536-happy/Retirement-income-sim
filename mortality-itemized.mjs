@@ -34,7 +34,11 @@ export function inspectMortalityExpenseBudget(config,monthlyRows,{sourceProfile=
   const profile=selectMortalityExpenseProfile(config,sourceProfile);
   const trace=profile?reconcileCashflow(config,{sourceProfile:profile}):null;
   if(trace&&trace.months.length!==monthlyRows.length)stop('expense-month-count','費目内訳と月次資産計算の期間が一致しません');
-  const issues=(trace?.comparisonDiagnostics||[]).filter(d=>/identity|duplicate|ambiguous|source-conflict/.test(d.code||''));
+  // An unnamed work-detail item cannot be assigned a lasting identity.
+  // Keep it out of named multipliers and in the budget remainder instead.
+  // Every other identity collision continues to block the comparison.
+  const unnamed=(trace?.comparisonDiagnostics||[]).filter(d=>d.code==='missing-identity'&&String(d.path||'').startsWith('/expenseDetail/monthlyCategories/'));
+  const issues=(trace?.comparisonDiagnostics||[]).filter(d=>/identity|duplicate|ambiguous|source-conflict/.test(d.code||'')&&!unnamed.includes(d));
   const blocked=trace?.blockers||[];
   if(issues.length||blocked.length){
     const evidence=[...issues.map(d=>({code:d.code,path:d.path})),...blocked.map(d=>({code:'invalid-source-container',path:d.path}))];
@@ -77,7 +81,7 @@ export function inspectMortalityExpenseBudget(config,monthlyRows,{sourceProfile=
     for(const item of view.items||[])if(labels.has(item.itemId))labels.set(item.itemId,String(item.label||item.itemId));
   }
   const items=[...labels].map(([id,label])=>({id,label})).sort((a,b)=>a.label.localeCompare(b.label,'ja'));
-  return {sourceProfile:profile,items,months:monthRows};
+  return {sourceProfile:profile,items,months:monthRows,unidentifiedItemCount:unnamed.length};
 }
 export function applyMortalityExpenseMultipliers(monthlyRows,budget,{factors={},unallocatedFactor=1}={}){
   if(!Array.isArray(monthlyRows)||monthlyRows.length!==budget?.months?.length)stop('expense-month-count','元の月次台帳と費目内訳の件数が一致しません');
