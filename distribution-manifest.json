@@ -1,6 +1,6 @@
 {
   "kind": "public-release",
-  "runtime": "v0.9.14-expense-diagnostics-20261031",
+  "runtime": "v0.9.15-current-expense-only-20261031",
   "files": [
     {
       "name": "annual-cashflow.mjs",
@@ -14,13 +14,13 @@
     },
     {
       "name": "app.mjs",
-      "size": 71804,
-      "sha256": "ee9ebdb7c4aa11eaf5c765e1475cb2eab3cbfd5c01d8700978223bf332addf41"
+      "size": 71805,
+      "sha256": "cb7d27251b3ffe17c604bbc6908b114d14c4e2a03b3bba50c521e2907f886541"
     },
     {
       "name": "backup-compatibility.mjs",
-      "size": 7833,
-      "sha256": "c549d3eb9cc7b7d452d25b057a23f48bc908cbaf44f13a7ef7eeabb2f9f373fa"
+      "size": 7834,
+      "sha256": "27ce5f21188709dff16eb126169f77ba6a60760e8be110dfff0a9f4b3c97e3e2"
     },
     {
       "name": "calc.mjs",
@@ -179,8 +179,8 @@
     },
     {
       "name": "mortality-itemized-ui.mjs",
-      "size": 7055,
-      "sha256": "a1f0c630f01aa591fa007ef336d4a17a3ad0cebb905e8c9d5864f241bdf51cd2"
+      "size": 5517,
+      "sha256": "d05f7161eb1d9b1b03ee8cfe046fd552c9832ef23ee5a19b347cdfd3d2fbcee5"
     },
     {
       "name": "mortality-itemized.mjs",
@@ -194,8 +194,8 @@
     },
     {
       "name": "mortality-ui.mjs",
-      "size": 51808,
-      "sha256": "f2197eee63a6ebf44d5ab9bc38e244904e5182ef438b3ea9151f4424905c3b06"
+      "size": 51723,
+      "sha256": "198529cdad9e08156af7485b1fee7b0e369f0a97b8df85d6fad7ce4a44d4a700"
     },
     {
       "name": "pension-estimate.mjs",
@@ -224,8 +224,8 @@
     },
     {
       "name": "release-info.json",
-      "size": 125,
-      "sha256": "27f7fc85969946334139b998ced42c2703fd354b3ad940aac24b2893a57bf36d"
+      "size": 126,
+      "sha256": "4dd9da270b925eee854b050c84f7ce70e6143625e0399b7605ca92d04870fb36"
     },
     {
       "name": "retirement-comment.mjs",
@@ -289,8 +289,8 @@
     },
     {
       "name": "sw.js",
-      "size": 4077,
-      "sha256": "738e2529e30954028089370f53ea13c5f6f5333d765ce5bb931dae3c3601412f"
+      "size": 4078,
+      "sha256": "28bc1c42277998e6b52f72d149da7fe520ca486c53be0d2467995e4394625dcb"
     },
     {
       "name": "sync-controller.mjs",
