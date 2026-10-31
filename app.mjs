@@ -473,7 +473,7 @@ function drawChart() {
     const t=document.createElementNS(ns,'text');t.textContent=`${formatMan(v)}`;t.setAttribute('x',pad.l-8);t.setAttribute('y',y(v)+4);t.setAttribute('text-anchor','end');t.setAttribute('class','axis');svg.appendChild(t);
   }
   [minAge,...Array.from({length:Math.max(0,Math.floor((maxAge-minAge)/5))},(_,i)=>Math.ceil((minAge+1)/5)*5+i*5),maxAge].filter((a,i,arr)=>a>=minAge&&a<=maxAge&&arr.indexOf(a)===i).forEach(a=>{
-    const t=document.createElementNS(ns,'text');t.textContent=`${a}`;t.setAttribute('x',x(a));t.setAttribute('y',h-12);t.setAttribute('text-anchor','middle');t.setAttribute('class','axis');svg.appendChild(t);
+    const t=document.createElementNS(ns,'text');t.textContent=a===maxAge?`${config.plan.endAge}歳末`:`${a}`;t.setAttribute('x',x(a));t.setAttribute('y',h-12);t.setAttribute('text-anchor','middle');t.setAttribute('class','axis');svg.appendChild(t);
   });
 
   drawPolyline(svg, targetPoints, x, y, 'target-line');
