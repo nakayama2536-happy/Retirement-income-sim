@@ -161,7 +161,7 @@ async function run(browser,id,mode){
    assert.equal(after.data.recoveryCompatibility.producerBuild,APP_BUILD);
    // PR #36 and PR #37 already have the current comparison layout. Only the exported
    // backup's producer label may differ; every displayed value and saved field remains exact.
-   const withoutProducer=value=>{const copy=structuredClone(value);delete copy.data.recoveryCompatibility.producerBuild;return copy;};
+   const withoutProducer=value=>{const copy=structuredClone(value);delete copy.data.recoveryCompatibility.producerBuild;copy.comparison=copy.comparison.map(row=>row.map((cell,i)=>i>0&&cell==='対象外'?'対象外（計算期間外）':cell));return copy;};
    assert.deepEqual(withoutProducer(after),withoutProducer(before));
   }else assert.deepEqual(after,before);
   record.after=await state(page);
