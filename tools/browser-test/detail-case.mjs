@@ -40,6 +40,8 @@ export async function validateLaborTrendUi({browser,createTestServer,open,load,o
   const page=await open(context,fixture.url),errors=[];page.on('pageerror',e=>errors.push(e.message));await load(page,path.join(here,'synthetic-full.json'));const before=(await snapshot(page)).data;
   for(const width of [390,1280]){
    await page.setViewportSize({width,height:900});await openTab(page,'salary');
+   const optionalLabor=page.locator('#salary details.salary-optional-labor');
+   if(!await optionalLabor.evaluate(n=>n.open))await optionalLabor.locator('summary').click();
    for(const id of ['laborPrimaryRegular','laborPrimarySide','laborSpouseRegular','laborSpouseSide'])assert(await page.locator('#detail-'+id+' form').isVisible());
    assert.equal(await page.locator('#salary #salary_receipt_ideco').count(),0);
    assert.deepEqual(await page.locator('#salaryInputs > details.salary-step > fieldset > legend').allTextContents(),['1. 生活費の負担を切り替える月','2. 給与生活中の家計と資産の入出金','3. 切替後の生活費・労働収入','4. 年金・iDeCo・臨時収支の扱い']);
@@ -106,7 +108,10 @@ export async function validateLaborTrendUi({browser,createTestServer,open,load,o
   await page.screenshot({path:path.join(out,'L1-selected-trend.png')});
   await openTab(page,'review');await page.locator('#makeReviewPrompt').click();assert((await page.locator('#reviewPromptText').inputValue()).includes('保存済み'));
   assert.deepEqual((await snapshot(page)).data,before);
-  await openTab(page,'salary');const f=page.locator('#detail-laborSpouseRegular form');
+  await openTab(page,'salary');
+  const optionalLabor=page.locator('#salary details.salary-optional-labor');
+  if(!await optionalLabor.evaluate(n=>n.open))await optionalLabor.locator('summary').click();
+  const f=page.locator('#detail-laborSpouseRegular form');
   await f.locator('[name=monthlyGross]').fill('4');await f.locator('[name=startDate]').fill(data.config.plan.startDate);await f.locator('[name=endDate]').fill(`${Number(data.config.plan.startDate.slice(0,4))+1}${data.config.plan.startDate.slice(4)}`);
   if(await f.locator('[name=useIndividualLabor]').count())await f.locator('[name=useIndividualLabor]').check();
   await f.locator('[type=submit]').click();assert(await page.locator('#detail-laborSpouseRegular [data-apply]').isVisible());

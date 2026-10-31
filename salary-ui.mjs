@@ -35,6 +35,17 @@ export function mountSalarySheet({getState,onCommit,showNotice}){
     for(const [kind,list] of [['event',d.eventTreatments],['period',d.periodTreatments]])list.forEach((v,i)=>{const node=el(`salary_${kind}_${i}`);if(node)list[i]=node.value;});
     return d;
   }
+  function renderAdoptedOverview(c){
+    const adopted=c.cashflow?.salaryLife;
+    const flow=el('salaryAdoptedTimeline');
+    if(!adopted){
+      flow.innerHTML='<p class="muted">現在は従来方式を使用中です。下の切替月は比較用の仮設定であり、採用済みの条件ではありません。</p>';
+      return;
+    }
+    flow.innerHTML='<div class="salary-time-part"><span>給与で生活費を賄う最終月</span><strong>'+esc(dateWithAge(adopted.lastSalaryMonth,c))+'</strong></div>'
+      +'<span class="salary-time-arrow" aria-hidden="true">→</span>'
+      +'<div class="salary-time-part"><span>資産から生活費を負担する開始月</span><strong>'+esc(dateWithAge(nextMonth(adopted.lastSalaryMonth),c))+'</strong></div>';
+  }
   function state(){
     const c=getState().config;if(!c||!draft)return;
     const matches=salaryDraftMatches(c,draft);
@@ -42,6 +53,18 @@ export function mountSalarySheet({getState,onCommit,showNotice}){
     // The legacy-mode default is only a proposal, not a user-edited draft.
     // An explicitly saved/edited draft still blocks cloud import even in legacy mode.
     el('salaryState').dataset.dirty=String(salaryDraftNeedsProtection(c,draft,hasUserSalaryDraft));
+    const status=el('salaryEditStatus');
+    const hasAdopted=Boolean(c.cashflow?.salaryLife);
+    if(preview){
+      status.innerHTML='<strong>試算済み・未反映</strong><span>結果は「反映前の差分確認」に表示されます。「全体シミュレーションに反映」するまでは計画は変わりません。</span>';
+    }else if(matches){
+      status.innerHTML='<strong>現在の設定と一致</strong><span>採用済みの計画と同じ条件です。</span>';
+    }else if(hasAdopted||hasUserSalaryDraft){
+      status.innerHTML='<strong>変更中・未反映</strong><span>入力中の条件です。現在の計画とは別で、試算・反映するまで集計結果は変わりません。</span>';
+    }else{
+      status.innerHTML='<strong>比較用の仮設定・未採用</strong><span>現在は従来方式です。切替案を試算しても自動採用されません。</span>';
+    }
+    status.dataset.status=preview?'preview':matches?'adopted':'draft';
     el('salaryUndo').disabled=busy||!salaryUndoAvailable(c);
     el('salary_switchMonth').textContent=dateWithAge(nextMonth(draft.settings.lastSalaryMonth),c);
     el('salary_lastSalaryMonthAge').textContent=dateAgeHint(draft.settings.lastSalaryMonth,c);
@@ -53,9 +76,9 @@ export function mountSalarySheet({getState,onCommit,showNotice}){
     const salaryFieldsHtml=`<fieldset class="pension-person"><legend>1. 生活費の負担を切り替える月</legend>
       <p class="muted">比較専用の65歳基準（65歳到達月の前月まで給与生活）： <strong>${esc(dateWithAge(draft.baselineMonth,c))}</strong> まで、資産からの生活費負担は <strong>${esc(dateWithAge(nextMonth(draft.baselineMonth),c))}</strong> から。</p>
       <label>給与で生活費を賄う最終月（その月を含む）<input id="salary_lastSalaryMonth" type="month" required aria-describedby="salary_lastSalaryMonthAge"></label><p id="salary_lastSalaryMonthAge" class="muted" aria-live="polite"></p>
-      <p>資産からの生活費負担開始月：<strong id="salary_switchMonth"></strong></p>
+      <p>入力中の案：この月までは給与で生活費を賄い、翌月から資産で負担します。</p><p>資産からの生活費負担開始月：<strong id="salary_switchMonth"></strong></p>
       <label>月の切替の確認<select id="salary_monthsConfirmed">${option('','未確認')+option('yes','上記の最終月・負担開始月で試算する')}</select></label>
-      </fieldset><fieldset class="pension-person"><legend>2. 給与生活中の家計と資産の入出金</legend><p>給与と生活費を家計側で賄い、計画資産へ実際に追加する額・引き出す額だけを入力します。給与全額やNISA口座内の売買額ではありません。</p><label>家計から計画資産へ追加する額（万円／月）<input id="salary_monthlyAddition" type="number" min="0" step="any" inputmode="decimal" required></label>
+      </fieldset><fieldset class="pension-person"><legend>2. 給与生活中の家計と資産の入出金</legend><p>給与と生活費を家計側で賄い、計画資産へ実際に追加する額・引き出す額だけを入力します。給与全額やNISA口座内の売買額ではありません。</p><p class="salary-transfer-direction">家計 → 計画資産：追加　／　計画資産 → 家計：引出し</p><label>家計から計画資産へ追加する額（万円／月）<input id="salary_monthlyAddition" type="number" min="0" step="any" inputmode="decimal" required></label>
       <label>計画資産から家計へ引き出す額（万円／月）<input id="salary_monthlyWithdrawal" type="number" min="0" step="any" inputmode="decimal" required></label>
       <button id="salaryZero" type="button" class="secondary">追加・取崩しなし（両方0）</button>
       </fieldset><fieldset class="pension-person"><legend>3. 切替後の生活費・労働収入</legend><p>65歳以降の生活費は「支出」の管理予算を使います。下の予算欄は65歳より前に切り替える場合だけ必要です。</p><label>65歳より前の資産負担期間の管理予算（万円／月）<input id="salary_pre65MonthlyBudget" type="number" min="0" step="any" inputmode="decimal"></label>
@@ -98,7 +121,8 @@ export function mountSalarySheet({getState,onCommit,showNotice}){
     const c=getState().config;if(!c)return;
     if(!draft){const savedDraft=loadSalaryDraft(c);draft=savedDraft||salaryDraftFromConfig(c);hasUserSalaryDraft=!!savedDraft;buildInputs(c);el('salaryDraftNote').textContent='入力は集計表と別に保存します。まだ反映していません。';}
     const adopted=c.cashflow?.salaryLife;
-    el('salaryAdopted').textContent=adopted?`採用中：給与生活 ${dateWithAge(adopted.lastSalaryMonth,c)}まで、生活費負担 ${dateWithAge(nextMonth(adopted.lastSalaryMonth),c)}から。追加 ${money(adopted.monthlyAddition)}/月、取崩し ${money(adopted.monthlyWithdrawal)}/月。`:'採用中：旧方式。新方式の試算・比較だけでは現在の計画を変更しません。';
+    el('salaryAdopted').textContent=adopted?`資産への追加 ${money(adopted.monthlyAddition)}/月・家計への引出し ${money(adopted.monthlyWithdrawal)}/月（給与総額とは別です）。`:'従来方式で計算中。新方式はまだ採用していません。';
+    renderAdoptedOverview(c);
     el('salaryExistingLabor').innerHTML='<strong>登録済みの個別条件（採用中）</strong><ul>'+[['primary','本人'],['spouse','配偶者']].flatMap(([person,label])=>[['regularWork','正社員'],['sideWork','アルバイト']].map(([job,title])=>{const v=c.employment?.[person]?.[job];return `<li>${label}${title}：${v?esc(money(v.monthlyGross))+'/月 ／ 開始 '+esc(dateWithAge(v.startDate,c,person))+' ／ 終了日 '+esc(dateWithAge(v.endDate,c,person))+' ／ 最終計上月 '+esc(dateWithAge(previousMonth(v.endDate),c,person)):'未設定'}</li>`;})).join('')+'</ul><p class="muted">開始月を含み、終了月を含みません。給与生活中は上の家計と資産の入出金で扱います。</p>';
     el('salaryRelated').textContent=`iDeCo掛金 ${money(c.ideco?.monthlyContribution)}/月、拠出終了 ${dateWithAge(c.ideco?.contributionEndDate,c)}。年金開始：本人 ${dateWithAge(c.income?.pensions?.primary?.startDate,c)}、配偶者 ${dateWithAge(c.income?.pensions?.spouse?.startDate,c,'spouse')}。`;
     if(preview&&preview.baseSignature!==configSignature(getState())){invalidate();error('前提または比較案が変わりました。もう一度試算してください。');}
@@ -117,6 +141,7 @@ export function mountSalarySheet({getState,onCommit,showNotice}){
       <p>更新対象：給与生活の条件と、変更した臨時収支・期間別収入の計上先${p.owned.patches.length}件。</p>
       <p class="muted">${p.result.limitations.map(esc).join('<br>')}<br>新方式の増減要因分解は未対応です。管理予算内の税社保・内訳を別加算しません。精密な税引後比較ではありません。</p>`;
     el('salaryApply').disabled=!p.changed;el('salarySaveScenario').disabled=false;el('salaryPreview').hidden=false;
+    state();
     el('salaryPreview').scrollIntoView?.({block:'start',behavior:'smooth'});
   }
   function changed(){draft=read();invalidate();error('');persist();state();}

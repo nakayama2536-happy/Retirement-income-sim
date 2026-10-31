@@ -102,3 +102,25 @@ button,input,select,textarea{font-family:inherit}
 
 /* Do not let inherited display rules reveal intentionally hidden plan metadata. */
 #simulationPeriod[hidden]{display:none!important}
+
+
+/* PC family salary screen: adopted conditions, editable proposal and preview are distinct. */
+#salary .salary-overview{border:1px solid #ecd4c0;background:#fff8f1;border-radius:14px;padding:16px 18px;margin:14px 0}
+#salary .salary-overview h3{margin:0 0 8px;font-size:1.03rem}
+#salary .salary-overview-adopted{margin:8px 0 12px;line-height:1.6}
+#salary .salary-time-flow{display:flex;align-items:stretch;gap:12px;margin:8px 0 12px}
+#salary .salary-time-part{flex:1;min-width:0;padding:13px 15px;border:1px solid #f0dbcb;background:#fff;border-radius:10px}
+#salary .salary-time-part span{display:block;font-size:.86rem;color:#595e62;margin-bottom:7px}
+#salary .salary-time-part strong{display:block;font-size:1.05rem;color:#5b3b2c;overflow-wrap:anywhere}
+#salary .salary-time-arrow{align-self:center;color:#bb6540;font-weight:700}
+#salary .salary-overview-more,#salary .salary-optional-labor{border:1px solid #ead8c7;border-radius:12px;background:#fff}
+#salary .salary-overview-more{margin:10px 0 16px;padding:0 12px}
+#salary .salary-overview-more>summary,#salary .salary-optional-labor>summary{cursor:pointer;padding:15px 6px;color:#8d4b28;font-weight:650}
+#salary .salary-optional-labor{padding:0 16px 14px;margin:18px 0}
+#salary .salary-optional-labor>summary{padding:16px 2px}
+#salary .salary-labor-help{margin-bottom:12px}
+#salary .salary-edit-status{display:flex;flex-direction:column;gap:4px;border-left:4px solid #c86c3d;background:#fff8ef;border-radius:8px;padding:12px 16px;margin:14px 0}
+#salary .salary-edit-status[data-status="adopted"]{border-color:#3d8970;background:#f5fbf7}
+#salary .salary-edit-status span{font-size:.92rem;line-height:1.65}
+#salary .salary-transfer-direction{background:#f8f0e7;border:1px solid #ecd8c2;border-radius:8px;padding:12px 14px;font-weight:600}
+@media(max-width:620px){#salary .salary-time-flow{flex-direction:column}#salary .salary-time-arrow{transform:rotate(90deg);align-self:center}}
