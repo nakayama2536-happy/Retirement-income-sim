@@ -56,3 +56,24 @@ th,td,.timeline li,.summary-box dl div,.certainty-row,.expense-list details{bord
 #scenarios #saveScenarioBtn{margin-top:10px}
 #scenarios #scenarioName{max-width:100%}
 @media(min-width:900px){.family-result-guide{max-width:100%;padding:18px 24px}.family-result-guide>p{max-width:74ch}}
+
+/* Gentle family typography; local fallbacks work without external font delivery. */
+:root{
+ --font-family-heading:"M PLUS Rounded 1c","Hiragino Maru Gothic ProN","Yu Gothic UI","Yu Gothic",sans-serif;
+ --font-family-body:"Noto Sans JP","BIZ UDPGothic","Yu Gothic UI","Meiryo",sans-serif;
+ --font-family-number:"Noto Sans JP","BIZ UDPGothic","Segoe UI",sans-serif;
+}
+body{font-family:var(--font-family-body);line-height:1.75;letter-spacing:.008em;color:#34424b}
+.topbar h1,.tab-groups button,.tabs button,.panel h2,.panel h3,.card h2,.card h3,.family-result-guide>strong,.home-explanation>summary{
+ font-family:var(--font-family-heading);letter-spacing:.018em;line-height:1.5}
+.topbar h1{font-weight:600;letter-spacing:.035em}
+.tab-groups button,.tabs button{font-weight:500}
+.tab-groups button.active,.tabs button.active{font-weight:600}
+.panel h2,.panel h3,.card h2,.card h3{font-weight:600}
+.card p,.panel p,.family-result-guide p,.family-guide-content li{line-height:1.83}
+.family-result-guide>strong{font-weight:600}
+.card small,.panel small,.muted{color:#58636b}
+.target-metrics strong,#finalAsset,#finalThreshold,#finalMargin,#currentAsset,.summary-box strong{
+ font-family:var(--font-family-number);font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:.005em}
+button,input,select,textarea{font-family:inherit}
+@media(min-width:900px){.family-result-guide{padding:20px 24px}}
