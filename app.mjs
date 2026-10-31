@@ -613,8 +613,8 @@ function renderScenarioCompare(){
   const rows=[
     ['最終評価年齢', x=>`${x.s.config.plan.endAge}歳末`],
     ['各案の最終年齢末資産（評価年齢に注意）', x=>money(x.m.finalAsset)],
-    ['95歳末資産', x=>{const r=runRetirementPlan(x.s.config).rows.find(r=>r.age===95);return r?money(r.endAsset):'対象外';}],
-    ['100歳末資産', x=>{const r=runRetirementPlan(x.s.config).rows.find(r=>r.age===100);return r?money(r.endAsset):'対象外';}],
+    ['95歳末資産', x=>{const r=runRetirementPlan(x.s.config).rows.find(r=>r.age===95);return r?money(r.endAsset):'対象外（計算期間外）';}],
+    ['100歳末資産', x=>{const r=runRetirementPlan(x.s.config).rows.find(r=>r.age===100);return r?money(r.endAsset):'対象外（計算期間外）';}],
     ['予備枠全使用後', x=>money(x.m.afterReserve)],
     ['80歳末資産', x=>x.m.age80Asset==null?'—':money(x.m.age80Asset)],
     ['90歳末資産', x=>x.m.age90Asset==null?'—':money(x.m.age90Asset)],
