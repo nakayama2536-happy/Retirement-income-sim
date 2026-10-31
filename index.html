@@ -57,7 +57,7 @@
 <article class="card"><div class="section-title"><h2>保留事項</h2><span id="pendingCount" class="pill"></span></div><p class="muted">変更できる項目は入力欄へ移動できます。移動だけでは保存・反映しません。外部確認や未対応項目は区別して表示します。</p><div id="pendingList" class="pending-list"></div></article>
 </section>
 
-<section id="cashflow" class="panel" hidden><div class="card family-result-guide" role="note"><strong>まず見る：年齢ごとの収入・支出・資産のまとめ</strong><p>金額が大きく変わる年齢を探し、必要なときだけ内訳を開きます。</p><p class="muted">操作の影響：表示の切り替えだけでは計画は変わりません。CSV保存は端末へのファイル出力です。</p></div><div class="card"><h2>年齢ごとの収入・支出</h2><p>年齢ごとの収入・支出と、その年齢の終わりに残る資産を確認できます。最初は「収入・支出・資産のまとめ」を選び、金額の変化が気になる年齢を探してください。必要な場合だけ収入・支出の内訳に切り替えられます。</p><p class="muted">金額の単位は万円です。生活費の内訳は支出合計に含まれています。NISAの売却・振替など、資産の中でお金を動かすだけの取引を収入として二重に数えることはありません。</p></div>
+<section id="cashflow" class="panel" hidden><div class="home-result-lead"><h2>年齢ごとの収入・支出</h2><p>まずは下の「1年ごとの収入と支出のまとめ」を見て、家計が変わる年齢を探しましょう。</p><p class="muted">この画面を見る・表示を切り替える・CSVを出力する操作では、現在の計画は変わりません。</p></div><details class="card home-explanation" id="cashflowReadingGuide"><summary><strong>収入と支出の表の見方</strong></summary><p>気になる年齢が見つかったら、その年の収入・支出の内訳を確認できます。金額は万円単位です。</p><p class="muted">生活費の内訳は支出合計に含まれています。NISAの売却・振替など、資産内でお金を移動するだけの取引は収入に重複して数えません。</p></details>
 <article class="card"><div class="section-title"><h2>1年ごとの収入と支出のまとめ</h2><button class="info" data-help="年間収支サマリー" data-help-text="資産推移と同じ月次計算を年齢期ごとに集計します。管理予算が支出の正本です。生活費内訳、家計内振替、税社会保険参考額、iDeCo掛金を合計へ重ねません。">ⓘ</button></div><div id="annualCashflowSummary" class="summary-box"></div><button id="exportAnnualCsvBtn" type="button" class="secondary">この収支の一覧をCSVで保存</button><p class="muted">さらに詳しい金額は「詳しい計算結果・保存」で確認できます。ここでは現在設定を年齢期ごとに出力します。未確定値は0円にせず空欄にし、状態列と未確定月数を残します。</p></article>
 
 
