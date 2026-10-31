@@ -102,8 +102,6 @@ export function mountMortalityComparison(root,{getConfig,getBaseline,runPlan}){
  <div class="form-grid mortality-grid">
   <label>万一を想定する方<select name="deceased"><option value="primary">本人</option><option value="spouse">配偶者</option></select></label>
   <label>万一を想定する月<input name="deathMonth" type="month" required aria-describedby="mortalityAgeHint"><small id="mortalityAgeHint" class="muted" aria-live="polite">年月を入力すると年齢を表示します。</small></label>
-  <label>残された人の公的年金合計（試算に使用する仮年額・万円／年）<input name="survivorPension" type="number" step="any" min="0" required placeholder="遺族年金を含む合計年額"></label>
-  <label id="mortalityPreClaimRow" hidden>老齢年金開始前の公的年金合計（万一の翌月から・万円／年、仮置き）<input name="preClaimPension" type="number" step="any" min="0" placeholder="区間の仮年額を入力"><small id="mortalityPreClaimHint" class="muted">繰下げと受給権は別途確認</small></label>
   <label>万一の月に1度だけ加える費用（万円、仮置き）<input name="funeral" type="number" step="any" min="0" value="0" required></label>
  </div>
  <p class="muted">登録済みの65歳基準情報から参考内訳を表示します。年金の受給前・資格未確認の場合は、参考額を確定収入として自動入力しません。年金合計への遺族年金の二重加算は行いません。</p>
@@ -111,7 +109,11 @@ export function mountMortalityComparison(root,{getConfig,getBaseline,runPlan}){
  <div id="mortalityPensionBreakdown" role="status" aria-live="polite"></div>
  <p class="muted">万一の月は元の年金、翌月から仮年額を12等分する近似です。葬儀費0は「今回の比較に費用を入れない」仮定であり、実費0円の認定ではありません。</p>
 
- <details><summary>年金の詳細設定・手動調整（必要な場合のみ）</summary>
+ <details id="mortalityPensionSettings"><summary>年金の詳細設定・試算用年額の調整（必要な場合のみ）</summary>
+  <div class="form-grid mortality-grid">
+   <label>残された人の公的年金合計（試算に使用する仮年額・万円／年）<input name="survivorPension" type="number" step="any" min="0" required placeholder="要確認：遺族年金を含む合計年額"></label>
+   <label id="mortalityPreClaimRow" hidden>残された人の老齢年金受給前の公的年金合計（万円／年、仮置き）<input name="preClaimPension" type="number" step="any" min="0" placeholder="受給前の参考年額"><small id="mortalityPreClaimHint" class="muted">繰下げと受給権は別途確認</small></label>
+  </div>
   <p class="muted">受給権・請求状況・繰下げの影響を資料で確認した場合のみ使用してください。先に旅立つ方の老齢厚生年金の繰下げ増額分は含めません。計算結果は本人の確定受給額ではありません。</p>
   <div class="form-grid mortality-grid">
    <label>先に旅立つ方の報酬比例部分（繰下げ前・万円／年）<input name="deceasedEarnings" type="number" step="any" min="0" placeholder="資料を確認して入力"></label>
@@ -347,6 +349,24 @@ export function mountMortalityComparison(root,{getConfig,getBaseline,runPlan}){
     const card=makeEl('article','mortality-metric');const small=makeEl('span','',label),val=makeEl('strong','',value);card.dataset.metric=key;card.append(small,val);summary.append(card);
   }
   results.append(summary);
+  const firstChanged=mortality.monthly.findIndex(row=>row.month===mortality.firstChangedMonth);
+  if(firstChanged>=0&&original.monthlyDetails?.[firstChanged]){
+    const before=original.monthlyDetails[firstChanged],after=mortality.monthly[firstChanged];
+    const strip=makeEl('div','mortality-metrics');
+    strip.id='mortalityQuickSummary';
+    for(const [name,value] of [
+      ['万一の翌月',after.month],
+      ['残された人の公的年金（月額）',formatTotal(after.publicPension)],
+      ['基準の生活費（月額）',formatTotal(before.expense)],
+      ['生活費の減額（月額）',formatTotal(after.expenseReduction)],
+      ['変更後の生活費（月額）',formatTotal(after.expense)]
+    ]){
+      const card=makeEl('article','mortality-metric');
+      card.append(makeEl('span','',name),makeEl('strong','',value));
+      strip.append(card);
+    }
+    results.append(strip);
+  }
   const diff=makeEl('p','muted',`${parameters.deceased==='primary'?'本人':'配偶者'}の万一の想定：${dateWithAge(parameters.deathMonth,getConfig(),parameters.deceased)}／年金合計の仮置き：${escMoney(parameters.survivorPension)}万円／年／一時費用の仮置き：${escMoney(parameters.funeral)}万円。年金・通常費は翌月から変更。一時費用だけ万一の月に計上。`);results.append(diff);
   const reference=validPensionReference();
   results.append(makeEl('p','muted',reference?`試算に使った年金の参考内訳：65歳基準・自身の基礎 ${formatTotal(reference.ownBasicAnnual)} ＋ 自身の厚生 ${formatTotal(reference.ownEmployeeAnnual)} ＋ 遺族厚生の差額 ${formatTotal(reference.survivorTopUpAnnual)} ＝ 合計 ${formatTotal(parameters.survivorPension)}／年。`:'試算に使った年金合計の内訳は未確認です。手入力の合計に遺族年金を自動加算していません。'));

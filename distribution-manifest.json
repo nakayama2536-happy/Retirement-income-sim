@@ -1,6 +1,6 @@
 {
   "kind": "public-release",
-  "runtime": "v0.9.10-preclaim-pension-display-20261031",
+  "runtime": "v0.9.11-mortality-summary-20261031",
   "files": [
     {
       "name": "annual-cashflow.mjs",
@@ -14,13 +14,13 @@
     },
     {
       "name": "app.mjs",
-      "size": 71809,
-      "sha256": "fb45b02687610dfca0c12f7ebcbe2396c73ea656ce60b8b475cae32a9bef47b8"
+      "size": 71802,
+      "sha256": "61427f6768b9f12823772bafbdfdf5f25954e9baefa0a367ab73830438a1d8db"
     },
     {
       "name": "backup-compatibility.mjs",
-      "size": 7838,
-      "sha256": "ad4e988e6be513152e8e83b01ef8a7c89be94d088bf849a8c713957d719d8e6d"
+      "size": 7831,
+      "sha256": "17d52f597b6a9d5fd21fea5e4c444299d015204d9ff08c7f0a2fc64cde7a32a7"
     },
     {
       "name": "calc.mjs",
@@ -194,8 +194,8 @@
     },
     {
       "name": "mortality-ui.mjs",
-      "size": 50796,
-      "sha256": "d09ea93a31a297faccce955ccbd4a81b8b1fedd1c09283df878d84a033a8ed4c"
+      "size": 51808,
+      "sha256": "f2197eee63a6ebf44d5ab9bc38e244904e5182ef438b3ea9151f4424905c3b06"
     },
     {
       "name": "pension-estimate.mjs",
@@ -224,8 +224,8 @@
     },
     {
       "name": "release-info.json",
-      "size": 130,
-      "sha256": "5869d4eeff63af72800ebef9785fe49610b7ba97024e78bc4599147cb48c4f8a"
+      "size": 123,
+      "sha256": "6d28db5de58107ed024209064400a380169841dec5972ec5ff71a8a92b429ef5"
     },
     {
       "name": "retirement-comment.mjs",
@@ -289,8 +289,8 @@
     },
     {
       "name": "sw.js",
-      "size": 4082,
-      "sha256": "41cc40d72fe8e442771a83368b3fdf087298197a217cd8223812bd20f923644d"
+      "size": 4075,
+      "sha256": "669a545f392c5ea287b2f05c2cc84fb6f0d5fd0b232f86c3816b94d70944bc21"
     },
     {
       "name": "sync-controller.mjs",
