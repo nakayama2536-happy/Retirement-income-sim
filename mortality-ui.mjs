@@ -238,18 +238,62 @@ export function mountMortalityComparison(root,{getConfig,getBaseline,runPlan}){
    const actualValid=actual!==null&&Number.isFinite(actual)&&actual>=0;
    const referenceOwn=Number(a.basicAnnual)+Number(a.employeeEarningsAnnual);
    const isSame=actualValid&&Math.abs(actual-referenceOwn)<0.00001;
-   const hypotheticalTotal=(actualValid?actual:referenceOwn)+estimate.survivorTopUpAnnual;
-   automaticPensionValue={total:hypotheticalTotal,source:isSame?'age65-matched':'mixed-reference'};
+   const own65Basic=Number(a.basicAnnual),own65Employee=Number(a.employeeEarningsAnnual);
+   // A registered combined annual amount cannot establish its component split.
+   // Use documented 65-year components for illustration, and expose any mismatch.
+   const total65=own65Basic+own65Employee;
+   const startMonth=start.slice(0,7),age65Month=(()=>{
+     const birth=cfg.people?.[other]?.birthDate;
+     const parts=birth?.match(/^(\\d{4})-(\\d{2})-(\\d{2})$/);
+     if(!parts)return null;
+     const y=Number(parts[1])+65,m=Number(parts[2]),d=Number(parts[3]);
+     const due=new Date(Date.UTC(y,m-1,d));
+     due.setUTCDate(due.getUTCDate()-1);
+     return due.getUTCFullYear()*12+due.getUTCMonth();
+   })();
+   const startMatch=startMonth.match(/^(\\d{4})-(\\d{2})$/);
+   const startIndex=startMatch?Number(startMatch[1])*12+Number(startMatch[2])-1:null;
+   const deferredMonths=age65Month!==null&&startIndex!==null?Math.max(0,startIndex-age65Month-1):null;
+   const deferralEligible=deferredMonths!==null&&deferredMonths<=120;
+   const deferralFactor=deferralEligible?1+Math.max(0,deferredMonths)*0.007:null;
+   const basicProjected=deferralFactor===null?null:own65Basic*deferralFactor;
+   const employeeProjected=deferralFactor===null?null:own65Employee*deferralFactor;
+   const ownProjected=basicProjected===null?null:basicProjected+employeeProjected;
+   const gap=actualValid&&ownProjected!==null?actual-ownProjected:null;
+   const hasGap=gap!==null&&Math.abs(gap)>0.01;
+   const ownTotal=actualValid?actual:ownProjected;
+   const hypotheticalTotal=ownTotal===null?null:ownTotal+estimate.survivorTopUpAnnual;
+   automaticPensionValue=hypotheticalTotal===null?null:{total:hypotheticalTotal,source:'age65-scenario-reference'};
    target.replaceChildren();
-   const title=makeEl('strong','', '年金シートからの自動参照（未反映の参考概算）');
-   const detail=makeEl('p','',`65歳基準：残された方の老齢基礎 ${formatTotal(Number(a.basicAnnual))} ＋ 老齢厚生 ${formatTotal(Number(a.employeeEarningsAnnual))}。先に旅立つ方の報酬比例部分 ${formatTotal(Number(b.employeeEarningsAnnual))}。`);
-   const extra=makeEl('p','',`遺族厚生年金の差額（65歳基準の仮定） ${formatTotal(estimate.survivorTopUpAnnual)}。`);
-   const total=makeEl('p','',`試算用の仮の年金合計：${formatTotal(hypotheticalTotal)}／年（残された方の登録年額 ${actualValid?formatTotal(actual):'未確認'} ＋ 仮の差額）。`);
-   const caveat=makeEl('p','muted',isSame?'65歳基準と登録年額が一致。受給権・加給・繰下げ・年金改定は未確認です。':'65歳基準と実際の登録年額が異なるため、差額は厳密な自動算定ではありません。繰下げ後の内訳・支給停止を確認してください。');
-   target.append(title,detail,extra,total,caveat);
-   if(isSame&&form.elements.survivorPension.value===''){
+   const title=makeEl('strong','', '万一を想定する年月の公的年金内訳（自動参考計算・未反映）');
+   const rows=[
+     ['残された方の老齢基礎年金（65歳基準）',own65Basic],
+     ['残された方の老齢厚生年金（65歳基準）',own65Employee],
+     ['受給開始月からの繰下げ倍率の仮定',deferralFactor===null?null:deferralFactor],
+     ['老齢基礎年金（繰下げ参考年額）',basicProjected],
+     ['老齢厚生年金（繰下げ参考年額）',employeeProjected],
+     ['遺族厚生年金の追加差額（65歳基準）',estimate.survivorTopUpAnnual],
+     ['年金シートの登録済み年額',actualValid?actual:null],
+     ['参考合計（登録年額＋遺族厚生年金の参考差額）',hypotheticalTotal]
+   ];
+   const wrap=makeEl('div','table-wrap'),table=makeEl('table');
+   const body=makeEl('tbody');
+   for(const [label,value] of rows){
+     const tr=makeEl('tr');tableCell(tr,label);
+     tableCell(tr,value===null?'未確認':label.includes('倍率')?value.toFixed(4)+'倍':escMoney(value)+'万円／年');
+     body.append(tr);
+   }
+   table.append(body);wrap.append(table);
+   const notice=makeEl('p','muted',`万一の月：${death}。残された方の老齢年金受給開始：${startMonth}。先に旅立つ方の65歳基準報酬比例部分：${formatTotal(Number(b.employeeEarningsAnnual))}。金額は名目改定・税・加給・在職支給停止を含まない参考値です。`);
+   const caution=makeEl('p','mortality-warning',hasGap?
+     `繰下げの簡易推計と登録年額に差 ${formatTotal(gap)} があるため、老齢基礎・厚生の実際の内訳は確定できません。表示した個別額は参考値で、登録年額と二重加算しません。`:
+     '受給権、繰下げの制限、老齢厚生との調整、将来制度改正は未確認です。遺族年金は確定支給額ではありません。');
+   target.append(title,wrap,notice,caution);
+   // Set only a previously blank hypothetical amount; never overwrite a draft
+   // or an adopted state. Manual review remains mandatory before simulation.
+   if(hypotheticalTotal!==null&&form.elements.survivorPension.value===''){
      form.elements.survivorPension.value=String(Number(hypotheticalTotal.toFixed(6)));
-     target.append(makeEl('p','muted','参考合計を仮入力しました。試算への反映は下の確認・試算操作後のみです。'));
+     target.append(makeEl('p','muted','参考合計を未反映の入力欄に補完しました。採用済み条件は変更しません。'));
    }
   }catch(e){target.textContent='遺族年金の自動参考計算を停止しました：'+e.message;}
  };
