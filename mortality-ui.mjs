@@ -242,11 +242,11 @@ export function mountMortalityComparison(root,{getConfig,getBaseline,runPlan}){
       ['老齢年金・想定月の受給額','受給開始前（計上なし）'],
       ['遺族厚生年金・65歳基準の参考受給権額',formatTotal(entitlement)],
       ['遺族厚生年金・65歳基準の参考差額',formatTotal(topUp65)],
-      ['死亡翌月からの公的年金合計','受給権・繰下げ影響未確認のため未確定']
+      ['公的年金合計の条件付き参考額（受給権成立・支給停止なしを仮定）',formatTotal(entitlement)]
     ];
     for(const [label,value] of rows){const tr=makeEl('tr');tableCell(tr,label);tableCell(tr,value);body.append(tr);}
     table.append(body);target.append(table);
-    target.append(makeEl('p','mortality-warning',`万一の月 ${death} は、残された方の老齢年金受給開始 ${dateParts(start)?start.slice(0,7):'未確認'} より前です。65歳基準額から遺族厚生年金の条件付き参考額は計算できますが、繰下げ待機中の受給権・支給開始月が確認できないため、受給前の合計を自動入力しません。未確認を0円とは扱いません。`));
+    target.append(makeEl('p','mortality-warning',`万一の月 ${death} は、残された方の老齢年金受給開始 ${dateParts(start)?start.slice(0,7):'未確認'} より前です。65歳基準額から遺族厚生年金の条件付き参考額は計算できますが、繰下げ待機中の受給権・支給開始月が確認できないため、条件付き参考合計は表示しますが、確定額として試算欄には自動入力しません。未確認を0円とは扱いません。`));
     return;
   }
   try{
