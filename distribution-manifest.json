@@ -1,6 +1,6 @@
 {
   "kind": "public-release",
-  "runtime": "v0.9.30-mortality-guides-20261031",
+  "runtime": "v0.9.31-family-salary-guide-20261031",
   "files": [
     {
       "name": "annual-cashflow.mjs",
@@ -14,13 +14,13 @@
     },
     {
       "name": "app.mjs",
-      "size": 72263,
-      "sha256": "2fcdc7fee6176cf3d712e4f08cac2961ed69ababebef72b0f2e12bc4bb14ba33"
+      "size": 72266,
+      "sha256": "18197730793f00bd81780dd11f2b79e3edd7e30f1fc023f48578fc28d66fe2c8"
     },
     {
       "name": "backup-compatibility.mjs",
-      "size": 7830,
-      "sha256": "ae970c5261af53b00c4b9399af2c447a773d7a03f1cf3c9189934e89b88113d3"
+      "size": 7833,
+      "sha256": "b5b4daa5a693dd1550eafaafe321204084d3a77d8135fc1fc491431c798f7849"
     },
     {
       "name": "calc.mjs",
@@ -104,8 +104,8 @@
     },
     {
       "name": "family-warm-theme.css",
-      "size": 7639,
-      "sha256": "d2561afc43af6802e3d676d06f488c16890efd1dbfff59daa612caf383f749e4"
+      "size": 9575,
+      "sha256": "fb71f1bf50da94666651c8a719c36de583fe779d0ea9697255cede9aa4e4474d"
     },
     {
       "name": "full-backup.mjs",
@@ -154,8 +154,8 @@
     },
     {
       "name": "index.html",
-      "size": 67264,
-      "sha256": "9a6a6a134b73ce9db0bfff5688c2b49797e4286b42a613cf11fa025bcb7c874e"
+      "size": 68226,
+      "sha256": "8d9ff2397b7791cada7e5624ccdac0fc3441a8135d448bb7ffecb0673c55dfbb"
     },
     {
       "name": "manifest.webmanifest",
@@ -229,8 +229,8 @@
     },
     {
       "name": "release-info.json",
-      "size": 122,
-      "sha256": "1a8a78a26afc351bd396ae4808457e222c50f7dd25319c4d5405122dcbec6e51"
+      "size": 125,
+      "sha256": "42a62f138b36a8bd880a7021d949add5d1f259c52a704ea11455cf35af85da8c"
     },
     {
       "name": "retirement-comment.mjs",
@@ -254,8 +254,8 @@
     },
     {
       "name": "salary-ui.mjs",
-      "size": 19649,
-      "sha256": "ab2bbfbebcc639b7fcfd4b88e7628adf53b36a176c8302c7783df2a2482b605a"
+      "size": 21571,
+      "sha256": "c2fb5194cc2da7485dd19f952c50b655152365299f23aba3ced659ae222c3019"
     },
     {
       "name": "salary-workflow.mjs",
@@ -294,8 +294,8 @@
     },
     {
       "name": "sw.js",
-      "size": 4100,
-      "sha256": "695d0388c5b79a3d52a5383f2dbdf50bbe4997faa38e6c6892896ca8d6f6d382"
+      "size": 4103,
+      "sha256": "6f0fdb4ab2b082078ae403e5216ec2c628227f0c8768ac968f22c7fbf49fa69a"
     },
     {
       "name": "sync-controller.mjs",
