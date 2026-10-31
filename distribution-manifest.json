@@ -1,6 +1,6 @@
 {
   "kind": "public-release",
-  "runtime": "v0.9.11-mortality-summary-20261031",
+  "runtime": "v0.9.12-global-buttons-20261031",
   "files": [
     {
       "name": "annual-cashflow.mjs",
@@ -14,13 +14,13 @@
     },
     {
       "name": "app.mjs",
-      "size": 71802,
-      "sha256": "61427f6768b9f12823772bafbdfdf5f25954e9baefa0a367ab73830438a1d8db"
+      "size": 71799,
+      "sha256": "5cebc05d7fd0e8763f47b8a7efe3159e63109cb90e3bcef3b13f2ca7b9f0cb1e"
     },
     {
       "name": "backup-compatibility.mjs",
-      "size": 7831,
-      "sha256": "17d52f597b6a9d5fd21fea5e4c444299d015204d9ff08c7f0a2fc64cde7a32a7"
+      "size": 7828,
+      "sha256": "fbeb9490145376fd967154fae85941240e51ecb27a4e8d1e96b9419b2ffa0040"
     },
     {
       "name": "calc.mjs",
@@ -224,8 +224,8 @@
     },
     {
       "name": "release-info.json",
-      "size": 123,
-      "sha256": "6d28db5de58107ed024209064400a380169841dec5972ec5ff71a8a92b429ef5"
+      "size": 120,
+      "sha256": "014571b0985c844c5dfb943ca8616407c6f6aea19184518d515533dedc73b7e3"
     },
     {
       "name": "retirement-comment.mjs",
@@ -284,13 +284,13 @@
     },
     {
       "name": "styles.css",
-      "size": 28299,
-      "sha256": "99b32426cb47e8e588f6097c37572029b0c550ea71b725a54d8bd35b738438c6"
+      "size": 30262,
+      "sha256": "547db6ef1137c471e3a4c0309d4fdc006b28344d09f168a7d135324918041ec1"
     },
     {
       "name": "sw.js",
-      "size": 4075,
-      "sha256": "669a545f392c5ea287b2f05c2cc84fb6f0d5fd0b232f86c3816b94d70944bc21"
+      "size": 4072,
+      "sha256": "4f9573f37d01bdf5b100811b3072cd7286fd923710d0e10ca76dc82ff264ffc0"
     },
     {
       "name": "sync-controller.mjs",
