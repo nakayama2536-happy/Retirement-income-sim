@@ -1,6 +1,6 @@
 {
   "kind": "public-release",
-  "runtime": "v0.9.23-family-results-meaning-20261031",
+  "runtime": "v0.9.24-soft-family-type-20261031",
   "files": [
     {
       "name": "annual-cashflow.mjs",
@@ -14,13 +14,13 @@
     },
     {
       "name": "app.mjs",
-      "size": 71990,
-      "sha256": "a0fc36cc466f116cf40e14d1679b0d965a4d416ecf77879181981d5ef804c155"
+      "size": 71984,
+      "sha256": "4b88e6b49a377658504b40a38667ac60259419ac729d2350bf4e8721650468f7"
     },
     {
       "name": "backup-compatibility.mjs",
-      "size": 7836,
-      "sha256": "c813a7044a10e12e718a9f5a40c9032d14d3cf2b7a2d9afe0409a403c9e9326f"
+      "size": 7830,
+      "sha256": "b89b1b71591dd9a46a0e38bd6ce440c7e5ff7a47d361d83ee080711a26b75a07"
     },
     {
       "name": "calc.mjs",
@@ -104,8 +104,8 @@
     },
     {
       "name": "family-warm-theme.css",
-      "size": 4705,
-      "sha256": "896d6f04a9b03a242c2c8913aebea88f2c982f5f8b544d5fdab4224582a11efa"
+      "size": 6101,
+      "sha256": "1aaa9a6bd3069cd4c26b6d5d798c6dc0d95385d9ab3792470e6975d531310746"
     },
     {
       "name": "full-backup.mjs",
@@ -229,8 +229,8 @@
     },
     {
       "name": "release-info.json",
-      "size": 128,
-      "sha256": "eed8b1b2d7b585aa4cd2bf917b84d62dc4d1c377ecd9fa719c5215943d991528"
+      "size": 122,
+      "sha256": "aa7b8ba445374f30d26e45b81e3361e93d2a6b84663b53e331367e4e7122e272"
     },
     {
       "name": "retirement-comment.mjs",
@@ -294,8 +294,8 @@
     },
     {
       "name": "sw.js",
-      "size": 4106,
-      "sha256": "6ec2b3f2571694f726b8b7433b7ffe895a7cc827bc229424eb99252b55daff74"
+      "size": 4100,
+      "sha256": "2ad0264d331dd39f07e801ff9ced0ad7dcd7438601541b64729d879b3c150fc6"
     },
     {
       "name": "sync-controller.mjs",
