@@ -1,6 +1,6 @@
 {
   "kind": "public-release",
-  "runtime": "v0.9.25-results-first-pc-20261031",
+  "runtime": "v0.9.26-goal-first-pc-20261031",
   "files": [
     {
       "name": "annual-cashflow.mjs",
@@ -14,13 +14,13 @@
     },
     {
       "name": "app.mjs",
-      "size": 71984,
-      "sha256": "7b451630beacb8912ee3b6940edda314519b2bfa152069294c43a4087e91d859"
+      "size": 72123,
+      "sha256": "d06bfa6bad367d024f99f69c3376e8f6a04124b967dac2fdacde8c72611b3ca7"
     },
     {
       "name": "backup-compatibility.mjs",
-      "size": 7830,
-      "sha256": "ae2ba89634cbcfbc674cd10786e6c3a79cb079511ff704396cf4535091147748"
+      "size": 7827,
+      "sha256": "55a9eeccc5ced5643934cacfa8855b2d22af475e90f5bfb877014dd8fc65df1a"
     },
     {
       "name": "calc.mjs",
@@ -104,8 +104,8 @@
     },
     {
       "name": "family-warm-theme.css",
-      "size": 6687,
-      "sha256": "bebb5f754897487bca8745f23dc8fcf353a5a0d34fbdc801de0a1982b0ebebc2"
+      "size": 7504,
+      "sha256": "39e1b691228ce82ba009640f215e23339e63f9b9a48aecb10c186c8a75348b6b"
     },
     {
       "name": "full-backup.mjs",
@@ -154,8 +154,8 @@
     },
     {
       "name": "index.html",
-      "size": 66027,
-      "sha256": "f9ba85e4c67c003e0a2fcf1e46f5b3a0a08aa0d4b1ebe862b696120889f792ad"
+      "size": 65953,
+      "sha256": "af89060d589e0cd158a8e6aac4b6b5110e721f5e9142af4caf1d1ff5dd726aa8"
     },
     {
       "name": "manifest.webmanifest",
@@ -229,8 +229,8 @@
     },
     {
       "name": "release-info.json",
-      "size": 122,
-      "sha256": "3532ba15eab5fe20bbd2fc036f71d4ec5922a54dcfd707f71acbd4756c8be837"
+      "size": 119,
+      "sha256": "0497a2a4a28abcfa3fd2c410483759480aa8703fd6cdcbadf627863eee8b1d14"
     },
     {
       "name": "retirement-comment.mjs",
@@ -294,8 +294,8 @@
     },
     {
       "name": "sw.js",
-      "size": 4100,
-      "sha256": "80cdfe6c9b22edcb194714e19848f85aabf426d5651dabd3945d6203809110c7"
+      "size": 4097,
+      "sha256": "1021cfef4d141c0aa0622f2b4c4cf6a3eb38ed7177d83b5f2180e33768f6a157"
     },
     {
       "name": "sync-controller.mjs",
