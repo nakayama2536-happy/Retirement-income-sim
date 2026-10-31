@@ -98,20 +98,20 @@ export function mountMortalityComparison(root,{getConfig,getBaseline,runPlan}){
  root.innerHTML=`
  <p class="muted">この画面は<strong>万一の時期による仮置き比較専用</strong>です。現在の採用条件・比較案・バックアップ・クラウドは変更しません。お二人とも万一の場合、相続、制度の受給資格、所得税・社会保険の精密な変更は未対応です。</p>
  <form id="mortalityForm" class="mortality-form">
- <fieldset><legend>1．万一の月と遺族年金を含む収入（仮定）</legend>
+ <fieldset><legend>1．誰が・いつ万一となるか</legend>
  <div class="form-grid mortality-grid">
   <label>万一を想定する方<select name="deceased"><option value="primary">本人</option><option value="spouse">配偶者</option></select></label>
   <label>万一を想定する月<input name="deathMonth" type="month" required aria-describedby="mortalityAgeHint"><small id="mortalityAgeHint" class="muted" aria-live="polite">年月を入力すると年齢を表示します。</small></label>
-  <label>残された方の公的年金合計（自身の年金＋遺族年金の差額・万円／年、老齢年金受給開始後の仮置き）<input name="survivorPension" type="number" step="any" min="0" required placeholder="遺族年金を含む合計年額"></label>
+  <label>残された人の公的年金合計（試算に使用する仮年額・万円／年）<input name="survivorPension" type="number" step="any" min="0" required placeholder="遺族年金を含む合計年額"></label>
   <label id="mortalityPreClaimRow" hidden>老齢年金開始前の公的年金合計（万一の翌月から・万円／年、仮置き）<input name="preClaimPension" type="number" step="any" min="0" placeholder="区間の仮年額を入力"><small id="mortalityPreClaimHint" class="muted">繰下げと受給権は別途確認</small></label>
   <label>万一の月に1度だけ加える費用（万円、仮置き）<input name="funeral" type="number" step="any" min="0" value="0" required></label>
  </div>
- <p class="mortality-warning">試算に使う年金は<strong>自身の老齢基礎＋自身の老齢厚生＋追加される遺族厚生年金の差額の合計</strong>です。入力した合計に遺族年金を自動で上乗せしません。内訳を確認して参考計算する場合は、下の「遺族厚生年金の差額と合計を参考計算する」を開いてください。</p>
+ <p class="muted">登録済みの65歳基準情報から参考内訳を表示します。年金の受給前・資格未確認の場合は、参考額を確定収入として自動入力しません。年金合計への遺族年金の二重加算は行いません。</p>
  <div id="mortalityPensionAuto" class="mortality-metric" role="status" aria-live="polite">万一の月を選ぶと、年金シートの65歳基準内訳から参考額を照合します。</div>
  <div id="mortalityPensionBreakdown" role="status" aria-live="polite"></div>
  <p class="muted">万一の月は元の年金、翌月から仮年額を12等分する近似です。葬儀費0は「今回の比較に費用を入れない」仮定であり、実費0円の認定ではありません。</p>
 
- <details><summary>遺族厚生年金の差額と合計を参考計算する（65歳以上・資料確認が必要）</summary>
+ <details><summary>年金の詳細設定・手動調整（必要な場合のみ）</summary>
   <p class="muted">受給権・請求状況・繰下げの影響を資料で確認した場合のみ使用してください。先に旅立つ方の老齢厚生年金の繰下げ増額分は含めません。計算結果は本人の確定受給額ではありません。</p>
   <div class="form-grid mortality-grid">
    <label>先に旅立つ方の報酬比例部分（繰下げ前・万円／年）<input name="deceasedEarnings" type="number" step="any" min="0" placeholder="資料を確認して入力"></label>
@@ -121,17 +121,17 @@ export function mountMortalityComparison(root,{getConfig,getBaseline,runPlan}){
   <label class="check-label"><input name="entitlement" type="checkbox">遺族厚生年金の受給権を資料で確認した</label>
   <label class="check-label"><input name="claimed" type="checkbox">残された方の老齢年金請求・受給を確認した</label>
   <label class="check-label"><input name="deferral" type="checkbox">繰下げ待機中の受給権の影響を確認した</label>
-  <button id="mortalityUseRegisteredPension" class="secondary" type="button">年金シートの登録済み内訳を引用</button>
-  <button id="mortalityEstimatePension" class="secondary" type="button">自身の年金＋遺族厚生の差額を参考計算し、合計欄へ入力</button>
+  <button id="mortalityUseRegisteredPension" class="secondary" type="button">年金の登録情報を再参照する</button>
+  <button id="mortalityEstimatePension" class="secondary" type="button">確認した条件で参考合計を入力する</button>
   <p id="mortalityEstimateNotice" class="muted" role="status"></p>
  </details>
  </fieldset>
- <fieldset><legend>2．万一の後の支出（登録費目ごと・管理予算残額も倍率変更）</legend>
- <p class="muted">夫婦健在時の登録費目の月額に、項目別の倍率を掛けます。<strong>配分％の入力は不要です。</strong>管理予算と確認済み費目の差額は「未照合の予算残額」とし、税社保・不明費用も含めて独立した倍率を指定できます。元の物価係数を二重適用しません。</p>
+ <fieldset><legend>2．残された人の生活費（費目別の変更）</legend>
+ <p class="muted">登録済みの生活費を費目別に参照し、残された人の生活費倍率を設定します。支出は「元の管理予算 − 減額分」で計算し、物価係数の二重適用を防ぎます。</p>
  <label>登録費目の参照先<select id="mortalityExpenseSource"><option value="">現在の採用済み出典／唯一の出典を使用</option><option value="public-v0.9">旧形式の費目内訳</option><option value="work-v0.9.7">標準形式の費目内訳</option></select></label>
  <p id="mortalityItemSourceNote" class="muted"></p>
  <div id="mortalityItemHost" class="mortality-item-rows"></div>
- <div class="mortality-item-row mortality-remainder-row"><strong>未照合の予算残額（税社保・不明費用を含む）</strong><span id="mortalityRemainderAmount">未計算</span><input id="mortalityRemainderFactor" type="number" min="0" max="3" step="0.05" value="1" aria-label="未照合の予算残額の倍率"><span>倍率を指定できます</span></div>
+ <div class="mortality-item-row mortality-remainder-row"><strong>内訳に含まれない管理予算の支出（税社保・不明費用を含む）</strong><span id="mortalityRemainderAmount">未計算</span><input id="mortalityRemainderFactor" type="number" min="0" max="3" step="0.05" value="1" aria-label="未照合の予算残額の倍率"><span>倍率を指定できます</span></div>
  <p id="mortalityItemState" class="muted" role="status"></p>
  <div hidden aria-hidden="true"><p>旧・未配分の仮配分方式は使用しません。</p>
  <div class="mortality-preset-controls"><button type="button" class="secondary" id="mortalityFictionalCosts">旧・架空配分</button><button type="button" class="secondary" id="mortalityResetCosts">旧・未配分へ戻す</button></div>
@@ -139,9 +139,9 @@ export function mountMortalityComparison(root,{getConfig,getBaseline,runPlan}){
  <p id="mortalityAllocationTotal" class="muted" role="status"></p></div>
  </fieldset>
  <label class="check-label"><input type="checkbox" name="reviewed" required> 年金年額・万一の月・費目別倍率と残額倍率が<strong>比較用の仮定</strong>で、現在の採用条件ではないことを確認しました。</label>
- <button id="mortalityRun" class="primary" type="submit">万一の後の収入・資産を試算（保存しない）</button>
- <button id="mortalityClear" class="secondary" type="button">試算結果をクリア（保存データ不変）</button>
- <button id="mortalityClearInputs" class="secondary" type="button">前回の比較入力をクリア（採用値は不変）</button>
+ <button id="mortalityRun" class="primary" type="submit">比較を計算（保存しない）</button>
+ <button id="mortalityClear" class="secondary" type="button">結果表示をクリア</button>
+ <button id="mortalityClearInputs" class="secondary" type="button">比較入力を初期化</button>
  </form>
  <p id="mortalityState" role="status" class="muted">まだ比較していません。現在の資産計算や保存データは変わりません。</p>
  <div id="mortalityResults" hidden></div>
@@ -220,11 +220,34 @@ export function mountMortalityComparison(root,{getConfig,getBaseline,runPlan}){
   const dp=dateParts(death),last=ageOn(death+'-'+String(dp.days).padStart(2,'0'),cfg?.people?.[other]?.birthDate);
   if(first===null||last===null||first<65||last<65){target.textContent='65歳未満または誕生日境界のため、65歳以上用の遺族厚生年金概算を自動適用しません。';return;}
   const start=own?.startDate??own?.startMonth;
-  if(!dateParts(start)||start.slice(0,7)>death){target.textContent='残された方の老齢年金は受給開始前です。繰下げ待機・受給権の確認が必要なため、年金合計を自動採用しません。';return;}
+  const beforeClaim=!dateParts(start)||start.slice(0,7)>death;
   const a=own?.reference65,b=dead?.reference65;
   const values=[a?.basicAnnual,a?.employeeEarningsAnnual,b?.employeeEarningsAnnual];
   if(!a?.source||!b?.source||values.some(v=>v==null||v==='')||!values.every(v=>Number.isFinite(Number(v))&&Number(v)>=0)){
     target.textContent='年金シートの65歳基準内訳・出典が不足しています。未確認項目を0円で補完せず、参考計算を停止しました。';return;
+  }
+  if(beforeClaim){
+    // An old-age pension claim may be deferred; do not misrepresent its 65-year
+    // basis as payable in the selected month, or certify survivor entitlement.
+    const ownBasic=Number(a.basicAnnual),ownEmployee=Number(a.employeeEarningsAnnual);
+    const deceasedEmployee=Number(b.employeeEarningsAnnual);
+    const entitlement=Math.max(deceasedEmployee*.75,deceasedEmployee*.5+ownEmployee*.5);
+    const topUp65=Math.max(0,entitlement-ownEmployee);
+    target.replaceChildren();
+    target.append(makeEl('strong','','万一の月の公的年金内訳（登録済み65歳基準・受給前）'));
+    const table=makeEl('table'),body=makeEl('tbody');
+    const rows=[
+      ['老齢基礎年金・65歳基準',formatTotal(ownBasic)],
+      ['老齢厚生年金・65歳基準',formatTotal(ownEmployee)],
+      ['老齢年金・想定月の受給額','受給開始前（計上なし）'],
+      ['遺族厚生年金・65歳基準の参考受給権額',formatTotal(entitlement)],
+      ['遺族厚生年金・65歳基準の参考差額',formatTotal(topUp65)],
+      ['公的年金合計の条件付き参考額（受給権成立・支給停止なしを仮定）',formatTotal(entitlement)]
+    ];
+    for(const [label,value] of rows){const tr=makeEl('tr');tableCell(tr,label);tableCell(tr,value);body.append(tr);}
+    table.append(body);target.append(table);
+    target.append(makeEl('p','mortality-warning',`万一の月 ${death} は、残された方の老齢年金受給開始 ${dateParts(start)?start.slice(0,7):'未確認'} より前です。65歳基準額から遺族厚生年金の条件付き参考額は計算できますが、繰下げ待機中の受給権・支給開始月が確認できないため、条件付き参考合計は表示しますが、確定額として試算欄には自動入力しません。未確認を0円とは扱いません。`));
+    return;
   }
   try{
    const estimate=estimateSurvivorReference65({

@@ -73,7 +73,7 @@ try{
   await ctx.route('**/*',r=>{if(new URL(r.request().url()).origin===origin)return r.continue();report.blockedExternal.push(r.request().url());return r.abort();});
   const page=await ctx.newPage();page.on('pageerror',e=>report.pageErrors.push({engine,error:e.message}));
   await page.goto(origin,{waitUntil:'networkidle'});await page.locator('#dashboard').waitFor({state:'visible'});
-  assert.equal(await page.locator('#appVersion').innerText(),'v0.9.9-survivor-pension-auto-20261031（端末で実行中）');
+  assert.equal(await page.locator('#appVersion').innerText(),'v0.9.10-preclaim-pension-display-20261031（端末で実行中）');
   const before=await saved(page);await open(page);await baselineInputs(page);
   assert.equal(Number(await page.locator('#mortalityRemainderFactor').inputValue()),1,'初期の残額倍率は100%であること');
   for(const label of ['食費','水道光熱費','住居'])assert.ok(await factorRow(page,label).count()>0,label);

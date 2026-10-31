@@ -10,7 +10,7 @@ test('死亡月から既存65歳内訳を参照する画面を保持',()=>{
 });
 test('未確認と受給前の自動採用を防ぐ',()=>{
  assert.match(source,/65歳未満または誕生日境界/);
- assert.match(source,/年金合計を自動採用しません/);
+ assert.match(source,/確定額として試算欄には自動入力しません/);
  assert.match(source,/if\(hypotheticalTotal!==null&&!hasGap&&actualValid&&form\.elements\.survivorPension\.value===''/);
  assert.match(source,/未反映の入力欄に補完しました/);
  assert.match(source,/老齢基礎年金（繰下げ参考年額）/);
