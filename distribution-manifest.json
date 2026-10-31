@@ -1,6 +1,6 @@
 {
   "kind": "public-release",
-  "runtime": "v0.9.28-cashflow-family-pc-20261031",
+  "runtime": "v0.9.29-family-detail-guides-20261031",
   "files": [
     {
       "name": "annual-cashflow.mjs",
@@ -14,13 +14,13 @@
     },
     {
       "name": "app.mjs",
-      "size": 72265,
-      "sha256": "117d33ff098b92012e70cfdb8631b7290a61af89b6881aa0abdc9378c6e14e83"
+      "size": 72267,
+      "sha256": "86601bd3203503339677f10a8d317739c61bf3b1f729900153d87596142d3853"
     },
     {
       "name": "backup-compatibility.mjs",
-      "size": 7832,
-      "sha256": "22ba91e9908f940f01331b0010ed93c3deed21db71c2143e37f2813e08ecf087"
+      "size": 7834,
+      "sha256": "0e274b18dd7bb93729dfd9b36b451705a1d9eda0bece30fe184fccdab40ca374"
     },
     {
       "name": "calc.mjs",
@@ -154,8 +154,8 @@
     },
     {
       "name": "index.html",
-      "size": 67193,
-      "sha256": "41243377bd1d3e10362237d5209c957b5824437f542360038e2e736bb005a682"
+      "size": 67237,
+      "sha256": "56475070df0b9deb9734257fd6b5ceef4f39bfa0031181df490139d911f6f6f4"
     },
     {
       "name": "manifest.webmanifest",
@@ -229,8 +229,8 @@
     },
     {
       "name": "release-info.json",
-      "size": 124,
-      "sha256": "4944419afa61c9e03cf421e1759511a47edb735cf9ba21b697c0279cdf64e098"
+      "size": 126,
+      "sha256": "b4806623dcc206e9d75b28405810b4c5c932d44ed537e7bcb087b0d2e6efdb57"
     },
     {
       "name": "retirement-comment.mjs",
@@ -294,8 +294,8 @@
     },
     {
       "name": "sw.js",
-      "size": 4102,
-      "sha256": "403000171a95b82996561464a6867a69419e6573045d675d0a0a95124a20e8d8"
+      "size": 4104,
+      "sha256": "180bd474445bcfa33d3c1ce070aa2b8afb79f24bc04fd4e0212ad2f125794a73"
     },
     {
       "name": "sync-controller.mjs",
