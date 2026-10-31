@@ -1,6 +1,6 @@
 {
   "kind": "public-release",
-  "runtime": "v0.9.14-expense-diagnostics-20261031",
+  "runtime": "v0.9.15-profile-diagnostics-20261031",
   "files": [
     {
       "name": "annual-cashflow.mjs",
@@ -15,12 +15,12 @@
     {
       "name": "app.mjs",
       "size": 71804,
-      "sha256": "ee9ebdb7c4aa11eaf5c765e1475cb2eab3cbfd5c01d8700978223bf332addf41"
+      "sha256": "b9f6060178170b40508cf71b5801e1ba091d06a43ecd8188fce967760cf1ac5c"
     },
     {
       "name": "backup-compatibility.mjs",
       "size": 7833,
-      "sha256": "c549d3eb9cc7b7d452d25b057a23f48bc908cbaf44f13a7ef7eeabb2f9f373fa"
+      "sha256": "4b2e1b6922f15287c5fb1574d19d353731c968f7602e2790e15b11214f27cc59"
     },
     {
       "name": "calc.mjs",
@@ -44,8 +44,8 @@
     },
     {
       "name": "cashflow-reconciliation.mjs",
-      "size": 7999,
-      "sha256": "11c839843c055a4296e5d3a51519256142231f555f387843c99923b11e6fd354"
+      "size": 8354,
+      "sha256": "f0369cf611bd86210b328c2923904b24e5b5891365e9018893424c177fde706d"
     },
     {
       "name": "cashflow-sources.mjs",
@@ -225,7 +225,7 @@
     {
       "name": "release-info.json",
       "size": 125,
-      "sha256": "27f7fc85969946334139b998ced42c2703fd354b3ad940aac24b2893a57bf36d"
+      "sha256": "48d8d3d9d38ce467ebc001b7f3aed8210a13130c8fdc16dad9304c2e81f85192"
     },
     {
       "name": "retirement-comment.mjs",
@@ -290,7 +290,7 @@
     {
       "name": "sw.js",
       "size": 4077,
-      "sha256": "738e2529e30954028089370f53ea13c5f6f5333d765ce5bb931dae3c3601412f"
+      "sha256": "6ce1eac82e236064ba27a9f00068ac104b7595c6a3638bbc645ba6bac77eccf0"
     },
     {
       "name": "sync-controller.mjs",
