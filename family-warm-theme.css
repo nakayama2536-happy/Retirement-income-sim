@@ -1,47 +1,48 @@
-/* Family-friendly warm theme: colors only; no calculations or storage. */
-:root{--ink:#34453d;--accent:#426857;--line:#dedbd1;--bg:#fffdf8;--muted:#5e675f;color:#303d36;background:#f7f4ed}
-body{background:#f7f4ed;color:#303d36}
-.topbar{background:#344b40;color:#fffdf6}
-.topbar .version,.topbar p{color:#e3e9df}
-.topbar .version b{color:#fffdf8}
-.navigation-sticky{background:#f1eee5;box-shadow:0 2px 8px #3d48301a}
-.navigation-sticky .tabs{background:#fffdf8;border-color:var(--line)}
-.tab-groups button{background:#e7e5da;color:#34463b;border-radius:10px 10px 0 0}
-.tab-groups button.active{background:#426857;color:#fff}
-.tabs button{color:#56635a}
-.tabs button.active{color:#345e49;border-bottom-color:#426857}
-.card{background:#fffdf9;border-color:#e2ded3;box-shadow:0 3px 13px #544b3610}
-.target-overview{background:#f4f4ea;border-color:#d8dfd0}
+/* Family pastel B: bright apricot/cream palette. Visual-only overrides. */
+:root{--ink:#3c4550;--accent:#bd592a;--line:#f0dfd2;--bg:#ffffff;--muted:#5c6570;color:#26323b;background:#fffaf4}
+body{background:#fffaf4;color:#26323b}
+.topbar{background:linear-gradient(110deg,#ffe0cb 0%,#fff1e4 68%,#fffaf4 100%);color:#27343f}
+.topbar .version,.topbar p{color:#4e5661}
+.topbar .version b{color:#994517}
+.navigation-sticky{background:#fff1e4;box-shadow:0 2px 9px #a8694019}
+.navigation-sticky .tabs{background:#fffefd;border-color:#f2ddd0}
+.tab-groups button{background:#fff4e9;color:#46505a;border-radius:12px 12px 0 0}
+.tab-groups button.active{background:#cf7040;color:white}
+.tabs button{color:#53606a}
+.tabs button.active{color:#a84922;border-bottom-color:#e78e5d}
+.card{background:#fff;border-color:#f1ded0;box-shadow:0 4px 16px #9b613511}
+.target-overview{background:#fffaf4;border-color:#edd7c3}
 .card>span,.card small,.muted{color:var(--muted)}
-.primary,.panel button.primary:not(:disabled),#migrationPanel button.primary:not(:disabled),#emptyState button.primary:not(:disabled),#mortalityComparisonContainer button.primary:not(:disabled){background:#426857;border-color:#345345;color:white;box-shadow:none}
-.panel button.primary:not(:disabled):hover,#mortalityComparisonContainer button.primary:not(:disabled):hover{background:#335442}
-.secondary,.file-btn,.panel button.secondary:not(:disabled),.panel .file-btn,#migrationPanel button.secondary:not(:disabled),#emptyState button.secondary:not(:disabled),#mortalityComparisonContainer button.secondary:not(:disabled){background:#ecece1;color:#344b3e;border-color:#9da99d;box-shadow:none}
-.panel button.secondary:not(:disabled):hover,.panel .file-btn:hover,#mortalityComparisonContainer button.secondary:not(:disabled):hover{background:#e0e5d9;border-color:#698472}
-input,select,textarea{background:#fffefa;border-color:#b8c3b6;color:#2c3931}
-input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-visible,summary:focus-visible,.panel button:focus-visible,#mortalityComparisonContainer button:focus-visible{outline:3px solid #a86e35;outline-offset:3px}
-label{color:#47564b}
-a,.link-btn{color:#365f49}
-.pill,.info,.pending-type,.baseline-badge{background:#ecf0e7;color:#3b5848}
-.rule-card,.scenario-item,.salary-step,.pension-person,.mortality-form fieldset{border-color:#d8ded2;background:#fffdf9}
-.current-setting-summary,.pension-impact,.mortality-metric{background:#f0f4ed;border-color:#d2dfd3}
-.home-explanation>summary,.salary-step>summary,.mortality-form legend{color:#375d49}
-.home-explanation>summary::after,.salary-step>summary::after{color:#496d56}
-#yearCashflowTable thead th,#yearCashflowTable tr>th:first-child,#yearCashflowTable tr>td:first-child,.mortality-table th,.mortality-table th:first-child,.mortality-table td:first-child,.mortality-item-head{background:#e9eee4}
-.mortality-table td,#yearCashflowTable td{background:#fffdf9}
-.mortality-remainder-row{background:#faf3e7}
-th{color:#465d4f}
-th,td,.timeline li,.summary-box dl div,.certainty-row,.expense-list details{border-bottom-color:#e9e7de}
-.asset-line{stroke:#477460}.grid{stroke:#e8e8dd}.axis{fill:#5b6a5e}.key-point{fill:#3a5846}
-.legend i.legend-plan{border-color:#477460!important}
+.primary,.panel button.primary:not(:disabled),#migrationPanel button.primary:not(:disabled),#emptyState button.primary:not(:disabled),#mortalityComparisonContainer button.primary:not(:disabled){background:#c96835;border-color:#a84b23;color:#fff;box-shadow:none}
+.panel button.primary:not(:disabled):hover,#mortalityComparisonContainer button.primary:not(:disabled):hover{background:#ab4f25}
+.secondary,.file-btn,.panel button.secondary:not(:disabled),.panel .file-btn,#migrationPanel button.secondary:not(:disabled),#emptyState button.secondary:not(:disabled),#mortalityComparisonContainer button.secondary:not(:disabled){background:#fff1e5;color:#82421f;border-color:#d3a489;box-shadow:none}
+.panel button.secondary:not(:disabled):hover,.panel .file-btn:hover,#mortalityComparisonContainer button.secondary:not(:disabled):hover{background:#ffe5d1;border-color:#ad6d43}
+input,select,textarea{background:#fffefa;border-color:#c5b3a3;color:#28333c}
+input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-visible,summary:focus-visible,.panel button:focus-visible,#mortalityComparisonContainer button:focus-visible{outline:3px solid #9b591f;outline-offset:3px}
+label{color:#49545f}
+a,.link-btn{color:#ac5127}
+.pill,.info,.pending-type,.baseline-badge{background:#fff0e4;color:#86431f}
+.rule-card,.scenario-item,.salary-step,.pension-person,.mortality-form fieldset{border-color:#f0ddce;background:#fff}
+.current-setting-summary,.pension-impact,.mortality-metric{background:#fff6ed;border-color:#efdcc9}
+.home-explanation>summary,.salary-step>summary,.mortality-form legend{color:#8d4b28}
+.home-explanation>summary::after,.salary-step>summary::after{color:#9b552c}
+#yearCashflowTable thead th,#yearCashflowTable tr>th:first-child,#yearCashflowTable tr>td:first-child,.mortality-table th,.mortality-table th:first-child,.mortality-table td:first-child,.mortality-item-head{background:#fff0e3}
+.mortality-table td,#yearCashflowTable td{background:#fff}
+.mortality-remainder-row{background:#fff4dd}
+th{color:#5f5960}
+th,td,.timeline li,.summary-box dl div,.certainty-row,.expense-list details{border-bottom-color:#f1e8df}
+.asset-line{stroke:#d47747}.grid{stroke:#eee9e3}.axis{fill:#5b6570}.key-point{fill:#ac613a}
+.legend i.legend-plan{border-color:#d47747!important}
 .legend i.legend-target{border-color:#ba8243!important}
 .target-line{stroke:#ba8243}.target-point{stroke:#ba8243}
-.pos,.integrity-ok{color:#236344}.neg{color:#a33f38}
-.certainty-high{background:#e2f0e4;color:#285b3f}
-.certainty-mid{background:#e9eee8;color:#405b4b}
-.certainty-low{background:#f8eadb;color:#85552f}
-.integrity-warn,.mortality-warning{background:#fff3df;color:#6b4c20;border-color:#dfc89c}
-.integrity-error,.inline-error{background:#fae7e2;color:#8f3f35}
-#runtimeFreshness[data-status="current"]{color:#cce8c9}
-#runtimeFreshness[data-status="outdated"]{color:#ffe1a6}
-@media(max-width:760px){.card{box-shadow:0 2px 8px #544b360d}}
+.pos,.integrity-ok{color:#196e51}.neg{color:#a13e37}
+.certainty-high{background:#e4f2e9;color:#225e46}
+.certainty-mid{background:#f3f0ec;color:#535b63}
+.certainty-low{background:#fff0df;color:#865125}
+.integrity-warn,.mortality-warning{background:#fff2dc;color:#6b4c20;border-color:#e6c996}
+.integrity-error,.inline-error{background:#fae8e2;color:#923e37}
+#runtimeFreshness[data-status="current"]{color:#245d43}
+#runtimeFreshness[data-status="outdated"]{color:#884c16}
+#runtimeFreshness[data-status="unknown"]{color:#62606a}
+@media(max-width:760px){.card{box-shadow:0 2px 9px #9b61350c}}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important}}
