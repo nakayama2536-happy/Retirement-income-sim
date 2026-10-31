@@ -1,6 +1,6 @@
 {
   "kind": "public-release",
-  "runtime": "v0.9.16-missing-id-guidance-20261031",
+  "runtime": "v0.9.17-unidentified-expense-20261031",
   "files": [
     {
       "name": "annual-cashflow.mjs",
@@ -14,13 +14,13 @@
     },
     {
       "name": "app.mjs",
-      "size": 71804,
-      "sha256": "d890eee86b44e64271662c9727b4f8afc78fd4ac3ce586be414bb7812e779ee0"
+      "size": 71805,
+      "sha256": "34dabd52be989b4d64eb51866d8f3e3b59b2b619033ff3e9dfbce81b12aeb4fc"
     },
     {
       "name": "backup-compatibility.mjs",
-      "size": 7833,
-      "sha256": "ae034b83b7de3c5f913e1d8b77b0537cf34d1769e5e7ea775a772c2c1488e1cb"
+      "size": 7834,
+      "sha256": "75db0999554fd0347e406d0011a624b41acdaba0c28b638bf29910072d1d9cb8"
     },
     {
       "name": "calc.mjs",
@@ -44,8 +44,8 @@
     },
     {
       "name": "cashflow-reconciliation.mjs",
-      "size": 7999,
-      "sha256": "11c839843c055a4296e5d3a51519256142231f555f387843c99923b11e6fd354"
+      "size": 8170,
+      "sha256": "c04a09e28b991732b9a7cd6fbb7557d39fb08757290f8a3e2f4f20a8d8e695a8"
     },
     {
       "name": "cashflow-sources.mjs",
@@ -179,13 +179,13 @@
     },
     {
       "name": "mortality-itemized-ui.mjs",
-      "size": 5517,
-      "sha256": "d05f7161eb1d9b1b03ee8cfe046fd552c9832ef23ee5a19b347cdfd3d2fbcee5"
+      "size": 5699,
+      "sha256": "1fa8e7c72816d5c341f4d7ba40a2ffaf2d212dbf5fc5b9efeab963e247b54c99"
     },
     {
       "name": "mortality-itemized.mjs",
-      "size": 6650,
-      "sha256": "1e9565c58f42485ff45bd8a7e9311aa58a30ff225ee49e8f0096a831bf2c71a1"
+      "size": 7086,
+      "sha256": "2c2fca8525fe011894a244c96745b9f431fd5f0db7385c0de1b08bf7340c627c"
     },
     {
       "name": "mortality-preview.mjs",
@@ -224,8 +224,8 @@
     },
     {
       "name": "release-info.json",
-      "size": 125,
-      "sha256": "3e3887d7104523ea89d78102664cb2559ebc2a5d6c3df804bdd436d4643a6e98"
+      "size": 126,
+      "sha256": "7b27aa70b834924a55cedd62860414e0521da7237aabd85e5aae09fd1418673d"
     },
     {
       "name": "retirement-comment.mjs",
@@ -289,8 +289,8 @@
     },
     {
       "name": "sw.js",
-      "size": 4077,
-      "sha256": "b3f06294ff44d8ee237488f05d10a5b6088273a1d5d05b505692b27302007ce3"
+      "size": 4078,
+      "sha256": "11bd5d052bc05b244b11b903c4bd811b3810edb3717c627acdb2040b1efd2b0c"
     },
     {
       "name": "sync-controller.mjs",
