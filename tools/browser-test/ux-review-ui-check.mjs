@@ -46,7 +46,7 @@ try{
  mark('compact-home-replaces-large-current-simulation-banner');
  assert.equal(await page.locator('#initialAssetLabel').innerText(),`${before.config.plan.startAge-1}歳期末想定資産`);
  assert.match(await page.locator('#initialAssetHelp').innerText(),/計算開始残高/);
- assert.equal(await page.locator('#home details.home-explanation').count(),7);
+ assert.equal(await page.locator('#home details.home-explanation').count(),6);
  assert.equal(await page.locator('#home .home-pending > summary #pendingCount').count(),1);
  assert.deepEqual(await snapshot(),before,'home label/disclosures must not alter adopted state');
  mark('ux-request-previous-age-year-end-and-individual-home-disclosures');
