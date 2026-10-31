@@ -11,7 +11,10 @@ export async function validateUnemploymentUi({browser,createTestServer,open,load
   await form.locator('[type=submit]').click();assert.deepEqual((await snapshot(page)).data,before.data);
   await openTab(page,'unemployment');await page.locator('#detail-unemployment [data-apply]').click();const adopted=await snapshot(page);assert.equal(adopted.data.config.unemployment.receiptPlan.dailyYen,'6000');assert.deepEqual(adopted.data.scenarios,before.data.scenarios);
   await openTab(page,'home');await page.locator('#homeTimelineGuide summary').click();assert((await page.locator('#timeline').textContent()).includes('高年齢求職者給付金'));
-  await openTab(page,'salary');const side=page.locator('#detail-laborPrimarySide');
+  await openTab(page,'salary');
+  const optionalLabor=page.locator('#salary details.salary-optional-labor');
+  if(!await optionalLabor.evaluate(n=>n.open))await optionalLabor.locator('summary').click();
+  const side=page.locator('#detail-laborPrimarySide');
   assert((await side.locator('.labor-date-recommendation').innerText()).includes('2045年4月'));
   const input=side.locator('[name=monthlyGross]'),old=await input.inputValue();await input.fill('9');
   await side.locator('[data-reset]').click();assert.equal(await side.locator('[name=monthlyGross]').inputValue(),old);
