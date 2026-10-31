@@ -206,7 +206,7 @@ function renderHome() {
   el('status').textContent = target ? (result.finalAsset>=target.threshold?'目標額以上':'目標額未満') : '未設定';
   const below=result.keyAges.filter(k=>k.age!==end&&k.margin<0);
   el('targetStatusNote').textContent=below.length?`途中の参考目標を下回る年齢：${below.map(k=>k.age+'歳末').join('・')}。生活費の不足とは別に確認してください。`:'この判定は最終年齢末の目標額との比較です。途中の資金不足や将来の安心を保証しません。';
-  el('initialAssetLabel').textContent=`${start-1}歳期末資産`;
+  el('initialAssetLabel').textContent=`${start-1}歳期末想定資産`;
   el('initialAssetHelp').textContent=`${start}歳期の計算開始残高として登録した計画値です。実績を確定した意味ではありません。`;
   el('finalTargetLabel').textContent=`${end}歳末の目標資産額`;
   el('finalPredictionLabel').textContent=`${end}歳末の予測資産額`;
