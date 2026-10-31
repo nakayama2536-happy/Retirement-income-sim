@@ -89,9 +89,11 @@ test('家族向け表示：採用条件、未反映の入力、試算済みを�
   assert.match(t.node('salaryAdoptedTimeline').innerHTML,/資産から生活費を負担する開始月/);
 });
 test('家族向け画面：設定の開閉を追加しても既存の必須入力・反映・税試算のIDを保持',()=>{
-  for(const id of ['salaryCurrentSummary','salaryForm','salaryPreview','salaryApply','salaryUndo','salary_lastSalaryMonth','taxToolAge','taxToolRun','detail-laborPrimaryRegular','detail-laborSpouseSide']){
+  for(const id of ['salaryCurrentSummary','salaryForm','salaryPreview','salaryApply','salaryUndo','taxToolAge','taxToolRun','detail-laborPrimaryRegular','detail-laborSpouseSide']){
     assert.match(html,new RegExp('id="'+id+'"'));
   }
+  const t=setup();
+  assert.ok(t.node('salary_lastSalaryMonth'),'動的生成される切替月の入力欄を維持');
   assert.match(html,/現在の計画に反映されている条件/);
   assert.match(html,/本人・配偶者の給与・アルバイトを変更する（必要なときだけ）/);
   assert.match(html,/初期値（年齢70歳、給与・年金0万円など）は現在の計画の採用条件ではありません/);
