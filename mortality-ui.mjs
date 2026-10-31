@@ -106,7 +106,7 @@ export function mountMortalityComparison(root,{getConfig,getBaseline,runPlan}){
  </div>
  <p class="muted">登録済みの65歳基準情報から参考内訳を表示します。年金の受給前・資格未確認の場合は、参考額を確定収入として自動入力しません。年金合計への遺族年金の二重加算は行いません。</p>
  <div id="mortalityPensionAuto" class="mortality-metric" role="status" aria-live="polite">万一の月を選ぶと、年金シートの65歳基準内訳から参考額を照合します。</div>
- <div id="mortalityPensionBreakdown" role="status" aria-live="polite"></div>
+ <div id="mortalityPensionBreakdown" role="status" aria-live="polite"></div><p class="muted">上の年金額は登録情報から計算した<strong>参考内訳</strong>です。比較に実際に使うのは、下の詳細設定にある「残された人の公的年金合計（仮年額）」です。受給資格を確認していない参考金額を、確定した年金収入として自動採用するものではありません。</p>
  <p class="muted">万一の月は元の年金、翌月から仮年額を12等分する近似です。葬儀費0は「今回の比較に費用を入れない」仮定であり、実費0円の認定ではありません。</p>
 
  <details id="mortalityPensionSettings"><summary>年金の詳細設定・試算用年額の調整（必要な場合のみ）</summary>
@@ -128,7 +128,7 @@ export function mountMortalityComparison(root,{getConfig,getBaseline,runPlan}){
   <p id="mortalityEstimateNotice" class="muted" role="status"></p>
  </details>
  </fieldset>
- <fieldset><legend>2．残された人の生活費（費目別の変更）</legend>
+ <fieldset><legend>2．残された人の生活費（費目別の変更）</legend><p>倍率の見方：<strong>1.0倍＝元と同じ100％、0.8倍＝80％（20％減）、1.2倍＝120％（20％増）</strong>です。費目ごとに入力した倍率で比較します。入力しただけでは現在の計画は変更されません。</p>
  <p class="muted">登録済みの生活費を費目別に参照し、残された人の生活費倍率を設定します。支出は「元の管理予算 − 減額分」で計算し、物価係数の二重適用を防ぎます。</p>
  <input type="hidden" id="mortalityExpenseSource" value="work-v0.9.7"><p class="muted">登録済みの現行形式の費目内訳を参照します。旧形式との選択・比較は行いません。</p>
  <p id="mortalityItemSourceNote" class="muted"></p>
