@@ -205,6 +205,7 @@ export function mountMortalityComparison(root,{getConfig,getBaseline,runPlan}){
  // survivor supplement must be identified separately. Entitlement is an
  // unverified scenario assumption here; it is never persisted or certified.
  let automaticPensionValue=null;
+ let lastAutomaticPensionDraft=null;
  const autoPension=()=>{
   const target=root.querySelector('#mortalityPensionAuto');
   if(!target)return;
@@ -212,6 +213,8 @@ export function mountMortalityComparison(root,{getConfig,getBaseline,runPlan}){
   const death=form.elements.deathMonth.value;
   const own=cfg?.income?.pensions?.[other],dead=cfg?.income?.pensions?.[who];
   automaticPensionValue=null;
+  if(lastAutomaticPensionDraft!==null&&form.elements.survivorPension.value===lastAutomaticPensionDraft){form.elements.survivorPension.value='';}
+  lastAutomaticPensionDraft=null;
   if(!dateParts(death)){target.textContent='万一の月を指定すると、登録済み年金内訳を参照します。';return;}
   const first=ageOn(death+'-01',cfg?.people?.[other]?.birthDate);
   const dp=dateParts(death),last=ageOn(death+'-'+String(dp.days).padStart(2,'0'),cfg?.people?.[other]?.birthDate);
@@ -293,6 +296,7 @@ export function mountMortalityComparison(root,{getConfig,getBaseline,runPlan}){
    // or an adopted state. Manual review remains mandatory before simulation.
    if(hypotheticalTotal!==null&&!hasGap&&actualValid&&form.elements.survivorPension.value===''){
      form.elements.survivorPension.value=String(Number(hypotheticalTotal.toFixed(6)));
+     lastAutomaticPensionDraft=form.elements.survivorPension.value;
      target.append(makeEl('p','muted','参考合計を未反映の入力欄に補完しました。採用済み条件は変更しません。'));
    }
   }catch(e){target.textContent='遺族年金の自動参考計算を停止しました：'+e.message;}
