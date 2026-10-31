@@ -229,9 +229,9 @@ async function validateHomeUi(browser){
    assert(!(await page.locator('[data-tab="actuals"]').isVisible()));
    assert(!(await page.locator('.forecast-card').isVisible()));
    assert.deepEqual(await page.locator('#keyAges').locator('xpath=../thead/tr/th').allTextContents(),['年齢末','目標資産額','予測資産額','差額']);
-   assert((await page.locator('#simulationPeriod').innerText()).includes('保存済みの計画'));
+   assert((await page.locator('#simulationPeriod').innerText()).includes('現在の計画'));
    assert.equal(await page.locator('#finalThreshold').innerText(),'500万円');
-   assert.equal(await page.locator('#status').innerText(),'達成');
+   assert.equal(await page.locator('#status').innerText() ,'目標額以上');
    assert((await page.locator('#targetStatusNote').innerText()).includes('80歳末'));
    const card=page.locator('.target-overview');const box=await card.boundingBox();assert(box&&box.x>=0&&box.x+box.width<=width+1);
    const amounts=await page.locator('#finalAsset,#finalThreshold,#finalMargin,#currentAsset,#reserve').evaluateAll(nodes=>nodes.map(n=>({size:getComputedStyle(n).fontSize,width:n.clientWidth,scroll:n.scrollWidth})));

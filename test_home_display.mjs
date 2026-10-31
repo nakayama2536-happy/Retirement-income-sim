@@ -18,9 +18,9 @@ function setup(){
 test('home shows target then prediction; final success does not hide intermediate shortfalls',()=>{
  const {context:c,el}=setup();c.result={...c.result,startAge:60,endAge:90,finalAsset:1200,finalThreshold:1000,keyAges:[{age:80,asset:700,threshold:900,margin:-200},{age:90,asset:1200,threshold:1000,margin:200}]};
  const before=JSON.stringify(c.config);c.renderHome();
- assert.equal(el('status').textContent,'達成');assert.match(el('targetStatusNote').textContent,/80歳末/);assert.equal(el('finalMargin').textContent,'+200万円');assert.equal(el('finalPredictionLabel').textContent,'90歳末の予測資産額');
+ assert.equal(el('status').textContent,'目標額以上');assert.match(el('targetStatusNote').textContent,/80歳末/);assert.equal(el('finalMargin').textContent,'+200万円');assert.equal(el('finalPredictionLabel').textContent,'90歳末の予測資産額');
  assert.match(el('keyAges').children[0].innerHTML,/<td>900万円<\/td><td>700万円<\/td>/);assert.equal(JSON.stringify(c.config),before);
- c.result.finalAsset=850;c.renderHome();assert.equal(el('status').textContent,'未達');assert.equal(el('finalMargin').textContent,'-150万円');
+ c.result.finalAsset=850;c.renderHome();assert.equal(el('status').textContent,'目標額未満');assert.equal(el('finalMargin').textContent,'-150万円');
  c.result.keyAges=[];c.renderHome();assert.equal(el('status').textContent,'未設定');assert.equal(el('finalMargin').textContent,'—');
 });
 test('simulation graph excludes saved actuals without changing them; display switch can restore them',()=>{
