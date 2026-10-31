@@ -34,6 +34,8 @@ export function mountMortalityItemizedControls(root,{getConfig,runPlan,onChange}
   function refresh({takeCurrent=true}={}){
     if(takeCurrent)for(const input of host.querySelectorAll('[data-mortality-itemfactor]'))savedFactors[input.dataset.mortalityItemfactor]=input.value;
     host.replaceChildren();model=null;
+    root.querySelector('#mortalityRemainderAmount').textContent='未計算';
+    status.textContent='費目内訳を確認中';
     const cfg=getConfig();
     if(!cfg){status.textContent='現在の設定を読み込んでください。';return;}
     try{
