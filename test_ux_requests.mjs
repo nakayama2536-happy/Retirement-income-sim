@@ -22,7 +22,7 @@ test('1-2 separately named release, legal basis and authoritative cloud save tim
 test('2-1 home status is compact and still distinguishes saved from unadopted inputs',()=>{
  assert.doesNotMatch(html,/class="card simulation-context"/);
  assert.match(html,/id="simulationPeriod" class="home-plan-range"/);
- assert.match(app,/保存済みの計画：/);assert.match(app,/未反映の入力は含みません/);
+ assert.match(app,/現在の計画：/);assert.match(app,/入力途中の変更は含みません/);
 });
 test('3-1 age100 reference goal is offered independently from adopted age95 calculation',()=>{
  const detail=text('./detail-ui.mjs'),d=text('./detail-settings.mjs');
