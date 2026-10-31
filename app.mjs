@@ -213,6 +213,7 @@ function renderHome() {
   el('simulationPeriod').textContent=`現在の計画：${start}歳～${end}歳末（入力途中の変更は含みません）`;
   el('assetChart').setAttribute('aria-label',`${start}歳から${end}歳末までの資産推移`);
   const margin=target?result.finalAsset-target.threshold:null;
+  el('finalMarginLabel').textContent=margin===null?'目標との差':'目標'+(margin>=0?'を上回る金額':'に足りない金額');
   el('finalMargin').textContent=margin===null?'—':`${margin>=0?'+':''}${money(margin)}`;
   el('finalMargin').className=margin===null?'':margin<0?'neg':'pos';
   el('status').dataset.status = target ? result.status : '';
