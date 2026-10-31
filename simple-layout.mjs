@@ -69,7 +69,7 @@ export function simplifyLayout(doc) {
   pending.querySelector('h2')?.classList.add('visually-hidden');
   (byId('homeTimelineGuide') || explanation).after(pendingBox);
   // Keep technical checks available, but not expanded in the family's everyday view.
-  for (const [id,title] of [['integritySummary','計算データの整合性を確認'],['reviewAlerts','見直し条件を確認']]) {
+  for (const [id,title] of [['integritySummary','計算データの整合性を確認']]) {
     const article=byId(id).closest('article');
     const box=wrap(article,title);
     box.classList.add('home-explanation');
