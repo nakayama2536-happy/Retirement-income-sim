@@ -42,11 +42,11 @@ try{
  assert.match(await page.locator('#cloudDataSavedAt').innerText(),/未確認/);
  mark('concise-header-build-rule-date-and-unverified-cloud-time');
  assert.equal(await page.locator('.simulation-context').count(),0);
- assert.match(await page.locator('#simulationPeriod').innerText(),/現在の計画/);
+ assert.match(await page.locator('#simulationPeriod').textContent(),/現在の計画/);
  mark('compact-home-replaces-large-current-simulation-banner');
- assert.equal(await page.locator('#initialAssetLabel').innerText(),`${before.config.plan.startAge-1}歳期末資産`);
+ assert.equal(await page.locator('#initialAssetLabel').innerText(),`${before.config.plan.startAge-1}歳期末想定資産`);
  assert.match(await page.locator('#initialAssetHelp').innerText(),/計算開始残高/);
- assert.equal(await page.locator('#home details.home-explanation').count(),5);
+ assert.equal(await page.locator('#home details.home-explanation').count(),6);
  assert.equal(await page.locator('#home .home-pending > summary #pendingCount').count(),1);
  assert.deepEqual(await snapshot(),before,'home label/disclosures must not alter adopted state');
  mark('ux-request-previous-age-year-end-and-individual-home-disclosures');
