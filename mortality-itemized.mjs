@@ -34,8 +34,13 @@ export function inspectMortalityExpenseBudget(config,monthlyRows,{sourceProfile=
   const profile=selectMortalityExpenseProfile(config,sourceProfile);
   const trace=profile?reconcileCashflow(config,{sourceProfile:profile}):null;
   if(trace&&trace.months.length!==monthlyRows.length)stop('expense-month-count','費目内訳と月次資産計算の期間が一致しません');
-  if(trace?.blockers?.length||trace?.comparisonDiagnostics?.some(d=>/identity|duplicate|ambiguous|source-conflict/.test(d.code||'')))
-    stop('expense-source-conflict','費目のIDや出典に競合があります。元の支出内訳を確認してください');
+  const issues=(trace?.comparisonDiagnostics||[]).filter(d=>/identity|duplicate|ambiguous|source-conflict/.test(d.code||''));
+  const blocked=trace?.blockers||[];
+  if(issues.length||blocked.length){
+    const evidence=[...issues.map(d=>({code:d.code,path:d.path})),...blocked.map(d=>({code:'invalid-source-container',path:d.path}))];
+    const locations=evidence.slice(0,5).map(d=>String(d.code)+' @ '+String(d.path||'位置未確認'));
+    stop('expense-source-conflict','費目の登録に不整合 '+evidence.length+'件：'+locations.join(' ／ ')+(evidence.length>5?' ／ ほか'+(evidence.length-5)+'件':'')+'。元の登録データは変更しません');
+  }
   const labels=new Map();
   const monthRows=monthlyRows.map((r,i)=>{
     const total=money(r.expense,'管理予算');
