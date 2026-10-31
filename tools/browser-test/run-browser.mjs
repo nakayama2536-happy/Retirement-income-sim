@@ -145,7 +145,7 @@ async function run(browser,id,mode){
    const extra=after.comparison.filter(row=>age100Labels.includes(row[0]));
    assert.deepEqual(extra.map(row=>row[0]),age100Labels);
    assert.equal(extra[0][1],'95歳末');
-   assert.equal(extra[2][1],'対象外');
+   assert.equal(extra[2][1],'対象外（計算期間外）');
    const withoutProducer=snapshot=>{
     const copy=structuredClone(snapshot);
     delete copy.data.recoveryCompatibility.producerBuild;
