@@ -1,6 +1,6 @@
 {
   "kind": "public-release",
-  "runtime": "v0.9.26-goal-first-pc-20261031",
+  "runtime": "v0.9.27-family-home-clarity-20261031",
   "files": [
     {
       "name": "annual-cashflow.mjs",
@@ -14,13 +14,13 @@
     },
     {
       "name": "app.mjs",
-      "size": 72177,
-      "sha256": "cd6e4302cc3c160ff37f0dec026f0dcefba63e291b52beae1b1d62efefba5883"
+      "size": 72224,
+      "sha256": "1316e22840c65e4fc7caa217069d9d553baa704c288b9bf6a46bb97c5a807ac8"
     },
     {
       "name": "backup-compatibility.mjs",
-      "size": 7827,
-      "sha256": "55a9eeccc5ced5643934cacfa8855b2d22af475e90f5bfb877014dd8fc65df1a"
+      "size": 7833,
+      "sha256": "499f023d5d6ac7e096408400432c40d687866b8f3fa0d9c2d880b39c558b00d9"
     },
     {
       "name": "calc.mjs",
@@ -229,8 +229,8 @@
     },
     {
       "name": "release-info.json",
-      "size": 119,
-      "sha256": "0497a2a4a28abcfa3fd2c410483759480aa8703fd6cdcbadf627863eee8b1d14"
+      "size": 125,
+      "sha256": "4720bda854798ef46d9bae4082792639a811d2802327993409a8f777cb490f74"
     },
     {
       "name": "retirement-comment.mjs",
@@ -264,8 +264,8 @@
     },
     {
       "name": "simple-layout.mjs",
-      "size": 7521,
-      "sha256": "4feb7a48ded84733417f131976828ee1aa97bbd022e7c99ff927e83608fd4e31"
+      "size": 7643,
+      "sha256": "6d3b25d53cbe410b70c9f6aebfba4c1ff9699a340869e4f00fbbf2d1f68f2687"
     },
     {
       "name": "state.mjs",
@@ -294,8 +294,8 @@
     },
     {
       "name": "sw.js",
-      "size": 4097,
-      "sha256": "1021cfef4d141c0aa0622f2b4c4cf6a3eb38ed7177d83b5f2180e33768f6a157"
+      "size": 4103,
+      "sha256": "a68c22b43e409a2223cca125f890b9ee7f8f9c492dc0a70d7571cb7d34fbcd55"
     },
     {
       "name": "sync-controller.mjs",

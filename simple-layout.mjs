@@ -67,7 +67,8 @@ export function simplifyLayout(doc) {
   // Keep the live count visible while closed; no second ID or copied state.
   pendingBox.querySelector('summary').append(byId('pendingCount'));
   pending.querySelector('h2')?.classList.add('visually-hidden');
-  explanation.before(pendingBox);
+  (byId('homeTimelineGuide') || explanation).after(pendingBox);
+  // Keep warnings and data-integrity checks visible even when other details are collapsed.
   // Preserve individual warning categories and all existing updates.
   for (const grid of home.querySelectorAll('.two-col')) if (!grid.children.length) grid.remove();
   wrap(byId('exportBtn'), '補助：現在の設定だけを保存');
