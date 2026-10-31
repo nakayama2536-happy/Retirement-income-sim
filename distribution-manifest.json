@@ -1,6 +1,6 @@
 {
   "kind": "public-release",
-  "runtime": "v0.9.18-stale-budget-guard-20261031",
+  "runtime": "v0.9.19-family-results-20261031",
   "files": [
     {
       "name": "annual-cashflow.mjs",
@@ -14,13 +14,13 @@
     },
     {
       "name": "app.mjs",
-      "size": 71803,
-      "sha256": "3642dcb17949a4189f9c93853f8214b6e61200ea88356f0b8436787e1d622574"
+      "size": 71799,
+      "sha256": "d680f9135514fb904540cfe2cb97aa0d68290ac37281b591b69a5d31f42154c5"
     },
     {
       "name": "backup-compatibility.mjs",
-      "size": 7832,
-      "sha256": "4ff90ceaa22cfb69f7ebd4c80b5e2dcd791dd712618c32bd2302b43bfc34522f"
+      "size": 7828,
+      "sha256": "84372cef10fd17a1c82c4572870016923d6f95976a6a552cfc0417da60f2cbf7"
     },
     {
       "name": "calc.mjs",
@@ -149,8 +149,8 @@
     },
     {
       "name": "index.html",
-      "size": 62628,
-      "sha256": "49ad7dfd6f6f4252e9401c295988619bdb75d4964c1934d5a209e6015bc611a6"
+      "size": 62799,
+      "sha256": "cdbea7d9876d257479bc9c697ab89bf8f3edda3748dc5a48a2e1c1fffcda55f2"
     },
     {
       "name": "manifest.webmanifest",
@@ -224,8 +224,8 @@
     },
     {
       "name": "release-info.json",
-      "size": 124,
-      "sha256": "17c5aaaa9632ed0e531a98baffe57358d45ba48b6e0a8fc22e1b524dfb169254"
+      "size": 120,
+      "sha256": "a0295a6df6793a52c855eb5262bc71cd224893f9911cccd420448ad95e2ab600"
     },
     {
       "name": "retirement-comment.mjs",
@@ -289,8 +289,8 @@
     },
     {
       "name": "sw.js",
-      "size": 4076,
-      "sha256": "391dc5e396d07489323016865521b1ad750f6ebcc8b44e94dec55b9f3ba4f36a"
+      "size": 4072,
+      "sha256": "65d2702adccf12d79b672082b733dd3a70f6971c5056747ed68cb04d6bb28486"
     },
     {
       "name": "sync-controller.mjs",
