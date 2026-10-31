@@ -1,6 +1,6 @@
 {
   "kind": "public-release",
-  "runtime": "v0.9.17-unidentified-expense-20261031",
+  "runtime": "v0.9.18-stale-budget-guard-20261031",
   "files": [
     {
       "name": "annual-cashflow.mjs",
@@ -14,13 +14,13 @@
     },
     {
       "name": "app.mjs",
-      "size": 71805,
-      "sha256": "34dabd52be989b4d64eb51866d8f3e3b59b2b619033ff3e9dfbce81b12aeb4fc"
+      "size": 71803,
+      "sha256": "3642dcb17949a4189f9c93853f8214b6e61200ea88356f0b8436787e1d622574"
     },
     {
       "name": "backup-compatibility.mjs",
-      "size": 7834,
-      "sha256": "75db0999554fd0347e406d0011a624b41acdaba0c28b638bf29910072d1d9cb8"
+      "size": 7832,
+      "sha256": "4ff90ceaa22cfb69f7ebd4c80b5e2dcd791dd712618c32bd2302b43bfc34522f"
     },
     {
       "name": "calc.mjs",
@@ -179,8 +179,8 @@
     },
     {
       "name": "mortality-itemized-ui.mjs",
-      "size": 5699,
-      "sha256": "1fa8e7c72816d5c341f4d7ba40a2ffaf2d212dbf5fc5b9efeab963e247b54c99"
+      "size": 5827,
+      "sha256": "2e93bb73f8683d804c4f31da97c0c8763b6b605fdabe7b0afbda551be0ff70cf"
     },
     {
       "name": "mortality-itemized.mjs",
@@ -224,8 +224,8 @@
     },
     {
       "name": "release-info.json",
-      "size": 126,
-      "sha256": "7b27aa70b834924a55cedd62860414e0521da7237aabd85e5aae09fd1418673d"
+      "size": 124,
+      "sha256": "17c5aaaa9632ed0e531a98baffe57358d45ba48b6e0a8fc22e1b524dfb169254"
     },
     {
       "name": "retirement-comment.mjs",
@@ -289,8 +289,8 @@
     },
     {
       "name": "sw.js",
-      "size": 4078,
-      "sha256": "11bd5d052bc05b244b11b903c4bd811b3810edb3717c627acdb2040b1efd2b0c"
+      "size": 4076,
+      "sha256": "391dc5e396d07489323016865521b1ad750f6ebcc8b44e94dec55b9f3ba4f36a"
     },
     {
       "name": "sync-controller.mjs",
