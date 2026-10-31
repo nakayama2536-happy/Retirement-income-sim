@@ -247,7 +247,7 @@ function renderHome() {
   const ideco=projectIdeco(config);
   if (ideco) check.push(`65歳iDeCo/DC見込は運用前提による試算です（約${formatMan(ideco.balance)}万円）`);
   if (!config.income?.pensions?.spouse?.annualAtStart || ['unknown','assumption'].includes(config.income?.pensions?.spouse?.certainty)) check.push('配偶者の公的年金額は未確認または仮定です');
-  if (config.reserve.total > 0 && result.finalAfterReserveUse < result.reserveUsedThreshold) check.push(`予備枠全使用時は${end}歳末の最低目安を下回ります`);
+  if (config.reserve.total > 0 && result.finalAfterReserveUse < result.reserveUsedThreshold) check.push(`急な出費に備えた予備枠をすべて使うと、${end}歳末の資産が設定した目安を下回る想定です`);
   if (showActuals && forecast && target && forecast.projection.finalAsset < result.finalThreshold) check.push(`最新実績からの再予測が${end}歳末管理基準を下回っています`);
   el('checks').innerHTML = check.length ? check.map(x=>`<li>${x}</li>`).join('') : '<li>主要な未確認事項はありません。</li>';
 
