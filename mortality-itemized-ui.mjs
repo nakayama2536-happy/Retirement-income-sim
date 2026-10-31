@@ -38,27 +38,8 @@ export function mountMortalityItemizedControls(root,{getConfig,runPlan,onChange}
     if(!cfg){status.textContent='現在の設定を読み込んでください。';return;}
     try{
       const plan=runPlan(cfg,{includeMonthlyDetails:true});
-      if(!select.value){
-        // Read-only eligibility check: resolve an ambiguous profile only when
-        // exactly one of the registered formats passes every budget check.
-        const candidates=['public-v0.9','work-v0.9.7'];
-        const valid=[],problems=[];
-        for(const candidate of candidates){
-          try{
-            const tested=inspectMortalityExpenseBudget(cfg,plan.monthlyDetails,{sourceProfile:candidate});
-            if(tested.items.length)valid.push(tested);
-          }catch(error){problems.push(candidate+': '+error.message);}
-        }
-        if(valid.length===1){
-          model=valid[0];
-          select.value=model.sourceProfile; // comparison draft only; never adopted
-          root.querySelector('#mortalityItemSourceNote').textContent='比較用の参照先を自動選択：'+(model.sourceProfile==='public-v0.9'?'旧形式':'標準形式')+'（もう一方は照合不成立）。採用済みデータは変更しません。';
-        }else if(valid.length>1){
-          throw Error('複数の費目内訳が検証に通りました。どちらが採用済みの管理予算に対応するか確認して選択してください。');
-        }else{
-          throw Error('どの費目内訳も検証に通りません。'+problems.join(' ／ '));
-        }
-      }else model=inspectMortalityExpenseBudget(cfg,plan.monthlyDetails,{sourceProfile:select.value});
+      select.value='work-v0.9.7';
+      model=inspectMortalityExpenseBudget(cfg,plan.monthlyDetails,{sourceProfile:'work-v0.9.7'});
       const month=model.months.find(m=>dateInput.value&&m.month>dateInput.value)||
         model.months.find(m=>m.expense>0)||model.months[0];
       const header=el('div','mortality-item-row mortality-item-head');
@@ -79,21 +60,22 @@ export function mountMortalityItemizedControls(root,{getConfig,runPlan,onChange}
         host.append(row);
       }
       root.querySelector('#mortalityRemainderAmount').textContent=format(month.unallocated)+'万円／月';
-      root.querySelector('#mortalityItemSourceNote').textContent='比較に使う参照先：'+(model.sourceProfile==='public-v0.9'?'旧形式の登録内訳':model.sourceProfile==='work-v0.9.7'?'標準形式の登録内訳':'登録済みの費目なし')+'。出典の選択は比較用のみで、保存済みの採用条件には反映しません。未確認費用は予算残額に含みます。';
+      root.querySelector('#mortalityItemSourceNote').textContent='現行形式の登録内訳を使用。未確認費用は予算残額に含みます。';
       factorText();
     }catch(e){status.textContent='費目の取込みを確認してください：'+e.message;root.querySelector('#mortalityItemSourceNote').textContent='内訳の出典・管理予算との整合を確認するまで比較を停止します。';}
   }
   function restore(draft){
     if(!draft)return;
     const v=draft.values||{};
-    if(typeof v.sourceProfile==='string'&&['','public-v0.9','work-v0.9.7'].includes(v.sourceProfile))select.value=v.sourceProfile;
+    // Historical draft profile is ignored: only the current format is used.
+    select.value='work-v0.9.7';
     if(typeof v.residualFactor==='string')remain.value=v.residualFactor;
     savedFactors={...(draft.factors||{})};
     refresh({takeCurrent:false});
   }
   select.addEventListener('change',()=>{refresh();onChange();});
   remain.addEventListener('input',()=>{factorText();onChange();});
-  function clear(){savedFactors={};select.value='';remain.value='1.0';refresh({takeCurrent:false});}
+  function clear(){savedFactors={};select.value='work-v0.9.7';remain.value='1.0';refresh({takeCurrent:false});}
   refresh();
   return {read,refresh,restore,clear, factorDraft:()=>{for(const input of host.querySelectorAll('[data-mortality-itemfactor]'))savedFactors[input.dataset.mortalityItemfactor]=input.value;return {...savedFactors};}};
 }
