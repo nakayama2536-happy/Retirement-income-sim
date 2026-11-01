@@ -154,8 +154,8 @@
     },
     {
       "name": "index.html",
-      "size": 68620,
-      "sha256": "f7575aa93b9da7b5cf75ef1d906d0219ab0649765d962c20f35f96908757ed18"
+      "size": 68643,
+      "sha256": "8bda49845bf3fd3d4c97eb17d9e05197e1cdd886695c999999b81861819ed785"
     },
     {
       "name": "manifest.webmanifest",
@@ -289,8 +289,8 @@
     },
     {
       "name": "styles.css",
-      "size": 30262,
-      "sha256": "547db6ef1137c471e3a4c0309d4fdc006b28344d09f168a7d135324918041ec1"
+      "size": 30664,
+      "sha256": "f4a11e9128c5d1874692777ecebcb5f6b6b17dfd55349c9094ef39708f401476"
     },
     {
       "name": "sw.js",
