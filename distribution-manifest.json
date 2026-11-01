@@ -54,8 +54,8 @@
     },
     {
       "name": "current-summary.mjs",
-      "size": 9240,
-      "sha256": "dfc3be5b8d348cec4b9d935f6d0d46a644b6632f5e358ec453c2c2f6e79ea46f"
+      "size": 9494,
+      "sha256": "d6e5b753f3e6d008f5d7db2082ebc5a1204188a1660a656ed058f2febaad6141"
     },
     {
       "name": "date-display.mjs",
@@ -69,8 +69,8 @@
     },
     {
       "name": "detail-ui.mjs",
-      "size": 37417,
-      "sha256": "8ec24e54d9615ce65c2ac802b4c191102fdc5df96ce3f895c06486a34349a8fb"
+      "size": 37460,
+      "sha256": "1eb1956fdbfcf25547f9aa8c5033b68575a1be5a6de6cf206a8ae22c711a1138"
     },
     {
       "name": "detailed-report.mjs",
