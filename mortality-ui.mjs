@@ -366,6 +366,13 @@ export function mountMortalityComparison(root,{getConfig,getBaseline,runPlan}){
       strip.append(card);
     }
     results.append(strip);
+    // Display-only reconciliation using the same month and immutable preview values.
+    const budgetIdentity=makeEl('p','mortality-budget-identity');
+    budgetIdentity.id='mortalityBudgetIdentity';
+    const op=after.expenseReduction<0?'＋':'−';
+    budgetIdentity.append(makeEl('strong','',`万一の翌月（${after.month}）の生活費：基準 ${formatTotal(before.expense)} ${op} ${formatTotal(Math.abs(after.expenseReduction))} ＝ 比較後 ${formatTotal(after.expense)}（万円／月）`));
+    budgetIdentity.append(makeEl('span','muted','。減額がマイナスの場合は支出増額を意味します。比較用の数値であり、保存済みの管理予算は変更しません。'));
+    results.append(budgetIdentity);
   }
   const diff=makeEl('p','muted',`${parameters.deceased==='primary'?'本人':'配偶者'}の万一の想定：${dateWithAge(parameters.deathMonth,getConfig(),parameters.deceased)}／年金合計の仮置き：${escMoney(parameters.survivorPension)}万円／年／一時費用の仮置き：${escMoney(parameters.funeral)}万円。年金・通常費は翌月から変更。一時費用だけ万一の月に計上。`);results.append(diff);
   const reference=validPensionReference();
