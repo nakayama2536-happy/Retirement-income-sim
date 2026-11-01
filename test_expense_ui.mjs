@@ -55,3 +55,10 @@ test('UI is wired into refresh/import/storage events and cache includes dependen
  for(const s of ['expense-ui','expense-workflow','expense-preview','cashflow-sources','cashflow-reconciliation'])assert.ok(sw.includes(s+'.mjs'));
  assert.ok(html.includes('inputmode="decimal"'));assert.ok(html.includes('未反映の入力はこの画面内だけ'));
 });
+
+test('生活費内訳と予算整合の2枚は均等幅、狭幅では縦配置',()=>{
+ const css=fs.readFileSync(new URL('./styles.css',import.meta.url),'utf8');
+ assert.match(html,/class="two-col expense-reconcile-grid"/);
+ assert.match(css,/\.expense-reconcile-grid\{grid-template-columns:repeat\(2,minmax\(0,1fr\)\)/);
+ assert.match(css,/@media\(max-width:900px\)\{\.expense-reconcile-grid\{grid-template-columns:minmax\(0,1fr\)\}\}/);
+});
