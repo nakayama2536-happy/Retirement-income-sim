@@ -1,12 +1,12 @@
 import {dateWithAge,dateAgeHint,previousMonth} from './date-display.mjs';
-import {formatMan} from './calc.mjs';
+import {formatMan,defaultPrimarySideWorkStart} from './calc.mjs';
 import {configSignature,downloadJson} from './storage.mjs';
 import {salaryDraftFromConfig,previewSalary,applySalaryPreview,undoSalaryApply,salaryUndoAvailable,salaryDraftMatches,saveSalaryScenario,saveSalaryDraft,loadSalaryDraft,clearSalaryDraft} from './salary-workflow.mjs';
 import {parseMonth} from './salary-life.mjs';
 const el=id=>document.getElementById(id);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const money=n=>`${formatMan(n,2)}万円`;
-const nextMonth=value=>{const n=parseMonth(value);return n===null?'未設定':`${Math.floor((n+1)/12)}-${String((n+1)%12+1).padStart(2,'0')}`;};
+const fallbackStartLabel=config=>{\n  const start=defaultPrimarySideWorkStart(config);\n  if(!(start instanceof Date)||!Number.isFinite(+start))return '計算時の開始月：確認不能';\n  const day=[start.getFullYear(),String(start.getMonth()+1).padStart(2,'0'),String(start.getDate()).padStart(2,'0')].join('-');\n  const mode=config?.employment?.primary?.sideWork?.startMode || 'after_high_age_benefit';\n  const delay=config?.unemployment?.baselineSideWorkDelayMonths??2;\n  return '開始日未入力（計算上の既定開始：'+dateWithAge(day,config)+'／'+(mode==='at_retirement'?'退職月から':'退職日から設定月数 '+String(delay)+'か月後')+'。採用済み開始日ではありません）';\n};\nconst nextMonth=value=>{const n=parseMonth(value);return n===null?'未設定':`${Math.floor((n+1)/12)}-${String((n+1)%12+1).padStart(2,'0')}`;};
 const option=(value,label)=>`<option value="${esc(value)}">${esc(label)}</option>`;
 const receiptOptions=()=>option('','未確認')+option('separate','別枠で資産に計上')+option('net_transfer','追加・取崩しに含む');
 const fundingValue=v=>v?.source?`${v.source}${v.accounting?':'+v.accounting:''}`:'';
@@ -123,7 +123,7 @@ export function mountSalarySheet({getState,onCommit,showNotice}){
     const adopted=c.cashflow?.salaryLife;
     el('salaryAdopted').textContent=adopted?`資産への追加 ${money(adopted.monthlyAddition)}/月・家計への引出し ${money(adopted.monthlyWithdrawal)}/月（給与総額とは別です）。`:'従来方式で計算中。新方式はまだ採用していません。';
     renderAdoptedOverview(c);
-    el('salaryExistingLabor').innerHTML='<strong>登録済みの個別条件（採用中）</strong><ul>'+[['primary','本人'],['spouse','配偶者']].flatMap(([person,label])=>[['regularWork','正社員'],['sideWork','アルバイト']].map(([job,title])=>{const v=c.employment?.[person]?.[job];return `<li>${label}${title}：${v?esc(money(v.monthlyGross))+'/月 ／ 開始 '+esc(dateWithAge(v.startDate,c,person))+' ／ 終了日 '+esc(dateWithAge(v.endDate,c,person))+' ／ 最終計上月 '+esc(dateWithAge(previousMonth(v.endDate),c,person)):'未設定'}</li>`;})).join('')+'</ul><p class="muted">開始月を含み、終了月を含みません。給与生活中は上の家計と資産の入出金で扱います。</p>';
+    el('salaryExistingLabor').innerHTML='<strong>登録済みの個別条件（採用中）</strong><ul>'+[['primary','本人'],['spouse','配偶者']].flatMap(([person,label])=>[['regularWork','正社員'],['sideWork','アルバイト']].map(([job,title])=>{const v=c.employment?.[person]?.[job];return `<li>${label}${title}：${v?esc(money(v.monthlyGross))+'/月 ／ 開始 '+esc(person==='primary'&&job==='sideWork'&&!v.startDate?fallbackStartLabel(c):dateWithAge(v.startDate,c,person))+' ／ 終了日 '+esc(dateWithAge(v.endDate,c,person))+' ／ 最終計上月 '+esc(dateWithAge(previousMonth(v.endDate),c,person)):'未設定'}</li>`;})).join('')+'</ul><p class="muted">開始月を含み、終了月を含みません。給与生活中は上の家計と資産の入出金で扱います。</p>';
     el('salaryRelated').textContent=`iDeCo掛金 ${money(c.ideco?.monthlyContribution)}/月、拠出終了 ${dateWithAge(c.ideco?.contributionEndDate,c)}。年金開始：本人 ${dateWithAge(c.income?.pensions?.primary?.startDate,c)}、配偶者 ${dateWithAge(c.income?.pensions?.spouse?.startDate,c,'spouse')}。`;
     if(preview&&preview.baseSignature!==configSignature(getState())){invalidate();error('前提または比較案が変わりました。もう一度試算してください。');}
     const last=c.salaryWorkflow?.history?.at(-1);
