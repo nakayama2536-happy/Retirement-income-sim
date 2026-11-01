@@ -956,22 +956,46 @@ el('appVersion').textContent=CURRENT_RUNTIME_BUILD+'（端末で実行中）';
 const freshness=el('runtimeFreshness');
 (async()=>{
  try{
-  // Query parameter bypasses the exact-URL offline cache and no-store asks
-  // the public server for its current marker, not the installed bundle.
-  const url=new URL('./release-info.json',import.meta.url);
-  url.searchParams.set('verify',String(Date.now()));
-  const response=await fetch(url,{cache:'no-store',credentials:'omit'});
-  if(!response.ok)throw Error('public-release-unavailable');
-  const release=await response.json();
-  if(typeof release.appBuild!=='string'||!/^v[0-9]+[.][0-9]+[.][0-9]+-/.test(release.appBuild))
-   throw Error('release-format-invalid');
-  freshness.textContent=release.appBuild===CURRENT_RUNTIME_BUILD?'最新公開版と一致': '更新あり（公開：'+release.appBuild+'）';
-  freshness.dataset.status=release.appBuild===CURRENT_RUNTIME_BUILD?'current':'outdated';
+  // The release marker alone does not prove the running bundle is current.
+  // Load the public manifest outside the offline cache, then compare actual
+  // bytes served to this page (which may come from its active service worker).
+  const markerUrl=new URL('./release-info.json',import.meta.url);
+  markerUrl.searchParams.set('verify',String(Date.now()));
+  const markerResponse=await fetch(markerUrl,{cache:'no-store',credentials:'omit'});
+  if(!markerResponse.ok)throw Error('release-marker-unavailable');
+  const marker=await markerResponse.json();
+  if(typeof marker.appBuild!=='string'||!/^v[0-9]+[.][0-9]+[.][0-9]+-/.test(marker.appBuild))throw Error('release-format-invalid');
+  if(marker.appBuild!==CURRENT_RUNTIME_BUILD){
+   freshness.textContent='更新あり（公開：'+marker.appBuild+'）';freshness.dataset.status='outdated';return;
+  }
+  if(!globalThis.crypto?.subtle)throw Error('digest-unavailable');
+  const manifestUrl=new URL('./distribution-manifest.json',import.meta.url);
+  manifestUrl.searchParams.set('verify',String(Date.now()));
+  const manifestResponse=await fetch(manifestUrl,{cache:'no-store',credentials:'omit'});
+  if(!manifestResponse.ok)throw Error('release-manifest-unavailable');
+  const manifest=await manifestResponse.json();
+  if(manifest.runtime!==CURRENT_RUNTIME_BUILD||!Array.isArray(manifest.files))throw Error('manifest-version-mismatch');
+  const targets=['index.html','app.mjs','current-summary.mjs','detail-ui.mjs','styles.css'];
+  const expected=new Map(manifest.files.map(file=>[file.name,file]));
+  let mismatched=false;
+  for(const name of targets){
+   const entry=expected.get(name);
+   if(!entry||!Number.isInteger(entry.size)||!/^([a-f0-9]{64})$/.test(entry.sha256))throw Error('manifest-file-missing');
+   // Exact URLs are intentionally intercepted by the page's active SW.
+   const response=await fetch(new URL('./'+name,import.meta.url),{cache:'no-store',credentials:'same-origin'});
+   if(!response.ok)throw Error('bundle-file-unavailable');
+   const buffer=await response.arrayBuffer();
+   const digest=await crypto.subtle.digest('SHA-256',buffer);
+   const actual=[...new Uint8Array(digest)].map(byte=>byte.toString(16).padStart(2,'0')).join('');
+   if(buffer.byteLength!==entry.size||actual!==entry.sha256)mismatched=true;
+  }
+  freshness.textContent=mismatched?'更新あり（画面の実行ファイルが公開版と不一致）':'主要実行ファイル照合済み（公開版と一致）';
+  freshness.dataset.status=mismatched?'outdated':'current';
  }catch{
-  freshness.textContent='照合不可（通信・キャッシュを確認）';
+  freshness.textContent='照合不可（更新状態は未確認）';
   freshness.dataset.status='unknown';
  }
-})(); el('rulesVersion').textContent=RULES.asOf;
+})(); ; el('rulesVersion').textContent=RULES.asOf;
 if(startupError){setEmptyState();showNotice(`保存データを読み込めません。復元用バックアップを確認してください。${startupError}`,'error');}
 else refresh();
 if(!writeAccess.writable)showNotice('この画面は読み取り専用です。別の編集画面を閉じて再読み込みしてください。同時更新制御が利用できない場合も保存を停止します。','error');
