@@ -46,3 +46,9 @@ test('candidate service worker is versioned separately without cache deletion or
   assert.doesNotMatch(sw,/caches\.delete\(/);
   assert.doesNotMatch(sw,/skipWaiting\s*\(/);
 });
+
+test('annual budget editor instructions span both grid columns instead of wrapping at half width',()=>{
+ const detail=read('./detail-ui.mjs');
+ assert.match(detail,/if\(kind==='budgetTable'\)return '<p style="grid-column:1\/-1">開始年齢/);
+ assert.match(detail,/data-budget-rows/);
+});
