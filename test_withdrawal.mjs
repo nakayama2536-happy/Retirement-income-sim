@@ -135,3 +135,11 @@ test('NISAの不足が正のときだけ概要を赤字強調し、ゼロは赤�
  s.config.nisa.withdrawal={version:1,...plan({monthlyAmount:0})};
  html=currentSummaryHtml(s.config,'nisa');assert.doesNotMatch(html,/class="neg" aria-label="NISA取崩し不足額"/);
 });
+
+test('退職金の未連動は資産へ自動加算しないと表示し、既存の受取行照合を促す',()=>{
+ const s=fixture();s.config.retirement={amount:1400,receiveDate:'2045-01-01',serviceYears:30,companyStartDate:'2015-01-01',receiptEventId:null};
+ const rows=currentSummaryRows(s.config,'retirement');
+ const r=rows.find(([k])=>k==='連動した資産計上額');
+ assert.ok(r);assert.match(r[1],/資産予測へ追加計上されません/);
+ assert.match(r[1],/二重計上を防ぐため/);
+});

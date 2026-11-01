@@ -46,3 +46,26 @@ test('candidate service worker is versioned separately without cache deletion or
   assert.doesNotMatch(sw,/caches\.delete\(/);
   assert.doesNotMatch(sw,/skipWaiting\s*\(/);
 });
+
+test('unemployment eligibility checkboxes stay horizontal and full-width at desktop and mobile sizes',()=>{
+  const css=read('./styles.css');
+  const detail=read('./detail-ui.mjs');
+  assert.match(detail,/if\(kind==='unemployment'\)/);
+  assert.match(detail,/name="seekingWork"/);
+  assert.match(detail,/name="eligibilityChecked"/);
+  assert.match(css,/\.detail-form\[data-detail-kind='unemployment'\] \.form-grid>\.check-label\{grid-column:1\/-1;display:flex;flex-direction:row;/);
+  assert.match(css,/\.detail-form\[data-detail-kind='unemployment'\] \.form-grid>\.check-label>input\[type='checkbox'\]/);
+  assert.match(css,/@media\(max-width:650px\)\{\.detail-form\[data-detail-kind='unemployment'\]>.form-grid\{grid-template-columns:minmax\(0,1fr\)\}/);
+});
+
+test('annual budget editor instructions span both grid columns instead of wrapping at half width',()=>{
+ const detail=read('./detail-ui.mjs');
+ assert.match(detail,/if\(kind==='budgetTable'\)return '<p style="grid-column:1\/-1">開始年齢/);
+ assert.match(detail,/data-budget-rows/);
+});
+
+test('臨時支出の物価上昇チェックはラベル横並び・全幅表示',()=>{
+ const detail=read('./detail-ui.mjs');const css=read('./styles.css');
+ assert.match(detail,/class="detail-checkbox-row"><input type="checkbox" name="inflationAdjusted"/);
+ assert.match(css,/\.detail-form\[data-detail-kind='event'\] \.form-grid>\.detail-checkbox-row\{grid-column:1\/-1;display:flex;flex-direction:row/);
+});
