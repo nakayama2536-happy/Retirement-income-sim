@@ -120,3 +120,11 @@ test('予算不足方式は給与生活の純入出金を使用して予算を�
  const p=proposal(s,{mode:'budget'}),r=projectNisaWithdrawal(p.candidate);
  assert.equal(r.rows[0].requested,5);assert.equal(r.rows[1].requested,5);assert.equal(r.rows[2].requested,20);
 });
+
+test('NISA不足は取崩し指定額の未充足であり家計全体の不足ではないと明示',()=>{
+ const s=fixture();s.config.nisa.withdrawal={version:1,...plan()};
+ const rows=currentSummaryRows(s.config,'nisa');
+ const ref=rows.find(([label])=>label==='参考試算');
+ assert.ok(ref);assert.match(ref[1],/NISAで賄えなかった取崩し指定額の累計/);
+ assert.match(ref[1],/家計全体の資金不足ではありません/);
+});
