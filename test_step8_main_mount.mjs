@@ -42,7 +42,7 @@ test('offline candidate assets and module dependency closure are included',()=>{
 });
 
 test('candidate service worker is versioned separately without cache deletion or forced update',()=>{
-  assert.match(sw,/const CACHE=`\$\{CACHE_PREFIX\}v0\.9\.31-family-salary-guide-20261031`/);
+  assert.match(sw,/const CACHE=`\$\{CACHE_PREFIX\}v0\.9\.32-runtime-content-check-20261101`/);
   assert.doesNotMatch(sw,/caches\.delete\(/);
   assert.doesNotMatch(sw,/skipWaiting\s*\(/);
 });

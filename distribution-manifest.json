@@ -1,6 +1,6 @@
 {
   "kind": "public-release",
-  "runtime": "v0.9.31-family-salary-guide-20261031",
+  "runtime": "v0.9.32-runtime-content-check-20261101",
   "files": [
     {
       "name": "annual-cashflow.mjs",
@@ -14,13 +14,13 @@
     },
     {
       "name": "app.mjs",
-      "size": 72266,
-      "sha256": "18197730793f00bd81780dd11f2b79e3edd7e30f1fc023f48578fc28d66fe2c8"
+      "size": 73978,
+      "sha256": "676a3bdfc2d3aa621cb00452f5e55c07c251751659a3703231446bbff22d1d89"
     },
     {
       "name": "backup-compatibility.mjs",
-      "size": 7833,
-      "sha256": "b5b4daa5a693dd1550eafaafe321204084d3a77d8135fc1fc491431c798f7849"
+      "size": 7835,
+      "sha256": "ae86b8522dc4dcb8b1a3ced4f4d99287d52991282c598b8dba1a2e90bbcab17b"
     },
     {
       "name": "calc.mjs",
@@ -229,8 +229,8 @@
     },
     {
       "name": "release-info.json",
-      "size": 125,
-      "sha256": "42a62f138b36a8bd880a7021d949add5d1f259c52a704ea11455cf35af85da8c"
+      "size": 127,
+      "sha256": "362e3ca8541ab81a8d735cdb017e74dc6e9200787361c0a10c4be49f8d3b279d"
     },
     {
       "name": "retirement-comment.mjs",
@@ -294,8 +294,8 @@
     },
     {
       "name": "sw.js",
-      "size": 4103,
-      "sha256": "6f0fdb4ab2b082078ae403e5216ec2c628227f0c8768ac968f22c7fbf49fa69a"
+      "size": 4105,
+      "sha256": "e0dc29483d631da9326dbf05824cd500d5fe0081db69b6b9267074d3c92d7e96"
     },
     {
       "name": "sync-controller.mjs",

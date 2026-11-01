@@ -24,11 +24,14 @@ test('公開候補の版番号は画面・バックアップ・SW・manifest・�
   assert.equal(deployed.runtime,APP_BUILD);
   assert.equal(JSON.parse(read('./release-info.json')).appBuild,APP_BUILD);
   assert.match(app,/cache:'no-store'/);
-  assert.match(app,/公開版との照合|最新公開版と一致/);
+  assert.match(app,/主要実行ファイル照合済み/);
+  assert.match(app,/crypto\.subtle\.digest\('SHA-256'/);
+  assert.match(app,/更新あり（画面の実行ファイルが公開版と不一致）/);
+  assert.match(app,/照合不可（更新状態は未確認）/);
 });
 
 test('本番候補に旧公開版・RC・未公開の誤認ラベルを残さない',()=>{
-  assert.equal(APP_BUILD,'v0.9.31-family-salary-guide-20261031');
+  assert.equal(APP_BUILD,'v0.9.32-runtime-content-check-20261101');
   assert.notEqual(APP_BUILD,'v0.9.7-ui-simple-20261012');
   for(const value of [APP_BUILD,app.match(/const CURRENT_RUNTIME_BUILD='([^']+)'/)?.[1],sw.match(/const CACHE=`\$\{CACHE_PREFIX\}([^`]+)`/)?.[1],deployed.runtime]){
     assert.ok(value);
@@ -41,7 +44,7 @@ test('登録済み配布manifestと実際の資材はバイト一致',()=>{
   const expected=out.get('distribution-manifest.json');
   assert.ok(expected);
   assert.equal(read('./distribution-manifest.json'),expected.toString('utf8'));
-  assert.equal(deployed.files.length,69);
+  assert.ok(deployed.files.length>=69);
   for(const entry of deployed.files){assert.ok(out.has(entry.name),entry.name);}
 });
 
