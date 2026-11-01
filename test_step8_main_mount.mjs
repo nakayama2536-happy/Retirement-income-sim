@@ -46,3 +46,9 @@ test('candidate service worker is versioned separately without cache deletion or
   assert.doesNotMatch(sw,/caches\.delete\(/);
   assert.doesNotMatch(sw,/skipWaiting\s*\(/);
 });
+
+test('臨時支出の物価上昇チェックはラベル横並び・全幅表示',()=>{
+ const detail=read('./detail-ui.mjs');const css=read('./styles.css');
+ assert.match(detail,/class="detail-checkbox-row"><input type="checkbox" name="inflationAdjusted"/);
+ assert.match(css,/\.detail-form\[data-detail-kind='event'\] \.form-grid>\.detail-checkbox-row\{grid-column:1\/-1;display:flex;flex-direction:row/);
+});

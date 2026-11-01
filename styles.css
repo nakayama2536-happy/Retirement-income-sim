@@ -240,3 +240,7 @@
 @media(prefers-reduced-motion:reduce){
  .panel button.primary,.panel button.secondary,.panel .file-btn{transition:none}
 }
+
+/* One-off expense checkbox stays beside its text and spans the complete form width. */
+.detail-form[data-detail-kind='event'] .form-grid>.detail-checkbox-row{grid-column:1/-1;display:flex;flex-direction:row;align-items:center;justify-content:flex-start;gap:10px;min-width:0;line-height:1.5;overflow-wrap:anywhere}
+.detail-form[data-detail-kind='event'] .form-grid>.detail-checkbox-row>input[type='checkbox']{flex:0 0 18px;width:18px;height:18px;min-width:18px;margin:0;padding:0}
