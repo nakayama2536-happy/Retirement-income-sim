@@ -37,7 +37,7 @@ try{
  assert.equal(beforeEnd,95);
  assert.equal(await page.locator('.topbar h1').innerText(),'ライフプランシミュレーター');
  assert.equal(await page.locator('.topbar p').count(),0);
- assert.match(await page.locator('#appVersion').innerText(),/^v0\.9\.31-family-salary-guide-20261031（端末で実行中）$/);
+ assert.match(await page.locator('#appVersion').innerText(),/^v0\.9\.32-runtime-content-check-20261101（端末で実行中）$/);
  assert.match(await page.locator('#rulesVersion').innerText(),/2026-09-24/);
  assert.match(await page.locator('#cloudDataSavedAt').innerText(),/未確認/);
  mark('concise-header-build-rule-date-and-unverified-cloud-time');
