@@ -477,7 +477,7 @@ function spouseBirth(config){ return parseDate(config?.people?.spouse?.birthDate
 function startDateFor(config){ return parseDate(config?.plan?.startDate) || addYears(primaryBirth(config),Number(config?.plan?.startAge||64)); }
 function endDateFor(config){ return addYears(primaryBirth(config),Number(config?.plan?.endAge||95)+1); } // endAge=95 は95歳の1年間終了時（96歳誕生日）
 function retirementDateFor(config){ return parseDate(config?.employment?.primary?.mainRetirement?.baseDate) || addYears(primaryBirth(config),65); }
-function defaultPrimarySideWorkStart(config){
+export function defaultPrimarySideWorkStart(config){
   const explicit=parseDate(config?.employment?.primary?.sideWork?.startDate);
   if(explicit) return explicit;
   const ret=retirementDateFor(config);
