@@ -24,7 +24,10 @@ test('公開候補の版番号は画面・バックアップ・SW・manifest・�
   assert.equal(deployed.runtime,APP_BUILD);
   assert.equal(JSON.parse(read('./release-info.json')).appBuild,APP_BUILD);
   assert.match(app,/cache:'no-store'/);
-  assert.match(app,/公開版との照合|最新公開版と一致/);
+  assert.match(app,/主要実行ファイル照合済み/);
+  assert.match(app,/crypto\.subtle\.digest\('SHA-256'/);
+  assert.match(app,/更新あり（画面の実行ファイルが公開版と不一致）/);
+  assert.match(app,/照合不可（更新状態は未確認）/);
 });
 
 test('本番候補に旧公開版・RC・未公開の誤認ラベルを残さない',()=>{
