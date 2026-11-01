@@ -69,8 +69,8 @@
     },
     {
       "name": "detail-ui.mjs",
-      "size": 37460,
-      "sha256": "1eb1956fdbfcf25547f9aa8c5033b68575a1be5a6de6cf206a8ae22c711a1138"
+      "size": 37488,
+      "sha256": "d848329d965918fd5710340b43638170640e49df21abda12df199447eeae14da"
     },
     {
       "name": "detailed-report.mjs",
@@ -289,8 +289,8 @@
     },
     {
       "name": "styles.css",
-      "size": 30262,
-      "sha256": "547db6ef1137c471e3a4c0309d4fdc006b28344d09f168a7d135324918041ec1"
+      "size": 30744,
+      "sha256": "1fc1fdb81c55080a872e9fd03ea1bfa29d2c79140f91353d8f4379813a57e551"
     },
     {
       "name": "sw.js",
