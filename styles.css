@@ -240,3 +240,20 @@
 @media(prefers-reduced-motion:reduce){
  .panel button.primary,.panel button.secondary,.panel .file-btn{transition:none}
 }
+
+/* Unemployment: consent checkboxes and explanatory note occupy full rows, never split checkbox/text. */
+.detail-form[data-detail-kind='unemployment']>.form-grid{grid-template-columns:repeat(2,minmax(0,1fr));align-items:start}
+.detail-form[data-detail-kind='unemployment'] .form-grid>.check-label{grid-column:1/-1;display:flex;flex-direction:row;align-items:flex-start;justify-content:flex-start;gap:10px;min-width:0;margin:4px 0;line-height:1.5}
+.detail-form[data-detail-kind='unemployment'] .form-grid>.check-label>input[type='checkbox']{flex:0 0 18px;width:18px;height:18px;min-width:18px;margin:2px 0 0;padding:0}
+.detail-form[data-detail-kind='unemployment'] .form-grid>p{grid-column:1/-1;margin:8px 0;max-width:100%;overflow-wrap:anywhere}
+@media(max-width:650px){.detail-form[data-detail-kind='unemployment']>.form-grid{grid-template-columns:minmax(0,1fr)}}
+
+/* Expense reference cards: use equal columns, avoid a cramped reconciliation panel. */
+.expense-reconcile-grid{grid-template-columns:repeat(2,minmax(0,1fr));align-items:stretch}
+.expense-reconcile-grid>.card{min-width:0;overflow-wrap:anywhere}
+.expense-reconcile-grid select{max-width:100%;min-width:0;width:100%}
+@media(max-width:900px){.expense-reconcile-grid{grid-template-columns:minmax(0,1fr)}}
+
+/* One-off expense checkbox stays beside its text and spans the complete form width. */
+.detail-form[data-detail-kind='event'] .form-grid>.detail-checkbox-row{grid-column:1/-1;display:flex;flex-direction:row;align-items:center;justify-content:flex-start;gap:10px;min-width:0;line-height:1.5;overflow-wrap:anywhere}
+.detail-form[data-detail-kind='event'] .form-grid>.detail-checkbox-row>input[type='checkbox']{flex:0 0 18px;width:18px;height:18px;min-width:18px;margin:0;padding:0}
