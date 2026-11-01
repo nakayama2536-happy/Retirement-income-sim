@@ -54,8 +54,8 @@
     },
     {
       "name": "current-summary.mjs",
-      "size": 9494,
-      "sha256": "d6e5b753f3e6d008f5d7db2082ebc5a1204188a1660a656ed058f2febaad6141"
+      "size": 9647,
+      "sha256": "62711df522a525465710183df227515671bbfe2c94106954f8f5b759e35ce7b8"
     },
     {
       "name": "date-display.mjs",
@@ -69,8 +69,8 @@
     },
     {
       "name": "detail-ui.mjs",
-      "size": 37460,
-      "sha256": "1eb1956fdbfcf25547f9aa8c5033b68575a1be5a6de6cf206a8ae22c711a1138"
+      "size": 37513,
+      "sha256": "be04f3cb0cd1d0a168dd05c7d2d841212acc34f844642c0c93281533fca71011"
     },
     {
       "name": "detailed-report.mjs",
@@ -154,8 +154,8 @@
     },
     {
       "name": "index.html",
-      "size": 68620,
-      "sha256": "f7575aa93b9da7b5cf75ef1d906d0219ab0649765d962c20f35f96908757ed18"
+      "size": 68643,
+      "sha256": "8bda49845bf3fd3d4c97eb17d9e05197e1cdd886695c999999b81861819ed785"
     },
     {
       "name": "manifest.webmanifest",
@@ -289,8 +289,8 @@
     },
     {
       "name": "styles.css",
-      "size": 30262,
-      "sha256": "547db6ef1137c471e3a4c0309d4fdc006b28344d09f168a7d135324918041ec1"
+      "size": 32012,
+      "sha256": "7608fcd650acbf750dd2ea01ff83a134ffe42f540cf82681a7f9a051f0089798"
     },
     {
       "name": "sw.js",
