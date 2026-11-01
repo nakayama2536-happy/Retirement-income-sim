@@ -139,7 +139,16 @@ test('NISAの不足が正のときだけ概要を赤字強調し、ゼロは赤�
 test('退職金の未連動は資産へ自動加算しないと表示し、既存の受取行照合を促す',()=>{
  const s=fixture();s.config.retirement={amount:1400,receiveDate:'2045-01-01',serviceYears:30,companyStartDate:'2015-01-01',receiptEventId:null};
  const rows=currentSummaryRows(s.config,'retirement');
- const r=rows.find(([k])=>k==='連動した資産計上額');
- assert.ok(r);assert.match(r[1],/資産予測へ追加計上されません/);
- assert.match(r[1],/二重計上を防ぐため/);
+ const posting=rows.find(([k])=>k==='資産予測への反映');
+ assert.ok(posting);assert.match(posting[1],/未計上/);
+ const linked=rows.find(([k])=>k==='連動した資産計上額');assert.equal(linked[1],'なし');
+ assert.match(rows.find(([k])=>k==='二重計上の確認')[1],/既存の臨時収入や開始資産/);
+});
+
+test('退職金の連動受取行がある場合は資産計上済みと表示する',()=>{
+ const s=fixture();s.config.retirement={amount:1400,receiveDate:'2045-01-01',serviceYears:30,companyStartDate:'2015-01-01',receiptEventId:'synthetic-linked'};
+ s.config.events=[{id:'synthetic-linked',type:'income',date:'2045-01-01',amount:1300}];
+ const rows=currentSummaryRows(s.config,'retirement');
+ assert.match(rows.find(([k])=>k==='資産予測への反映')[1],/計上済み/);
+ assert.match(rows.find(([k])=>k==='連動した資産計上額')[1],/1,300万円/);
 });
