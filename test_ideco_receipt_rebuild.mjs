@@ -1,3 +1,4 @@
+import {readFileSync} from 'node:fs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {runRetirementPlan, projectIdeco, runForecastFromLatestActual, integrityChecks} from './calc.mjs';
@@ -81,4 +82,13 @@ test('separate annuity month works with unchanged legacy accounting when salary-
  const m=runRetirementPlan(c,{includeMonthlyDetails:true}).monthlyDetails;
  assert.equal(m.filter(x=>x.idecoAnnuity>0).length,60);
  assert.equal(m.filter(x=>x.month==='2044-09')[0].idecoAnnuity,1);
+});
+
+test('iDeCo参考試算の初期値は採用条件ではなく保存に反映しないと明記する',()=>{
+ const html=readFileSync(new URL('./index.html',import.meta.url),'utf8');
+ assert.match(html,/参考：iDeCoの税額・年金年額（採用条件とは別）/);
+ assert.match(html,/初期表示の残高0万円・年金10年は例示用の入力値/);
+ assert.match(html,/保存済みの計画、資産推移、CSVに反映されません/);
+ assert.match(html,/id="idecoBalance" type="number" value="0"/);
+ assert.match(html,/id="idecoYears" type="number" value="10"/);
 });
