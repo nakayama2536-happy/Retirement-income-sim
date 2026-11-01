@@ -69,8 +69,8 @@
     },
     {
       "name": "detail-ui.mjs",
-      "size": 37460,
-      "sha256": "1eb1956fdbfcf25547f9aa8c5033b68575a1be5a6de6cf206a8ae22c711a1138"
+      "size": 37485,
+      "sha256": "b25b46253827109ed673c86902785a250e1555299514373982026b49d0197229"
     },
     {
       "name": "detailed-report.mjs",
