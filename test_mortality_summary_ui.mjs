@@ -16,3 +16,12 @@ test('支出減額と結果月額は計算済み値を読むだけで保存値�
  assert.match(ui,/after\.expense/);
  assert.match(ui,/after\.publicPension/);
 });
+
+test('死亡翌月の基準・減額・変更後を要約直下に表示し増額にも対応',()=>{
+ assert.match(ui,/id='mortalityBudgetIdentity'/);
+ assert.match(ui,/after\.expenseReduction<0\?'＋':'−'/);
+ assert.match(ui,/Math\.abs\(after\.expenseReduction\)/);
+ assert.match(ui,/formatTotal\(before\.expense\)/);
+ assert.match(ui,/formatTotal\(after\.expense\)/);
+ assert.match(ui,/保存済みの管理予算は変更しません/);
+});
