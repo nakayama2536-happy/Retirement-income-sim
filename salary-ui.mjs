@@ -6,7 +6,15 @@ import {parseMonth} from './salary-life.mjs';
 const el=id=>document.getElementById(id);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const money=n=>`${formatMan(n,2)}万円`;
-const fallbackStartLabel=config=>{\n  const start=defaultPrimarySideWorkStart(config);\n  if(!(start instanceof Date)||!Number.isFinite(+start))return '計算時の開始月：確認不能';\n  const day=[start.getFullYear(),String(start.getMonth()+1).padStart(2,'0'),String(start.getDate()).padStart(2,'0')].join('-');\n  const mode=config?.employment?.primary?.sideWork?.startMode || 'after_high_age_benefit';\n  const delay=config?.unemployment?.baselineSideWorkDelayMonths??2;\n  return '開始日未入力（計算上の既定開始：'+dateWithAge(day,config)+'／'+(mode==='at_retirement'?'退職月から':'退職日から設定月数 '+String(delay)+'か月後')+'。採用済み開始日ではありません）';\n};\nconst nextMonth=value=>{const n=parseMonth(value);return n===null?'未設定':`${Math.floor((n+1)/12)}-${String((n+1)%12+1).padStart(2,'0')}`;};
+const fallbackStartLabel=config=>{
+  const start=defaultPrimarySideWorkStart(config);
+  if(!(start instanceof Date)||!Number.isFinite(+start))return '計算時の開始月：確認不能';
+  const day=[start.getFullYear(),String(start.getMonth()+1).padStart(2,'0'),String(start.getDate()).padStart(2,'0')].join('-');
+  const mode=config?.employment?.primary?.sideWork?.startMode || 'after_high_age_benefit';
+  const delay=config?.unemployment?.baselineSideWorkDelayMonths??2;
+  return '開始日未入力（計算上の既定開始：'+dateWithAge(day,config)+'／'+(mode==='at_retirement'?'退職月から':'退職日から設定月数 '+String(delay)+'か月後')+'。採用済み開始日ではありません）';
+};
+const nextMonth=value=>{const n=parseMonth(value);return n===null?'未設定':`${Math.floor((n+1)/12)}-${String((n+1)%12+1).padStart(2,'0')}`;};
 const option=(value,label)=>`<option value="${esc(value)}">${esc(label)}</option>`;
 const receiptOptions=()=>option('','未確認')+option('separate','別枠で資産に計上')+option('net_transfer','追加・取崩しに含む');
 const fundingValue=v=>v?.source?`${v.source}${v.accounting?':'+v.accounting:''}`:'';
