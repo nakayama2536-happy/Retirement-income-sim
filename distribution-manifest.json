@@ -54,8 +54,8 @@
     },
     {
       "name": "current-summary.mjs",
-      "size": 9161,
-      "sha256": "887b8c233a5cbb7b4d04ab53e8b651af5fa5d306d7ba1083162d953c9c96b4ca"
+      "size": 9240,
+      "sha256": "dfc3be5b8d348cec4b9d935f6d0d46a644b6632f5e358ec453c2c2f6e79ea46f"
     },
     {
       "name": "date-display.mjs",
