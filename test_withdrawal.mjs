@@ -128,3 +128,10 @@ test('NISA不足は取崩し指定額の未充足であり家計全体の不足�
  assert.ok(ref);assert.match(ref[1],/NISAで賄えなかった取崩し指定額の累計/);
  assert.match(ref[1],/家計全体の資金不足ではありません/);
 });
+
+test('NISAの不足が正のときだけ概要を赤字強調し、ゼロは赤くしない',()=>{
+ const s=fixture();s.config.nisa.withdrawal={version:1,...plan()};
+ let html=currentSummaryHtml(s.config,'nisa');assert.match(html,/class="neg" aria-label="NISA取崩し不足額"/);
+ s.config.nisa.withdrawal={version:1,...plan({monthlyAmount:0})};
+ html=currentSummaryHtml(s.config,'nisa');assert.doesNotMatch(html,/class="neg" aria-label="NISA取崩し不足額"/);
+});
