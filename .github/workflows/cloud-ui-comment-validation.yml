@@ -27,7 +27,7 @@ jobs:
           git rev-parse HEAD > stage3-evidence/source-commit.txt
           git rev-parse HEAD^{tree} > stage3-evidence/source-tree.txt
           git archive --format=zip HEAD > stage3-evidence/committed-source-NOT-DEPLOYED.zip
-          echo 'b5ec3161b40cdc31c05e5b47b9f8ca4b2aaca68ae7dcd601c7b137df4d946359  distribution-manifest.json' | sha256sum -c -
+          echo '91c3947b86361385d5cfecff1b0d411a0ec63ad79773a13093754961f751ddda  distribution-manifest.json' | sha256sum -c -
           node --test test_cloud_login_candidate.mjs test_cloud_ui_interactions.mjs test_sync_panel.mjs test_sync_master_override.mjs test_sync_master_panel.mjs test_sync_firebase.mjs tools/retirement-comment/test_integration.mjs test_release_identity.mjs test_distribution_audit.mjs test_service_worker.mjs test_step8_main_mount.mjs | tee stage3-evidence/targeted.tap
           node tools/package-public.mjs . stage3-evidence/public-candidate-NOT-DEPLOYED
           git diff --exit-code
