@@ -41,7 +41,7 @@ export function currentSummaryRows(c,tab){
  if(tab==='pension')return ['primary','spouse'].map((who,k)=>{const p=c.income?.pensions?.[who];return [k?'配偶者':'本人',`開始 ${date(p?.startDate,who)} ／ ${amount(p?.annualAtStart)}／年（税引前）`];});
  if(tab==='retirement'){
   const r=c.retirement||{},e=(c.events||[]).find(x=>x.id&&x.id===r.receiptEventId);
-  return [['退職金（税引前）',amount(r.amount)],['受取日',date(r.receiveDate)],['入社日・勤続年数',`${date(r.companyStartDate)} ／ ${amount(r.serviceYears,'年')}`],['連動した資産計上額',e?`${amount(e.amount)} ／ ${date(e.date)}`:'この退職金は、この設定からは資産予測へ追加計上されません。既存の臨時収入や開始資産に含まれている場合があります。二重計上を防ぐため、既存の受取行を確認してください。']];
+  return [['退職金（税引前）',amount(r.amount)],['受取予定',date(r.receiveDate)],['入社日・勤続年数',`${date(r.companyStartDate)} ／ ${amount(r.serviceYears,'年')}`],['資産予測への反映',e?'この設定から計上済み（連動した受取行あり）':'未計上（この退職金設定からは資産へ追加しません）'],['連動した資産計上額',e?`${amount(e.amount)} ／ ${date(e.date)}`:'なし'],['二重計上の確認','既存の臨時収入や開始資産に退職金が含まれていないか確認してください。']];
  }
  if(tab==='expenses'){
   const source=expenseDisplayProfile(c),groups=source==='public-v0.9'?c.cashflow?.expenseCategories:c.expenseDetail?.monthlyCategories;
