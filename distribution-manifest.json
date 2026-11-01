@@ -24,8 +24,8 @@
     },
     {
       "name": "calc.mjs",
-      "size": 61786,
-      "sha256": "57f48ad214fe6a77b48906348f172a5f198772da28f4843ef90df2225ac928c9"
+      "size": 61793,
+      "sha256": "6836638431335e6e0b9ab09d79134357e4d752c186ce74b783848bc503fcd4e0"
     },
     {
       "name": "calendar-mode.mjs",
@@ -254,8 +254,8 @@
     },
     {
       "name": "salary-ui.mjs",
-      "size": 21571,
-      "sha256": "c2fb5194cc2da7485dd19f952c50b655152365299f23aba3ced659ae222c3019"
+      "size": 22393,
+      "sha256": "fb28d145c75b2369214e80dd1483fb5276d932bb990d10814283235779582c05"
     },
     {
       "name": "salary-workflow.mjs",

@@ -98,3 +98,10 @@ test('家族向け画面：設定の開閉を追加しても既存の必須入�
   assert.match(html,/本人・配偶者の給与・アルバイトを変更する（必要なときだけ）/);
   assert.match(html,/初期値（年齢70歳、給与・年金0万円など）は現在の計画の採用条件ではありません/);
 });
+
+test('本人アルバイト開始日未入力は計算上の既定開始を表示し採用済みと誤認させない',()=>{
+ const t=setup();
+ assert.match(t.node('salaryExistingLabor').innerHTML,/開始日未入力（計算上の既定開始/);
+ assert.match(t.node('salaryExistingLabor').innerHTML,/採用済み開始日ではありません/);
+ assert.equal(t.getState().config.employment.primary.sideWork.startDate,undefined);
+});
