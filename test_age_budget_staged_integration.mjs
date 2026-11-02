@@ -16,7 +16,7 @@ test('隔離公開候補で支出比較・CSV・配布整合・版識別の回�
  const tmp=fs.mkdtempSync(path.join(os.tmpdir(),'lifeplan-age-integration-'));
  try{
   const dest=path.join(tmp,'release');
-  const stage=stageAgeBudgetRelease(source,dest,'v0.9.33-age-budget-preview-20261103');
+  const stage=stageAgeBudgetRelease(source,dest,'v0.9.34-age-budget-preview-validation-20261103');
   assert.equal(stage.published,false);
   const tests=['test_age_budget_candidate.mjs','test_age_budget_preview_export.mjs','test_age_budget_ui.mjs','test_distribution_audit.mjs','test_release_identity.mjs'];
   const result=spawnSync(process.execPath,['--test',...tests],{cwd:dest,encoding:'utf8',timeout:120000,maxBuffer:8*1024*1024});
