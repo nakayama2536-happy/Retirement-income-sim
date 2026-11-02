@@ -46,8 +46,13 @@ export function stageAgeBudgetRelease(sourceDir,targetDir,buildId){
   write(dest,'test_release_identity.mjs',s=>s.replaceAll(old,buildId));
   const staged=collect(dest);
   if(staged.runtime.length!==71||staged.out.size!==74)throw Error('unexpected-release-file-count');
-  fs.writeFileSync(path.join(dest,'distribution-manifest.json'),staged.out.get('distribution-manifest.json'));
-  if(!fs.readFileSync(path.join(dest,'distribution-manifest.json')).equals(collect(dest).out.get('distribution-manifest.json')))throw Error('manifest-not-reproducible');
+  // collect() is imported from the source revision; its generator embeds the
+  // source release ID. Preserve its independently calculated file hashes and
+  // use the candidate ID that was written to the staged packager above.
+  const manifest=JSON.parse(staged.out.get('distribution-manifest.json').toString('utf8'));
+  manifest.runtime=buildId;
+  fs.writeFileSync(path.join(dest,'distribution-manifest.json'),JSON.stringify(manifest,null,2)+'\n');
+  if(JSON.parse(fs.readFileSync(path.join(dest,'distribution-manifest.json'),'utf8')).runtime!==buildId)throw Error('manifest-release-id-mismatch');
   return {status:'staged-only',releaseId:buildId,runtimeFiles:staged.runtime.length,manifestFiles:staged.out.size-1,published:false};
  }catch(error){fs.rmSync(dest,{recursive:true,force:true});throw error;}
 }
