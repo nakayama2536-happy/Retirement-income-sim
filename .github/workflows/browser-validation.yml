@@ -45,7 +45,7 @@ jobs:
         run: node tools/browser-test/age-budget-staged-browser.mjs
       - name: Stage verified age-budget release candidate (no deployment)
         run: |
-          node tools/stage-age-budget-release.mjs . /tmp/lifeplan-age-budget-staged v0.9.33-age-budget-preview-20261103
+          node tools/stage-age-budget-release.mjs . /tmp/lifeplan-age-budget-staged v0.9.34-age-budget-preview-validation-20261103
           node /tmp/lifeplan-age-budget-staged/tools/package-public.mjs /tmp/lifeplan-age-budget-staged /tmp/lifeplan-age-budget-public
           node --test /tmp/lifeplan-age-budget-staged/test_age_budget_candidate.mjs /tmp/lifeplan-age-budget-staged/test_age_budget_preview_export.mjs /tmp/lifeplan-age-budget-staged/test_age_budget_ui.mjs /tmp/lifeplan-age-budget-staged/test_distribution_audit.mjs /tmp/lifeplan-age-budget-staged/test_release_identity.mjs
       - name: Preserve candidate release bundle as CI artifact only
