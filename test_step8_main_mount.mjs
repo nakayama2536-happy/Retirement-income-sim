@@ -12,7 +12,7 @@ test('step8 comparison card is retained on settings while backup uses its own ta
   assert.match(html,/<div id="step8TrialContainer"><\/div>/);
   assert.match(app,/import \{mountStep8TrialCard\} from '\.\/step8-trial-ui\.mjs'/);
   assert.match(app,/mountStep8TrialCard\(el\('step8TrialContainer'\),\(\)=>config\)/);
-  assert.match(app,/detailUI\.render\(\);\s*step8TrialCard\.reset\(\);/);
+  assert.match(app,/detailUI\.render\(\);\s*ageBudgetComparison\.reset\(\);\s*step8TrialCard\.reset\(\);/);
 });
 
 test('step8 trial fields are excluded from existing saved dashboard input snapshot',()=>{
@@ -37,12 +37,12 @@ test('offline candidate assets and module dependency closure are included',()=>{
     assert.ok(runtime.includes(name),name);
     assert.match(sw,new RegExp("\\./"+name.replaceAll('.','\\.')));
   }
-  assert.equal(runtime.length,67);
-  assert.equal(out.size,70);
+  assert.equal(runtime.length,71);
+  assert.equal(out.size,74);
 });
 
 test('candidate service worker is versioned separately without cache deletion or forced update',()=>{
-  assert.match(sw,/const CACHE=`\$\{CACHE_PREFIX\}v0\.9\.32-runtime-content-check-20261101`/);
+  assert.match(sw,/const CACHE=`\$\{CACHE_PREFIX\}v0\.9\.33-age-budget-preview-20261103`/);
   assert.doesNotMatch(sw,/caches\.delete\(/);
   assert.doesNotMatch(sw,/skipWaiting\s*\(/);
 });

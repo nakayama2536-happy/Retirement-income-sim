@@ -1,0 +1,6 @@
+import test from 'node:test';import assert from 'node:assert/strict';
+import {ageBudgetPreviewRows,ageBudgetPreviewCsv,ageBudgetPreviewView} from './age-budget-preview-export.mjs';
+const preview=()=>({stage:'preview-only',adopted:false,saved:false,finalAssetBefore:120,finalAssetAfter:114,finalAssetDifference:-6,months:[{month:'2060-01',age:80,changed:true,expenseBefore:44,expenseAfter:47,expenseDifference:3,endAssetBefore:120,endAssetAfter:117},{month:'2060-02',age:80,changed:true,expenseBefore:44,expenseAfter:47,expenseDifference:3,endAssetBefore:120,endAssetAfter:114}]});
+test('参考表示とCSVは同一の月次比較結果を使う',()=>{const p=preview(),old=structuredClone(p),v=ageBudgetPreviewView(p),rows=ageBudgetPreviewRows(p),csv=ageBudgetPreviewCsv(p);assert.deepEqual(v.rows,rows);assert.equal(v.changedMonthCount,2);assert.equal(v.finalAssetDifference,-6);assert.ok(csv.startsWith('\uFEFF集計区分,対象月'));assert.equal(csv.split('\r\n').filter(Boolean).length,3);assert.ok(csv.includes('未採用・参考比較'));assert.deepEqual(p,old);});
+test('採用・保存済み扱いのデータは参考CSVへ混ぜない',()=>{const p=preview();p.adopted=true;assert.throws(()=>ageBudgetPreviewCsv(p),/未採用/);p.adopted=false;p.saved=true;assert.throws(()=>ageBudgetPreviewRows(p),/未採用/);});
+test('不正な月次結果は空欄として隠さず停止',()=>{const p=preview();p.months[0].expenseAfter=NaN;assert.throws(()=>ageBudgetPreviewView(p),/不正/);});
