@@ -6,7 +6,7 @@ import {reconcileCashflow} from './cashflow-reconciliation.mjs';
 import {configSignature} from './storage.mjs';
 import {projectNisaWithdrawal,IDECO_MODES} from './withdrawal-plan.mjs';
 export const EXPENSE_GROUPS=[['living','生活費'],['insurance','保険'],['taxes','税・社会保険'],['travel','旅行費']];
-export const EXPENSE_EXAMPLES={living:['食費','日用品','住居費','電気・ガス・水道','通信費','交通・車','医療・介護','衣服・理美容','趣味・交際','教育・家族支援','その他生活費'],insurance:['生命保険','医療保険','がん保険','火災・地震保険','自動車保険','その他保険'],taxes:['労働収入の税・社会保険','年金の税・社会保険','その他の税・社会保険'],travel:['旅行費']};
+export const EXPENSE_EXAMPLES={living:['家賃','管理費','固定資産税','住宅修繕','電気代','ガス代','水道代','インターネット','携帯電話','食費','外食費','日用品','医療費','薬代','介護費','ガソリン','高速道路','車検・整備','車両税金','車両買替','趣味費','交際費','被服費','美容・理容費','冠婚葬祭','家電買替','家具更新','住宅設備更新','更新積立（内訳未確認）','教育・家族支援','その他生活費','住居費','電気・ガス・水道','通信費','交通・車','医療・介護','衣服・理美容','趣味・交際'],insurance:['生命保険','医療保険','がん保険','火災保険','地震保険','自動車保険','その他保険','火災・地震保険'],taxes:['労働収入の税・社会保険','年金の税・社会保険','その他の税・社会保険'],travel:['旅行費','国内旅行','海外旅行']};
 const profiles=['work-v0.9.7','public-v0.9'];
 const num=(v,label,min=0,max=1e9)=>{if(v===''||v==null||!Number.isFinite(Number(v))||Number(v)<min||Number(v)>max)throw Error(`${label}を${min}～${max}の数値で入力してください。未入力は0にしません。`);return Number(v);};
 const text=(v,label)=>{if(typeof v!=='string'||!v.trim()||v.length>100)throw Error(`${label}を入力してください（100文字以内）。`);return v.trim();};
