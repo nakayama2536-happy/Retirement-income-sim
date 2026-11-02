@@ -26,7 +26,7 @@ export function previewAgeBudgetCandidate(config,{fromAge=80,throughAge=120,refe
   const next=after.monthlyDetails[i];
   if(m.month!==next.month||m.age!==next.age||m.annualRowIndex!==next.annualRowIndex)throw Error('比較案で月次年齢期が変わりました');
   if(m.budget?.priceFactor!==next.budget?.priceFactor)throw Error('比較案で物価基準が変わりました');
-  const revised=m.budget&&m.age>=fromAge&&m.age<=throughAge;
+  const revised=Boolean(m.budget&&m.age>=fromAge&&m.age<=throughAge);
   if(!revised&&!near(m.expense,next.expense))throw Error('対象外の管理予算支出が変わりました');
   if(revised&&!near(next.expense,ageExpenseReference(m.age,referenceOptions).monthly*next.budget.priceFactor))throw Error('比較案の支出が参照値と一致しません');
   return {month:m.month,age:m.age,changed:revised,expenseBefore:m.expense,expenseAfter:next.expense,expenseDifference:next.expense-m.expense,endAssetBefore:m.endAsset,endAssetAfter:next.endAsset};
