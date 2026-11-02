@@ -8,3 +8,5 @@ test('不明税額はゼロ扱いせず未確認とし、同一項目ID重複は
  assert.throws(()=>allocateTaxSocial({grossPension:25,lines:[{id:'tax',amount:1,route:'pension-withheld'},{id:'tax',amount:1,route:'expense-paid'}]}),/重複/);
  assert.throws(()=>allocateTaxSocial({grossPension:25,lines:[{id:'tax',amount:26,route:'pension-withheld'}]}),/超え/);
 });
+
+// Regression: this isolated reference module must not mutate the production state or claim statutory accuracy.
