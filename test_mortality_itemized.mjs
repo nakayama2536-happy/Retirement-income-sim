@@ -95,3 +95,11 @@ test('separate draft retains inputs but never eligibility confirmations or adopt
    assert.equal(clearMortalityDraft(),true);assert.equal(readMortalityDraft(c),null);
  }finally{if(old===undefined)delete globalThis.localStorage;else globalThis.localStorage=old;}
 });
+
+test('死亡比較の費目補充ガイドは自動登録を促さず更新積立の未確定内訳を説明する',()=>{
+ const ui=fs.readFileSync(new URL('./mortality-ui.mjs',import.meta.url),'utf8');
+ assert.match(ui,/登録費目を充実させるための確認例/);
+ assert.match(ui,/「更新積立」は将来の買替・修繕/);
+ assert.match(ui,/既存の年間予算に含まれる費用を二重計上しない/);
+ assert.match(ui,/未確認の費用を仮の費目に振り分けません/);
+});
