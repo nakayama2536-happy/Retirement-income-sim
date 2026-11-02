@@ -9,7 +9,7 @@ test('公開候補のHTTP配信相当バイトとmanifestのSHA-256がすべて�
  const tmp=fs.mkdtempSync(path.join(os.tmpdir(),'lifeplan-http-smoke-'));
  try{
   const stage=path.join(tmp,'stage'),publicDir=path.join(tmp,'public');
-  stageAgeBudgetRelease(source,stage,'v0.9.33-age-budget-preview-20261103');
+  stageAgeBudgetRelease(source,stage,'v0.9.34-age-budget-preview-validation-20261103');
   const built=spawnSync(process.execPath,[path.join(stage,'tools/package-public.mjs'),stage,publicDir],{encoding:'utf8',timeout:30000});
   assert.equal(built.status,0,built.stderr);
   const manifest=JSON.parse(fs.readFileSync(path.join(publicDir,'distribution-manifest.json'),'utf8'));
