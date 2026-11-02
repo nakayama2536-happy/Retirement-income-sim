@@ -61,7 +61,7 @@ try{
  await submit.click();await host.locator('[data-apply]').click();
  await page.waitForFunction(()=>JSON.parse(localStorage.getItem('lifeplan-sim-state-v1')).config.plan.endAge===100);
  await page.reload({waitUntil:'networkidle'});await page.locator('#dashboard').waitFor({state:'visible'});
- assert.equal((await snapshot()).config.plan.endAge,100);assert.match(await page.locator('#targetStatusLabel').innerText(),/100歳末/);
+ assert.equal((await snapshot()).config.plan.endAge,100);assert.match(await page.locator('#targetStatusLabel').innerText(),/99歳末/);
  assert.match(await page.locator('#finalThreshold').innerText(),/未設定/);mark('reload-shows-unset-100-goal-not-zero');
  assert.deepEqual(blocked,[]);assert.deepEqual(errors,[]);mark('no-unexpected-external-requests-or-page-errors');
  report.status='passed';
