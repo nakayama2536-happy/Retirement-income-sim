@@ -69,7 +69,7 @@ try{
   assert.equal(Number(record[2]),Number(age),'CSV age alignment '+month);
   assert.equal(record[3],'対象','CSV change flag '+month);
   for(const [index,display] of [[4,expenseBefore],[5,expenseAfter],[6,expenseDelta],[7,assetBefore],[8,assetAfter]])assert.equal(Number(record[index]).toFixed(2),display,'CSV mismatch '+month+' col '+index);
-  assert.equal((Number(assetAfter)-Number(assetBefore)).toFixed(2),Number(assetDelta).toFixed(2),'visible asset delta mismatch '+month);
+  assert.equal((Number(record[8])-Number(record[7])).toFixed(2),assetDelta,'visible asset delta mismatch '+month);
  }
 
  const savedAfter=await page.evaluate(()=>JSON.stringify(Object.fromEntries(Object.keys(localStorage).sort().map(k=>[k,localStorage.getItem(k)]))));
