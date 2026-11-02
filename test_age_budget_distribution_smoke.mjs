@@ -11,7 +11,7 @@ test('公開候補のHTTP配信相当バイトとmanifestのSHA-256がすべて�
   const stage=path.join(tmp,'stage'),publicDir=path.join(tmp,'public');
   stageAgeBudgetRelease(source,stage,'v0.9.33-age-budget-preview-20261103');
   const built=build(stage,publicDir);
-  assert.equal(built.published,false);
+  assert.equal(built.status,0,built.stderr);
   const manifest=JSON.parse(fs.readFileSync(path.join(publicDir,'distribution-manifest.json'),'utf8'));
   for(const f of manifest.files){
    const data=fs.readFileSync(path.join(publicDir,f.name));
