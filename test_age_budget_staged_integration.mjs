@@ -23,7 +23,7 @@ test('隔離公開候補で支出比較・CSV・配布整合・版識別の回�
   assert.equal(result.error,undefined,result.error?.message);
   assert.equal(result.status,0,[(result.stdout||'').slice(-5000),(result.stderr||'').slice(-2000)].join('\n'));
   // Parse every shipped JS module from the staged candidate, not the source tree.
-  const runtime=collect(dest).runtime.filter(name=>/\\.(?:mjs|js)$/.test(name));
+  const runtime=collect(dest).runtime.filter(name=>/\.(?:mjs|js)$/.test(name));
   for(const name of runtime){
    const checked=spawnSync(process.execPath,['--check',name],{cwd:dest,encoding:'utf8',timeout:20000});
    assert.equal(checked.error,undefined,checked.error?.message);
