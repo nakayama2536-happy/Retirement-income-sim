@@ -95,3 +95,22 @@ test('separate draft retains inputs but never eligibility confirmations or adopt
    assert.equal(clearMortalityDraft(),true);assert.equal(readMortalityDraft(c),null);
  }finally{if(old===undefined)delete globalThis.localStorage;else globalThis.localStorage=old;}
 });
+
+test('細分化された登録費目ごとの倍率を残額と独立に計算し、元データを変更しない',()=>{
+ const c=fixture(),before=structuredClone(c),raw=runRetirementPlan(c,{includeMonthlyDetails:true});
+ const originalRows=structuredClone(raw.monthlyDetails);
+ const model=inspectMortalityExpenseBudget(c,raw.monthlyDetails);
+ const month=model.months.find(m=>m.expense===55);
+ assert.ok(month);assert.equal(model.items.length,3);
+ const factors=Object.fromEntries(model.items.map(x=>[x.id,x.label==='住居'?0.6:x.label==='食費'?0.5:1.2]));
+ const adjusted=applyMortalityExpenseMultipliers(raw.monthlyDetails,model,{factors,unallocatedFactor:0.8});
+ const row=adjusted.monthlyRows.find(x=>x.month===month.month);
+ near(row.itemizedExpensePreview,15*0.6+10*0.5+5*1.2+25*0.8);
+ near(row.itemizedBudgetRemainder,25);
+ near(row.expense,55);
+ assert.deepEqual(c,before);
+ assert.deepEqual(raw.monthlyDetails,originalRows);
+ const zero=applyMortalityExpenseMultipliers(raw.monthlyDetails,model,{factors:Object.fromEntries(model.items.map(x=>[x.id,0])),unallocatedFactor:0});
+ near(zero.monthlyRows.find(x=>x.month===month.month).itemizedExpensePreview,0);
+ assert.throws(()=>applyMortalityExpenseMultipliers(raw.monthlyDetails,model,{factors:{...factors,unknown:1},unallocatedFactor:1}),/費目/);
+});
