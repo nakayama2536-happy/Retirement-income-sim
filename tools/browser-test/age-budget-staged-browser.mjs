@@ -7,14 +7,15 @@ import path from 'node:path';
 import assert from 'node:assert/strict';
 import {fileURLToPath} from 'node:url';
 import {stageAgeBudgetRelease} from '../stage-age-budget-release.mjs';
-import {build} from '../package-public.mjs';
+import {spawnSync} from 'node:child_process';
 const here=path.dirname(fileURLToPath(import.meta.url)),root=path.resolve(here,'../..');
 const tmp=await fs.mkdtemp(path.join(os.tmpdir(),'lifeplan-age-browser-'));
 let server,browser;const evidence={mode:'isolated-staged-candidate',synthetic:true,published:false,cases:[]};
 try{
  const stage=path.join(tmp,'stage'),pub=path.join(tmp,'public');
- stageAgeBudgetRelease(root,stage,'v0.9.33-age-budget-preview-20261103');
- build(stage,pub);
+ stageAgeBudgetRelease(root,stage,'v0.9.34-age-budget-preview-validation-20261103');
+ const built=spawnSync(process.execPath,[path.join(stage,'tools/package-public.mjs'),stage,pub],{encoding:'utf8',timeout:30000});
+ assert.equal(built.status,0,built.stderr);
  const manifest=JSON.parse(await fs.readFile(path.join(pub,'distribution-manifest.json'),'utf8'));
  const allowed=new Set([...manifest.files.map(f=>f.name),'distribution-manifest.json']);
  const types={'.html':'text/html','.mjs':'text/javascript','.js':'text/javascript','.css':'text/css','.json':'application/json','.png':'image/png','.webmanifest':'application/manifest+json'};
