@@ -1,3 +1,4 @@
+import {mountAgeBudgetComparison} from './age-budget-ui.mjs';
 import {unemploymentEvents} from './unemployment-plan.mjs';
 import {mountStep8TrialCard} from './step8-trial-ui.mjs';
 import {mountFullPlanComparisonCard} from './full-plan-ui.mjs';
@@ -127,6 +128,7 @@ const incomeSheet=mountIncomeSheet({getState:()=>({config,scenarios}),showNotice
 }});
 
 const detailUI=mountDetailUI({getState:()=>({config,scenarios}),commit:next=>commitState(next),notice:showNotice});
+const ageBudgetComparison=mountAgeBudgetComparison({container:el('cashflow'),getConfig:()=>config,notice:showNotice});
 
 function showNotice(msg, type='info') {
   const n = el('notice'); n.textContent = msg; n.dataset.type = type; n.hidden = false;
@@ -192,6 +194,7 @@ function refresh({calculated=null}={}) {
   expenseSheet.render();
   incomeSheet.render();
   detailUI.render();
+  ageBudgetComparison.reset();
   step8TrialCard.reset();
   fullPlanCard.reset();
   mortalityCard.invalidate();
