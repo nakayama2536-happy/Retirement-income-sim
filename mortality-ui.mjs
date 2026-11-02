@@ -131,6 +131,7 @@ export function mountMortalityComparison(root,{getConfig,getBaseline,runPlan}){
  <fieldset><legend>2．残された人の生活費（費目別の変更）</legend><p>倍率の見方：<strong>1.0倍＝元と同じ100％、0.8倍＝80％（20％減）、1.2倍＝120％（20％増）</strong>です。費目ごとに入力した倍率で比較します。入力しただけでは現在の計画は変更されません。</p>
  <p class="muted">登録済みの生活費を費目別に参照し、残された人の生活費倍率を設定します。支出は「元の管理予算 − 減額分」で計算し、物価係数の二重適用を防ぎます。</p>
  <input type="hidden" id="mortalityExpenseSource" value="work-v0.9.7"><p class="muted">登録済みの現行形式の費目内訳を参照します。旧形式との選択・比較は行いません。</p>
+ <details class="mortality-expense-guide"><summary>登録費目を充実させるための確認例（自動登録・金額変更なし）</summary><p>現在の登録費目は下の一覧です。追加候補：家賃・住居修繕、電気・ガス・水道・通信、食費・日用品、医療・介護、生命・医療・火災保険、車両維持・買替、旅行・趣味・交際、家電・家具・住宅設備の更新など。</p><p>「更新積立」は将来の買替・修繕に備える予算名として使われますが、実際に何を含むかは登録内容の確認が必要です。新たな費用は「支出を設定 → 生活費・保険」で内訳として登録してください。管理予算へ自動加算されません。既存の年間予算に含まれる費用を二重計上しないでください。</p><p>内訳にない金額は下の未照合予算残額に維持します。未確認の費用を仮の費目に振り分けません。</p></details>
  <p id="mortalityItemSourceNote" class="muted"></p>
  <div id="mortalityItemHost" class="mortality-item-rows"></div>
  <div class="mortality-item-row mortality-remainder-row"><strong>内訳に含まれない管理予算の支出（税社保・不明費用を含む）</strong><span id="mortalityRemainderAmount">未計算</span><input id="mortalityRemainderFactor" type="number" min="0" max="3" step="0.05" value="1" aria-label="未照合の予算残額の倍率"><span>倍率を指定できます</span></div>
