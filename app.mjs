@@ -201,24 +201,28 @@ function refresh({calculated=null}={}) {
 
 function renderHome() {
   const end=result.endAge, start=result.startAge;
-  const target=result.keyAges.find(k=>k.age===end);
-  el('targetStatusLabel').textContent=`${end}歳末の目標`;
-  el('status').textContent = target ? (result.finalAsset>=target.threshold?'目標額以上':'目標額未満') : '未設定';
-  const below=result.keyAges.filter(k=>k.age!==end&&k.margin<0);
-  el('targetStatusNote').textContent=below.length?`途中の参考目標を下回る年齢：${below.map(k=>k.age+'歳末').join('・')}。生活費の不足とは別に確認してください。`:'この判定は最終年齢末の目標額との比較です。途中の資金不足や将来の安心を保証しません。';
+  // Display-only target checkpoint; keep the full calculation horizon intact.
+  const goalAge=end>=99&&start<=99?99:end;
+  const goalRow=result.rows.find(r=>r.age===goalAge);
+  const target=result.keyAges.find(k=>k.age===goalAge);
+  const goalAsset=goalAge===end?result.finalAsset:(goalRow?.endAsset ?? null);
+  el('targetStatusLabel').textContent=`${goalAge}歳末の目標`;
+  el('status').textContent = target ? (goalAsset!==null&&goalAsset>=target.threshold?'目標額以上':'目標額未満') : '未設定';
+  const below=result.keyAges.filter(k=>k.age!==goalAge&&k.margin<0);
+  el('targetStatusNote').textContent=below.length?`途中の参考目標を下回る年齢：${below.map(k=>k.age+'歳末').join('・')}。生活費の不足とは別に確認してください。`:'この判定は表示年齢末の目標額との比較です。途中の資金不足や将来の安心を保証しません。';
   el('initialAssetLabel').textContent=`${start-1}歳期末想定資産`;
   el('initialAssetHelp').textContent=`${start}歳期の計算開始残高として登録した計画値です。実績を確定した意味ではありません。`;
-  el('finalTargetLabel').textContent=`${end}歳末の目標資産額`;
-  el('finalPredictionLabel').textContent=`${end}歳末の予測資産額`;
+  el('finalTargetLabel').textContent=`${goalAge}歳末の目標資産額`;
+  el('finalPredictionLabel').textContent=`${goalAge}歳末の予測資産額`;
   el('simulationPeriod').textContent=`現在の計画：${start}歳～${end}歳末（入力途中の変更は含みません）`;
   el('assetChart').setAttribute('aria-label',`${start}歳から${end}歳末までの資産推移`);
-  const margin=target?result.finalAsset-target.threshold:null;
+  const margin=target?goalAsset-target.threshold:null;
   el('finalMarginLabel').textContent=margin===null?'目標との差':'目標'+(margin>=0?'を上回る金額':'に足りない金額');
   el('finalMargin').textContent=margin===null?'—':`${margin>=0?'+':''}${money(margin)}`;
   el('finalMargin').className=margin===null?'':margin<0?'neg':'pos';
-  el('status').dataset.status = target ? result.status : '';
+  el('status').dataset.status = target ? (margin>=0?'正常':'要見直し') : '';
   el('currentAsset').textContent = money(config.plan.initialAsset);
-  el('finalAsset').textContent = money(result.finalAsset);
+  el('finalAsset').textContent = goalAsset===null?'未計算':money(goalAsset);
   el('finalThreshold').textContent = target ? money(target.threshold) : '未設定';
   el('reserve').textContent = money(result.reserve);
   el('afterReserve').textContent = money(result.finalAfterReserveUse);

@@ -63,3 +63,11 @@ test('home goal card presents target, estimate and difference without redundant 
  assert.match(card,/id="simulationPeriod"[^>]* hidden/);
  assert.doesNotMatch(card,/差額は「予測資産額/);
 });
+
+test('ホームの目標判定は99歳末を参照し計算終了100歳を維持する',()=>{
+ const app=fs.readFileSync(new URL('./app.mjs',import.meta.url),'utf8');
+ assert.match(app,/const goalAge=end>=99&&start<=99\?99:end/);
+ assert.match(app,/const goalRow=result.rows.find\(r=>r.age===goalAge\)/);
+ assert.match(app,/const goalAsset=goalAge===end\?result\.finalAsset:\(goalRow\?\.endAsset/);
+ assert.match(app,/result.keyAges.find\(k=>k.age===goalAge\)/);
+});

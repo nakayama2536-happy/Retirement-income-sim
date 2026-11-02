@@ -86,7 +86,7 @@ export function mountDetailUI({getState,commit,notice}){
   if(kind==='horizon'&&form.elements.endAge){form.elements.endAge.value='100';}
   if(kind==='budgetTable')for(const row of budgetTableRows(c))appendBudgetRow(form,row);
   if(kind==='unemployment')fill(form,c.unemployment?.receiptPlan||{});
-  if(kind==='goal'){form.elements.age.value=String(c.plan.endAge);fill(form,{amount:c.management?.thresholds?.[c.plan.endAge]??''});}
+  if(kind==='goal'){const goalAge=Number(c.plan.endAge)>=99&&Number(c.plan.startAge)<=99?99:Number(c.plan.endAge);form.elements.age.value=String(goalAge);fill(form,{amount:c.management?.thresholds?.[goalAge]??''});}
 
   if(['expense','budget'].includes(kind)){form.elements.profile.value=expenseDisplayProfile(c)||'';}
   if(kind==='expense')refreshTargets(form,c);
