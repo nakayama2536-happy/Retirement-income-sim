@@ -1,7 +1,22 @@
 {
   "kind": "public-release",
-  "runtime": "v0.9.32-runtime-content-check-20261101",
+  "runtime": "v0.9.33-age-budget-preview-20261103",
   "files": [
+    {
+      "name": "age-budget-candidate.mjs",
+      "size": 3403,
+      "sha256": "5d6c5ab989675507658c78a0e1a1fa0e819c06a391260aa34432fab911836910"
+    },
+    {
+      "name": "age-budget-preview-export.mjs",
+      "size": 2395,
+      "sha256": "cf721a183d1e21e369be2d39d280fc9c8409f8553cff9ef71fc6bcad8873f782"
+    },
+    {
+      "name": "age-budget-ui.mjs",
+      "size": 3787,
+      "sha256": "d45ef07831f42248794ea44004d3d9602093594dd71c97d33b2e3a8224764a01"
+    },
     {
       "name": "annual-cashflow.mjs",
       "size": 6596,
@@ -14,13 +29,13 @@
     },
     {
       "name": "app.mjs",
-      "size": 74298,
-      "sha256": "7af91abab911e6943c8f604beddae30d0f7dbb0b079c2b2d860484d82afd9a7f"
+      "size": 74507,
+      "sha256": "bd83876407da4b5a77ee6c0ee1c36b30c04ce4d8e49f6a1773b8e14ac2dac601"
     },
     {
       "name": "backup-compatibility.mjs",
-      "size": 7835,
-      "sha256": "ae86b8522dc4dcb8b1a3ced4f4d99287d52991282c598b8dba1a2e90bbcab17b"
+      "size": 7832,
+      "sha256": "1df8f79485e81c113ddcc0e82352cc7de403472328b2028cb2744c11e70a0b27"
     },
     {
       "name": "calc.mjs",
@@ -76,6 +91,11 @@
       "name": "detailed-report.mjs",
       "size": 16616,
       "sha256": "8a9c7859517ec6fa83832c87af899b78e6a5020a0a50ff94a7ff81d568d98c39"
+    },
+    {
+      "name": "discretionary-travel.mjs",
+      "size": 1965,
+      "sha256": "29683e450123bc85f8e72615347809337d074ceadfca67500a23bf33b9e48877"
     },
     {
       "name": "docs/USER_GUIDE.md",
@@ -229,8 +249,8 @@
     },
     {
       "name": "release-info.json",
-      "size": 127,
-      "sha256": "362e3ca8541ab81a8d735cdb017e74dc6e9200787361c0a10c4be49f8d3b279d"
+      "size": 131,
+      "sha256": "2a7371c227de7a05c15755b9e65150c9378df2266363caa8829d483485b51014"
     },
     {
       "name": "retirement-comment.mjs",
@@ -294,8 +314,8 @@
     },
     {
       "name": "sw.js",
-      "size": 4105,
-      "sha256": "e0dc29483d631da9326dbf05824cd500d5fe0081db69b6b9267074d3c92d7e96"
+      "size": 4230,
+      "sha256": "fcdef09c218cb0f06fee3acbfc40719f14f2b3eb37cdd2a937f94a028cc7137c"
     },
     {
       "name": "sync-controller.mjs",
