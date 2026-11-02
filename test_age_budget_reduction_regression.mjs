@@ -36,7 +36,7 @@ test('85歳からの参考支出減額は予算から減算され、資産を増
  const csv=ageBudgetPreviewCsv(p);
  assert.ok(csv.startsWith('\uFEFF'));
  assert.ok(csv.includes('支出差額_万円'));
- assert.ok(csv.includes('-5.9'));
+ assert.ok(csv.includes("'"+String(rows[0].expenseDifference)),'CSV負数は数式注入防止のため先頭に引用符を付ける');
 });
 
 test('参考比較対象外の予算を変えず、月次評価条件を保持',()=>{
