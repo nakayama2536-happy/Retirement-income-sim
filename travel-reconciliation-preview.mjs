@@ -20,7 +20,7 @@ export function previewTravelFromReconciliation(reconciliation,nonTravelMonths){
   lookup.set(row.month,row);
  }
  const months=reconciliation.months.map(m=>{
-  if(!m?.month||m.scope!=='asset-funded'||m.budget?.check?.status!=='resolved'||m.assessment==='over-budget'){
+  if(!m?.month||m.scope!=='asset-funded'||m.budget?.check?.status!=='resolved'){
    return {month:m?.month??null,annualRowIndex:m?.annualRowIndex??null,status:'unresolved',travelBudget:null,shortfall:null,reason:'予算照合または資産負担範囲が未確定'};
   }
   const row=lookup.get(m.month);
