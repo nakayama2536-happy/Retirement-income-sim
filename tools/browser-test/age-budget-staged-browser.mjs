@@ -57,8 +57,8 @@ try{
  assert.ok(csv.startsWith('\uFEFF'),'CSV must be UTF-8 BOM');
  const csvLines=csv.replace(/^\uFEFF/,'').trimEnd().split('\r\n');
  assert.equal(csvLines[0].split(',').length,10,'expected stable comparison export columns');
- assert.ok(csvLines.some(line=>/^month,\\d{4}-\\d{2},80,/.test(line)),'age 80 CSV rows');
- assert.ok(csvLines.some(line=>/^month,\\d{4}-\\d{2},85,/.test(line)),'age 85 CSV rows');
+ assert.ok(csvLines.some(line=>/^month,\d{4}-\d{2},80,/.test(line)),'age 80 CSV rows');
+ assert.ok(csvLines.some(line=>/^month,\d{4}-\d{2},85,/.test(line)),'age 85 CSV rows');
  const savedAfter=await page.evaluate(()=>JSON.stringify(Object.fromEntries(Object.keys(localStorage).sort().map(k=>[k,localStorage.getItem(k)]))));
  assert.equal(savedAfter,savedBefore,'comparison and CSV must not modify saved browser settings');
  assert.deepEqual(errors,[]);
