@@ -1,3 +1,4 @@
+import {mountAgeBudgetComparison} from './age-budget-ui.mjs';
 import {unemploymentEvents} from './unemployment-plan.mjs';
 import {mountStep8TrialCard} from './step8-trial-ui.mjs';
 import {mountFullPlanComparisonCard} from './full-plan-ui.mjs';
@@ -127,6 +128,7 @@ const incomeSheet=mountIncomeSheet({getState:()=>({config,scenarios}),showNotice
 }});
 
 const detailUI=mountDetailUI({getState:()=>({config,scenarios}),commit:next=>commitState(next),notice:showNotice});
+const ageBudgetComparison=mountAgeBudgetComparison({container:el('cashflow'),getConfig:()=>config,notice:showNotice});
 
 function showNotice(msg, type='info') {
   const n = el('notice'); n.textContent = msg; n.dataset.type = type; n.hidden = false;
@@ -192,6 +194,7 @@ function refresh({calculated=null}={}) {
   expenseSheet.render();
   incomeSheet.render();
   detailUI.render();
+  ageBudgetComparison.reset();
   step8TrialCard.reset();
   fullPlanCard.reset();
   mortalityCard.invalidate();
@@ -955,7 +958,7 @@ document.querySelectorAll('[data-help]').forEach(btn=>btn.addEventListener('clic
 }));
 el('helpClose').addEventListener('click',()=>el('helpDialog').close());
 
-const CURRENT_RUNTIME_BUILD='v0.9.32-runtime-content-check-20261101';
+const CURRENT_RUNTIME_BUILD='v0.9.33-age-budget-preview-20261103';
 el('appVersion').textContent=CURRENT_RUNTIME_BUILD+'（端末で実行中）';
 const freshness=el('runtimeFreshness');
 (async()=>{
