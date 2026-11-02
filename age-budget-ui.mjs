@@ -21,9 +21,9 @@ export function mountAgeBudgetComparison({container,getConfig,notice,documentRef
   previewSource=source;
   const view=ageBudgetPreviewView(preview);status.textContent='未反映の参考比較：対象 '+view.changedMonthCount+'か月。最終資産の差額 '+view.finalAssetDifference.toFixed(2)+'万円';
   const grid=documentRef.createElement('table'),head=documentRef.createElement('thead'),row=documentRef.createElement('tr');
-  for(const label of ['年月','年齢','変更前支出','変更後支出','月末資産（変更前）','月末資産（変更後）']){const th=documentRef.createElement('th');th.textContent=label;row.append(th);}head.append(row);grid.append(head);
+  for(const label of ['年月','年齢','変更前支出','変更後支出','支出差額（変更後−変更前）','月末資産（変更前）','月末資産（変更後）','資産差額（変更後−変更前）']){const th=documentRef.createElement('th');th.textContent=label;row.append(th);}head.append(row);grid.append(head);
   const body=documentRef.createElement('tbody');
-  for(const v of view.rows){if(v.changed!=='対象')continue;const tr=documentRef.createElement('tr');for(const value of [v.month,v.age,v.expenseBefore,v.expenseAfter,v.endAssetBefore,v.endAssetAfter]){const td=documentRef.createElement('td');td.textContent=typeof value==='number'?value.toFixed(2):String(value);tr.append(td);}body.append(tr);}grid.append(body);table.append(grid);exportBtn.disabled=false;
+  for(const v of view.rows){if(v.changed!=='対象')continue;const tr=documentRef.createElement('tr');for(const value of [v.month,v.age,v.expenseBefore,v.expenseAfter,v.expenseDifference,v.endAssetBefore,v.endAssetAfter,v.endAssetAfter-v.endAssetBefore]){const td=documentRef.createElement('td');td.textContent=typeof value==='number'?value.toFixed(2):String(value);tr.append(td);}body.append(tr);}grid.append(body);table.append(grid);exportBtn.disabled=false;
  }catch(e){status.textContent='比較できません：'+e.message;notice?.(e.message,'error');}});
  exportBtn.addEventListener('click',()=>{if(!preview)return;try{
   if(previewSource!==sourceSnapshot()){reset();throw Error('設定が変更されました。比較案を再試算してください');}
