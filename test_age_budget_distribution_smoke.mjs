@@ -2,7 +2,7 @@ import test from 'node:test';import assert from 'node:assert/strict';
 import fs from 'node:fs';import os from 'node:os';import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {stageAgeBudgetRelease} from './tools/stage-age-budget-release.mjs';
-import {build} from './tools/package-public.mjs';
+import {spawnSync} from 'node:child_process';
 const source=path.dirname(fileURLToPath(import.meta.url));
 test('公開候補のHTTP配信相当バイトとmanifestのSHA-256がすべて一致',async()=>{
  const crypto=await import('node:crypto');
