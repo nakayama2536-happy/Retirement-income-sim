@@ -23,3 +23,11 @@ test('未対応の年齢境界や対象月なしは停止',()=>{
  assert.throws(()=>previewAgeBudgetCandidate(fixture(),{fromAge:100,throughAge:100}),/対象/);
  assert.throws(()=>previewAgeBudgetCandidate(fixture(),{fromAge:60}),/範囲/);
 });
+
+test('支出未計上月の変更対象フラグはfalseとして画面・CSVへ渡す',()=>{
+ const c=fixture();
+ c.employment.primary.mainRetirement.baseDate='2060-08-27';
+ const p=previewAgeBudgetCandidate(c,{throughAge:86});
+ assert.ok(p.months.some(m=>m.changed===false));
+ assert.ok(p.months.every(m=>typeof m.changed==='boolean'));
+});
