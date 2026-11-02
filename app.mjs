@@ -205,7 +205,7 @@ function renderHome() {
   const goalAge=end>=99&&start<=99?99:end;
   const goalRow=result.rows.find(r=>r.age===goalAge);
   const target=result.keyAges.find(k=>k.age===goalAge);
-  const goalAsset=goalRow?.endAsset ?? null;
+  const goalAsset=goalAge===end?result.finalAsset:(goalRow?.endAsset ?? null);
   el('targetStatusLabel').textContent=`${goalAge}歳末の目標`;
   el('status').textContent = target ? (goalAsset!==null&&goalAsset>=target.threshold?'目標額以上':'目標額未満') : '未設定';
   const below=result.keyAges.filter(k=>k.age!==goalAge&&k.margin<0);
