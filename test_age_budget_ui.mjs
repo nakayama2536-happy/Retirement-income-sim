@@ -25,3 +25,14 @@ test('設定が試算後に変わると旧比較CSVを拒否',()=>{
  state={...state,plan:{...state.plan,initialAsset:5100}};exportBtn.click();
  assert.equal(created,0);assert.equal(exportBtn.disabled,true);assert.ok(messages.some(x=>x.includes('再試算')));
 });
+
+test('同一オブジェクトの予算更新も検知し旧CSVを出力しない',()=>{
+ const state=config(),root=new Element('div'),messages=[];let created=0;
+ mountAgeBudgetComparison({container:root,getConfig:()=>state,documentRef,notice:t=>messages.push(t),urlRef:{createObjectURL:()=>{created++;return 'blob:example';},revokeObjectURL:()=>{}}});
+ const shell=root.children[0],run=shell.children[2],exportBtn=shell.children[3];
+ run.click();assert.equal(exportBtn.disabled,false);
+ state.budgets[0].annualBudget+=12;
+ exportBtn.click();
+ assert.equal(created,0);assert.equal(exportBtn.disabled,true);
+ assert.ok(messages.some(x=>x.includes('再試算')));
+});
