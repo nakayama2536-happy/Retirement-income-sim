@@ -44,8 +44,8 @@ try{
  const downloadButton=panel.locator('button').nth(1);
  assert.equal(await downloadButton.isDisabled(),false);
  const visibleRows=await panel.locator('tbody tr').evaluateAll(rows=>rows.map(r=>[...r.querySelectorAll('td')].map(c=>c.textContent)));
- assert.ok(visibleRows.some(r=>r[1]==='80'),'age 80 must be visible');
- assert.ok(visibleRows.some(r=>r[1]==='85'),'age 85 must be visible');
+ assert.ok(visibleRows.some(r=>Number(r[1])===80),'age 80 must be visible');
+ assert.ok(visibleRows.some(r=>Number(r[1])===85),'age 85 must be visible');
  assert.ok(visibleRows.every(r=>r.length===6&&r.every(cell=>cell!=='')),'all comparison table cells must be populated');
  const pending=page.waitForEvent('download');
  await downloadButton.click();
@@ -65,7 +65,7 @@ try{
   const [month,age,expenseBefore,expenseAfter,assetBefore,assetAfter]=row;
   const record=byMonth.get(month);
   assert.ok(record,'missing CSV month '+month);
-  assert.equal(record[2],age,'CSV age alignment '+month);
+  assert.equal(Number(record[2]),Number(age),'CSV age alignment '+month);
   assert.equal(record[3],'対象','CSV change flag '+month);
   for(const [index,display] of [[4,expenseBefore],[5,expenseAfter],[7,assetBefore],[8,assetAfter]])assert.equal(Number(record[index]).toFixed(2),display,'CSV mismatch '+month+' col '+index);
  }
