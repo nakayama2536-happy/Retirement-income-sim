@@ -31,3 +31,9 @@ test('家計参考月は資産支出0円の余裕とみなさない',()=>{
  const t=structuredClone(trace);t.months[0].scope='family-reference';
  assert.equal(previewTravelFromReconciliation(t,[input('2040-01',0)]).months[0].travelBudget,null);
 });
+
+test('照合側が予算超過と判定した月も確定不足額を隠さない',()=>{
+ const x=structuredClone(trace);x.months[1].assessment='over-budget';
+ const r=previewTravelFromReconciliation(x,[input('2040-01',25),input('2040-02',45),input('2041-01',30)]);
+ assert.equal(r.months[1].shortfall,5);assert.equal(r.periods[0].status,'over-budget');
+});
