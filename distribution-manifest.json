@@ -14,8 +14,8 @@
     },
     {
       "name": "app.mjs",
-      "size": 73978,
-      "sha256": "676a3bdfc2d3aa621cb00452f5e55c07c251751659a3703231446bbff22d1d89"
+      "size": 74264,
+      "sha256": "00000000000000000000000000000000e35dcbe4684c4a27f1aedd21302fcb16"
     },
     {
       "name": "backup-compatibility.mjs",
@@ -64,8 +64,8 @@
     },
     {
       "name": "detail-settings.mjs",
-      "size": 23513,
-      "sha256": "9d07c3bd2abc88bce33a02f6a28f794a30e8cbb74f2ca181f34e28c9342fe386"
+      "size": 23984,
+      "sha256": "00000000000000000000000000000000bf50108ce5d4ca8fbb8d37e417bd7af3"
     },
     {
       "name": "detail-ui.mjs",
