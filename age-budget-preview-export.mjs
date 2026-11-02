@@ -5,7 +5,7 @@ function validate(preview){
  if(preview?.stage!=='preview-only'||preview.adopted!==false||preview.saved!==false||!Array.isArray(preview.months)||!num(preview.finalAssetBefore)||!num(preview.finalAssetAfter))throw Error('未採用の比較案が必要です');
  for(const m of preview.months)if(typeof m.month!=='string'||!/^\d{4}-\d{2}$/.test(m.month)||!Number.isInteger(m.age)||typeof m.changed!=='boolean'||[m.expenseBefore,m.expenseAfter,m.expenseDifference,m.endAssetBefore,m.endAssetAfter].some(n=>!num(n)))throw Error('比較月次データが不正です');
 }
-const safe=(v)=>{if(v===null||v===undefined)return '';const s=String(v);return /^[=+\-@]/.test(s)?"'"+s:s;};
+const safe=(v)=>{if(v===null||v===undefined)return '';if(typeof v==='number')return Number.isFinite(v)?String(v):'';const s=String(v);return /^[=+\-@]/.test(s)?"'"+s:s;};
 const csvCell=v=>{const s=safe(v).replace(/"/g,'""');return /[",\r\n]/.test(s)?'"'+s+'"':s;};
 export function ageBudgetPreviewRows(preview){
  validate(preview);
