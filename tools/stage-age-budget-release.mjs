@@ -30,13 +30,13 @@ export function stageAgeBudgetRelease(sourceDir,targetDir,buildId){
   const old=JSON.parse(fs.readFileSync(path.join(dest,'release-info.json'),'utf8')).appBuild;
   if(buildId===old)throw Error('build-id-unchanged');
   write(dest,'app.mjs',s=>{
-   s=once(s,"import {unemploymentEvents} from './unemployment-plan.mjs';","import {mountAgeBudgetComparison} from './age-budget-ui.mjs';\nimport {unemploymentEvents} from './unemployment-plan.mjs';",'app.mjs');
-   s=once(s,"const detailUI=mountDetailUI({getState:()=>({config,scenarios}),commit:next=>commitState(next),notice:showNotice});","const detailUI=mountDetailUI({getState:()=>({config,scenarios}),commit:next=>commitState(next),notice:showNotice});\nconst ageBudgetComparison=mountAgeBudgetComparison({container:el('cashflow'),getConfig:()=>config,notice:showNotice});",'app.mjs');
-   s=once(s,"  detailUI.render();","  detailUI.render();\n  ageBudgetComparison.reset();",'app.mjs');
+   if(!s.includes("import {mountAgeBudgetComparison} from './age-budget-ui.mjs';"))s=once(s,"import {unemploymentEvents} from './unemployment-plan.mjs';","import {mountAgeBudgetComparison} from './age-budget-ui.mjs';\nimport {unemploymentEvents} from './unemployment-plan.mjs';",'app.mjs');
+   if(!s.includes("const ageBudgetComparison=mountAgeBudgetComparison("))s=once(s,"const detailUI=mountDetailUI({getState:()=>({config,scenarios}),commit:next=>commitState(next),notice:showNotice});","const detailUI=mountDetailUI({getState:()=>({config,scenarios}),commit:next=>commitState(next),notice:showNotice});\nconst ageBudgetComparison=mountAgeBudgetComparison({container:el('cashflow'),getConfig:()=>config,notice:showNotice});",'app.mjs');
+   if(!s.includes("  ageBudgetComparison.reset();"))s=once(s,"  detailUI.render();","  detailUI.render();\n  ageBudgetComparison.reset();",'app.mjs');
    return once(s,old,buildId,'app.mjs');
   });
   write(dest,'sw.js',s=>{
-   s=once(s,"const URLS=ASSETS.map","ASSETS.push("+expected.map(x=>JSON.stringify('./'+x)).join(',')+");\nconst URLS=ASSETS.map",'sw.js');
+   if(!s.includes("ASSETS.push(\"./age-budget-ui.mjs\""))s=once(s,"const URLS=ASSETS.map","ASSETS.push("+expected.map(x=>JSON.stringify('./'+x)).join(',')+");\nconst URLS=ASSETS.map",'sw.js');
    return once(s,old,buildId,'sw.js');
   });
   write(dest,'backup-compatibility.mjs',s=>once(s,old,buildId,'backup-compatibility.mjs'));
