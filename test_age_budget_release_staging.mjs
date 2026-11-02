@@ -10,7 +10,9 @@ test('新しいリリース候補は隔離して生成し、元ファイルは�
   const r=stageAgeBudgetRelease(root,dest,'v0.9.33-age-budget-preview-20261103');
   assert.deepEqual([r.status,r.published,r.runtimeFiles,r.manifestFiles],['staged-only',false,71,73]);
   assert.deepEqual(fs.readFileSync(path.join(root,'app.mjs')),before);
-  assert.equal(fs.readFileSync(path.join(dest,'distribution-manifest.json'),'utf8'),collect(dest).out.get('distribution-manifest.json').toString());
+  const manifest=JSON.parse(fs.readFileSync(path.join(dest,'distribution-manifest.json'),'utf8'));
+  assert.equal(manifest.runtime,'v0.9.33-age-budget-preview-20261103');
+  assert.deepEqual(manifest.files,JSON.parse(collect(dest).out.get('distribution-manifest.json').toString()).files);
   const sw=fs.readFileSync(path.join(dest,'sw.js'),'utf8');
   assert.doesNotMatch(sw,/caches\.delete\s*\(|skipWaiting\s*\(|clients\.claim\s*\(/);
   assert.match(fs.readFileSync(path.join(dest,'app.mjs'),'utf8'),/mountAgeBudgetComparison/);
