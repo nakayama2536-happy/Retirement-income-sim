@@ -59,6 +59,17 @@ try{
  assert.equal(csvLines[0].split(',').length,10,'expected stable comparison export columns');
  assert.ok(csvLines.some(line=>/^month,\d{4}-\d{2},80,/.test(line)),'age 80 CSV rows');
  assert.ok(csvLines.some(line=>/^month,\d{4}-\d{2},85,/.test(line)),'age 85 CSV rows');
+ // All visible changed rows must agree with the CSV values, to two display decimals.
+ const byMonth=new Map(csvLines.slice(1).map(line=>{const cols=line.split(',');return [cols[1],cols];}));
+ for(const row of visibleRows){
+  const [month,age,expenseBefore,expenseAfter,assetBefore,assetAfter]=row;
+  const record=byMonth.get(month);
+  assert.ok(record,'missing CSV month '+month);
+  assert.equal(record[2],age,'CSV age alignment '+month);
+  assert.equal(record[3],'対象','CSV change flag '+month);
+  for(const [index,display] of [[4,expenseBefore],[5,expenseAfter],[7,assetBefore],[8,assetAfter]])assert.equal(Number(record[index]).toFixed(2),display,'CSV mismatch '+month+' col '+index);
+ }
+
  const savedAfter=await page.evaluate(()=>JSON.stringify(Object.fromEntries(Object.keys(localStorage).sort().map(k=>[k,localStorage.getItem(k)]))));
  assert.equal(savedAfter,savedBefore,'comparison and CSV must not modify saved browser settings');
  assert.deepEqual(errors,[]);
