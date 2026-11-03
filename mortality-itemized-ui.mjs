@@ -80,7 +80,8 @@ export function mountMortalityItemizedControls(root,{getConfig,runPlan,onChange}
   select.addEventListener('change',()=>{refresh();onChange();});
   remain.addEventListener('input',()=>{factorText();onChange();});
   function clear(){savedFactors={};const p=readMortalityExpensePreset(getConfig());select.value=p?.sourceProfile||'work-v0.9.7';remain.value=String(p?.unallocatedFactor??1);refresh({takeCurrent:false});}
-  remain.value=String(readMortalityExpensePreset(getConfig())?.unallocatedFactor??1);
+  try{remain.value=String(readMortalityExpensePreset(getConfig())?.unallocatedFactor??1);}
+  catch{remain.value='1';} // refresh() reports invalid saved values and blocks the comparison.
   refresh();
   return {read,refresh,restore,clear, factorDraft:()=>{for(const input of host.querySelectorAll('[data-mortality-itemfactor]'))savedFactors[input.dataset.mortalityItemfactor]=input.value;return {...savedFactors};}};
 }
