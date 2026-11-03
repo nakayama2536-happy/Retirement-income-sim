@@ -78,7 +78,10 @@ export function mountMortalityItemizedControls(root,{getConfig,runPlan,onChange}
           kind==='budget-after'?moneyText(totals.fullAfter):'—';
       }
       status.textContent='参考年月 '+next.month+'：夫婦健在時 '+format(next.expense)+'万円／月 − 減額 '+format(next.expense-revised)+'万円 ＝ 比較後 '+format(revised)+'万円。未照合残額 '+format(next.unallocated)+'万円にも倍率を適用します。';
-    }catch(e){status.textContent='倍率の確認：'+e.message;}
+    }catch(e){
+      for(const cell of host.querySelectorAll('[data-mortality-total]'))cell.textContent='未計算';
+      status.textContent='倍率の確認：'+e.message;
+    }
   }
   function refresh({takeCurrent=true}={}){
     const deceased=root.querySelector('#mortalityForm').elements.deceased.value;
