@@ -25,3 +25,17 @@ test('家族向け入口は既存の画面移動経路を使い保存処理を�
   assert.match(html,/見るだけでは現在の計画や保存データは変わりません/);
   assert.match(html,/試算と保存は別の操作です/);
 });
+
+test('将来資産を示してから操作入口を表示し、3画面からホームに戻れる',()=>{
+  const hero=html.indexOf('<div class="hero-grid">');
+  const quick=html.indexOf('aria-label="家族向けのかんたん操作"');
+  const guide=html.indexOf('id="familyFirstGuide"');
+  assert.ok(hero>=0 && hero<quick && quick<guide);
+  for(const target of ['cashflow','mortality','budget']){
+    const section=html.split('<section id="'+target+'" class="panel" hidden>')[1];
+    assert.ok(section?.startsWith('<div class="family-lite-back"'),'戻る導線が各画面の先頭にある');
+    assert.match(section.slice(0,300),/data-open-tab="home"/);
+  }
+  const links=[...html.matchAll(/class="family-lite-back"/g)];
+  assert.equal(links.length,3);
+});
