@@ -14,7 +14,7 @@ export function registeredMonthlyAmount(item,month){
   if(item.priceBasis==='nominal-fixed'||item.priceBasis==='target-period-nominal')return amount;
   return null; // Unsupported price bases are not guessed.
 }
-const moneyText=value=>value===null?'未確認':format(value)+'万円';
+const moneyText=value=>value===null?'未確認':Number(value).toLocaleString('ja-JP',{minimumFractionDigits:2,maximumFractionDigits:2})+'万円';
 const val=(input,name)=>{
   if(!input||input.value.trim()===''||!/^(?:\d+\.?\d*|\.\d+)$/.test(input.value.trim()))throw Error(name+'の倍率を入力してください（空欄は0ではありません）');
   const n=Number(input.value);if(!Number.isFinite(n)||n<0||n>3)throw Error(name+'の倍率は0～3倍です');
@@ -75,11 +75,11 @@ export function mountMortalityItemizedControls(root,{getConfig,runPlan,onChange}
         const cells=[el('span','',item.label),el('span','',moneyText(base)),el('span','',moneyText(amount))];
         for(let i=0;i<cells.length;i++)cells[i].dataset.mortalityColumn=labels[i];
         const factorCell=el('span','mortality-item-factor');factorCell.dataset.mortalityColumn=labels[3];factorCell.append(field);
-        const impact=el('span','mortality-item-impact',format(amount*Number(field.value))+'万円');impact.dataset.mortalityColumn=labels[4];
+        const impact=el('span','mortality-item-impact',moneyText(amount*Number(field.value)));impact.dataset.mortalityColumn=labels[4];
         row.append(...cells,factorCell,impact);
         field.addEventListener('input',()=>{
           savedFactors[item.id]=field.value;
-          row.lastElementChild.textContent=Number.isFinite(Number(field.value))?format(amount*Number(field.value))+'万円':'未計算';
+          row.lastElementChild.textContent=Number.isFinite(Number(field.value))?moneyText(amount*Number(field.value)):'未計算';
           factorText();onChange();
         });
         host.append(row);
