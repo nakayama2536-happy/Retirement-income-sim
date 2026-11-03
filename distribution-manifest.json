@@ -319,8 +319,8 @@
     },
     {
       "name": "sw.js",
-      "size": 4230,
-      "sha256": "fcdef09c218cb0f06fee3acbfc40719f14f2b3eb37cdd2a937f94a028cc7137c"
+      "size": 4263,
+      "sha256": "39bee0ccbbd0122e839f89642f820acfb3295c21112b3adb75dfd0e0747b99ee"
     },
     {
       "name": "sync-controller.mjs",
