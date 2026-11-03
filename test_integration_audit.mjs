@@ -76,7 +76,7 @@ test('real detail render function displays public-only data and uses chosen peri
  const {state}=setup();delete state.config.expenseDetail;
  const nodes={expenseDetail:{},expenseReconcile:{},annualCashflowSummary:{},cashflowViewAge:{value:'65'},expenseDisplaySource:{value:''}};
  const start=app.indexOf('function renderExpenseDetail()'),end=app.indexOf('\nfunction ',start+10);
- vm.runInNewContext(app.slice(start,end)+';renderExpenseDetail();',{config:state.config,el:id=>nodes[id],expenseDisplayModel,expenseDisplayHtml,expenseDisplayProfile,annualCashflowSummary:()=>({status:'ready'}),annualCashflowHtml:()=>'<p>annual</p>',renderPeriodOverrides(){}});
+ vm.runInNewContext(app.slice(start,end)+';renderExpenseDetail();',{config:state.config,el:id=>nodes[id],expenseDisplayModel,expenseDisplayHtml,expenseDisplayProfile,annualCashflowSummary:()=>({status:'ready'}),annualCashflowHtml:()=>'<p>annual</p>',renderPeriodOverrides(){},budgetTravelView:{render(){}}});
  assert.equal(nodes.expenseDisplaySource.value,'public-v0.9');assert.match(nodes.expenseDetail.innerHTML,/96万円/);assert.match(nodes.expenseReconcile.innerHTML,/120万円/);
 });
 test('FIX C: CSV action and annual cashflow summary are connected to development entrypoints',()=>{
