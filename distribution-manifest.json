@@ -209,13 +209,13 @@
     },
     {
       "name": "mortality-itemized-ui.mjs",
-      "size": 6786,
-      "sha256": "ad418121fb8d97d2d7f086881838647bf21adf9e205b2fedc906071a531754bc"
+      "size": 8175,
+      "sha256": "e06af8a5ef0556b854bb87b3684e76a5ab1baa47e2a5080098c4a1750d0fdf48"
     },
     {
       "name": "mortality-itemized.mjs",
-      "size": 7086,
-      "sha256": "2c2fca8525fe011894a244c96745b9f431fd5f0db7385c0de1b08bf7340c627c"
+      "size": 7333,
+      "sha256": "e539529831d8886b9b0e0e3e00ef769d390a246686618926b895bd26180fcf2b"
     },
     {
       "name": "mortality-preview.mjs",
@@ -314,8 +314,8 @@
     },
     {
       "name": "styles.css",
-      "size": 32012,
-      "sha256": "7608fcd650acbf750dd2ea01ff83a134ffe42f540cf82681a7f9a051f0089798"
+      "size": 32284,
+      "sha256": "3858e5b4e0c2d9f98462e303f8e14d7bc0411ce540cf235c09526f42374da10a"
     },
     {
       "name": "sw.js",
