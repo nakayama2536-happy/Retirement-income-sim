@@ -13,5 +13,5 @@ test('外部モジュール参照を拒否',()=>clone(src=>{fs.appendFileSync(pa
 test('HTML未梱包参照を拒否',()=>clone(src=>{fs.appendFileSync(path.join(src,'index.html'),'<script src="private.js"></script>');assert.throws(()=>collect(src));}));
 test('シンボリックリンク参照を拒否',()=>clone(src=>{fs.renameSync(path.join(src,'calc.mjs'),path.join(src,'calc-copy.mjs'));fs.symlinkSync('calc-copy.mjs',path.join(src,'calc.mjs'));assert.throws(()=>collect(src));}));
 test('既存出力を上書きしない',()=>clone((src,tmp)=>assert.throws(()=>build(src,tmp))));
-test('manifestのサイズと全体SHAを照合',()=>{const {out}=collect(root);const m=JSON.parse(out.get('distribution-manifest.json'));assert.equal(m.files.length,74);for(const f of m.files){assert.equal(f.size,out.get(f.name).length);assert.equal(f.sha256,crypto.createHash('sha256').update(out.get(f.name)).digest('hex'));}});
+test('manifestのサイズと全体SHAを照合',()=>{const {out}=collect(root);const m=JSON.parse(out.get('distribution-manifest.json'));assert.equal(m.files.length,76);for(const f of m.files){assert.equal(f.size,out.get(f.name).length);assert.equal(f.sha256,crypto.createHash('sha256').update(out.get(f.name)).digest('hex'));}});
 test('梱包前失敗時に出力を作らない',()=>clone((src,tmp)=>{fs.appendFileSync(path.join(src,'app.mjs'),'\n'+ 'ghp_'+'x'.repeat(30));const dest=path.join(tmp,'out');assert.throws(()=>build(src,dest));assert.equal(fs.existsSync(dest),false);}));
