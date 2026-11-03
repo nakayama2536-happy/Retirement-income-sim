@@ -13,7 +13,7 @@ export function mountMortalityItemizedControls(root,{getConfig,runPlan,onChange}
   if(!host)return null; // legacy synthetic DOM harness lacks HTML parser
   const select=root.querySelector('#mortalityExpenseSource'),remain=root.querySelector('#mortalityRemainderFactor');
   const status=root.querySelector('#mortalityItemState'),dateInput=root.querySelector('#mortalityForm').elements.deathMonth;
-  let model=null,savedFactors={};
+  let model=null,savedFactors={},lastDeceased=root.querySelector('#mortalityForm').elements.deceased.value;
   function read(){
     if(!model)throw Error('費目別の元データが確認できていません');
     const factors={};
@@ -33,6 +33,8 @@ export function mountMortalityItemizedControls(root,{getConfig,runPlan,onChange}
     }catch(e){status.textContent='倍率の確認：'+e.message;}
   }
   function refresh({takeCurrent=true}={}){
+    const deceased=root.querySelector('#mortalityForm').elements.deceased.value;
+    if(deceased!==lastDeceased){savedFactors={};lastDeceased=deceased;takeCurrent=false;}
     if(takeCurrent)for(const input of host.querySelectorAll('[data-mortality-itemfactor]'))savedFactors[input.dataset.mortalityItemfactor]=input.value;
     host.replaceChildren();model=null;
     root.querySelector('#mortalityRemainderAmount').textContent='未計算';
@@ -41,8 +43,9 @@ export function mountMortalityItemizedControls(root,{getConfig,runPlan,onChange}
     if(!cfg){status.textContent='現在の設定を読み込んでください。';return;}
     try{
       const plan=runPlan(cfg,{includeMonthlyDetails:true});
-      const preset=readMortalityExpensePreset(cfg);
-      select.value=preset?.sourceProfile||'work-v0.9.7';
+      const registered=readMortalityExpensePreset(cfg);
+      const preset=registered?.deceased===deceased?registered:null;
+      select.value=registered?.sourceProfile||'work-v0.9.7';
       model=inspectMortalityExpenseBudget(cfg,plan.monthlyDetails,{sourceProfile:select.value});
       const month=model.months.find(m=>dateInput.value&&m.month>dateInput.value)||
         model.months.find(m=>m.expense>0)||model.months[0];
