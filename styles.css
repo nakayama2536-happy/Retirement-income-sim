@@ -264,3 +264,8 @@
 /* One-off expense checkbox stays beside its text and spans the complete form width. */
 .detail-form[data-detail-kind='event'] .form-grid>.detail-checkbox-row{grid-column:1/-1;display:flex;flex-direction:row;align-items:center;justify-content:flex-start;gap:10px;min-width:0;line-height:1.5;overflow-wrap:anywhere}
 .detail-form[data-detail-kind='event'] .form-grid>.detail-checkbox-row>input[type='checkbox']{flex:0 0 18px;width:18px;height:18px;min-width:18px;margin:0;padding:0}
+
+/* Budget tab: travel allowance is read-only, not an extra expense. */
+.budget-travel-values{display:grid;grid-template-columns:minmax(170px,1fr) minmax(110px,1fr);gap:9px 14px;margin:12px 0}
+.budget-travel-values dt{font-weight:600}.budget-travel-values dd{margin:0;text-align:right;font-variant-numeric:tabular-nums}
+@media(max-width:600px){.budget-travel-values{grid-template-columns:minmax(0,1fr) auto;gap:9px}.budget-travel-values dd{overflow-wrap:anywhere}}
