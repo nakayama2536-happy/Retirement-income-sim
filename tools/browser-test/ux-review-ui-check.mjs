@@ -31,7 +31,7 @@ try{
  await context.addInitScript(seed=>{if(localStorage.getItem('lifeplan-sim-state-v1')===null)localStorage.setItem('lifeplan-sim-state-v1',JSON.stringify(seed));},fixture);
  const page=await context.newPage();page.on('pageerror',e=>errors.push(e.message));
  const snapshot=()=>page.evaluate(()=>JSON.parse(localStorage.getItem('lifeplan-sim-state-v1')));
- const openTab=async(group,tab)=>{await page.locator(`[data-group="${group}"]`).click();await page.locator(`[data-tab="${tab}"]`).click();};
+ const openTab=async(group,tab)=>{await page.locator(`[data-group="${group}"]`).click();if(group===tab){await page.locator(`#${tab}`).waitFor({state:'visible'});return;}await page.locator(`[data-tab="${tab}"]`).click();};
  await page.goto(origin,{waitUntil:'networkidle'});await page.locator('#dashboard').waitFor({state:'visible'});
  const before=await snapshot(),beforeEnd=before.config.plan.endAge;
  assert.equal(beforeEnd,95);
