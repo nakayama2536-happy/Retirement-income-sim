@@ -158,7 +158,7 @@ try{
  await openTab('expense','expenses');
  assert.match(await page.locator('#expensesPriceBase').innerText(),/2044年1月/);
  assert.match(await page.locator('#expensesPriceBase').innerText(),/従来方式/);
- await openTab('expense','budget');
+ await openTab('budget','budget');
  assert.match(await page.locator('#budgetPriceBase').innerText(),/2044年1月/);
  const periodForm=page.locator('#periodEditForm');
  const periodDetails=periodForm.locator('xpath=ancestor::details[1]');
