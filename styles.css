@@ -140,6 +140,11 @@
 .mortality-item-row strong{white-space:normal}
 .mortality-item-head{background:#f0f4f8}
 .mortality-remainder-row{background:#fff8e9}
+.mortality-total-row{font-weight:600;background:#f3f6fa;border-top:2px solid #b6c8d8}
+.mortality-total-remainder{background:#fff8e9;font-weight:500;border-top:1px solid #eadcc3}
+.mortality-total-budget{background:#e7f1f8;border-top:2px solid #8ba9bc}
+.mortality-total-row .mortality-total-impact{font-variant-numeric:tabular-nums}
+
 .pension-component-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
 .pension-component-grid label{display:flex;flex-direction:column;gap:5px}
 .pension-component-grid label>span{min-height:2.6rem}

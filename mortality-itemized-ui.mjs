@@ -15,6 +15,30 @@ export function registeredMonthlyAmount(item,month){
   return null; // Unsupported price bases are not guessed.
 }
 const moneyText=value=>value===null?'未確認':Number(value).toLocaleString('ja-JP',{minimumFractionDigits:2,maximumFractionDigits:2})+'万円';
+/** Display totals use the exact unrounded monthly engine amounts, never the rounded labels. */
+export function mortalityItemizedTotals(items,month,factors,unallocatedFactor){
+  if(!Array.isArray(items)||!month||typeof month.expense!=='number'||typeof month.unallocated!=='number')throw Error('費目内訳を確認してください');
+  const required=n=>typeof n==='number'&&Number.isFinite(n)&&n>=0&&n<=3;
+  if(!required(unallocatedFactor))throw Error('未照合予算倍率を確認してください');
+  let base=0,baseComplete=true,priced=0,after=0;
+  for(const item of items){
+    const amount=month.amounts[item.id]??0;
+    if(typeof amount!=='number'||!Number.isFinite(amount)||amount<0)throw Error('費目金額を確認してください');
+    const factor=factors[item.id];
+    if(!required(factor))throw Error('費目別倍率を確認してください');
+    priced+=amount;
+    after+=amount*factor;
+    if(amount!==0){
+      const registered=registeredMonthlyAmount(item,month);
+      if(registered===null)baseComplete=false;
+      else base+=registered;
+    }
+  }
+  const remainder=month.unallocated;
+  if(Math.abs(priced+remainder-month.expense)>1e-6*Math.max(1,month.expense))throw Error('管理予算と費目合計が一致しません');
+  return {base:baseComplete?base:null,priced,after,remainder,remainderAfter:remainder*unallocatedFactor,fullBefore:month.expense,fullAfter:after+remainder*unallocatedFactor};
+}
+
 const val=(input,name)=>{
   if(!input||input.value.trim()===''||!/^(?:\d+\.?\d*|\.\d+)$/.test(input.value.trim()))throw Error(name+'の倍率を入力してください（空欄は0ではありません）');
   const n=Number(input.value);if(!Number.isFinite(n)||n<0||n>3)throw Error(name+'の倍率は0～3倍です');
@@ -40,9 +64,24 @@ export function mountMortalityItemizedControls(root,{getConfig,runPlan,onChange}
       const f=read();
       const next=model.months.find(m=>dateInput.value&&m.month>dateInput.value)||
         model.months.find(m=>m.expense>0)||model.months[0];
-      const revised=Object.entries(next.amounts).reduce((s,[id,n])=>s+n*f.factors[id],next.unallocated*f.unallocatedFactor);
+      const totals=mortalityItemizedTotals(model.items,next,f.factors,f.unallocatedFactor);
+      const revised=totals.fullAfter;
+      const totalCells=host.querySelectorAll('[data-mortality-total]');
+      for(const cell of totalCells){
+        const kind=cell.dataset.mortalityTotal;
+        cell.textContent=kind==='named-base'?moneyText(totals.base):
+          kind==='named-priced'?moneyText(totals.priced):
+          kind==='named-after'?moneyText(totals.after):
+          kind==='remainder-priced'?moneyText(totals.remainder):
+          kind==='remainder-after'?moneyText(totals.remainderAfter):
+          kind==='budget-priced'?moneyText(totals.fullBefore):
+          kind==='budget-after'?moneyText(totals.fullAfter):'—';
+      }
       status.textContent='参考年月 '+next.month+'：夫婦健在時 '+format(next.expense)+'万円／月 − 減額 '+format(next.expense-revised)+'万円 ＝ 比較後 '+format(revised)+'万円。未照合残額 '+format(next.unallocated)+'万円にも倍率を適用します。';
-    }catch(e){status.textContent='倍率の確認：'+e.message;}
+    }catch(e){
+      for(const cell of host.querySelectorAll('[data-mortality-total]'))cell.textContent='未計算';
+      status.textContent='倍率の確認：'+e.message;
+    }
   }
   function refresh({takeCurrent=true}={}){
     const deceased=root.querySelector('#mortalityForm').elements.deceased.value;
@@ -84,8 +123,24 @@ export function mountMortalityItemizedControls(root,{getConfig,runPlan,onChange}
         });
         host.append(row);
       }
+      // Named items, unallocated management-budget remainder, and complete
+      // management-budget total are separated so the remainder is never counted twice.
+      const addTotal=(caption,baseKey,pricedKey,afterKey,kind)=>{
+        const row=el('div','mortality-item-row mortality-total-row mortality-total-'+kind);
+        const cells=[el('strong','',caption),el('span',''),el('span',''),el('span','','')];
+        cells[1].dataset.mortalityTotal=baseKey;
+        cells[2].dataset.mortalityTotal=pricedKey;
+        const impact=el('strong','mortality-total-impact');impact.dataset.mortalityTotal=afterKey;
+        const parts=[cells[0],cells[1],cells[2],cells[3],impact];
+        for(let i=0;i<parts.length;i++)parts[i].dataset.mortalityColumn=labels[i];
+        cells[3].textContent='—';
+        row.append(...parts);host.append(row);
+      };
+      addTotal('個別費目の合計','named-base','named-priced','named-after','named');
+      addTotal('未照合の管理予算残額',null,'remainder-priced','remainder-after','remainder');
+      addTotal('管理予算全体の合計',null,'budget-priced','budget-after','budget');
       root.querySelector('#mortalityRemainderAmount').textContent=format(month.unallocated)+'万円／月';
-      root.querySelector('#mortalityItemSourceNote').textContent='登録月額は各年齢期の設定額、'+month.month+'は計画の物価基準を用いた月額です。死亡後の概算額は物価換算後の金額に倍率を乗じます。登録月額が未確認の場合は推定しません。'+(preset?'保存済みの万一の倍率を初期値に使用（試算専用）。':'既定倍率1.0を使用（試算専用）。')+(model.unidentifiedItemCount?'識別情報がない費目 '+model.unidentifiedItemCount+'件は個別倍率の対象にせず、未照合予算残額として扱います。':'')+'未確認費用は予算残額に含みます。';
+      root.querySelector('#mortalityItemSourceNote').textContent='合計は丸める前の月次金額から算出します。「個別費目の合計」に「未照合の管理予算残額」を加えた値が「管理予算全体の合計」です。登録月額は各年齢期の設定額、'+month.month+'は計画の物価基準を用いた月額です。死亡後の概算額は物価換算後の金額に倍率を乗じます。登録月額が未確認の場合は推定しません。'+(preset?'保存済みの万一の倍率を初期値に使用（試算専用）。':'既定倍率1.0を使用（試算専用）。')+(model.unidentifiedItemCount?'識別情報がない費目 '+model.unidentifiedItemCount+'件は個別倍率の対象にせず、未照合予算残額として扱います。':'')+'未確認費用は予算残額に含みます。';
       factorText();
     }catch(e){status.textContent='費目の取込みを確認してください：'+e.message;root.querySelector('#mortalityItemSourceNote').textContent='内訳の出典・管理予算との整合を確認するまで比較を停止します。';}
   }
