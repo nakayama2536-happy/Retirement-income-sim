@@ -203,9 +203,14 @@
       "sha256": "731d4fea9af40340653d40e103ffeb776a1839128ef3d6c365ddd56a71d255e9"
     },
     {
+      "name": "mortality-expense-preset.mjs",
+      "size": 1484,
+      "sha256": "312c7e102fb16b03e4757899dfb73dde1ba9a6874f30b6e9c436b320d4c857d2"
+    },
+    {
       "name": "mortality-itemized-ui.mjs",
-      "size": 5827,
-      "sha256": "2e93bb73f8683d804c4f31da97c0c8763b6b605fdabe7b0afbda551be0ff70cf"
+      "size": 6364,
+      "sha256": "68a1a8fba28a037b3f236b89cc808f1099c5e3255dd59a53da6218a64ca867e4"
     },
     {
       "name": "mortality-itemized.mjs",
@@ -219,8 +224,8 @@
     },
     {
       "name": "mortality-ui.mjs",
-      "size": 53099,
-      "sha256": "00ed1fec0cabeca918b078b0031cb1e040b78b0fe5add9e3bd240683750c8175"
+      "size": 53243,
+      "sha256": "13faecf01969ebdd1610020cfd38bf678c9ea6e5904ee9f300ce020881391104"
     },
     {
       "name": "pension-estimate.mjs",
