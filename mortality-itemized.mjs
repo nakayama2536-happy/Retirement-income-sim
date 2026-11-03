@@ -74,13 +74,15 @@ export function inspectMortalityExpenseBudget(config,monthlyRows,{sourceProfile=
       const item=trace?.months[i]?.details?.length?null:null;
       if(!labels.has(id))labels.set(id,id);
     }
-    return {month:r.month,expense:total,known,unallocated:residual,amounts};
+    return {month:r.month,expense:total,known,unallocated:residual,amounts,priceFactor:r.budget?.priceFactor??null};
   });
   if(trace){
     const view=inspectCashflowSources(config,{sourceProfile:profile});
     for(const item of view.items||[])if(labels.has(item.itemId))labels.set(item.itemId,String(item.label||item.itemId));
   }
-  const items=[...labels].map(([id,label])=>({id,label})).sort((a,b)=>a.label.localeCompare(b.label,'ja'));
+  const sourceItems=trace?inspectCashflowSources(config,{sourceProfile:profile}).items:[];
+  const basisById=new Map(sourceItems.map(item=>[item.itemId,item.priceBasis]));
+  const items=[...labels].map(([id,label])=>({id,label,priceBasis:basisById.get(id)??null})).sort((a,b)=>a.label.localeCompare(b.label,'ja'));
   return {sourceProfile:profile,items,months:monthRows,unidentifiedItemCount:unnamed.length};
 }
 export function applyMortalityExpenseMultipliers(monthlyRows,budget,{factors={},unallocatedFactor=1}={}){
