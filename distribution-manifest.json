@@ -99,8 +99,8 @@
     },
     {
       "name": "docs/USER_GUIDE.md",
-      "size": 46457,
-      "sha256": "378e950d3992021dd1b3706e7f2152a1bd325519e12043b1140011f89c7cf189"
+      "size": 48574,
+      "sha256": "fb8c53988fc1c87d37e9f8b0aed2bc4c74fc48ab196f5e08da975ea07254b152"
     },
     {
       "name": "expense-display.mjs",
@@ -174,8 +174,8 @@
     },
     {
       "name": "index.html",
-      "size": 70291,
-      "sha256": "28aca3d777491971b8ec5aa1d23359e2294d419375f2c8bf440ca820c88633c4"
+      "size": 70895,
+      "sha256": "ebdf38bbdfca7797b797ba7780c42ae46e629dbdaeaed7a9ba7a7354c176c642"
     },
     {
       "name": "manifest.webmanifest",
