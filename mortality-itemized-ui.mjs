@@ -1,5 +1,6 @@
 /** H-MORT-07 item-by-item expense UI. Read-only references, no adopted writes. */
 import {inspectMortalityExpenseBudget} from './mortality-itemized.mjs';
+import {readMortalityExpensePreset,mortalityFactorForItem} from './mortality-expense-preset.mjs';
 const format=n=>Number(n).toLocaleString('ja-JP',{maximumFractionDigits:2});
 const el=(tag,cls='',t='')=>{const x=document.createElement(tag);if(cls)x.className=cls;if(t)x.textContent=t;return x;};
 const val=(input,name)=>{
@@ -12,7 +13,7 @@ export function mountMortalityItemizedControls(root,{getConfig,runPlan,onChange}
   if(!host)return null; // legacy synthetic DOM harness lacks HTML parser
   const select=root.querySelector('#mortalityExpenseSource'),remain=root.querySelector('#mortalityRemainderFactor');
   const status=root.querySelector('#mortalityItemState'),dateInput=root.querySelector('#mortalityForm').elements.deathMonth;
-  let model=null,savedFactors={};
+  let model=null,savedFactors={},lastDeceased=root.querySelector('#mortalityForm').elements.deceased.value;
   function read(){
     if(!model)throw Error('費目別の元データが確認できていません');
     const factors={};
@@ -32,6 +33,8 @@ export function mountMortalityItemizedControls(root,{getConfig,runPlan,onChange}
     }catch(e){status.textContent='倍率の確認：'+e.message;}
   }
   function refresh({takeCurrent=true}={}){
+    const deceased=root.querySelector('#mortalityForm').elements.deceased.value;
+    if(deceased!==lastDeceased){savedFactors={};lastDeceased=deceased;takeCurrent=false;}
     if(takeCurrent)for(const input of host.querySelectorAll('[data-mortality-itemfactor]'))savedFactors[input.dataset.mortalityItemfactor]=input.value;
     host.replaceChildren();model=null;
     root.querySelector('#mortalityRemainderAmount').textContent='未計算';
@@ -40,8 +43,10 @@ export function mountMortalityItemizedControls(root,{getConfig,runPlan,onChange}
     if(!cfg){status.textContent='現在の設定を読み込んでください。';return;}
     try{
       const plan=runPlan(cfg,{includeMonthlyDetails:true});
-      select.value='work-v0.9.7';
-      model=inspectMortalityExpenseBudget(cfg,plan.monthlyDetails,{sourceProfile:'work-v0.9.7'});
+      const registered=readMortalityExpensePreset(cfg);
+      const preset=registered?.deceased===deceased?registered:null;
+      select.value=registered?.sourceProfile||'work-v0.9.7';
+      model=inspectMortalityExpenseBudget(cfg,plan.monthlyDetails,{sourceProfile:select.value});
       const month=model.months.find(m=>dateInput.value&&m.month>dateInput.value)||
         model.months.find(m=>m.expense>0)||model.months[0];
       const header=el('div','mortality-item-row mortality-item-head');
@@ -51,7 +56,7 @@ export function mountMortalityItemizedControls(root,{getConfig,runPlan,onChange}
         const amount=month.amounts[item.id]||0, row=el('div','mortality-item-row');
         row.dataset.mortalityItem=item.id;
         const field=el('input');field.type='number';field.min='0';field.max='3';field.step='0.05';
-        field.dataset.mortalityItemfactor=item.id;field.value=savedFactors[item.id]??'1.0';
+        field.dataset.mortalityItemfactor=item.id;field.value=savedFactors[item.id]??String(mortalityFactorForItem(preset,item.id));
         field.setAttribute('aria-label',item.label+'の倍率');
         row.append(el('span','',item.label),el('span','',format(amount)+'万円'),field,el('span','mortality-item-impact',format(amount*Number(field.value))+'万円'));
         field.addEventListener('input',()=>{
@@ -62,22 +67,24 @@ export function mountMortalityItemizedControls(root,{getConfig,runPlan,onChange}
         host.append(row);
       }
       root.querySelector('#mortalityRemainderAmount').textContent=format(month.unallocated)+'万円／月';
-      root.querySelector('#mortalityItemSourceNote').textContent='現行形式の登録内訳を使用。'+(model.unidentifiedItemCount?'識別情報がない費目 '+model.unidentifiedItemCount+'件は個別倍率の対象にせず、未照合予算残額として扱います。':'')+'未確認費用は予算残額に含みます。';
+      root.querySelector('#mortalityItemSourceNote').textContent=(preset?'保存済みの万一の倍率を初期値に使用（試算専用）。':'既定倍率1.0を使用（試算専用）。')+(model.unidentifiedItemCount?'識別情報がない費目 '+model.unidentifiedItemCount+'件は個別倍率の対象にせず、未照合予算残額として扱います。':'')+'未確認費用は予算残額に含みます。';
       factorText();
     }catch(e){status.textContent='費目の取込みを確認してください：'+e.message;root.querySelector('#mortalityItemSourceNote').textContent='内訳の出典・管理予算との整合を確認するまで比較を停止します。';}
   }
   function restore(draft){
     if(!draft)return;
     const v=draft.values||{};
-    // Historical draft profile is ignored: only the current format is used.
-    select.value='work-v0.9.7';
+    // A same-config local draft takes precedence over the saved suggestion.
+    select.value=readMortalityExpensePreset(getConfig())?.sourceProfile||'work-v0.9.7';
     if(typeof v.residualFactor==='string')remain.value=v.residualFactor;
     savedFactors={...(draft.factors||{})};
     refresh({takeCurrent:false});
   }
   select.addEventListener('change',()=>{refresh();onChange();});
   remain.addEventListener('input',()=>{factorText();onChange();});
-  function clear(){savedFactors={};select.value='work-v0.9.7';remain.value='1.0';refresh({takeCurrent:false});}
+  function clear(){savedFactors={};const p=readMortalityExpensePreset(getConfig());select.value=p?.sourceProfile||'work-v0.9.7';remain.value=String(p?.unallocatedFactor??1);refresh({takeCurrent:false});}
+  try{remain.value=String(readMortalityExpensePreset(getConfig())?.unallocatedFactor??1);}
+  catch{remain.value='1';} // refresh() reports invalid saved values and blocks the comparison.
   refresh();
   return {read,refresh,restore,clear, factorDraft:()=>{for(const input of host.querySelectorAll('[data-mortality-itemfactor]'))savedFactors[input.dataset.mortalityItemfactor]=input.value;return {...savedFactors};}};
 }

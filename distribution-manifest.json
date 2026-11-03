@@ -34,8 +34,8 @@
     },
     {
       "name": "backup-compatibility.mjs",
-      "size": 7832,
-      "sha256": "1df8f79485e81c113ddcc0e82352cc7de403472328b2028cb2744c11e70a0b27"
+      "size": 8051,
+      "sha256": "034d2e9306583e2c442a786b7b1febf4e719850ac7e900a3bd48cac3f1ab5e2b"
     },
     {
       "name": "calc.mjs",
@@ -203,9 +203,14 @@
       "sha256": "731d4fea9af40340653d40e103ffeb776a1839128ef3d6c365ddd56a71d255e9"
     },
     {
+      "name": "mortality-expense-preset.mjs",
+      "size": 1484,
+      "sha256": "312c7e102fb16b03e4757899dfb73dde1ba9a6874f30b6e9c436b320d4c857d2"
+    },
+    {
       "name": "mortality-itemized-ui.mjs",
-      "size": 5827,
-      "sha256": "2e93bb73f8683d804c4f31da97c0c8763b6b605fdabe7b0afbda551be0ff70cf"
+      "size": 6786,
+      "sha256": "ad418121fb8d97d2d7f086881838647bf21adf9e205b2fedc906071a531754bc"
     },
     {
       "name": "mortality-itemized.mjs",
@@ -219,8 +224,8 @@
     },
     {
       "name": "mortality-ui.mjs",
-      "size": 53099,
-      "sha256": "00ed1fec0cabeca918b078b0031cb1e040b78b0fe5add9e3bd240683750c8175"
+      "size": 53243,
+      "sha256": "13faecf01969ebdd1610020cfd38bf678c9ea6e5904ee9f300ce020881391104"
     },
     {
       "name": "pension-estimate.mjs",
@@ -314,8 +319,8 @@
     },
     {
       "name": "sw.js",
-      "size": 4230,
-      "sha256": "fcdef09c218cb0f06fee3acbfc40719f14f2b3eb37cdd2a937f94a028cc7137c"
+      "size": 4263,
+      "sha256": "39bee0ccbbd0122e839f89642f820acfb3295c21112b3adb75dfd0e0747b99ee"
     },
     {
       "name": "sync-controller.mjs",
