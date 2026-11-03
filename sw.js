@@ -18,6 +18,7 @@ ASSETS.push('./ui-entry-guards.mjs');
 ASSETS.push('./release-info.json');
 ASSETS.push('./mortality-preview.mjs','./mortality-comparison.mjs','./mortality-ui.mjs','./mortality-itemized.mjs','./mortality-itemized-ui.mjs','./mortality-expense-preset.mjs','./mortality-draft.mjs');
 ASSETS.push("./age-budget-ui.mjs","./age-budget-candidate.mjs","./age-budget-preview-export.mjs","./discretionary-travel.mjs");
+ASSETS.push('./travel-budget-summary.mjs','./budget-travel-ui.mjs');
 const URLS=ASSETS.map(path=>new URL(path,SCOPE).href);
 const ALLOWED=new Set(URLS);
 async function requireComplete(cache){
