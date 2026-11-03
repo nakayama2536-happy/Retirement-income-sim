@@ -69,6 +69,7 @@
 </section>
 
 <section id="cashflow" class="panel" hidden><div class="family-lite-back" style="margin:0 0 12px"><button type="button" class="link-btn" data-open-tab="home" aria-label="将来のお金の見通しへ戻る">← ホームに戻る</button></div><div class="home-result-lead"><h2>年齢ごとの収入・支出</h2><p>まずは下の「1年ごとの収入と支出のまとめ」を見て、家計が変わる年齢を探しましょう。</p><p class="muted">この画面を見る・表示を切り替える・CSVを出力する操作では、現在の計画は変わりません。</p></div><details class="card home-explanation" id="cashflowReadingGuide"><summary><strong>収入と支出の表の見方</strong></summary><p>気になる年齢が見つかったら、その年の収入・支出の内訳を確認できます。金額は万円単位です。</p><p class="muted">生活費の内訳は支出合計に含まれています。NISAの売却・振替など、資産内でお金を移動するだけの取引は収入に重複して数えません。</p></details>
+<details id="age65IncomeAuditCard" class="card home-explanation"><summary><strong>65歳の収入が多い理由・受取条件を確認</strong></summary><div id="age65IncomeAudit" role="region" aria-label="65歳期の収入内訳と確認事項"></div></details>
 <article class="card"><div class="section-title"><h2>1年ごとの収入と支出のまとめ</h2><button class="info" data-help="年間収支サマリー" data-help-text="資産推移と同じ月次計算を年齢期ごとに集計します。管理予算が支出の正本です。生活費内訳、家計内振替、税社会保険参考額、iDeCo掛金を合計へ重ねません。">ⓘ</button></div><div id="annualCashflowSummary" class="summary-box"></div><button id="exportAnnualCsvBtn" type="button" class="secondary">この収支の一覧をCSVで保存</button><p class="muted">さらに詳しい金額は「詳しい計算結果・保存」で確認できます。ここでは現在設定を年齢期ごとに出力します。未確定値は0円にせず空欄にし、状態列と未確定月数を残します。</p></article>
 
 

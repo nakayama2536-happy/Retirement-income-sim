@@ -187,7 +187,7 @@ function refresh({calculated=null}={}) {
   } catch (e) { showNotice(e.message, 'error'); return; }
   el('emptyState').hidden = true;
   el('dashboard').hidden = false;
-  renderHome(); renderExpenseDetail(); renderYearTable(); renderActuals(); renderAnnualReview(); renderScenarios(); renderSettings(); renderRules(); drawChart(); renderTimeline(); renderCertainty(); renderFactors(); renderIntegrity(); renderCalculationBasis();
+  renderHome(); renderExpenseDetail(); renderYearTable(); renderAge65IncomeAudit(); renderActuals(); renderAnnualReview(); renderScenarios(); renderSettings(); renderRules(); drawChart(); renderTimeline(); renderCertainty(); renderFactors(); renderIntegrity(); renderCalculationBasis();
   pensionSheet.render();
   salarySheet.render();
   calendarSheet.render();
@@ -435,6 +435,45 @@ function renderPending() {
   const items = derivePending();
   el('pendingCount').textContent = `${items.length}件`;
   el('pendingList').innerHTML = items.map(i=>`<article class="pending-item"><span class="pending-type">${escapeHtml(i.type)}</span><div><strong>${escapeHtml(i.title)}</strong><p>${escapeHtml(i.reason)}</p>${i.limitation?`<p>${escapeHtml(i.limitation)}</p>`:''}${i.action?`<button type="button" class="link-btn" data-open-tab="${i.action.tab}" data-focus-target="${i.action.target}">${i.action.label}</button>`:''}</div></article>`).join('') || '<p>現在、保留事項はありません。</p>';
+}
+
+function renderAge65IncomeAudit(){
+  const container=el('age65IncomeAudit');
+  if(!container || !result) return;
+  const row=result.rows.find(r=>r.age===65);
+  if(!row){
+    container.textContent='現在の計画に65歳期が含まれていないため、内訳は表示できません。';
+    return;
+  }
+  const events=Array.isArray(row.events)?row.events:[];
+  const sumDetail=label=>events.filter(e=>e?.label===label).reduce((v,e)=>v+(Number(e.amount)||0),0);
+  const idecoLump=sumDetail('iDeCo/DC一時金（資産計上額）');
+  const taxReference=-sumDetail('iDeCo/DC一時金税額（現行制度参考）');
+  const other=Number(row.extraIncome||0)-idecoLump;
+  const parts=[
+    ['労働収入（本人・配偶者合計）',Number(row.labor||0)],
+    ['公的年金',Number(row.pension||0)],
+    ['iDeCo年金',Number(row.idecoAnnuity||0)],
+    ['雇用保険給付（受取予定）',Number(row.unemployment||0)],
+    ['iDeCo一時金（資産計上額）',idecoLump],
+    ['その他の臨時・追加収入',other]
+  ];
+  const total=Number(row.totalIncome||0);
+  const actual=parts.reduce((v,[,n])=>v+n,0);
+  const checked=Math.abs(actual-total)<1e-6;
+  container.innerHTML=`<p class="muted">現在の採用済み条件を、65歳期の収入として分類した参考表示です。閲覧・確認だけでは設定や計算結果は変わりません。</p>
+  <div class="table-wrap"><table><thead><tr><th>収入の区分</th><th>65歳期の計上額（万円）</th></tr></thead><tbody>
+  ${parts.map(([name,amount])=>`<tr><td>${name}</td><td>${formatMan(amount)}</td></tr>`).join('')}
+  <tr><th scope="row">収入合計</th><th>${formatMan(total)}</th></tr></tbody></table></div>
+  <p class="muted" role="status">内訳と収入合計の照合：${checked?'一致':'不一致（設定・明細を確認してください）'}。iDeCo一時金の税額参考：${taxReference>0?formatMan(taxReference)+'万円（税引前一時金に対する概算控除）':'適用・計上が未確認、または0万円'}。</p>
+  <details><summary>計上条件と制度上の注意点</summary>
+  <p><strong>65歳より前：</strong>給与で生活費を賄い、計画資産の純入出金として管理する方式では、給与額が収入合計に出ない期間があります。実際の給与が0円だった意味ではありません。</p>
+  <p><strong>開始資産とiDeCo：</strong>iDeCoを開始資産に含めていない場合に限り、その受取額を資産へ追加する取扱いが整合します。開始資産の内訳はこの画面で自動確認できません。</p>
+  <p><strong>雇用保険：</strong>表示額は受取予定であり支給確定ではありません。離職時年齢、被保険者期間、求職する意思と能力、認定時期、離職後の就労状況を確認してください。65歳期の労働収入との併記だけで受給可否は判定できません。</p>
+  <p><strong>労働収入：</strong>本人・配偶者の採用済み就労条件による計上額です。税引前登録額と資産への入金額の取扱いを確認してください。就労予定が未確定なら仮定です。</p>
+  <p><strong>iDeCo税額：</strong>一時金の税額は退職金との受取順序・時期・加入期間等による参考計算です。iDeCo年金への所得税・社会保険料の精密計算は含みません。</p>
+  <p><button type="button" class="link-btn" data-open-tab="salary">給与生活の区切りを確認</button> <button type="button" class="link-btn" data-open-tab="unemployment">雇用保険の条件を確認</button> <button type="button" class="link-btn" data-open-tab="ideco">iDeCo受取を確認</button></p>
+  </details>`;
 }
 
 function renderYearTable() {
