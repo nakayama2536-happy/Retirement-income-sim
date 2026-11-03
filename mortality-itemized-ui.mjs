@@ -3,6 +3,18 @@ import {inspectMortalityExpenseBudget} from './mortality-itemized.mjs';
 import {readMortalityExpensePreset,mortalityFactorForItem} from './mortality-expense-preset.mjs';
 const format=n=>Number(n).toLocaleString('ja-JP',{maximumFractionDigits:2});
 const el=(tag,cls='',t='')=>{const x=document.createElement(tag);if(cls)x.className=cls;if(t)x.textContent=t;return x;};
+/** Convert a price-adjusted amount back to its configured, age-specific base amount. */
+export function registeredMonthlyAmount(item,month){
+  const amount=month?.amounts?.[item?.id];
+  if(typeof amount!=='number'||!Number.isFinite(amount)||amount<0)return null;
+  if(item.priceBasis==='plan-start-base'){
+    const factor=month?.priceFactor;
+    return typeof factor==='number'&&Number.isFinite(factor)&&factor>0?amount/factor:null;
+  }
+  if(item.priceBasis==='nominal-fixed'||item.priceBasis==='target-period-nominal')return amount;
+  return null; // Unsupported price bases are not guessed.
+}
+const moneyText=value=>value===null?'未確認':format(value)+'万円';
 const val=(input,name)=>{
   if(!input||input.value.trim()===''||!/^(?:\d+\.?\d*|\.\d+)$/.test(input.value.trim()))throw Error(name+'の倍率を入力してください（空欄は0ではありません）');
   const n=Number(input.value);if(!Number.isFinite(n)||n<0||n>3)throw Error(name+'の倍率は0～3倍です');
@@ -50,7 +62,8 @@ export function mountMortalityItemizedControls(root,{getConfig,runPlan,onChange}
       const month=model.months.find(m=>dateInput.value&&m.month>dateInput.value)||
         model.months.find(m=>m.expense>0)||model.months[0];
       const header=el('div','mortality-item-row mortality-item-head');
-      for(const h of ['登録済み費目','夫婦健在（月額）','万一の後の倍率','万一の後の概算額'])header.append(el('strong','',h));
+      const labels=['登録済み費目','登録月額（基準額）',month.month+' の月額（物価反映後）','万一の後の倍率','万一の後の概算額'];
+      for(const h of labels)header.append(el('strong','',h));
       host.append(header);
       for(const item of model.items){
         const amount=month.amounts[item.id]||0, row=el('div','mortality-item-row');
@@ -58,7 +71,12 @@ export function mountMortalityItemizedControls(root,{getConfig,runPlan,onChange}
         const field=el('input');field.type='number';field.min='0';field.max='3';field.step='0.05';
         field.dataset.mortalityItemfactor=item.id;field.value=savedFactors[item.id]??String(mortalityFactorForItem(preset,item.id));
         field.setAttribute('aria-label',item.label+'の倍率');
-        row.append(el('span','',item.label),el('span','',format(amount)+'万円'),field,el('span','mortality-item-impact',format(amount*Number(field.value))+'万円'));
+        const base=registeredMonthlyAmount(item,month);
+        const cells=[el('span','',item.label),el('span','',moneyText(base)),el('span','',moneyText(amount))];
+        for(let i=0;i<cells.length;i++)cells[i].dataset.mortalityColumn=labels[i];
+        const factorCell=el('span','mortality-item-factor');factorCell.dataset.mortalityColumn=labels[3];factorCell.append(field);
+        const impact=el('span','mortality-item-impact',format(amount*Number(field.value))+'万円');impact.dataset.mortalityColumn=labels[4];
+        row.append(...cells,factorCell,impact);
         field.addEventListener('input',()=>{
           savedFactors[item.id]=field.value;
           row.lastElementChild.textContent=Number.isFinite(Number(field.value))?format(amount*Number(field.value))+'万円':'未計算';
@@ -67,7 +85,7 @@ export function mountMortalityItemizedControls(root,{getConfig,runPlan,onChange}
         host.append(row);
       }
       root.querySelector('#mortalityRemainderAmount').textContent=format(month.unallocated)+'万円／月';
-      root.querySelector('#mortalityItemSourceNote').textContent=(preset?'保存済みの万一の倍率を初期値に使用（試算専用）。':'既定倍率1.0を使用（試算専用）。')+(model.unidentifiedItemCount?'識別情報がない費目 '+model.unidentifiedItemCount+'件は個別倍率の対象にせず、未照合予算残額として扱います。':'')+'未確認費用は予算残額に含みます。';
+      root.querySelector('#mortalityItemSourceNote').textContent='登録月額は各年齢期の設定額、'+month.month+'は計画の物価基準を用いた月額です。死亡後の概算額は物価換算後の金額に倍率を乗じます。登録月額が未確認の場合は推定しません。'+(preset?'保存済みの万一の倍率を初期値に使用（試算専用）。':'既定倍率1.0を使用（試算専用）。')+(model.unidentifiedItemCount?'識別情報がない費目 '+model.unidentifiedItemCount+'件は個別倍率の対象にせず、未照合予算残額として扱います。':'')+'未確認費用は予算残額に含みます。';
       factorText();
     }catch(e){status.textContent='費目の取込みを確認してください：'+e.message;root.querySelector('#mortalityItemSourceNote').textContent='内訳の出典・管理予算との整合を確認するまで比較を停止します。';}
   }
