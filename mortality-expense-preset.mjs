@@ -17,10 +17,11 @@ export function readMortalityExpensePreset(config){
 }
 export function mortalityFactorForItem(preset,itemId){
   if(!preset)return 1;
-  const match=String(itemId).match(/(?:^|\\/)key:([^/]+)$/);
-  if(!match)return 1;
+  const token=String(itemId);
+  const at=token.lastIndexOf('/key:');
+  if(at<0)return 1;
   let key;
-  try{key=decodeURIComponent(match[1]);}catch{return 1;}
+  try{key=decodeURIComponent(token.slice(at+5));}catch{return 1;}
   const value=preset.factorsByItemKey[key];
   return value===undefined?1:value;
 }
