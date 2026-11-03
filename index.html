@@ -33,6 +33,16 @@
 </section>
 <div id="dashboard" hidden>
 <section id="home" class="panel"><div class="home-result-lead"><h2>将来のお金の見通し</h2><p>まずは将来の資産額を確認しましょう。次に、下のグラフで途中の増減を見られます。</p><p class="muted">金額は現在の設定に基づく予測です。この画面を見るだけでは、計画は変わりません。</p></div>
+<nav class="card" aria-label="家族向けのかんたん操作" style="padding:16px 18px;border-left:4px solid #ce784c">
+<h2 style="margin:0 0 4px;font-size:1.12rem">今日は何を確認しますか？</h2>
+<p class="muted" style="margin:0 0 14px">見るだけでは現在の計画や保存データは変わりません。</p>
+<div class="family-lite-links" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,220px),1fr));gap:10px">
+<button type="button" class="secondary" data-open-tab="cashflow" style="min-height:56px;text-align:left;padding:12px 16px;white-space:normal"><strong>生活費を確認する</strong><small style="display:block">何歳で、いくら使う？</small></button>
+<button type="button" class="secondary" data-open-tab="mortality" style="min-height:56px;text-align:left;padding:12px 16px;white-space:normal"><strong>もしものときに備える</strong><small style="display:block">一人になった場合は？</small></button>
+<button type="button" class="secondary" data-open-tab="budget" style="min-height:56px;text-align:left;padding:12px 16px;white-space:normal"><strong>生活費を変えて試す</strong><small style="display:block">試算と保存は別の操作です</small></button>
+</div>
+<details style="margin-top:12px"><summary>詳しい設定・保存について</summary><p class="muted">収入・支出・バックアップは画面上部のメニューから操作できます。「変更後の結果を確認」は未反映の試算です。現在の計画を変更する場合のみ、内容を確認して「反映」を選んでください。</p></details>
+</nav>
 <div class="hero-grid">
 <article class="card target-overview"><h2 id="targetStatusLabel">最終年齢末のお金</h2><small id="simulationPeriod" class="home-plan-range" hidden></small><div class="target-metrics"><div><span id="finalTargetLabel">目標資産額</span><strong id="finalThreshold"></strong></div><div><span id="finalPredictionLabel">予測資産額</span><strong id="finalAsset"></strong></div><div><span id="finalMarginLabel">目標より多い・少ない金額</span><strong id="finalMargin"></strong></div></div><p class="home-goal-status">目標との比較：<strong id="status"></strong></p><small id="targetStatusNote"></small><button class="link-btn" data-open-tab="settings" data-focus-target="detail-goal">目標額を変更する</button></article>
 <article class="card"><span id="initialAssetLabel">63歳期末想定資産</span><strong id="currentAsset"></strong><small id="initialAssetHelp">64歳期の計算開始残高として登録した計画値です。</small></article>
