@@ -214,8 +214,8 @@
     },
     {
       "name": "mortality-itemized-ui.mjs",
-      "size": 12385,
-      "sha256": "1044e321f00861965050401c703b3a77080cf68a0a8352afe7e876113b2479d6"
+      "size": 12903,
+      "sha256": "0bf705c046f83c55dd2cfb9fd7228d45f257ae03ebca181299a0d1d7e9f66806"
     },
     {
       "name": "mortality-itemized.mjs",
