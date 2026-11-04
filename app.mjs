@@ -8,6 +8,7 @@ import {prepareSavedComparison,comparisonSourceFingerprint} from './full-plan-sa
 import {createConfigBackup} from './backup-compatibility.mjs';
 import {mountDetailUI} from './detail-ui.mjs';
 import {mountMortalityComparison} from './mortality-ui.mjs';
+import {mountSurvivorPensionTab} from './survivor-pension-ui.mjs';
 import {dateWithAge,ageOn} from './date-display.mjs';
 import {mountCalendarSheet} from './calendar-ui.mjs';
 import {mountExpenseSheet} from './expense-ui.mjs';
@@ -54,6 +55,7 @@ let forecast = null;
 let showActuals = false;
 let renderedInputValues=new Map();
 const mortalityCard=mountMortalityComparison(document.getElementById('mortalityComparisonContainer'),{getConfig:()=>config,getBaseline:()=>result,runPlan:runRetirementPlan});
+mountSurvivorPensionTab(document.getElementById('survivorPensionContainer'));
 
 function inputValues(){
   return new Map([...document.querySelectorAll('#dashboard input, #dashboard select, #dashboard textarea')]
@@ -1000,7 +1002,7 @@ document.querySelectorAll('[data-help]').forEach(btn=>btn.addEventListener('clic
 }));
 el('helpClose').addEventListener('click',()=>el('helpDialog').close());
 
-const CURRENT_RUNTIME_BUILD='v0.9.33-age-budget-preview-20261103';
+const CURRENT_RUNTIME_BUILD='v0.9.34-survivor-pension-20261104';
 el('appVersion').textContent=CURRENT_RUNTIME_BUILD+'（端末で実行中）';
 const freshness=el('runtimeFreshness');
 (async()=>{

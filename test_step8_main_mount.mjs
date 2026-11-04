@@ -37,12 +37,12 @@ test('offline candidate assets and module dependency closure are included',()=>{
     assert.ok(runtime.includes(name),name);
     assert.match(sw,new RegExp("\\./"+name.replaceAll('.','\\.')));
   }
-  assert.equal(runtime.length,74);
-  assert.equal(out.size,77);
+  assert.equal(runtime.length,76);
+  assert.equal(out.size,79);
 });
 
 test('candidate service worker is versioned separately without cache deletion or forced update',()=>{
-  assert.match(sw,/const CACHE=`\$\{CACHE_PREFIX\}v0\.9\.33-age-budget-preview-20261103`/);
+  assert.match(sw,/const CACHE=`\$\{CACHE_PREFIX\}v0\.9\.34-survivor-pension-20261104`/);
   assert.doesNotMatch(sw,/caches\.delete\(/);
   assert.doesNotMatch(sw,/skipWaiting\s*\(/);
 });

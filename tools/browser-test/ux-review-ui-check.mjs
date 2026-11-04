@@ -37,10 +37,27 @@ try{
  assert.equal(beforeEnd,95);
  assert.equal(await page.locator('.topbar h1').innerText(),'ライフプランシミュレーター');
  assert.equal(await page.locator('.topbar p').count(),0);
- assert.match(await page.locator('#appVersion').innerText(),/^v0\.9\.33-age-budget-preview-20261103（端末で実行中）$/);
+ assert.match(await page.locator('#appVersion').innerText(),/^v0\.9\.34-survivor-pension-20261104（端末で実行中）$/);
  assert.match(await page.locator('#rulesVersion').innerText(),/2026-09-24/);
  assert.match(await page.locator('#cloudDataSavedAt').innerText(),/未確認/);
  mark('concise-header-build-rule-date-and-unverified-cloud-time');
+ // Survivor pension: synthetic reference calculation; no plan mutation.
+ await openTab('results','survivorPension');
+ const survivor=page.locator('#survivorPensionForm');
+ await survivor.locator('[name=wifeBirthDate]').fill('1980-07-01');
+ await survivor.locator('[name=deathDate]').fill('2051-08-20');
+ await survivor.locator('[name=deceasedProportional]').fill('160');
+ await survivor.locator('[name=ownBasic65]').fill('80');
+ await survivor.locator('[name=ownEmployee65]').fill('20');
+ await survivor.locator('[name=eligibilityConfirmed]').check();
+ await survivor.locator('button[type=submit]').click();
+ assert.match(await page.locator('#survivorPensionOutput').innerText(),/遺族厚生年金の差額支給/);
+ assert.match(await page.locator('#survivorPensionOutput').innerText(),/100万円/);
+ assert.deepEqual(await snapshot(),before,'survivor calculator must never save or adopt the inputs');
+ await page.locator('#survivorPensionClear').click();
+ assert.equal((await page.locator('#survivorPensionOutput').innerText()).trim(),'');
+ assert.deepEqual(await snapshot(),before,'clearing survivor draft must preserve the plan');
+ mark('survivor-pension-fictional-input-and-no-storage');
  assert.equal(await page.locator('.simulation-context').count(),0);
  assert.match(await page.locator('#simulationPeriod').textContent(),/現在の計画/);
  mark('compact-home-replaces-large-current-simulation-banner');
