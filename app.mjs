@@ -1,4 +1,5 @@
 import {mountAgeBudgetComparison} from './age-budget-ui.mjs';
+import {mountBudgetTravelView} from './budget-travel-ui.mjs';
 import {unemploymentEvents} from './unemployment-plan.mjs';
 import {mountStep8TrialCard} from './step8-trial-ui.mjs';
 import {mountFullPlanComparisonCard} from './full-plan-ui.mjs';
@@ -62,6 +63,7 @@ function inputValues(){
 }
 
 const el = id => document.getElementById(id);
+const budgetTravelView=mountBudgetTravelView(document,{getConfig:()=>config});
 const money = v => `${formatMan(v, 0)}万円`;
 const step8TrialCard=mountStep8TrialCard(el('step8TrialContainer'),()=>config);
 const fullPlanCard=mountFullPlanComparisonCard(el('fullPlanComparisonContainer'),{
@@ -339,6 +341,7 @@ function renderExpenseDetail() {
     if(taxAudit)taxAudit.innerHTML=taxSocialMethodHtml(taxSocialMethodAudit(config,age));
   }catch(e){wrap.textContent='内訳を表示できません。'+e.message;reconcile.textContent='未計算のため予算余裕は判定できません。';annual.textContent='年間収支を表示できません。'+e.message;if(taxAudit)taxAudit.textContent='税・社会保険の方式差を表示できません。'+e.message;}
   renderPeriodOverrides();
+  budgetTravelView.render();
 }
 
 function renderPeriodOverrides(){

@@ -37,8 +37,8 @@ test('offline candidate assets and module dependency closure are included',()=>{
     assert.ok(runtime.includes(name),name);
     assert.match(sw,new RegExp("\\./"+name.replaceAll('.','\\.')));
   }
-  assert.equal(runtime.length,72);
-  assert.equal(out.size,75);
+  assert.equal(runtime.length,74);
+  assert.equal(out.size,77);
 });
 
 test('candidate service worker is versioned separately without cache deletion or forced update',()=>{
