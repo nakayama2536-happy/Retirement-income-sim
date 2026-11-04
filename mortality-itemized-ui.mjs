@@ -57,6 +57,12 @@ export function mountMortalityItemizedControls(root,{getConfig,runPlan,onChange}
   let model=null,savedFactors={},lastDeceased=root.querySelector('#mortalityForm').elements.deceased.value;
   function read(){
     if(!model)throw Error('費目別の元データが確認できていません');
+    // No post-death month exists at or after the plan's final month.
+    // Rates cannot affect the ledger, but funeral-only comparison remains valid.
+    if(dateInput.value&&!referenceExpenseMonth(model.months,dateInput.value)){
+      return {factors:Object.fromEntries(model.items.map(item=>[item.id,1])),
+        unallocatedFactor:val(remain,'未照合の予算残額'),expenseSourceProfile:select.value};
+    }
     const factors={};
     for(const item of model.items){
       const target=[...host.querySelectorAll('[data-mortality-itemfactor]')].find(x=>x.dataset.mortalityItemfactor===item.id);
@@ -68,7 +74,7 @@ export function mountMortalityItemizedControls(root,{getConfig,runPlan,onChange}
     try{
       const f=read();
       const next=referenceExpenseMonth(model.months,dateInput.value);
-      if(!next)throw Error('死亡翌月が計算範囲外です。計画期間と死亡年月を確認してください');
+      if(!next){status.textContent='死亡翌月は計画期間外です。期間内の死亡後支出は変わりません。死亡月の一時費用は比較できます。';return;}
       const totals=mortalityItemizedTotals(model.items,next,f.factors,f.unallocatedFactor);
       const revised=totals.fullAfter;
       const totalCells=host.querySelectorAll('[data-mortality-total]');
@@ -105,7 +111,7 @@ export function mountMortalityItemizedControls(root,{getConfig,runPlan,onChange}
       model=inspectMortalityExpenseBudget(cfg,plan.monthlyDetails,{sourceProfile:select.value});
       const month=referenceExpenseMonth(model.months,dateInput.value);
       if(!month){
-        status.textContent='死亡翌月が計算範囲外です。計画期間と死亡年月を確認してください。';
+        status.textContent='死亡翌月は計画期間外です。期間内の死亡後支出は変わりません。死亡月の一時費用は比較できます。';
         root.querySelector('#mortalityItemSourceNote').textContent='死亡後の参考月額は対象外です。元の計画や保存値は変更していません。';
         return;
       }
