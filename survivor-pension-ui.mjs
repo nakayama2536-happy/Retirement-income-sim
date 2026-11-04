@@ -10,8 +10,8 @@ export function mountSurvivorPensionTab(root){
  root.innerHTML=`<article class="card"><h2>遺族厚生年金シミュレーター</h2><p>ねんきんネット等で確認した年額を入力し、本人が亡くなった後の奥様の年金を試算します。入力も結果も保存されず、資産計算へ自動反映しません。</p>
  <p class="muted">対象は、妻65歳以降の夫死亡、遺族厚生年金の受給権・生計維持要件を確認済みのケースです。すべて税引前年額・万円、同じ価格基準で入力してください。</p>
  <form id="survivorPensionForm" class="form-grid">
- <label>妻の生年月日<input name="wifeBirthDate" type="date" required></label>
- <label>本人の死亡想定日<input name="deathDate" type="date" required></label>
+ <label>妻の生年月日<input name="wifeBirthDate" type="date" aria-describedby="survivorWifeBirthHelp" required><small id="survivorWifeBirthHelp" class="muted">年齢と年金の開始月を計算するための生年月日です。</small></label>
+ <label>本人の死亡想定日<input name="deathDate" type="date" aria-describedby="survivorDeathHelp" required><small id="survivorDeathHelp" class="muted">死亡翌月からの年金を比較する仮定の日付です。</small></label>
  <label>本人の老齢厚生年金の報酬比例部分（年額・万円、死亡時点の見込額）<input name="deceasedProportional" type="number" min="0" step="any" required></label>
  <label>妻の65歳基準の老齢基礎年金（年額・万円）<input name="ownBasic65" type="number" min="0" step="any" required></label>
  <label>妻の65歳基準の老齢厚生年金（年額・万円）<input name="ownEmployee65" type="number" min="0" step="any" required></label>
