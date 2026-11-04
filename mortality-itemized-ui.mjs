@@ -44,6 +44,11 @@ const val=(input,name)=>{
   const n=Number(input.value);if(!Number.isFinite(n)||n<0||n>3)throw Error(name+'の倍率は0～3倍です');
   return n;
 };
+export function referenceExpenseMonth(months,deathMonth){
+  if(!Array.isArray(months)||months.length===0)return null;
+  if(deathMonth)return months.find(m=>m.month>deathMonth)??null;
+  return months.find(m=>m.expense>0)??months[0];
+}
 export function mountMortalityItemizedControls(root,{getConfig,runPlan,onChange}){
   const host=root.querySelector('#mortalityItemHost');
   if(!host)return null; // legacy synthetic DOM harness lacks HTML parser
@@ -52,6 +57,12 @@ export function mountMortalityItemizedControls(root,{getConfig,runPlan,onChange}
   let model=null,savedFactors={},lastDeceased=root.querySelector('#mortalityForm').elements.deceased.value;
   function read(){
     if(!model)throw Error('費目別の元データが確認できていません');
+    // No post-death month exists at or after the plan's final month.
+    // Rates cannot affect the ledger, but funeral-only comparison remains valid.
+    if(dateInput.value&&!referenceExpenseMonth(model.months,dateInput.value)){
+      return {factors:Object.fromEntries(model.items.map(item=>[item.id,1])),
+        unallocatedFactor:val(remain,'未照合の予算残額'),expenseSourceProfile:select.value};
+    }
     const factors={};
     for(const item of model.items){
       const target=[...host.querySelectorAll('[data-mortality-itemfactor]')].find(x=>x.dataset.mortalityItemfactor===item.id);
@@ -62,8 +73,8 @@ export function mountMortalityItemizedControls(root,{getConfig,runPlan,onChange}
   function factorText(){
     try{
       const f=read();
-      const next=model.months.find(m=>dateInput.value&&m.month>dateInput.value)||
-        model.months.find(m=>m.expense>0)||model.months[0];
+      const next=referenceExpenseMonth(model.months,dateInput.value);
+      if(!next){status.textContent='死亡翌月は計画期間外です。期間内の死亡後支出は変わりません。死亡月の一時費用は比較できます。';return;}
       const totals=mortalityItemizedTotals(model.items,next,f.factors,f.unallocatedFactor);
       const revised=totals.fullAfter;
       const totalCells=host.querySelectorAll('[data-mortality-total]');
@@ -98,8 +109,12 @@ export function mountMortalityItemizedControls(root,{getConfig,runPlan,onChange}
       const preset=registered?.deceased===deceased?registered:null;
       select.value=registered?.sourceProfile||'work-v0.9.7';
       model=inspectMortalityExpenseBudget(cfg,plan.monthlyDetails,{sourceProfile:select.value});
-      const month=model.months.find(m=>dateInput.value&&m.month>dateInput.value)||
-        model.months.find(m=>m.expense>0)||model.months[0];
+      const month=referenceExpenseMonth(model.months,dateInput.value);
+      if(!month){
+        status.textContent='死亡翌月は計画期間外です。期間内の死亡後支出は変わりません。死亡月の一時費用は比較できます。';
+        root.querySelector('#mortalityItemSourceNote').textContent='死亡後の参考月額は対象外です。元の計画や保存値は変更していません。';
+        return;
+      }
       const header=el('div','mortality-item-row mortality-item-head');
       const labels=['登録済み費目','登録月額（基準額）',month.month+' の月額（物価反映後）','万一の後の倍率','万一の後の概算額'];
       for(const h of labels)header.append(el('strong','',h));
@@ -114,11 +129,13 @@ export function mountMortalityItemizedControls(root,{getConfig,runPlan,onChange}
         const cells=[el('span','',item.label),el('span','',moneyText(base)),el('span','',moneyText(amount))];
         for(let i=0;i<cells.length;i++)cells[i].dataset.mortalityColumn=labels[i];
         const factorCell=el('span','mortality-item-factor');factorCell.dataset.mortalityColumn=labels[3];factorCell.append(field);
-        const impact=el('span','mortality-item-impact',moneyText(amount*Number(field.value)));impact.dataset.mortalityColumn=labels[4];
+        const impact=el('span','mortality-item-impact');impact.dataset.mortalityColumn=labels[4];
+        try{impact.textContent=moneyText(amount*val(field,item.label));}catch{impact.textContent='未計算';}
         row.append(...cells,factorCell,impact);
         field.addEventListener('input',()=>{
           savedFactors[item.id]=field.value;
-          row.lastElementChild.textContent=Number.isFinite(Number(field.value))?moneyText(amount*Number(field.value)):'未計算';
+          try{row.lastElementChild.textContent=moneyText(amount*val(field,item.label));}
+          catch{row.lastElementChild.textContent='未計算';}
           factorText();onChange();
         });
         host.append(row);
