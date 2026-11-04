@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {mortalityItemizedTotals} from './mortality-itemized-ui.mjs';
+import {mortalityItemizedTotals,referenceExpenseMonth} from './mortality-itemized-ui.mjs';
 import {readFileSync} from 'node:fs';
 const near=(a,b)=>assert.ok(Math.abs(a-b)<1e-9,`${a} != ${b}`);
 test('registered subtotal, inflated subtotal, unallocated remainder, and full budget reconcile without double counting',()=>{
@@ -34,4 +34,21 @@ test('subtotal rows and responsive labels are present in the read-only UI',()=>{
  assert.match(ui,/\[data-mortality-total\]/);
  assert.match(css,/\.mortality-total-budget/);
  assert.match(css,/data-mortality-column/);
+});
+
+test('mortality reference month chooses the month after death, never an earlier month',()=>{
+ const months=[{month:'2060-01',expense:55},{month:'2060-02',expense:55},{month:'2060-03',expense:55}];
+ assert.equal(referenceExpenseMonth(months,'2060-01')?.month,'2060-02');
+ assert.equal(referenceExpenseMonth(months,'2060-03'),null);
+ assert.equal(referenceExpenseMonth(months,'2061-01'),null);
+ assert.equal(referenceExpenseMonth(months,'2059-12')?.month,'2060-01');
+ assert.equal(referenceExpenseMonth(months,'')?.month,'2060-01');
+ assert.equal(referenceExpenseMonth([], '2060-01'),null);
+});
+test('itemized preview refuses omitted multipliers, preserving explicit zero',()=>{
+ const items=[{id:'food',priceBasis:'plan-start-base'}];
+ const month={expense:20,unallocated:10,priceFactor:1,amounts:{food:10}};
+ assert.throws(()=>mortalityItemizedTotals(items,month,{},1));
+ assert.equal(mortalityItemizedTotals(items,month,{food:0},1).fullAfter,10);
+ assert.equal(mortalityItemizedTotals(items,month,{food:1.2},1).fullAfter,22);
 });
