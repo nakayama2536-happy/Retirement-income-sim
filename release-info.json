@@ -1,5 +1,5 @@
 {
-  "appBuild": "v0.9.33-age-budget-preview-20261103",
-  "releasedAt": "2026-11-01",
-  "purpose": "age-budget-preview-candidate"
+  "appBuild": "v0.9.34-mortality-offline-20261105",
+  "releasedAt": "2026-11-05",
+  "purpose": "mortality-monthly-diagnostic-offline-cache-alignment"
 }
