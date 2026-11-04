@@ -26,7 +26,7 @@ test('公開候補の版番号は画面・バックアップ・SW・manifest・�
   assert.match(app,/cache:'no-store'/);
   assert.match(app,/主要実行ファイル照合済み/);
   assert.match(app,/const targets=\[[^\]]*'mortality-ui\.mjs'/);
-  assert.match(sw,/const CACHE=`\$\{CACHE_PREFIX\}v0\.9\.34-mortality-offline-20261105`/);
+  assert.equal(cache,APP_BUILD,'Service Worker cache must match the staged or active build');
   assert.match(app,/crypto\.subtle\.digest\('SHA-256'/);
   assert.match(app,/更新あり（画面の実行ファイルが公開版と不一致）/);
   assert.match(app,/照合不可（更新状態は未確認）/);
