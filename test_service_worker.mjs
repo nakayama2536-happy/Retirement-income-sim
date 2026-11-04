@@ -33,6 +33,23 @@ export function harness(scope='https://example.test/lifeplan/'){
   const fetchRequest=async(request)=>{let promise;handlers.fetch({request,respondWith:p=>promise=p});return promise?{handled:true,response:await promise}:{handled:false};};
   return {scope,stores,deleted,requests,flags,network,run,fetchRequest,takeovers:()=>takeovers,current:()=>[...stores.keys()].find(k=>k.startsWith(prefix(scope))&&k.endsWith(cacheVersion))};
 }
+test('画面モジュール更新時には旧キャッシュと分離した版を構築し旧版を保護',async()=>{
+ const h=harness(),prior=prefix(h.scope)+'v0.9.33-age-budget-preview-20261103';
+ const oldCache=new Map([[h.scope+'mortality-ui.mjs',new Response('old-mortality-ui')]]);
+ h.stores.set(prior,oldCache);
+ assert.equal(cacheVersion,'v0.9.34-mortality-offline-20261105');
+ assert.notEqual(h.current(),prior);
+ await h.run('install');
+ await h.run('activate');
+ const newCache=h.current();
+ assert.notEqual(newCache,prior);
+ assert.equal(h.stores.get(prior),oldCache);
+ assert.equal(await (await h.stores.get(prior).get(h.scope+'mortality-ui.mjs')).text(),'old-mortality-ui');
+ const updated=await h.fetchRequest(new Request(h.scope+'mortality-ui.mjs'));
+ assert.equal(await updated.response.text(),'bundle:'+h.scope+'mortality-ui.mjs');
+ assert.equal(h.takeovers(),0);
+ assert.deepEqual(h.deleted,[]);
+});
 test('正常更新後も旧版と他アプリ・旧形式・隣接範囲を保持',async()=>{
   const h=harness(),own=prefix(h.scope)+'v0.9.6-1';
   const keep=['other-app-v1','lifeplan-sim-v0.9.6-1',prefix('https://example.test/lifeplan-copy/')+'v0.9.6-1',prefix('https://example.test/lifeplan/sub/')+'v0.9.6-1'];
