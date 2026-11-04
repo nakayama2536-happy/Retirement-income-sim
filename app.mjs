@@ -1000,7 +1000,7 @@ document.querySelectorAll('[data-help]').forEach(btn=>btn.addEventListener('clic
 }));
 el('helpClose').addEventListener('click',()=>el('helpDialog').close());
 
-const CURRENT_RUNTIME_BUILD='v0.9.33-age-budget-preview-20261103';
+const CURRENT_RUNTIME_BUILD='v0.9.34-mortality-offline-20261105';
 el('appVersion').textContent=CURRENT_RUNTIME_BUILD+'（端末で実行中）';
 const freshness=el('runtimeFreshness');
 (async()=>{
@@ -1024,7 +1024,7 @@ const freshness=el('runtimeFreshness');
   if(!manifestResponse.ok)throw Error('release-manifest-unavailable');
   const manifest=await manifestResponse.json();
   if(manifest.runtime!==CURRENT_RUNTIME_BUILD||!Array.isArray(manifest.files))throw Error('manifest-version-mismatch');
-  const targets=['index.html','app.mjs','current-summary.mjs','detail-ui.mjs','styles.css'];
+  const targets=['index.html','app.mjs','mortality-ui.mjs','current-summary.mjs','detail-ui.mjs','styles.css'];
   const expected=new Map(manifest.files.map(file=>[file.name,file]));
   let mismatched=false;
   for(const name of targets){
