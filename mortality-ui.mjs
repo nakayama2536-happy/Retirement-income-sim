@@ -30,6 +30,64 @@ function setAllocation(root,items){for(const x of items){root.querySelector(`[da
 function tableCell(tr,text,th=false){const td=makeEl(th?'th':'td');td.textContent=String(text);if(th)td.scope='col';tr.append(td);return td;}
 function formatTotal(a){return Number.isFinite(a)?`${escMoney(a)}万円`:'未確認';}
 
+/** Read-only diagnostic based on the actual monthly comparison ledger. */
+export function mortalityFirstNegativeDiagnostic(monthly,firstNegativeMonth,radius=3){
+ if(!firstNegativeMonth)return [];
+ if(!Array.isArray(monthly)||!Number.isInteger(radius)||radius<0||radius>12)
+   throw Error('月次診断の入力が不正です');
+ const index=monthly.findIndex(row=>row.month===firstNegativeMonth);
+ if(index<0||monthly[index].endAsset>=0||monthly.slice(0,index).some(row=>row.endAsset<0))
+   throw Error('初回マイナス月と月次資産台帳が一致しません');
+ return monthly.slice(Math.max(0,index-radius),Math.min(monthly.length,index+radius+1)).map(row=>{
+   const keys=['startAsset','investmentGain','income','baselineExpense','expenseReduction','expense','extraExpense','funeralExpense','endAsset'];
+   if(keys.some(key=>typeof row[key]!=='number'||!Number.isFinite(row[key])))
+     throw Error(row.month+' の月次資産内訳が未確認です');
+   const expected=row.startAsset+row.investmentGain+row.income-row.expense-row.extraExpense-row.funeralExpense;
+   const gap=expected-row.endAsset;
+   const tolerance=1e-6*Math.max(1,Math.abs(expected),Math.abs(row.endAsset));
+   const costGap=row.baselineExpense-row.expenseReduction-row.expense;
+   const reconciled=Math.abs(gap)<=tolerance&&Math.abs(costGap)<=tolerance;
+   return {month:row.month,startAsset:row.startAsset,investmentGain:row.investmentGain,
+     income:row.income,baselineExpense:row.baselineExpense,expenseReduction:row.expenseReduction,
+     expense:row.expense,extraExpense:row.extraExpense,funeralExpense:row.funeralExpense,
+     endAsset:row.endAsset,reconciled,firstNegative:row.month===firstNegativeMonth};
+ });
+}
+
+function renderFirstNegativeDiagnostic(target,mortality){
+ if(!mortality.firstNegativeMonth)return;
+ const section=makeEl('section','mortality-funding');section.id='mortalityFirstNegativeDiagnostic';
+ section.append(...heading('初回資産不足月の前後3か月（月次の検算）',
+   '単位：万円／月。比較案の実計算台帳を表示します。月末資産＝月初資産＋運用益＋収入－管理予算支出－臨時支出－死亡月の一時費用。'));
+ try{
+   const rows=mortalityFirstNegativeDiagnostic(mortality.monthly,mortality.firstNegativeMonth);
+   const valid=rows.every(row=>row.reconciled);
+   const note=makeEl('p',valid?'muted':'mortality-warning',
+     valid?'各月の月末資産と支出減額の検算が一致しています。':'月次収支または支出減額に不一致があります。比較値を確定扱いしないでください。');
+   note.id='mortalityDiagnosticState';section.append(note);
+   const region=makeEl('div','table-wrap mortality-table-wrap');
+   region.tabIndex=0;region.setAttribute('role','region');region.setAttribute('aria-label','初回資産不足月の前後の月次資産検算');
+   const table=makeEl('table','mortality-table');table.id='mortalityFirstNegativeMonthlyTable';
+   const head=makeEl('thead'),hrow=makeEl('tr');
+   for(const label of ['年月','月初資産','運用益','収入','基準管理予算','管理予算減額','比較後管理予算','臨時支出','死亡月の一時費用','月末資産','検算'])tableCell(hrow,label,true);
+   head.append(hrow);table.append(head);
+   const body=makeEl('tbody');
+   for(const row of rows){
+     const tr=makeEl('tr');tr.dataset.month=row.month;
+     if(row.firstNegative)tr.dataset.firstNegative='true';
+     const values=[row.month,row.startAsset,row.investmentGain,row.income,row.baselineExpense,
+       row.expenseReduction,row.expense,row.extraExpense,row.funeralExpense,row.endAsset];
+     values.forEach((v,i)=>tableCell(tr,i===0?v:escMoney(v)));
+     tableCell(tr,row.reconciled?'一致':'不一致');body.append(tr);
+   }
+   table.append(body);region.append(table);section.append(region);
+   section.append(makeEl('p','muted','比較用の表示です。元の設定・保存済み条件・クラウドには反映しません。負の残高は借入残高や実際の不足総額とは限りません。'));
+ }catch(error){
+   section.append(makeEl('p','mortality-warning','月次診断を確認できません：'+error.message));
+ }
+ target.append(section);
+}
+
 function renderPensionBreakdown(target,reference){
  target.replaceChildren();target.dataset.pensionState=reference?'reference':'unknown';
  if(!reference){target.append(makeEl('p','muted','内訳未確認：入力した公的年金合計をそのまま試算に使います。自身の年金・遺族年金の内訳は推定せず、遺族年金を別途自動加算しません。'));return;}
@@ -387,6 +445,7 @@ export function mountMortalityComparison(root,{getConfig,getBaseline,runPlan}){
   coverage.id='mortalityHorizonNotice';results.append(coverage);
   if(at100){const msg=makeEl('p','',`100歳期末資産：基準 ${formatTotal(at100.baselineEndAsset)}／比較 ${formatTotal(at100.previewEndAsset)}／差 ${formatTotal(at100.delta)}。負残高があれば、追加資金・支出見直しを検討する参考値です。`);msg.id='mortalityAge100Balance';results.append(msg);}
   if(mortality.firstNegativeMonth){const warning=makeEl('p','mortality-warning',`比較案では${mortality.firstNegativeMonth}に初めて資産残高が負になります。追加資金・支出削減などの条件を見直す必要性を検討してください。負残高は借入額や資金不足総額とは限りません。`);warning.id='mortalityFundingWarning';results.append(warning);}
+  renderFirstNegativeDiagnostic(results,mortality);
   const capital=requiredAdditionalCapitalAt64(original.monthlyDetails,{mortality},getConfig()?.plan?.afterTaxReturn);
   const funding=makeEl('section','mortality-funding');funding.id='mortalityAge64Prefunding';
   funding.append(makeEl('h3','','64歳末に必要な追加資金（参考試算）'));
