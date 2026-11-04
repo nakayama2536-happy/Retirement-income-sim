@@ -57,37 +57,37 @@ test('itemized preview refuses omitted multipliers, preserving explicit zero',()
 test('first negative month shows a 3+3 month read-only ledger and reconciliation',()=>{
  const months=Array.from({length:9},(_,i)=>{
    const amount=3-i;
-   return {month:'2069-'+String(i+5).padStart(2,'0'),startAsset:amount+1,investmentGain:0,
+   return {month:'2080-'+String(i+1).padStart(2,'0'),startAsset:amount+1,investmentGain:0,
      income:0,baselineExpense:1.5,expenseReduction:0.5,expense:1,extraExpense:0,
      funeralExpense:0,endAsset:amount};
  });
  const before=JSON.stringify(months);
- const rows=mortalityFirstNegativeDiagnostic(months,'2069-09');
- assert.deepEqual(rows.map(x=>x.month),['2069-06','2069-07','2069-08','2069-09','2069-10','2069-11','2069-12']);
- assert.equal(rows.find(x=>x.firstNegative)?.month,'2069-09');
+ const rows=mortalityFirstNegativeDiagnostic(months,'2080-05');
+ assert.deepEqual(rows.map(x=>x.month),['2080-02','2080-03','2080-04','2080-05','2080-06','2080-07','2080-08']);
+ assert.equal(rows.find(x=>x.firstNegative)?.month,'2080-05');
  assert.ok(rows.every(x=>x.reconciled));
  assert.equal(JSON.stringify(months),before);
 });
 test('month-end ledger includes funeral and extra expense, and reports mismatch rather than masking it',()=>{
  const months=[
-  {month:'2069-08',startAsset:2,investmentGain:0.1,income:0.2,baselineExpense:1.5,
+  {month:'2080-04',startAsset:2,investmentGain:0.1,income:0.2,baselineExpense:1.5,
    expenseReduction:0.5,expense:1,extraExpense:0.1,funeralExpense:0,endAsset:1.2},
-  {month:'2069-09',startAsset:1.2,investmentGain:0,income:0,baselineExpense:1.5,
+  {month:'2080-05',startAsset:1.2,investmentGain:0,income:0,baselineExpense:1.5,
    expenseReduction:0.5,expense:1,extraExpense:0.3,funeralExpense:0.2,endAsset:-0.3}
  ];
- assert.ok(mortalityFirstNegativeDiagnostic(months,'2069-09').every(x=>x.reconciled));
+ assert.ok(mortalityFirstNegativeDiagnostic(months,'2080-05').every(x=>x.reconciled));
  const bad=structuredClone(months);bad[1].endAsset=-0.2;
- assert.equal(mortalityFirstNegativeDiagnostic(bad,'2069-09')[1].reconciled,false);
+ assert.equal(mortalityFirstNegativeDiagnostic(bad,'2080-05')[1].reconciled,false);
 });
 test('missing and contradictory initial depletion dates are not silently accepted',()=>{
  const months=[
-  {month:'2069-08',endAsset:-0.1},
-  {month:'2069-09',endAsset:-0.2}
+  {month:'2080-04',endAsset:-0.1},
+  {month:'2080-05',endAsset:-0.2}
  ];
  assert.deepEqual(mortalityFirstNegativeDiagnostic(months,null),[]);
- assert.throws(()=>mortalityFirstNegativeDiagnostic(months,'2069-09'),/一致しません/);
- assert.throws(()=>mortalityFirstNegativeDiagnostic(months,'2069-10'),/一致しません/);
- assert.throws(()=>mortalityFirstNegativeDiagnostic(months,'2069-09',13));
+ assert.throws(()=>mortalityFirstNegativeDiagnostic(months,'2080-05'),/一致しません/);
+ assert.throws(()=>mortalityFirstNegativeDiagnostic(months,'2080-06'),/一致しません/);
+ assert.throws(()=>mortalityFirstNegativeDiagnostic(months,'2080-05',13));
 });
 test('diagnostic UI uses existing monthly comparison ledger and does not change adopted data',()=>{
  const ui=readFileSync(new URL('./mortality-ui.mjs',import.meta.url),'utf8');
