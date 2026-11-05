@@ -1,3 +1,4 @@
+// Release identity is intentionally changed for survivor pension display safety.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -33,7 +34,7 @@ test('公開候補の版番号は画面・バックアップ・SW・manifest・�
 });
 
 test('本番候補に旧公開版・RC・未公開の誤認ラベルを残さない',()=>{
-  assert.equal(APP_BUILD,'v0.9.34-mortality-offline-20261105');
+  assert.equal(APP_BUILD,'v0.9.35-mortality-pension-20261105');
   assert.notEqual(APP_BUILD,'v0.9.7-ui-simple-20261012');
   for(const value of [APP_BUILD,app.match(/const CURRENT_RUNTIME_BUILD='([^']+)'/)?.[1],sw.match(/const CACHE=`\$\{CACHE_PREFIX\}([^`]+)`/)?.[1],deployed.runtime]){
     assert.ok(value);

@@ -1,5 +1,5 @@
 {
-  "appBuild": "v0.9.34-mortality-offline-20261105",
+  "appBuild": "v0.9.35-mortality-pension-20261105",
   "releasedAt": "2026-11-05",
-  "purpose": "mortality-monthly-diagnostic-offline-cache-alignment"
+  "purpose": "mortality-survivor-pension-basis-separation"
 }
