@@ -1,3 +1,22 @@
-/* Visual-only numbering: existing labels, values, and semantics are preserved. */
-.step-numbered::before{content:attr(data-step-no) '．';font-variant-numeric:tabular-nums;font-weight:700;margin-inline-end:.35em;color:inherit}
-#mortalityForm label.step-numbered::before,#expenses h2.step-numbered::before{white-space:nowrap}
+/* Presentation-only reference numbers. Copy, editing and stored values are unchanged. */
+.step-numbered::before{
+ content:attr(data-step-no) '．';
+ font-variant-numeric:tabular-nums;
+ font-weight:700;
+ margin-inline-end:.35em;
+ color:inherit;
+ white-space:nowrap;
+}
+#expenseDetail details > summary.step-numbered::before{
+ color:var(--text-color,#575757);
+ font-size:.92em;
+}
+#expenses label.step-numbered::before,
+#expenses details > summary.step-numbered::before{
+ display:inline;
+ white-space:nowrap;
+}
+@media(max-width:600px){
+ .step-numbered::before{margin-inline-end:.25em}
+ #expenseDetail details{overflow-wrap:anywhere}
+}
