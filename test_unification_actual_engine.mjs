@@ -21,7 +21,7 @@ function synthetic(){
  return c;
 }
 function rowAt(result,age){return result.months.find(m=>m.age===age&&m.scope==='asset-funded');}
-function leafAt(row){return row.details.flatMap(d=>d.children||[]).find(d=>d.base?.sourceRefs?.some(r=>r.path?.includes('items/0')));}
+function leafAt(row){return row.details.flatMap(d=>d.children||[]).find(d=>d.itemId==='expense/key:food');}
 test('real engine keeps age 95 expense and does not invent age 96 amount',()=>{
  const original=synthetic();
  const before=runRetirementPlan(original,{includeMonthlyDetails:true});
