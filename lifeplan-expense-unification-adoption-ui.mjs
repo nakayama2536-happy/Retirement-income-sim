@@ -6,7 +6,7 @@
 import {prepareUnificationState,commitPreparedUnification,undoPreparedUnification} from './lifeplan-expense-unification-transaction.mjs';
 import {validateSavedState} from './migration.mjs';
 import {createFullBackup} from './full-backup.mjs';
-import {STATE_KEY,downloadJson} from './storage.mjs';
+import {STATE_KEY,downloadJson,loadState,configSignature} from './storage.mjs';
 
 const clone=x=>structuredClone(x);
 const eq=(a,b)=>JSON.stringify(a)===JSON.stringify(b);
@@ -40,7 +40,7 @@ export function mountExpenseUnificationAdoptionUi({doc=globalThis.document,stora
      const raw=storage.getItem(STATE_KEY);
      if(typeof raw!=='string')throw Error('統合保存データがありません。');
      const state=JSON.parse(raw);
-     if(!eq(state,getState()))throw Error('表示中の設定と保存データが異なります。再読み込みしてください。');
+     if(configSignature(loadState())!==configSignature(getState()))throw Error('表示中の設定と保存データが異なります。再読み込みしてください。');
      const proposal=prepareUnificationState(state,{validate:validateSavedState});
      if(proposal.status!=='prepared')throw Error('移行できません：'+proposal.reason);
      expectedRaw=raw;sourceSnapshot=clone(state);pending=proposal;
@@ -73,7 +73,7 @@ export function mountExpenseUnificationAdoptionUi({doc=globalThis.document,stora
    if(!eligible()){report('取消停止：書込み権限がありません。');return;}
    const raw=storage.getItem(STATE_KEY);
    if(!raw){report('取消対象の保存データがありません。');return;}
-   if(!eq(JSON.parse(raw),getState())){report('取消停止：保存内容が変わりました。再読み込みしてください。');return;}
+   if(configSignature(loadState())!==configSignature(getState())){report('取消停止：保存内容が変わりました。再読み込みしてください。');return;}
    const r=undoPreparedUnification({store:storage,key:STATE_KEY,expectedRaw:raw,validate:validateSavedState,allowWrite:true});
    if(r.status!=='undone'){report('取消停止：'+r.reason);return;}
    clear();report('移行処理だけを取り消しました。');
