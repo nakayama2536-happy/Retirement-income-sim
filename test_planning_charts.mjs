@@ -9,3 +9,21 @@ test('収入不一致を拒否',()=>{const x=structuredClone(rows);x[0].totalInc
 test('内訳の保存元未選択は推測しない',()=>assert.equal(expenseGraphData(rows,{status:'choose-source'}).items,null));
 test('未確定費目を0円扱いしない',()=>assert.equal(expenseGraphData(rows,{status:'ready',age:65,rows:[{label:'未入力',amount:null}]}).items[0].amount,null));
 test('入力の不変性',()=>{const x=structuredClone(rows),y=structuredClone(monthly);incomeGraphData(rows);budgetGraphData(rows,monthly);assert.deepEqual(rows,x);assert.deepEqual(monthly,y);});
+
+test('3画面へSVGを表示し、採用済みデータには書き込まない',async()=>{
+ const {mountPlanningCharts}=await import('./planning-charts.mjs');
+ class Element {
+  constructor(tag){this.tag=tag;this.children=[];this.style={};this.attrs={};this.value='';this.textContent='';}
+  setAttribute(k,v){this.attrs[k]=v;}
+  append(...kids){this.children.push(...kids);}
+  replaceChildren(...kids){this.children=[...kids];}
+ }
+ const ids=Object.fromEntries(['planningIncomeChart','planningBudgetChart','planningExpenseChart','cashflowViewAge','expenseDisplaySource'].map(id=>[id,new Element('div')]));
+ ids.cashflowViewAge.value='65';ids.expenseDisplaySource.value='work-v0.9.7';
+ const doc={createElement:k=>new Element(k),createElementNS:(_ns,k)=>new Element(k),getElementById:k=>ids[k]};
+ const config={plan:{startAge:65}},snapshot=structuredClone(rows);
+ const chart=mountPlanningCharts({documentRef:doc,getConfig:()=>config,getResult:()=>({rows}),runPlan:()=>({monthlyDetails:monthly}),getExpenseModel:()=>({status:'ready',age:65,rows:[{label:'食費',amount:10},{label:'未確定',amount:null}]})});
+ chart.render();
+ for(const name of ['planningIncomeChart','planningBudgetChart','planningExpenseChart'])assert.ok(ids[name].children.some(el=>el.tag==='svg'),name);
+ assert.deepEqual(rows,snapshot);
+});
