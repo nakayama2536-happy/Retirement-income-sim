@@ -47,8 +47,8 @@ export function mountSurvivorPensionScreen(root,{getConfig=()=>null,onTransfer=n
  });
  transfer.addEventListener('click',()=>{
   if(!last||typeof onTransfer!=='function')return;
-  try{onTransfer({...last});add(note,'p','比較画面へ入力項目を引き継ぎました。年金合計は受給資格確認後に転記するため空欄です。');}
-  catch(e){add(note,'p','転記できません：'+e.message);}
+  try{onTransfer({...last});note.textContent='比較画面へ入力項目を引き継ぎました。年金合計は受給資格確認後に転記するため空欄です。';}
+  catch(e){note.textContent='転記できません：'+e.message;}
  });
  const details=add(root,'details');add(details,'summary','老齢基礎年金の繰下げを別途試算');
  add(details,'p','遺族年金との合算ではありません。受給権発生時期により繰下げできない場合があります。');
