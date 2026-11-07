@@ -76,7 +76,14 @@ try{
   const page=await ctx.newPage();page.on('pageerror',e=>report.pageErrors.push({engine,error:e.message}));
   await page.goto(origin,{waitUntil:'networkidle'});await page.locator('#dashboard').waitFor({state:'visible'});
   assert.equal(await page.locator('#appVersion').innerText(),'v0.9.36-numbering-expense-csv-20261107（端末で実行中）');
+  assert.equal(await page.locator('[data-group="results"]').getAttribute('data-step-no'),'1');
+  assert.equal(await page.locator('[data-tab="mortality"]').getAttribute('data-step-no'),'1-3');
+  assert.equal(await page.locator('[data-tab="pension"]').getAttribute('data-step-no'),'2-5');
+  assert.equal(await page.locator('[data-tab="expenses"]').getAttribute('data-step-no'),'4-1');
+  mark(engine,'navigation-numbering-visible-in-actual-application');
   const before=await saved(page);await open(page);await baselineInputs(page);
+  assert.equal(await input(page,'deathMonth').locator('xpath=..').getAttribute('data-step-no'),'1-2');
+  mark(engine,'mortality-form-field-numbering-present');
   assert.equal(Number(await page.locator('#mortalityRemainderFactor').inputValue()),1,'初期の残額倍率は100%であること');
   for(const label of ['食費','水道光熱費','住居'])assert.ok(await factorRow(page,label).count()>0,label);
   mark(engine,'actual-saved-expense-items-loaded-without-fabricated-shares');
@@ -93,6 +100,20 @@ try{
   near(await number(annual(80,'expenseReduction')),110);
   near(await number(annual(81,'expenseReduction')),120);
   mark(engine,'actual-items-plus-remaining25-are-factored-once-monthly-and-annual');
+  const downloaded=[];
+  const downloadDone=new Promise((ok,fail)=>{
+    const timeout=setTimeout(()=>fail(Error('mortality expense CSV download timeout: '+downloaded.length)),15000);
+    page.on('download',d=>{downloaded.push(d);if(downloaded.length===2){clearTimeout(timeout);ok();}});
+  });
+  await page.locator('#mortalityExportExpenseCsv').click();
+  await downloadDone;
+  assert.equal(downloaded.length,2);
+  const csvFiles=await Promise.all(downloaded.map(async d=>({name:d.suggestedFilename(),text:await readFile(await d.path(),'utf8')})));
+  assert.ok(csvFiles.some(f=>f.name.includes('-monthly-')));
+  assert.ok(csvFiles.some(f=>f.name.includes('-items-')));
+  for(const file of csvFiles){assert.ok(file.text.startsWith('\ufeff'));assert.match(file.text,/管理予算|費目名/);}
+  assert.equal(await saved(page),before,'CSV download must not adopt or save settings');
+  mark(engine,'actual-two-expense-CSV-downloads-are-read-only-and-UTF8-BOM');
   await verifyPensionReference(page);
   await submit(page);
   assert.equal(await page.locator('#mortalityPensionBreakdown').getAttribute('data-pension-state'),'reference');
