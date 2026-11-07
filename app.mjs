@@ -1,3 +1,4 @@
+import {mountPlanningCharts} from './planning-charts.mjs';
 import {mountAgeBudgetComparison} from './age-budget-ui.mjs';
 import {mountBudgetTravelView} from './budget-travel-ui.mjs';
 import {unemploymentEvents} from './unemployment-plan.mjs';
@@ -63,6 +64,7 @@ function inputValues(){
 }
 
 const el = id => document.getElementById(id);
+const planningCharts=mountPlanningCharts({documentRef:document,getConfig:()=>config,getResult:()=>result,runPlan:runRetirementPlan,getExpenseModel:(age,source)=>expenseDisplayModel(config,age,{sourceProfile:source})});
 const budgetTravelView=mountBudgetTravelView(document,{getConfig:()=>config});
 const money = v => `${formatMan(v, 0)}万円`;
 const step8TrialCard=mountStep8TrialCard(el('step8TrialContainer'),()=>config);
@@ -189,7 +191,7 @@ function refresh({calculated=null}={}) {
   } catch (e) { showNotice(e.message, 'error'); return; }
   el('emptyState').hidden = true;
   el('dashboard').hidden = false;
-  renderHome(); renderExpenseDetail(); renderYearTable(); renderAge65IncomeAudit(); renderActuals(); renderAnnualReview(); renderScenarios(); renderSettings(); renderRules(); drawChart(); renderTimeline(); renderCertainty(); renderFactors(); renderIntegrity(); renderCalculationBasis();
+  renderHome(); renderExpenseDetail(); planningCharts.render(); renderYearTable(); renderAge65IncomeAudit(); renderActuals(); renderAnnualReview(); renderScenarios(); renderSettings(); renderRules(); drawChart(); renderTimeline(); renderCertainty(); renderFactors(); renderIntegrity(); renderCalculationBasis();
   pensionSheet.render();
   salarySheet.render();
   calendarSheet.render();
@@ -911,8 +913,8 @@ el('periodEditForm').elements.kind.addEventListener('change',e=>{
     if(f.elements.label.readOnly){f.elements.label.value=f.elements.label.dataset.previousLabel||'';f.elements.label.readOnly=false;}
   }
 });
-el('cashflowViewAge').addEventListener('change', renderExpenseDetail);
-el('expenseDisplaySource').addEventListener('change', renderExpenseDetail);
+el('cashflowViewAge').addEventListener('change', ()=>{renderExpenseDetail();planningCharts.renderExpense();});
+el('expenseDisplaySource').addEventListener('change', ()=>{renderExpenseDetail();planningCharts.renderExpense();});
 el('exportAnnualCsvBtn').addEventListener('click',()=>{if(!config)return;const x=downloadAnnualCsv(config,{sourceProfile:el('expenseDisplaySource').value});showNotice(`年間収支CSV（${x.rowCount}期間）を作成しました。保存先を確認してください。`);});
 el('certaintyForm').addEventListener('submit', saveCertainty);
 el('actualForm').addEventListener('submit', saveActual);
@@ -1000,7 +1002,7 @@ document.querySelectorAll('[data-help]').forEach(btn=>btn.addEventListener('clic
 }));
 el('helpClose').addEventListener('click',()=>el('helpDialog').close());
 
-const CURRENT_RUNTIME_BUILD='v0.9.39-mortality-expense-audit-20261107';
+const CURRENT_RUNTIME_BUILD='v0.9.40-planning-charts-20261107';
 el('appVersion').textContent=CURRENT_RUNTIME_BUILD+'（端末で実行中）';
 const freshness=el('runtimeFreshness');
 (async()=>{
