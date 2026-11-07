@@ -12,3 +12,5 @@ test('expense CSV BOM / known audit columns',()=>{assert.ok(mortalityExpenseAudi
 test('expense CSV rejects mismatched budget',()=>{const f=fixture();f.mortality.monthly[0].expense=79;assert.throws(()=>mortalityExpenseAuditRows(f),/一致しません/);});
 
 test('expense CSV keeps negative numeric reductions as numeric fields',()=>{const f=fixture();f.mortality.monthly[0].expenseReduction=-10;f.mortality.monthly[0].expense=110;f.itemFactors.food=1.25;const rows=mortalityExpenseAuditCsv(f).split('\r\n');assert.ok(rows[1].includes(',-10,110,'));});
+
+test('pre-death item CSV uses the unchanged baseline despite configured postdeath multipliers',()=>{const f=fixture();f.mortality.monthly[0].postDeath=false;f.mortality.monthly[0].expenseReduction=0;f.mortality.monthly[0].expense=100;const rows=mortalityExpenseItemRows(f);const food=rows.find(x=>x.month==='2071-01'&&x.itemId==='food');assert.equal(food.factor,0.5);assert.equal(food.afterAmount,40);assert.equal(food.difference,0);});
