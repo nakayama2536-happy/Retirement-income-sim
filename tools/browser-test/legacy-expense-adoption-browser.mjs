@@ -20,6 +20,11 @@ try{
  fixture.config.budgets=fixture.config.budgets.map(row=>({...row,toAge:99}));
  fixture.config.cashflow.expenseCategories=[{key:'living',label:'生活費',items:[{key:'food',label:'食費',periods:[{fromAge:64,toAge:95,amount:2}]}]}];
  fixture.config.cashflow.detailSourceProfile='public-v0.9';
+ // Independent saved comparison has a different expense amount and must not
+ // be overwritten by baseline migration.
+ const comparison=structuredClone(fixture.config);
+ comparison.cashflow.expenseCategories[0].items[0].periods[0].amount=3;
+ fixture.scenarios.push({id:'synthetic-legacy-comparison-1',name:'架空の比較案',role:'scenario',selected:false,config:comparison});
  const input=path.join(temp,'fictional-full.json');
  await fs.writeFile(input,JSON.stringify(fixture));
  server=createServer(async(req,res)=>{
@@ -70,7 +75,14 @@ try{
  assert.equal(adopted.config.cashflow.expenseCategories,undefined);
  assert.equal(adopted.config.expenseUnificationArchive.original.legacy[0].items[0].periods[0].amount,2);
  assert.ok(adopted.config.recoveryCompatibility.requiredFeatures.includes('legacy-expense-unification-v1'));
- assert.deepEqual(adopted.scenarios,JSON.parse(before).scenarios);
+ assert.equal(adopted.scenarios.length,JSON.parse(before).scenarios.length);
+ const convertedScenario=adopted.scenarios.find(x=>x.id==='synthetic-legacy-comparison-1');
+ assert.ok(convertedScenario,'independent saved comparison is retained');
+ assert.equal(convertedScenario.config.cashflow.expenseCategories,undefined);
+ assert.equal(convertedScenario.config.cashflow.periodOverrides[0].amount,3);
+ assert.equal(adopted.config.cashflow.periodOverrides[0].amount,2);
+ assert.equal(adopted.expenseUnificationScenarioJournal.entries.length,1);
+ evidence.cases.push({id:'independent-scenario-migrated-together',status:'pass',amountsSeparated:true});
  const coverage=await page.evaluate(async()=>{
    const {inspectCashflowSources,resolveBaseAmount}=await import('./cashflow-sources.mjs');
    const cfg=JSON.parse(localStorage.getItem('lifeplan-sim-state-v1')).config;
@@ -120,6 +132,7 @@ try{
  assert.equal(restored.config.cashflow.detailSourceProfile,'public-v0.9');
  assert.equal(restored.config.expenseUnificationCandidate,undefined);
  assert.deepEqual(restored.scenarios,JSON.parse(before).scenarios);
+ assert.equal(restored.expenseUnificationScenarioJournal,undefined);
  evidence.cases.push({id:'reload-and-targeted-undo',status:'pass',settingsRestored:true});
 
  // A compatible full backup must restore the migrated values and its archive.
@@ -128,7 +141,8 @@ try{
  const reimported=JSON.parse(await state());
  assert.deepEqual(reimported.config.cashflow.periodOverrides,adopted.config.cashflow.periodOverrides);
  assert.equal(reimported.config.cashflow.detailSourceProfile,'work-v0.9.7');
- assert.deepEqual(reimported.scenarios,adopted.scenarios);
+ assert.equal(reimported.scenarios.find(x=>x.id==='synthetic-legacy-comparison-1').config.cashflow.periodOverrides[0].amount,3);
+ assert.equal(reimported.expenseUnificationScenarioJournal.entries.length,1);
  evidence.cases.push({id:'same-build-adopted-backup-restore',status:'pass'});
  // A pre-migration backup must restore the original legacy config and scenarios.
  await page.locator('#importFile').setInputFiles(backupPath);
