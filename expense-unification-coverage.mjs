@@ -19,7 +19,8 @@ export function stagedExpenseCoverageGuard(view,variant,allRules,age){
   if(state===undefined)return null; // unchanged native standard handling
   const sourceRefs=variant.sourceRefs||[];
   const invalid=reason=>out('conflict',reason,sourceRefs);
-  if(!record(state)||state.format!==FORMAT||state.adopted!==false||state.safety!=='DO_NOT_ADOPT_WITH_V0.9.38_RESOLVER'||state.targetProfile!==WORK||!Array.isArray(state.coverage))return invalid('migration-metadata-invalid');
+  if(!record(state)||state.format!==FORMAT||!((state.adopted===false&&state.safety==='DO_NOT_ADOPT_WITH_V0.9.38_RESOLVER')||(state.adopted===true&&state.safety==='STANDARD_MIGRATED_WITH_COVERAGE_V1'))||state.targetProfile!==WORK||!Array.isArray(state.coverage))return invalid('migration-metadata-invalid');
+  if(state.adopted===true&&(!record(view.retainedSource.expenseUnificationArchive)||Object.hasOwn(view.retainedSource.cashflow||{},'expenseCategories')||view.retainedSource.cashflow?.detailSourceProfile!==WORK))return invalid('migration-adoption-source-invalid');
   const path=sourceRefs[0]?.path;
   const m=/^\/expenseDetail\/monthlyCategories\/(\d+)\/items\/(\d+)$/.exec(String(path||''));
   if(!m)return null; // unrelated native standard item
