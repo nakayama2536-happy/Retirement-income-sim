@@ -10,3 +10,5 @@ test('expense CSV preserves 96-year no-reduction result',()=>{const rows=mortali
 test('expense CSV identifies unavailable expense items',()=>{const rows=mortalityExpenseItemRows(fixture());assert.equal(rows.find(x=>x.month==='2072-01'&&x.itemId==='food').status,'対象期間外または未登録');assert.equal(rows.find(x=>x.month==='2072-01'&&x.itemId==='food').baseAmount,null);});
 test('expense CSV BOM / known audit columns',()=>{assert.ok(mortalityExpenseAuditCsv(fixture()).startsWith('\ufeff年月'));assert.ok(mortalityExpenseItemCsv(fixture()).includes('未照合の管理予算残額'));});
 test('expense CSV rejects mismatched budget',()=>{const f=fixture();f.mortality.monthly[0].expense=79;assert.throws(()=>mortalityExpenseAuditRows(f),/一致しません/);});
+
+test('expense CSV keeps negative numeric reductions as numeric fields',()=>{const f=fixture();f.mortality.monthly[0].expenseReduction=-10;f.mortality.monthly[0].expense=110;f.itemFactors.food=1.25;const rows=mortalityExpenseAuditCsv(f).split('\r\n');assert.ok(rows[1].includes(',-10,110,'));});
