@@ -101,7 +101,7 @@ try{
   assert.equal(await child.getAttribute('data-step-no'),'4-1-3-3-1');
   mark(engine,'expense-page-headings-age-source-category-and-child-numbered');
   const before=await saved(page);await open(page);await baselineInputs(page);
-  assert.equal(await input(page,'deathMonth').locator('xpath=..').getAttribute('data-step-no'),'1-2');
+  assert.equal(await input(page,'deathMonth').locator('xpath=..').getAttribute('data-step-no'),'1-3-1-2');
   mark(engine,'mortality-form-field-numbering-present');
   assert.equal(Number(await page.locator('#mortalityRemainderFactor').inputValue()),1,'初期の残額倍率は100%であること');
   for(const label of ['食費','水道光熱費','住居'])assert.ok(await factorRow(page,label).count()>0,label);
