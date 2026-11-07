@@ -1,6 +1,6 @@
 {
   "kind": "public-release",
-  "runtime": "v0.9.35-mortality-pension-20261105",
+  "runtime": "v0.9.36-numbering-expense-csv-20261107",
   "files": [
     {
       "name": "age-budget-candidate.mjs",
@@ -29,13 +29,13 @@
     },
     {
       "name": "app.mjs",
-      "size": 78464,
-      "sha256": "16b894a7c1354caffcdf5a113c00abf9746a8f8f4bd6bf42e9b4fcf8f34a53e4"
+      "size": 78468,
+      "sha256": "2d989f03a4986c7a10c361573331c95babded650c70403b2c46ccd8edc6d15a4"
     },
     {
       "name": "backup-compatibility.mjs",
-      "size": 8050,
-      "sha256": "3051be7a65aff2d1d95659afe1ec1e0bf5a17b84bf3f666728e1de25ff13e47b"
+      "size": 8054,
+      "sha256": "913dfc9c8094044b68e74bcd4477e04ad2eee59e1a399dc4ed546efff1cf4003"
     },
     {
       "name": "budget-travel-ui.mjs",
@@ -179,8 +179,8 @@
     },
     {
       "name": "index.html",
-      "size": 72008,
-      "sha256": "ce4c7096dd037ee470f85833b5088bb360435e0a76bd28211e7a3372f7214b1e"
+      "size": 72110,
+      "sha256": "313285bee82b17df72495f024975fa9c53776ee3232192a14d66a1c8f4e4b241"
     },
     {
       "name": "manifest.webmanifest",
@@ -208,6 +208,11 @@
       "sha256": "731d4fea9af40340653d40e103ffeb776a1839128ef3d6c365ddd56a71d255e9"
     },
     {
+      "name": "mortality-expense-csv.mjs",
+      "size": 5614,
+      "sha256": "00f3266538e8f6c3a1abc46e8c02a0da147eb2f4267870b1fa71f1295a37b67f"
+    },
+    {
       "name": "mortality-expense-preset.mjs",
       "size": 1484,
       "sha256": "312c7e102fb16b03e4757899dfb73dde1ba9a6874f30b6e9c436b320d4c857d2"
@@ -229,8 +234,8 @@
     },
     {
       "name": "mortality-ui.mjs",
-      "size": 57302,
-      "sha256": "b193909745414f83162b37a9e1efa26baf2eaa3400a291d149ad660151c8fc1c"
+      "size": 58039,
+      "sha256": "0f33d068372e95d3bb8491723dabc24df4ac798cf6675a35c431db03daaffab0"
     },
     {
       "name": "pension-estimate.mjs",
@@ -259,8 +264,8 @@
     },
     {
       "name": "release-info.json",
-      "size": 145,
-      "sha256": "c4331b705b1d3a633736cc3d7fb5fae5deee747587acdf1254ab8243576d8116"
+      "size": 152,
+      "sha256": "07b96d970a9b1e3f2b3c9bf233b568699a9ba052971732fb1a31883bcb6011c8"
     },
     {
       "name": "retirement-comment.mjs",
@@ -324,8 +329,8 @@
     },
     {
       "name": "sw.js",
-      "size": 4331,
-      "sha256": "0b94b59ee93e662573c1e05ef609ce701584eb99940586bf641e074791510069"
+      "size": 4421,
+      "sha256": "69021a12d9aef115411ed75d25ef557ad47ffc961e12bd94e1d6afc419a60a78"
     },
     {
       "name": "sync-controller.mjs",
@@ -366,6 +371,16 @@
       "name": "ui-entry-guards.mjs",
       "size": 5504,
       "sha256": "8e81292e69c014232efc93c1fcfeca057e6716b966c0348925dc2812d5d64824"
+    },
+    {
+      "name": "ui-numbering.css",
+      "size": 326,
+      "sha256": "ed062e8225935b2acfd09eafa0049920882b5c1dcfc6d246c31f9260e2b8b83f"
+    },
+    {
+      "name": "ui-numbering.mjs",
+      "size": 2266,
+      "sha256": "5d93b0f0c977f7a0dc70920e8e61d426f54e35ab2002a368b54929f036ed031e"
     },
     {
       "name": "unemployment-plan.mjs",
