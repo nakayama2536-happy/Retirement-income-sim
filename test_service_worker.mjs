@@ -37,7 +37,7 @@ test('画面モジュール更新時には旧キャッシュと分離した版�
  const h=harness(),prior=prefix(h.scope)+'v0.9.33-age-budget-preview-20261103';
  const oldCache=new Map([[h.scope+'mortality-ui.mjs',new Response('old-mortality-ui')]]);
  h.stores.set(prior,oldCache);
- assert.equal(cacheVersion,'v0.9.35-mortality-pension-20261105');
+ assert.equal(cacheVersion,'v0.9.36-numbering-expense-csv-20261107');
  assert.notEqual(h.current(),prior);
  await h.run('install');
  await h.run('activate');
@@ -95,7 +95,7 @@ test('インストール済みの画面・全モジュールをオフライン�
   assert.equal(h.takeovers(),0);assert.deepEqual(h.network,[]);
 });
 test('HTTPキャッシュを再利用せず全ファイルを取得、配布ファイルの不足なし',async()=>{
-  const h=harness();await h.run('install');assert.equal(h.requests.length,74);
+  const h=harness();await h.run('install');assert.equal(h.requests.length,77);
   for(const module of ['mortality-preview.mjs','mortality-comparison.mjs','mortality-ui.mjs'])assert.ok(h.requests.some(r=>r.url===h.scope+module));
   assert.ok(h.requests.some(r=>r.url===h.scope+'simple-layout.mjs'));
   assert.ok(h.requests.some(r=>r.url===h.scope+'annual-cashflow.mjs'));
