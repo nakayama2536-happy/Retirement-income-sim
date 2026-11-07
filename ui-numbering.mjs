@@ -38,8 +38,7 @@ export function numberExpenseDetailTree(host,prefix='4-1-3-3'){
  const visit=(parent,rootNumber)=>{
   const children=[...parent.children].filter(node=>node.matches?.('details'));
   children.forEach((detail,index)=>{
-   const number=rootNumber+(rootNumber===prefix?index?'-'+(index+1):'': '-'+(index+1)); // overridden below
-   const stable=rootNumber===prefix?rootNumber.slice(0,-1)+(Number(rootNumber.slice(-1))+index):rootNumber+'-'+(index+1);
+   const stable=rootNumber===prefix?'4-1-3-'+(index+3):rootNumber+'-'+(index+1);
    assignReferenceNumber(detail.querySelector(':scope > summary'),stable);
    visit(detail,stable);
   });
