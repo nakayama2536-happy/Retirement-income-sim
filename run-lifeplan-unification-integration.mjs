@@ -48,7 +48,7 @@ export function runIntegration(repo,settings={}){
   const requested=requiredIntegrationTests();
   const missing=REGRESSION.filter(x=>!existsSync(join(stage,x)));
   if(missing.length)throw Error(`MISSING_EXPECTED_TESTS ${missing.join(',')}`);
-  const proc=spawnSync(process.execPath,['--test',...requested],{cwd:stage,encoding:'utf8',timeout:180000,maxBuffer:20*1024*1024});
+  const proc=spawnSync(process.execPath,['--test',...requested],{cwd:stage,encoding:'utf8',timeout:180000,maxBuffer:20*1024*1024,env:{...process.env,LIFEPLAN_UNIFICATION_OVERLAY:'1'}});
   return {sha,trackedCount,testsRequested:requested,status:proc.status,stdout:proc.stdout?.slice(-14000),stderr:proc.stderr?.slice(-4000),error:proc.error?.message||null,sourceUnchanged:true};
  }finally{rmSync(stage,{recursive:true,force:true});}
 }

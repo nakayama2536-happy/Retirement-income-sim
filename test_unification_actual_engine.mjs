@@ -9,6 +9,8 @@ import {runRetirementPlan} from './calc.mjs';
 import {reconcileCashflow} from './cashflow-reconciliation.mjs';
 import {inspectMortalityExpenseBudget} from './mortality-itemized.mjs';
 import {prepareExpenseUnification} from './lifeplan-expense-unification-candidate.mjs';
+const overlayEnabled=process.env.LIFEPLAN_UNIFICATION_OVERLAY==='1';
+if(overlayEnabled)assert.match(readFileSync(new URL('./cashflow-sources.mjs',import.meta.url),'utf8'),/stagedExpenseCoverageGuard/, 'missing isolated source patch');
 function synthetic(){
  const s=JSON.parse(readFileSync(new URL('./tools/browser-test/mortality-synthetic.json',import.meta.url)));
  const c=migrateConfig(s.config);
@@ -22,7 +24,7 @@ function synthetic(){
 }
 function rowAt(result,age){return result.months.find(m=>m.age===age&&m.scope==='asset-funded');}
 function leafAt(row,id=null){const leaves=row.details.flatMap(d=>d.children||[]);return id?leaves.find(d=>d.itemId===id):leaves.find(d=>d.base?.sourceRefs?.some(r=>r.path?.includes('/items/0')));}
-test('real engine keeps age 95 expense and does not invent age 96 amount',()=>{
+test('real engine keeps age 95 expense and does not invent age 96 amount',{skip:!overlayEnabled},()=>{
  const original=synthetic();
  const before=runRetirementPlan(original,{includeMonthlyDetails:true});
  const prepared=prepareExpenseUnification(original);
@@ -45,7 +47,7 @@ test('real engine keeps age 95 expense and does not invent age 96 amount',()=>{
  assert.equal(candidate.expenseUnificationCandidate.adopted,false);
  assert.equal(original.expenseUnificationCandidate,undefined);
 });
-test('death-expense reference keeps unresolved item in remainder instead of inventing zero',()=>{
+test('death-expense reference keeps unresolved item in remainder instead of inventing zero',{skip:!overlayEnabled},()=>{
  const original=synthetic();
  const prepared=prepareExpenseUnification(original);assert.equal(prepared.status,'candidate-only');
  const candidate=prepared.candidate;
