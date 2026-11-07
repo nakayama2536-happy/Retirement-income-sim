@@ -6,6 +6,7 @@ on:
       - 'expense-unification-*.mjs'
       - 'apply-expense-unification-coverage.mjs'
       - 'apply-expense-unification-review*.mjs'
+      - 'tools/stage-expense-unification-release.mjs'
       - 'lifeplan-unification-*.mjs'
       - 'run-lifeplan-unification-integration*.mjs'
       - 'test_unification_actual_engine.mjs'
@@ -64,4 +65,26 @@ jobs:
           node --check "$temp/app.mjs"
           node --check "$temp/backup-compatibility.mjs"
           node tools/browser-test/legacy-expense-adoption-browser.mjs "$temp"
+      - name: Package unpublished candidate and validate distribution in isolated Chromium
+        shell: bash
+        run: |
+          set -euo pipefail
+          source_checkout="$(mktemp -d)"
+          candidate_checkout="${RUNNER_TEMP}/lifeplan-unification-staged"
+          distribution="${RUNNER_TEMP}/lifeplan-unification-public"
+          trap 'git worktree remove --force "$source_checkout" >/dev/null 2>&1 || true; rm -rf "$source_checkout"' EXIT
+          git worktree add --detach "$source_checkout" 3de8df5465b1484028bd7d1b1d9db7ddbf9df81a
+          node tools/stage-expense-unification-release.mjs "$source_checkout" "$candidate_checkout"
+          node "$candidate_checkout/tools/package-public.mjs" "$candidate_checkout" "$distribution"
+          node --test "$candidate_checkout/test_release_identity.mjs"
+          node tools/browser-test/legacy-expense-adoption-browser.mjs "$distribution"
+          test -f "$distribution/expense-unification-coverage.mjs"
+          test -f "$distribution/lifeplan-expense-unification-adoption-ui.mjs"
+      - name: Keep synthetic-only unpublished distribution as CI artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: unification-staged-only-${{ github.event.pull_request.head.sha }}
+          path: ${{ runner.temp }}/lifeplan-unification-public/
+          if-no-files-found: error
+          retention-days: 7
 
