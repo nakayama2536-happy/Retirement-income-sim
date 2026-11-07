@@ -71,6 +71,7 @@ jobs:
           node --check "$temp/app.mjs"
           node --check "$temp/backup-compatibility.mjs"
           node tools/browser-test/legacy-expense-adoption-browser.mjs "$temp"
+          node tools/browser-test/legacy-expense-adoption-browser.mjs "$PWD"
       - name: Package unpublished candidate and validate distribution in isolated Chromium
         shell: bash
         run: |
