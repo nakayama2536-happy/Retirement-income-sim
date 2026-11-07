@@ -1,5 +1,5 @@
 {
-  "appBuild": "v0.9.36-numbering-expense-csv-20261107",
+  "appBuild": "v0.9.38-complete-numbering-20261107",
   "releasedAt": "2026-11-07",
-  "purpose": "navigation-numbering-and-mortality-expense-csv"
+  "purpose": "complete-on-screen-numbering"
 }
