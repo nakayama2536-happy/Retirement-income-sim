@@ -79,6 +79,7 @@ jobs:
           node --test "$candidate_checkout/test_release_identity.mjs"
           LIFEPLAN_STAGE_DIR="$distribution" node --test tools/browser-test/legacy-expense-staged-sw.test.mjs
           node tools/browser-test/legacy-expense-adoption-browser.mjs "$distribution"
+          node tools/browser-test/legacy-expense-real-offline-browser.mjs "$distribution"
           test -f "$distribution/expense-unification-coverage.mjs"
           test -f "$distribution/lifeplan-expense-unification-adoption-ui.mjs"
       - name: Keep synthetic-only unpublished distribution as CI artifact
