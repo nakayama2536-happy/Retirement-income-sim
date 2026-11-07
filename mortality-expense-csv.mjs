@@ -22,14 +22,15 @@ export function mortalityExpenseItemRows(comparison){
  const rows=[];
  for(let i=0;i<monthly.length;i++){
   const d=detail.months[i],m=monthly[i];if(d.month!==m.month)throw Error(m.month+': 年月不一致');
-  let total=d.unallocated,after=d.unallocated*factors.unallocated;
+  const effectiveFactor=m.postDeath?factors.unallocated:1;
+  let total=d.unallocated,after=d.unallocated*effectiveFactor;
   for(const item of detail.items){
    const amount=d.amounts?.[item.id],present=finite(amount),factor=factors[item.id];
    if(!finite(factor))throw Error(item.id+': 倍率が未確認です');
-   if(present){total+=amount;after+=amount*factor;}
-   rows.push({month:m.month,age:base[i].annualAge,itemId:item.id,itemName:item.label||item.name||item.id,status:present?'対象月':'対象期間外または未登録',source:detail.sourceProfile||'未確認',baseAmount:present?amount:null,factor,afterAmount:present?amount*factor:null,difference:present?amount*(1-factor):null});
+   if(present){total+=amount;after+=amount*(m.postDeath?factor:1);}
+   rows.push({month:m.month,age:base[i].annualAge,itemId:item.id,itemName:item.label||item.name||item.id,status:present?'対象月':'対象期間外または未登録',source:detail.sourceProfile||'未確認',baseAmount:present?amount:null,factor,afterAmount:present?amount*(m.postDeath?factor:1):null,difference:present?amount*(1-(m.postDeath?factor:1)):null});
   }
-  rows.push({month:m.month,age:base[i].annualAge,itemId:'unallocated',itemName:'未照合の管理予算残額',status:'予算差額',source:detail.sourceProfile||'未確認',baseAmount:d.unallocated,factor:factors.unallocated,afterAmount:d.unallocated*factors.unallocated,difference:d.unallocated*(1-factors.unallocated)});
+  rows.push({month:m.month,age:base[i].annualAge,itemId:'unallocated',itemName:'未照合の管理予算残額',status:'予算差額',source:detail.sourceProfile||'未確認',baseAmount:d.unallocated,factor:factors.unallocated,afterAmount:d.unallocated*effectiveFactor,difference:d.unallocated*(1-effectiveFactor)});
   if(!close(total,m.baselineExpense))throw Error(m.month+': 費目合計と管理予算が一致しません');
   if(m.postDeath&&!close(after,m.expense))throw Error(m.month+': 費目倍率と死亡後予算が一致しません');
  }
