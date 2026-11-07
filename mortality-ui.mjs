@@ -152,6 +152,28 @@ function renderTransition(root,baseline,mortality,allocation,itemized=null,itemF
  ct.append(cb);costs.append(ct);detail.append(costs);root.append(detail);
 }
 
+/** Read-only diagnostic for a complete disappearance of named expense attribution.
+ * A missing source is not proof that an expense period was intentionally ended.
+ */
+export function mortalityExpenseCoverageBreaks(itemized,mortality,baseline){
+ const d=itemized?.months,m=mortality?.monthly;
+ if(!Array.isArray(d)||!Array.isArray(m)||!Array.isArray(baseline)||d.length!==m.length||m.length!==baseline.length)return [];
+ const out=[];
+ for(let i=1;i<m.length;i++){
+   const before=d[i-1],after=d[i],row=m[i],prior=m[i-1],b=baseline[i];
+   if(!row?.postDeath||!prior?.postDeath||after?.month!==row.month||before?.month!==prior.month)continue;
+   const nums=[before?.known,after?.known,after?.unallocated,b?.expense];
+   if(nums.some(n=>typeof n!=='number'||!Number.isFinite(n)))continue;
+   if(before.known<=1e-6||after.known>1e-6||b.expense<=1e-6)continue;
+   if(Math.abs(after.unallocated-b.expense)>1e-6*Math.max(1,b.expense))continue;
+   let end=i;
+   while(end+1<m.length&&m[end+1]?.postDeath&&d[end+1]?.known===0)end++;
+   out.push({month:row.month,age:b.annualAge??null,priorKnown:before.known,budget:b.expense,months:end-i+1});
+   i=end;
+ }
+ return out;
+}
+
 export function mountMortalityComparison(root,{getConfig,getBaseline,runPlan}){
  if(!root||typeof getConfig!=='function'||typeof getBaseline!=='function'||typeof runPlan!=='function')throw Error('missing-mortality-ui-dependency');
  root.innerHTML=`
@@ -434,6 +456,12 @@ export function mountMortalityComparison(root,{getConfig,getBaseline,runPlan}){
   const reference=validPensionReference();
   results.append(makeEl('p','muted',reference?`試算に使った年金の参考内訳：65歳基準・自身の基礎 ${formatTotal(reference.ownBasicAnnual)} ＋ 自身の厚生 ${formatTotal(reference.ownEmployeeAnnual)} ＋ 遺族厚生の差額 ${formatTotal(reference.survivorTopUpAnnual)} ＝ 合計 ${formatTotal(parameters.survivorPension)}／年。`:'試算に使った年金合計の内訳は未確認です。手入力の合計に遺族年金を自動加算していません。'));
   renderTransition(results,original.monthlyDetails,mortality,allocation,itemized,itemFactors);
+  for(const issue of mortalityExpenseCoverageBreaks(itemized,mortality,original.monthlyDetails)){
+    const age=issue.age==null?'年齢未確認':issue.age+'歳期';
+    const notice=makeEl('p','mortality-warning',`費目別支出の確認：${issue.month}（本人${age}）から${issue.months}か月間、登録済み費目の参照金額がすべて0になり、管理予算の全額が未照合残額になっています。直前の月は${formatTotal(issue.priorKnown)}／月の費目内訳を参照できました。費目の登録終了年齢・対象期間・参照元を確認してください。比較の計算値と保存済み設定は変更していません。`);
+    notice.dataset.mortalityExpenseCoverageWarning='true';
+    results.append(notice);
+  }
   const periods=agePeriodComparisonRows(original.monthlyDetails,{mortality});
   // The adopted 95/100-year horizon stays authoritative. Never silently extend it.
   const last=periods.at(-1),at100=periods.find(p=>p.age===100);
