@@ -87,6 +87,24 @@ try{
  await page.reload({waitUntil:'domcontentloaded'});
  await page.locator('#dashboard').waitFor({state:'visible',timeout:30000});
  assert.ok((await state())===JSON.stringify(adopted),'Reload did not change persisted state');
+ const csvComparison=await page.evaluate(async()=>{
+   const {annualCsvRows,annualCsvText}=await import('./annual-csv.mjs');
+   const cfg=JSON.parse(localStorage.getItem('lifeplan-sim-state-v1')).config;
+   const rows=annualCsvRows(cfg,{sourceProfile:'work-v0.9.7'});
+   const find=age=>rows.find(x=>x.age===age);
+   const r95=find(95),r96=find(96);
+   const text=annualCsvText(cfg,{sourceProfile:'work-v0.9.7'});
+   return {r95,r96,startsBom:text.startsWith('\uFEFF'),containsStandard:text.includes('Work v0.9.7形式'),lineCount:text.split('\r\n').length-1};
+ });
+ assert.ok(csvComparison.r95&&csvComparison.r96,'CSV must include ages 95 and 96');
+ assert.equal(csvComparison.r95.managementExpense,csvComparison.r96.managementExpense,'Migration must not change adopted management budget');
+ assert.ok(csvComparison.r95.referenceKnownSubtotal>0,'Registered age 95 detail must remain known');
+ assert.equal(csvComparison.r96.referenceKnownSubtotal,0,'Unregistered age 96 detail must not be invented');
+ assert.ok(csvComparison.r96.unresolvedMonthCount>0,'Missing age 96 must remain unresolved');
+ assert.equal(csvComparison.startsBom,true);
+ assert.equal(csvComparison.containsStandard,true);
+ assert.ok(csvComparison.lineCount>30);
+ evidence.cases.push({id:'reload-annual-csv-95-96',status:'pass',missing96Unresolved:true});
  const card2=await openExpense();
  await card2.locator('#expenseUnificationAdoption button').nth(3).click();
  await page.waitForFunction(()=>JSON.parse(localStorage.getItem('lifeplan-sim-state-v1')).config.expenseUnificationArchive===undefined);
