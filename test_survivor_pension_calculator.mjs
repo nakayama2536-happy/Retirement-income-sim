@@ -8,3 +8,20 @@ test('NaNを拒否',()=>assert.throws(()=>calc({deceasedEarningsBaseAnnual:NaN,o
 test('繰下げ月数60か月',()=>assert.equal(defer({basicAt65Annual:100,monthsDeferred:60}).amount,142));
 test('繰下げ月数の不正値を拒否',()=>assert.throws(()=>defer({basicAt65Annual:100,monthsDeferred:121})));
 test('確定採用不可',()=>assert.equal(calc({deceasedEarningsBaseAnnual:100,ownEmployeeAnnual:50,ownBasicAnnual:80,eligibilityConfirmed:true}).eligibleForAdoption,false));
+
+import {registeredSurvivorInputs} from './survivor-pension-calculator.mjs';
+test('reference65 uses only existing private adopted values for either spouse',()=>{
+ const c={income:{pensions:{primary:{reference65:{source:'synthetic-a',employeeEarningsAnnual:'125',basicAnnual:'80'}},spouse:{reference65:{source:'synthetic-b',employeeEarningsAnnual:'30',basicAnnual:'85'}}}}};
+ const p=registeredSurvivorInputs(c,'primary');
+ assert.equal(p.deceasedEarnings,125);assert.equal(p.ownEmployee,30);assert.equal(p.ownBasic,85);
+ const s=registeredSurvivorInputs(c,'spouse');
+ assert.equal(s.deceasedEarnings,30);assert.equal(s.ownEmployee,125);assert.equal(s.ownBasic,80);
+});
+test('reference65 never infers missing values or accepts raw yen as man-yen',()=>{
+ const c={income:{pensions:{primary:{reference65:{source:'2026 fictional',employeeEarningsAnnual:'120'}},spouse:{reference65:{source:'2026 fictional',employeeEarningsAnnual:'24',basicAnnual:''}}}}};
+ assert.throws(()=>registeredSurvivorInputs(c,'primary'),/未登録/);
+ c.income.pensions.spouse.reference65.basicAnnual='1234567';
+ assert.throws(()=>registeredSurvivorInputs(c,'primary'),/万円/);
+ c.income.pensions.spouse.reference65.basicAnnual='0';
+ assert.equal(registeredSurvivorInputs(c,'primary').ownBasic,0);
+});

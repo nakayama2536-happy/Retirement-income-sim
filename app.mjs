@@ -55,8 +55,8 @@ let result = null;
 let forecast = null;
 let showActuals = false;
 let renderedInputValues=new Map();
-const survivorPensionCard=mountSurvivorPensionScreen(document.getElementById('survivorPensionContainer'));
 const mortalityCard=mountMortalityComparison(document.getElementById('mortalityComparisonContainer'),{getConfig:()=>config,getBaseline:()=>result,runPlan:runRetirementPlan});
+const survivorPensionCard=mountSurvivorPensionScreen(document.getElementById('survivorPensionContainer'),{getConfig:()=>config,onTransfer:reference=>{mortalityCard.stageReference(reference);switchTab('mortality');}});
 
 function inputValues(){
   return new Map([...document.querySelectorAll('#dashboard input, #dashboard select, #dashboard textarea')]
