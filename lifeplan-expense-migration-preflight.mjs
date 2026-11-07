@@ -4,7 +4,6 @@
  * Accept only synthetic or authorized local config snapshots. Never log raw amounts.
  * node lifeplan-expense-migration-preflight.mjs fictional-input.json
  */
-import {readFileSync} from 'node:fs';
 const isRecord=x=>x!==null&&typeof x==='object'&&!Array.isArray(x);
 const integer=n=>Number.isInteger(n)&&n>=0&&n<=120;
 const validMoney=x=>typeof x==='number'&&Number.isFinite(x)&&x>=0;
@@ -58,8 +57,4 @@ export function inspectLegacyExpenseMigration(config){
     diagnostics,
     // Deliberately no proposed replacement values: null and missing are not zero.
     proposedWrites:0,existingDataModified:false};
-}
-if(process.argv[1]&&import.meta.url===new URL('file://'+process.argv[1]).href){
- const path=process.argv[2];if(!path){console.error('Usage: node lifeplan-expense-migration-preflight.mjs <local-json>');process.exitCode=2;}
- else {const r=inspectLegacyExpenseMigration(JSON.parse(readFileSync(path,'utf8')));console.log(JSON.stringify(r,null,2));if(r.status==='blocked')process.exitCode=1;}
 }
