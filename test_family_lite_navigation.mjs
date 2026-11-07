@@ -37,5 +37,6 @@ test('将来資産を示してから操作入口を表示し、3画面からホ�
     assert.match(section.slice(0,300),/data-open-tab="home"/);
   }
   const links=[...html.matchAll(/class="family-lite-back"/g)];
-  assert.equal(links.length,3);
+  assert.equal(links.length,4,'既存3画面と新設の遺族年金専用画面に戻る導線がある');
+  assert.match(html,/<section id="survivorPension" class="panel" hidden><div class="family-lite-back"/);
 });
