@@ -51,6 +51,6 @@ test('mandatory actual-engine test must never be omitted by name filter',()=>{
  assert.ok(tests.includes('test_unification_actual_engine.mjs'));
  assert.ok(tests.includes('lifeplan-unification-equivalence.test.mjs'));
  assert.ok(tests.includes('test_mortality_comparison.mjs'));
- assert.ok(tests.includes('test_release_identity.mjs'));
+ assert.ok(!tests.includes('test_release_identity.mjs')); // manifest verified against unchanged source, not patched overlay
  assert.equal(new Set(tests).size,tests.length);
 });

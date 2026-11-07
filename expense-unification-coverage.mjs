@@ -36,8 +36,12 @@ export function stagedExpenseCoverageGuard(view,variant,allRules,age){
   if(expected.some((p,i)=>i>0&&p.fromAge<=expected[i-1].toAge))return invalid('migration-period-overlap');
   // Verify exact registered override values, without converting any omission to zero.
   const generated=allRules.filter(r=>r.generatedBy===SOURCE);
-  const other=allRules.filter(r=>r.generatedBy!==SOURCE);
-  if(other.length||generated.length!==periods.length)return invalid('migration-overrides-changed');
+  // The standard source deliberately uses a zero-valued base placeholder.
+  // It must not count as an unexpected manual override, but any alteration
+  // of that placeholder remains a conflict.
+  const base=allRules.filter(r=>r.generatedBy!==SOURCE && r.priority===10 && r.period?.type==='all' && r.status==='resolved' && r.amount===0 && r.unit==='monthly' && r.sourceRefs?.[0]?.path===path);
+  const other=allRules.filter(r=>r.generatedBy!==SOURCE && !base.includes(r));
+  if(base.length!==1||other.length||generated.length!==periods.length)return invalid('migration-overrides-changed');
   const seen=new Set();
   for(const r of generated){
     const i=expected.findIndex((p,i)=>!seen.has(i)&&r.period?.type==='age'&&same(r.period.fromAge,p.fromAge)&&same(r.period.toAge,p.toAge)&&same(r.amount,p.amount)&&r.status==='resolved'&&r.unit==='monthly'&&r.priority===30);
