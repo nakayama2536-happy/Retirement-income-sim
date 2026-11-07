@@ -30,6 +30,12 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '22'
+      - name: Generate branch-native distribution manifest (hash evidence)
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --input-type=module -e 'import {collect} from "./tools/package-public.mjs"; const b=collect(process.cwd()); console.log("UNIFICATION_MANIFEST_JSON="+JSON.stringify(JSON.parse(b.out.get("distribution-manifest.json").toString("utf8"))));'
+
       - name: Standalone synthetic guard and migration tests
         run: node --test lifeplan-expense-migration-preflight.test.mjs lifeplan-expense-unification-candidate.test.mjs lifeplan-expense-unification-adoption.test.mjs lifeplan-expense-unification-transaction.test.mjs lifeplan-expense-unification-review.test.mjs apply-expense-unification-review.test.mjs expense-unification-coverage.test.mjs run-lifeplan-unification-integration.test.mjs lifeplan-unification-equivalence.test.mjs
       - name: Verify original publish manifest (unmodified source only)
