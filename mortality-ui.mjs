@@ -444,10 +444,18 @@ export function mountMortalityComparison(root,{getConfig,getBaseline,runPlan}){
   if(at100){const msg=makeEl('p','',`100歳期末資産：基準 ${formatTotal(at100.baselineEndAsset)}／比較 ${formatTotal(at100.previewEndAsset)}／差 ${formatTotal(at100.delta)}。負残高があれば、追加資金・支出見直しを検討する参考値です。`);msg.id='mortalityAge100Balance';results.append(msg);}
   if(mortality.firstNegativeMonth){const warning=makeEl('p','mortality-warning',`比較案では${mortality.firstNegativeMonth}に初めて資産残高が負になります。追加資金・支出削減などの条件を見直す必要性を検討してください。負残高は借入額や資金不足総額とは限りません。`);warning.id='mortalityFundingWarning';results.append(warning);}
   renderFirstNegativeDiagnostic(results,mortality);
-  const expenseExport=makeEl('button','secondary','月次・費目別支出CSVを保存（未採用の比較）');
-  expenseExport.id='mortalityExportExpenseCsv';expenseExport.type='button';
-  expenseExport.addEventListener('click',()=>{try{downloadMortalityExpenseCsv({mortality,original,itemized,itemFactors});}catch(error){expenseExport.insertAdjacentText('afterend',' CSVを作成できません：'+error.message);}});
-  results.append(expenseExport);
+  for(const [kind,id,label] of [
+    ['monthly','mortalityExportExpenseMonthlyCsv','月次支出CSVを保存（未採用の比較）'],
+    ['items','mortalityExportExpenseItemsCsv','費目別支出CSVを保存（未採用の比較）']
+  ]){
+    const button=makeEl('button','secondary',label);button.id=id;button.type='button';
+    if(kind==='items'&&!itemized)button.disabled=true;
+    button.addEventListener('click',()=>{
+      try{downloadMortalityExpenseCsv({mortality,original,itemized,itemFactors},{kind});}
+      catch(error){button.insertAdjacentText('afterend',' CSVを作成できません：'+error.message);}
+    });
+    results.append(button);
+  }
   const capital=requiredAdditionalCapitalAt64(original.monthlyDetails,{mortality},getConfig()?.plan?.afterTaxReturn);
   const funding=makeEl('section','mortality-funding');funding.id='mortalityAge64Prefunding';
   funding.append(makeEl('h3','','64歳末に必要な追加資金（参考試算）'));
