@@ -1,5 +1,6 @@
 // I-02A: read-only adapters. Deliberately not imported by the running application.
 // Amounts are in 万円. No inflation, tax calculation, persistence, or plan adoption.
+import {stagedExpenseCoverageGuard} from './expense-unification-coverage.mjs';
 const PUBLIC = 'public-v0.9', WORK = 'work-v0.9.7';
 const PROFILES = [PUBLIC, WORK];
 const own = (o, k) => o != null && Object.hasOwn(o, k);
@@ -256,6 +257,8 @@ function resolveProfile(view,itemId,age,profile,ancestors=new Set(),ignoreParent
   if (ancestors.has(itemId)) return result('conflict',{...base,reason:'identity-cycle'});
   const next = new Set([...ancestors,itemId]);
   const all=view.rules.filter(r=>r.itemId === itemId && r.profile === profile);
+  const stagedCoverage=stagedExpenseCoverageGuard(view,v,all,age);
+  if(stagedCoverage)return stagedCoverage;
   if (!ignoreParent && v.parentId) {
     const parentOverrides=view.rules.filter(r=>r.itemId === v.parentId && r.profile === profile && r.priority === 30 && (covers(r.period,age) || r.period.type === 'invalid'));
     if (parentOverrides.length) return result('unsupported',{...base,reason:'suppressed-by-parent',suppressedRules:all.filter(r=>covers(r.period,age)).map(r=>r.ruleRef),suppressedBy:parentOverrides.map(r=>r.ruleRef)});
