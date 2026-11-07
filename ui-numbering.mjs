@@ -35,16 +35,16 @@ function numberControls(container,prefix,{includeSummaries=true}={}){
 /** Subcategory identifiers follow the same rows even when their numeric amount is unknown. */
 export function numberExpenseDetailTree(host,prefix='4-1-3-3'){
  if(!host)return;
- const visit=(parent,rootNumber)=>{
+ const visit=(parent,parentReference,isCategoryLevel)=>{
   const children=[...parent.children].filter(node=>node.matches?.('details'));
   children.forEach((detail,index)=>{
-   const stable=rootNumber===prefix?'4-1-3-'+(index+3):rootNumber+'-'+(index+1);
-   assignReferenceNumber(detail.querySelector(':scope > summary'),stable);
-   visit(detail,stable);
+   const number=isCategoryLevel?'4-1-3-'+(index+3):parentReference+'-'+(index+1);
+   assignReferenceNumber(detail.querySelector(':scope > summary'),number);
+   visit(detail,number,false);
   });
  };
  // Categories are 4-1-3-3, 4-1-3-4 ... ; children are 4-1-3-3-1, etc.
- visit(host,prefix);
+ visit(host,prefix,true);
 }
 function numberExpensePanel(root){
  const panel=root.querySelector('#expenses');if(!panel)return;
