@@ -43,3 +43,18 @@ jobs:
           node --check "$temp/ui-numbering.mjs"
           grep -F "4-1-6" "$temp/ui-numbering.mjs"
           grep -F "mountExpenseUnificationReview" "$temp/app.mjs"
+          node --check "$temp/lifeplan-expense-unification-review.mjs"
+      - name: Chromium acceptance of isolated 4-1-6 review
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd tools/browser-test
+          npm install --no-save --package-lock=false --ignore-scripts playwright@1.62.1
+          npx --no-install playwright install --with-deps chromium
+          cd ../..
+          temp="$(mktemp -d)"
+          trap 'git worktree remove --force "$temp" >/dev/null 2>&1 || true; rm -rf "$temp"' EXIT
+          git worktree add --detach "$temp" 3de8df5465b1484028bd7d1b1d9db7ddbf9df81a
+          node apply-expense-unification-review.mjs "$temp"
+          node tools/browser-test/legacy-expense-staged-browser.mjs "$temp"
+

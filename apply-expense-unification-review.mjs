@@ -28,11 +28,11 @@ export function applyReadOnlyExpenseReviewOverlay(target){
  updated=updated.replace(refreshAnchor,refreshAnchor+'\n'+refreshLine);
  // The details card is appended AFTER the existing 4-1-5 settings accordion.
  const numbered=insert(numbering,"  ['#periodEditForm','4-1-5-1'],",uiLine,'number');
- const mod='lifeplan-expense-unification-review.mjs';
- copyFileSync(join(sourceDir,mod),join(root,mod));
+ const mods=['lifeplan-expense-migration-preflight.mjs','lifeplan-expense-unification-candidate.mjs','lifeplan-expense-unification-review.mjs'];
+ for(const mod of mods)copyFileSync(join(sourceDir,mod),join(root,mod));
  // All anchors were verified before writing the replacement files.
  writeFileSync(appFile,updated);writeFileSync(numberingFile,numbered);
- return {installed:true,sourceUntouched:true,targets:['app.mjs','ui-numbering.mjs',mod]};
+ return {installed:true,sourceUntouched:true,targets:['app.mjs','ui-numbering.mjs',...mods]};
 }
 if(process.argv[1]&&fileURLToPath(import.meta.url)===resolve(process.argv[1])){
  try{const p=process.argv[2];if(!p)throw Error('Usage: node apply-expense-unification-review.mjs <isolated-repository-copy>');console.log(JSON.stringify(applyReadOnlyExpenseReviewOverlay(p)));}catch(e){console.error('Review UI overlay aborted: '+e.message);process.exitCode=1;}
