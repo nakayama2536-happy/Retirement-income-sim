@@ -71,7 +71,10 @@ jobs:
           node --check "$temp/app.mjs"
           node --check "$temp/backup-compatibility.mjs"
           node tools/browser-test/legacy-expense-adoption-browser.mjs "$temp"
-          node tools/browser-test/legacy-expense-adoption-browser.mjs "$PWD"
+          direct_tmp="$(mktemp -d)"
+          trap 'rm -rf "$direct_tmp"' EXIT
+          node tools/package-public.mjs . "$direct_tmp/direct-branch-bundle"
+          node tools/browser-test/legacy-expense-adoption-browser.mjs "$direct_tmp/direct-branch-bundle"
       - name: Package unpublished candidate and validate distribution in isolated Chromium
         shell: bash
         run: |
