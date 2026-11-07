@@ -1,6 +1,6 @@
 {
   "kind": "public-release",
-  "runtime": "v0.9.36-numbering-expense-csv-20261107",
+  "runtime": "v0.9.38-complete-numbering-20261107",
   "files": [
     {
       "name": "age-budget-candidate.mjs",
@@ -29,13 +29,13 @@
     },
     {
       "name": "app.mjs",
-      "size": 78468,
-      "sha256": "2d989f03a4986c7a10c361573331c95babded650c70403b2c46ccd8edc6d15a4"
+      "size": 78465,
+      "sha256": "f5256e59ae7958e20c79b18f64cb6546b10d48aefcdc5a8666a561ef3572ca1e"
     },
     {
       "name": "backup-compatibility.mjs",
-      "size": 8054,
-      "sha256": "913dfc9c8094044b68e74bcd4477e04ad2eee59e1a399dc4ed546efff1cf4003"
+      "size": 8051,
+      "sha256": "8cdbec7fb03021464e9b4a416974b01d587d0fd9a95f067ffb94ac2d89c003a9"
     },
     {
       "name": "budget-travel-ui.mjs",
@@ -264,8 +264,8 @@
     },
     {
       "name": "release-info.json",
-      "size": 152,
-      "sha256": "07b96d970a9b1e3f2b3c9bf233b568699a9ba052971732fb1a31883bcb6011c8"
+      "size": 131,
+      "sha256": "94a87ebede310f66cf4561452a8b4cd937b65d22414ffc32665e4b5e103d88e5"
     },
     {
       "name": "retirement-comment.mjs",
@@ -329,8 +329,8 @@
     },
     {
       "name": "sw.js",
-      "size": 4421,
-      "sha256": "69021a12d9aef115411ed75d25ef557ad47ffc961e12bd94e1d6afc419a60a78"
+      "size": 4418,
+      "sha256": "e62fdf9b59b04f570894674e66c160d73a69c373563237c85fa942be8815c6a0"
     },
     {
       "name": "sync-controller.mjs",
@@ -374,13 +374,13 @@
     },
     {
       "name": "ui-numbering.css",
-      "size": 326,
-      "sha256": "ed062e8225935b2acfd09eafa0049920882b5c1dcfc6d246c31f9260e2b8b83f"
+      "size": 632,
+      "sha256": "1f5d0d07af57bb2348f3a176beecf389294615c28414a65e7b4d3b301d1fbee9"
     },
     {
       "name": "ui-numbering.mjs",
-      "size": 2266,
-      "sha256": "5d93b0f0c977f7a0dc70920e8e61d426f54e35ab2002a368b54929f036ed031e"
+      "size": 6569,
+      "sha256": "d9fa4edb21a43a57f2f951b1484186c51393917c46b51a47a026b3d10465de29"
     },
     {
       "name": "unemployment-plan.mjs",
