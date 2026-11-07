@@ -1,5 +1,5 @@
 {
-  "appBuild": "v0.9.36-numbering-expense-csv-20261107",
+  "appBuild": "v0.9.37-mortality-coverage-warning-20261107",
   "releasedAt": "2026-11-07",
-  "purpose": "navigation-numbering-and-mortality-expense-csv"
+  "purpose": "mortality-expense-coverage-warning"
 }
