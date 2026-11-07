@@ -81,6 +81,22 @@ try{
   assert.equal(await page.locator('[data-tab="pension"]').getAttribute('data-step-no'),'2-5');
   assert.equal(await page.locator('[data-tab="expenses"]').getAttribute('data-step-no'),'4-1');
   mark(engine,'navigation-numbering-visible-in-actual-application');
+  // Full hierarchy is taken from the visible expense page, not invented help text.
+  await page.locator('[data-group="expense"]').click();
+  await page.locator('[data-group-item="expense"][data-tab="expenses"]').click();
+  assert.equal(await page.locator('#expenses .expense-reconcile-grid .section-title h2').getAttribute('data-step-no'),'4-1-3');
+  assert.equal(await page.locator('#cashflowViewAge').locator('xpath=..').getAttribute('data-step-no'),'4-1-3-1');
+  const sourceLabel=page.locator('#expenseDisplaySource').locator('xpath=..');
+  assert.match(await sourceLabel.getAttribute('data-step-no'),/^4-1-3-2(?:-1)?$/);
+  await page.locator('#expenseDisplaySource').selectOption('work-v0.9.7');
+  const category=page.locator('#expenseDetail > details > summary').first();
+  await category.waitFor({state:'visible'});
+  assert.equal(await category.getAttribute('data-step-no'),'4-1-3-3');
+  await category.click();
+  const child=page.locator('#expenseDetail > details:first-of-type > details > summary').first();
+  await child.waitFor({state:'visible'});
+  assert.equal(await child.getAttribute('data-step-no'),'4-1-3-3-1');
+  mark(engine,'expense-page-headings-age-source-category-and-child-numbered');
   const before=await saved(page);await open(page);await baselineInputs(page);
   assert.equal(await input(page,'deathMonth').locator('xpath=..').getAttribute('data-step-no'),'1-2');
   mark(engine,'mortality-form-field-numbering-present');
