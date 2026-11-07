@@ -3,7 +3,7 @@ export const EXPENSE_COLUMNS=[['month','年月'],['age','本人年齢期'],['pos
 export const ITEM_COLUMNS=[['month','年月'],['age','本人年齢期'],['itemId','費目ID'],['itemName','費目名'],['status','状態'],['source','参考内訳出典'],['baseAmount','登録内訳月額_物価換算後_万円'],['factor','死亡後倍率'],['afterAmount','死亡後参考月額_万円'],['difference','減額_万円']];
 const finite=x=>typeof x==='number'&&Number.isFinite(x);
 const close=(a,b)=>Math.abs(a-b)<1e-7*Math.max(1,Math.abs(a),Math.abs(b));
-const cell=x=>{if(x==null||typeof x==='number'&&!Number.isFinite(x))return '';let v=String(x);if(/^[\s]*[=+@\-\t\r]/.test(v))v="'"+v;return /[",\r\n]/.test(v)?'"'+v.replaceAll('"','""')+'"':v;};
+const cell=x=>{if(x==null||typeof x==='number'&&!Number.isFinite(x))return '';if(typeof x==='number')return String(x);let v=String(x);if(/^[\s]*[=+@\-\t\r]/.test(v))v="'"+v;return /[",\r\n]/.test(v)?'"'+v.replaceAll('"','""')+'"':v;};
 export function csvString(columns,rows){return '\ufeff'+[columns.map(([,label])=>cell(label)).join(','),...rows.map(row=>columns.map(([key])=>cell(row[key])).join(','))].join('\r\n')+'\r\n';}
 function requirePreview(comparison){
  const monthly=comparison?.mortality?.monthly,base=comparison?.original?.monthlyDetails;
