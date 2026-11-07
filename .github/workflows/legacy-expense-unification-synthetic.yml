@@ -10,6 +10,8 @@ on:
       - 'run-lifeplan-unification-integration*.mjs'
       - 'test_unification_actual_engine.mjs'
       - 'test_unification_adoption_engine.mjs'
+      - 'lifeplan-expense-unification-adoption-ui.mjs'
+      - 'apply-expense-unification-adoption-ui.mjs'
       - '.github/workflows/legacy-expense-unification-synthetic.yml'
 permissions:
   contents: read
@@ -58,4 +60,7 @@ jobs:
           git worktree add --detach "$temp" 3de8df5465b1484028bd7d1b1d9db7ddbf9df81a
           node apply-expense-unification-review.mjs "$temp"
           node tools/browser-test/legacy-expense-staged-browser.mjs "$temp"
+          node apply-expense-unification-adoption-ui.mjs "$temp"
+          node --check "$temp/app.mjs"
+          node --check "$temp/backup-compatibility.mjs"
 
