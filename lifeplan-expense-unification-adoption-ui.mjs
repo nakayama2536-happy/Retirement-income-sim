@@ -61,7 +61,7 @@ export function mountExpenseUnificationAdoptionUi({doc=globalThis.document,stora
    if(!pending||!backupRequested||!confirm.checked||!eligible())return;
    apply.disabled=true;prepare.disabled=true;
    const outcome=await commitPreparedUnification({
-     store:storage,key:STATE_KEY,expectedRaw,prepared:pending,validate:validateSavedState,allowWrite:eligible(),
+     store:storage,key:STATE_KEY,expectedRaw,prepared:pending,validate:validateSavedState,allowWrite:eligible,
      writeBackup:async()=>({secured:confirm.checked&&backupRequested,receipt:'user-confirmed-downloaded-full-backup'})
    });
    prepare.disabled=false;

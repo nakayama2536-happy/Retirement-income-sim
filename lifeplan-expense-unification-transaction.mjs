@@ -55,7 +55,8 @@ export function prepareUnificationState(input,{validate}={}){
 }
 
 export async function commitPreparedUnification({store,key,expectedRaw,prepared,validate,writeBackup,allowWrite=false}={}){
- if(!allowWrite)return blocked('WRITE_NOT_AUTHORIZED');
+ const permitted=()=>typeof allowWrite==='function'?allowWrite()===true:allowWrite===true;
+ if(!permitted())return blocked('WRITE_NOT_AUTHORIZED');
  if(!store||typeof store.getItem!=='function'||typeof store.setItem!=='function'||typeof key!=='string'||!key)return blocked('INVALID_STORAGE');
  if(typeof expectedRaw!=='string'||store.getItem(key)!==expectedRaw)return blocked('STALE_SOURCE');
  if(prepared?.status!=='prepared'||typeof validate!=='function'||typeof writeBackup!=='function')return blocked('UNVERIFIED_CANDIDATE');
@@ -69,6 +70,7 @@ export async function commitPreparedUnification({store,key,expectedRaw,prepared,
  let receipt;
  try{receipt=await writeBackup(copy(before))}catch{return blocked('BACKUP_FAILED')}
  if(receipt?.secured!==true||typeof receipt.receipt!=='string'||!receipt.receipt.trim())return blocked('BACKUP_NOT_SECURED');
+ if(!permitted())return blocked('WRITE_ACCESS_LOST');
  if(store.getItem(key)!==expectedRaw)return blocked('STALE_AFTER_BACKUP');
  const encoded=JSON.stringify(next);
  try{store.setItem(key,encoded)}catch{return blocked('WRITE_FAILED')}

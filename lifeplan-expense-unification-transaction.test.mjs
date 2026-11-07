@@ -125,3 +125,13 @@ test('original root recovery compatibility is restored exactly by targeted undo'
  assert.equal(undoPreparedUnification({store,key:'x',expectedRaw:store.getItem('x'),validate,allowWrite:true}).status,'undone');
  assert.deepEqual(JSON.parse(store.getItem('x')),s);
 });
+
+test('write access lost while backup is being secured blocks adoption without writes',async()=>{
+ const {raw,store,prepared}=setup();
+ let permitted=true;
+ const result=await commitPreparedUnification({store,key:'x',expectedRaw:raw,prepared,validate,
+  writeBackup:async()=>{permitted=false;return backup();},allowWrite:()=>permitted});
+ assert.equal(result.reason,'WRITE_ACCESS_LOST');
+ assert.equal(store.writes,0);
+ assert.equal(store.getItem('x'),raw);
+});
