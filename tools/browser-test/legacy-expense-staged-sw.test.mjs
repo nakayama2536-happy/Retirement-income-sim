@@ -7,7 +7,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import vm from 'node:vm';
-const dir=process.argv[2]&&path.resolve(process.argv[2]);
+const dir=process.env.LIFEPLAN_STAGE_DIR&&path.resolve(process.env.LIFEPLAN_STAGE_DIR);
 if(!dir||!fs.existsSync(path.join(dir,'sw.js')))throw Error('Candidate directory with sw.js is required');
 const sw=fs.readFileSync(path.join(dir,'sw.js'),'utf8');
 const scope='https://example.test/lifeplan-isolated/';
