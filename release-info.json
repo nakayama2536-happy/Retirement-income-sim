@@ -1,5 +1,5 @@
 {
-  "appBuild": "v0.9.40-planning-charts-20261107",
+  "appBuild": "v0.9.41-survivor-reference-20261108",
   "releasedAt": "2026-11-07",
-  "purpose": "read-only-income-budget-expense-charts"
+  "purpose": "independent-survivor-pension-reference-screen"
 }
