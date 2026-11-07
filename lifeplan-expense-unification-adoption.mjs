@@ -7,6 +7,7 @@ import {prepareExpenseUnification} from './lifeplan-expense-unification-candidat
 const clone=x=>structuredClone(x);
 const own=(x,k)=>x!==null&&typeof x==='object'&&Object.hasOwn(x,k);
 export const ADOPTION_SAFETY='STANDARD_MIGRATED_WITH_COVERAGE_V1';
+export const REQUIRED_FEATURE='legacy-expense-unification-v1';
 const tracked=c=>({
   standardExists:own(c,'expenseDetail'),
   expenseDetail:own(c,'expenseDetail')?clone(c.expenseDetail):null,
@@ -17,7 +18,9 @@ const tracked=c=>({
   selectedExists:own(c.cashflow,'detailSourceProfile'),
   selected:own(c.cashflow,'detailSourceProfile')?clone(c.cashflow.detailSourceProfile):null,
   candidateExists:own(c,'expenseUnificationCandidate'),
-  candidate:own(c,'expenseUnificationCandidate')?clone(c.expenseUnificationCandidate):null
+  candidate:own(c,'expenseUnificationCandidate')?clone(c.expenseUnificationCandidate):null,
+  recoveryExists:own(c,'recoveryCompatibility'),
+  recovery:own(c,'recoveryCompatibility')?clone(c.recoveryCompatibility):null
 });
 const equal=(a,b)=>JSON.stringify(a)===JSON.stringify(b);
 /** No test can write or adopt a real browser state by calling this function. */
@@ -35,6 +38,10 @@ export function buildExpenseUnificationAdoption(raw){
   next.cashflow.detailSourceProfile='work-v0.9.7';
   next.expenseUnificationCandidate.adopted=true;
   next.expenseUnificationCandidate.safety=ADOPTION_SAFETY;
+  // This is deliberately incompatible with old deployed binaries: they must
+  // reject a saved proposal rather than silently ignore unknown coverage.
+  const existing=before.recoveryCompatibility?.requiredFeatures||[];
+  next.recoveryCompatibility={...clone(before.recoveryCompatibility||{}),protocol:1,producerBuild:'draft-legacy-expense-unification-v1',requiredFeatures:[...new Set([...existing,REQUIRED_FEATURE])]};
   // Record only the fields this migration changes: unrelated later settings
   // can remain untouched when an undo is requested.
   const adopted=tracked(next);
@@ -55,6 +62,7 @@ export function undoExpenseUnificationAdoption(raw){
   if(orig.overrideExists)c.cashflow.periodOverrides=clone(orig.overrides);else delete c.cashflow.periodOverrides;
   if(orig.selectedExists)c.cashflow.detailSourceProfile=clone(orig.selected);else delete c.cashflow.detailSourceProfile;
   if(orig.candidateExists)c.expenseUnificationCandidate=clone(orig.candidate);else delete c.expenseUnificationCandidate;
+  if(orig.recoveryExists)c.recoveryCompatibility=clone(orig.recovery);else delete c.recoveryCompatibility;
   delete c.expenseUnificationArchive;
   return {status:'undo-proposal-only',config:c,autoSaved:false};
 }

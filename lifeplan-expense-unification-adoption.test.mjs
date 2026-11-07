@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {buildExpenseUnificationAdoption,undoExpenseUnificationAdoption,ADOPTION_SAFETY} from './lifeplan-expense-unification-adoption.mjs';
+import {buildExpenseUnificationAdoption,undoExpenseUnificationAdoption,ADOPTION_SAFETY,REQUIRED_FEATURE} from './lifeplan-expense-unification-adoption.mjs';
 import {stagedExpenseCoverageGuard} from './expense-unification-coverage.mjs';
 const fixture=()=>({plan:{startAge:65,endAge:99},cashflow:{detailSourceProfile:'public-v0.9',expenseCategories:[{key:'food',items:[{key:'grocery',periods:[{fromAge:65,toAge:95,amount:12}]}]}],periodOverrides:[]},budgets:[{fromAge:65,toAge:99,annualBudget:200}],income:{pensions:{primary:{annualAtStart:100},spouse:{annualAtStart:90}}}});
 const adopt=()=>{const r=buildExpenseUnificationAdoption(fixture());assert.equal(r.status,'adoption-proposal-only');return r};
@@ -16,3 +16,5 @@ test('unsupported tax or travel prevents migration',()=>{const c=fixture();c.cas
 test('invalid selected source prevents migration',()=>{const c=fixture();c.cashflow.detailSourceProfile='unknown';assert.equal(buildExpenseUnificationAdoption(c).reason,'UNKNOWN_SELECTED_SOURCE')});
 test('invalid archive prevents undo',()=>{assert.equal(undoExpenseUnificationAdoption(fixture()).reason,'NO_VALID_ARCHIVE')});
 test('config with a referenced explicit zero is preserved',()=>{const c=fixture();c.cashflow.expenseCategories[0].items[0].periods[0].amount=0;const r=buildExpenseUnificationAdoption(c);assert.equal(r.config.cashflow.periodOverrides[0].amount,0);assert.deepEqual(undoExpenseUnificationAdoption(r.config).config,c)});
+
+test('saved draft requires explicit new feature before any older app can load it',()=>{const c=adopt().config;assert.ok(c.recoveryCompatibility.requiredFeatures.includes(REQUIRED_FEATURE));assert.equal(c.recoveryCompatibility.producerBuild,'draft-legacy-expense-unification-v1');assert.equal(undoExpenseUnificationAdoption(c).config.recoveryCompatibility,undefined)});
