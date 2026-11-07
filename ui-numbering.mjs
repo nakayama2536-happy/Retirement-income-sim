@@ -55,6 +55,7 @@ function numberExpensePanel(root){
   ['.expense-reconcile-grid > article:first-child .section-title > h2','4-1-3'],
   ['.expense-reconcile-grid > article:nth-child(2) > h2','4-1-4'],
   ['#expenses > details.card > summary','4-1-5'],
+  ['#expenseUnificationReview > summary','4-1-6'],
   ['#periodEditForm','4-1-5-1'],
   ['#expenses > details.card .section-title > h2','4-1-5-1']
  ];

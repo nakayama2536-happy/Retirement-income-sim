@@ -10,6 +10,8 @@ import {mountDetailUI} from './detail-ui.mjs';
 import {mountMortalityComparison} from './mortality-ui.mjs';
 import {dateWithAge,ageOn} from './date-display.mjs';
 import {mountCalendarSheet} from './calendar-ui.mjs';
+import {mountExpenseUnificationReview} from './lifeplan-expense-unification-review.mjs';
+import {mountExpenseUnificationAdoptionUi} from './lifeplan-expense-unification-adoption-ui.mjs';
 import {mountExpenseSheet} from './expense-ui.mjs';
 import {mountIncomeSheet} from './income-ui.mjs';
 import {expenseDisplayModel,expenseDisplayHtml,expenseDisplayProfile} from './expense-display.mjs';
@@ -120,6 +122,8 @@ const expenseSheet=mountExpenseSheet({getState:()=>({config,scenarios}),showNoti
   }
 }});
 
+const expenseUnificationReview=mountExpenseUnificationReview({getConfig:()=>config});
+const expenseUnificationAdoptionUi=mountExpenseUnificationAdoptionUi({getState:()=>({config,scenarios}),writeAllowed:()=>writeAccess.writable,onCommit:()=>{const saved=loadState();config=saved.config;scenarios=saved.scenarios;refresh();}});
 const incomeSheet=mountIncomeSheet({getState:()=>({config,scenarios}),showNotice,onCommit:updated=>{
   const pending=[...inputValues()].filter(([key,entry])=>renderedInputValues.has(key)&&entry.value!==renderedInputValues.get(key));
   config=updated.state.config;scenarios=updated.state.scenarios;
@@ -179,6 +183,8 @@ function scenarioSnapshot(c) {
 }
 
 function refresh({calculated=null}={}) {
+  expenseUnificationAdoptionUi.clear();
+  expenseUnificationReview.clear();
   if (!config) return setEmptyState();
   config = migrateConfig(config);
   const errors = validateConfig(config);
@@ -1000,7 +1006,7 @@ document.querySelectorAll('[data-help]').forEach(btn=>btn.addEventListener('clic
 }));
 el('helpClose').addEventListener('click',()=>el('helpDialog').close());
 
-const CURRENT_RUNTIME_BUILD='v0.9.38-complete-numbering-20261107';
+const CURRENT_RUNTIME_BUILD='v0.9.39-legacy-expense-unification-20261107';
 el('appVersion').textContent=CURRENT_RUNTIME_BUILD+'（端末で実行中）';
 const freshness=el('runtimeFreshness');
 (async()=>{

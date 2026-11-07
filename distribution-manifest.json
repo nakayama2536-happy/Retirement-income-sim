@@ -1,6 +1,6 @@
 {
   "kind": "public-release",
-  "runtime": "v0.9.38-complete-numbering-20261107",
+  "runtime": "v0.9.39-legacy-expense-unification-20261107",
   "files": [
     {
       "name": "age-budget-candidate.mjs",
@@ -29,13 +29,13 @@
     },
     {
       "name": "app.mjs",
-      "size": 78465,
-      "sha256": "f5256e59ae7958e20c79b18f64cb6546b10d48aefcdc5a8666a561ef3572ca1e"
+      "size": 79063,
+      "sha256": "12f53d5eacbb503a241ee6f2f1005a6aa04537e1bce2604d850e11500bd5bcd2"
     },
     {
       "name": "backup-compatibility.mjs",
-      "size": 8051,
-      "sha256": "8cdbec7fb03021464e9b4a416974b01d587d0fd9a95f067ffb94ac2d89c003a9"
+      "size": 8091,
+      "sha256": "f1fccd9bf590f1bf0e7904b48dcabf2d9d1479d6b5045462bff712a7a27123aa"
     },
     {
       "name": "budget-travel-ui.mjs",
@@ -69,8 +69,8 @@
     },
     {
       "name": "cashflow-sources.mjs",
-      "size": 26669,
-      "sha256": "12ba0651c582d82f9cf5e0a1bc40dcf3772b05435ae4647e0151e8a9adb53a1c"
+      "size": 26858,
+      "sha256": "4d9023d58b22df1c9ff9113a9dcd9f965006da08d8f9836f5ade42c0d7678bb3"
     },
     {
       "name": "current-summary.mjs",
@@ -121,6 +121,11 @@
       "name": "expense-ui.mjs",
       "size": 7827,
       "sha256": "a0e311ddc87aaa29620392384957b7ec181db87bb1a12b91a463a7fe00ac6c8c"
+    },
+    {
+      "name": "expense-unification-coverage.mjs",
+      "size": 4334,
+      "sha256": "1f7560b7493d4f92f85411b36dd397eedd5975e8f5747f08a0316263682ff4d2"
     },
     {
       "name": "expense-workflow.mjs",
@@ -181,6 +186,36 @@
       "name": "index.html",
       "size": 72110,
       "sha256": "313285bee82b17df72495f024975fa9c53776ee3232192a14d66a1c8f4e4b241"
+    },
+    {
+      "name": "lifeplan-expense-migration-preflight.mjs",
+      "size": 3877,
+      "sha256": "539758694c67e8999cacadf7fc4e2b7327f1dbe4a61410e1e989a2153cf178db"
+    },
+    {
+      "name": "lifeplan-expense-unification-adoption-ui.mjs",
+      "size": 5989,
+      "sha256": "0dfebf6c3bfc6b88b05bcaa4975b2c330dbc2c2191d9d7a1411a53fc6783168c"
+    },
+    {
+      "name": "lifeplan-expense-unification-adoption.mjs",
+      "size": 4827,
+      "sha256": "23d771590fc1203f096f05d3609511e67dcbdcaca4e008a63dd9d008cb5debc5"
+    },
+    {
+      "name": "lifeplan-expense-unification-candidate.mjs",
+      "size": 5490,
+      "sha256": "724c8da23871c82a62ab337c9927f3cc7aaccb1325465f5ad3871b8cb5352a6d"
+    },
+    {
+      "name": "lifeplan-expense-unification-review.mjs",
+      "size": 5434,
+      "sha256": "677a0e0e910009f71a952f24a29ac3385d911723ed53f692c205118b874593ee"
+    },
+    {
+      "name": "lifeplan-expense-unification-transaction.mjs",
+      "size": 7618,
+      "sha256": "fed26a5b721173dff1914b9a2bf6a77f636165077237847db2c04e6e798e984c"
     },
     {
       "name": "manifest.webmanifest",
@@ -264,8 +299,8 @@
     },
     {
       "name": "release-info.json",
-      "size": 131,
-      "sha256": "94a87ebede310f66cf4561452a8b4cd937b65d22414ffc32665e4b5e103d88e5"
+      "size": 130,
+      "sha256": "7053bf4728944f8e0933c413304ff630ec7d50916855815c43269ebcec8cc493"
     },
     {
       "name": "retirement-comment.mjs",
@@ -329,8 +364,8 @@
     },
     {
       "name": "sw.js",
-      "size": 4418,
-      "sha256": "e62fdf9b59b04f570894674e66c160d73a69c373563237c85fa942be8815c6a0"
+      "size": 4757,
+      "sha256": "1ac2e17878c3f402ee5a3e1d6d3474eb7b2dc6be732c0ac976aeb94e8688c700"
     },
     {
       "name": "sync-controller.mjs",
@@ -379,8 +414,8 @@
     },
     {
       "name": "ui-numbering.mjs",
-      "size": 6602,
-      "sha256": "19debc525104fffa821a7cd8bdf386713d84ffb099965a6d6cc5a75c63d9a195"
+      "size": 6653,
+      "sha256": "0dc5af849ad98ea48503057b3b5679d2ca35da030cbe0c6ac928f95d9d5dad7f"
     },
     {
       "name": "unemployment-plan.mjs",
