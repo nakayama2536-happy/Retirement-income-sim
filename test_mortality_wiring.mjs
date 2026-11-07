@@ -6,7 +6,7 @@ import {runRetirementPlan} from './calc.mjs';
 const read=n=>fs.readFileSync(new URL(n,import.meta.url),'utf8');
 const app=read('app.mjs'),html=read('index.html'),ui=read('mortality-ui.mjs'),comparison=read('mortality-comparison.mjs');
 test('read-only comparison has its own results subtab and mount',()=>{assert.match(html,/data-group-item="results" data-tab="mortality"/);assert.match(html,/id="mortalityComparisonContainer"/);assert.match(app,/mountMortalityComparison\(document.getElementById\('mortalityComparisonContainer'\)/);});
-test('new mortality inputs do not count as adopted unsaved financial controls',()=>assert.match(app,/input\.closest\('#mortality, #pension/));
+test('mortality and survivor reference inputs do not count as adopted unsaved financial controls',()=>assert.match(app,/input\.closest\('#mortality, #survivorPension, #pension/));
 test('refresh invalidates a trial and external saved-state notifications block the cached baseline',()=>{assert.match(app,/mortalityCard\.invalidate\(\)/);assert.match(app,/mortalityCard\.invalidate\(\{external:true\}\)/);});
 test('mortality modules have no persistent data, network, adoption or restore calls',()=>{for(const n of ['mortality-ui.mjs','mortality-comparison.mjs','mortality-preview.mjs'])assert.doesNotMatch(read(n),/\b(?:localStorage|sessionStorage|indexedDB)\s*[.\[]|\b(?:fetch|commitState|replaceState|restoreFullBackup|setItem)\s*\(/);});
 test('full browser gate uses synthetic file and disallows external origins',()=>{const t=read('tools/browser-test/mortality-ui-check.mjs');assert.match(t,/mortality-synthetic\.json/);assert.match(t,/r\.abort\(\)/);assert.match(t,/__mortalityWrites/);assert.match(t,/\['webkit',webkit\]/);});

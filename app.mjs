@@ -9,6 +9,7 @@ import {prepareSavedComparison,comparisonSourceFingerprint} from './full-plan-sa
 import {createConfigBackup} from './backup-compatibility.mjs';
 import {mountDetailUI} from './detail-ui.mjs';
 import {mountMortalityComparison} from './mortality-ui.mjs';
+import {mountSurvivorPensionScreen} from './survivor-pension-ui.mjs';
 import {dateWithAge,ageOn} from './date-display.mjs';
 import {mountCalendarSheet} from './calendar-ui.mjs';
 import {mountExpenseSheet} from './expense-ui.mjs';
@@ -54,11 +55,12 @@ let result = null;
 let forecast = null;
 let showActuals = false;
 let renderedInputValues=new Map();
+const survivorPensionCard=mountSurvivorPensionScreen(document.getElementById('survivorPensionContainer'));
 const mortalityCard=mountMortalityComparison(document.getElementById('mortalityComparisonContainer'),{getConfig:()=>config,getBaseline:()=>result,runPlan:runRetirementPlan});
 
 function inputValues(){
   return new Map([...document.querySelectorAll('#dashboard input, #dashboard select, #dashboard textarea')]
-    .filter(input=>input.id!=='expenseDisplaySource'&&!input.closest('#mortality, #pension, #salary, #salaryIdecoInputs, #calendarSheet, #expenseSheet, #incomeSheet, .detail-form, #step8TrialContainer, #fullPlanComparisonContainer, #privateSyncContainer'))
+    .filter(input=>input.id!=='expenseDisplaySource'&&!input.closest('#mortality, #survivorPension, #pension, #salary, #salaryIdecoInputs, #calendarSheet, #expenseSheet, #incomeSheet, .detail-form, #step8TrialContainer, #fullPlanComparisonContainer, #privateSyncContainer'))
     .map(input=>[input.id||(input.dataset.reviewKey?`review/${input.dataset.reviewKey}`:input.form?.id&&input.name?`${input.form.id}/${input.name}`:''),{input,value:input.type==='checkbox'?input.checked:input.value}])
     .filter(([key])=>key));
 }
@@ -202,6 +204,7 @@ function refresh({calculated=null}={}) {
   step8TrialCard.reset();
   fullPlanCard.reset();
   mortalityCard.invalidate();
+  survivorPensionCard.invalidate();
   renderedInputValues=new Map([...inputValues()].map(([key,{value}])=>[key,value]));
   migrationPanel.render();
 }
@@ -1002,7 +1005,7 @@ document.querySelectorAll('[data-help]').forEach(btn=>btn.addEventListener('clic
 }));
 el('helpClose').addEventListener('click',()=>el('helpDialog').close());
 
-const CURRENT_RUNTIME_BUILD='v0.9.40-planning-charts-20261107';
+const CURRENT_RUNTIME_BUILD='v0.9.41-survivor-reference-20261108';
 el('appVersion').textContent=CURRENT_RUNTIME_BUILD+'（端末で実行中）';
 const freshness=el('runtimeFreshness');
 (async()=>{
