@@ -1,6 +1,6 @@
 {
   "kind": "public-release",
-  "runtime": "v0.9.40-planning-charts-20261107",
+  "runtime": "v0.9.41-survivor-reference-20261108",
   "files": [
     {
       "name": "age-budget-candidate.mjs",
@@ -29,13 +29,13 @@
     },
     {
       "name": "app.mjs",
-      "size": 78845,
-      "sha256": "493d370909e6a91ecd637211e1447be7196589f8cadb7761eedb48a25ec13622"
+      "size": 79079,
+      "sha256": "78568cc179d3fa8d1b382d235c9d33bce4e608c83e094a84d556acb7bf2bc35e"
     },
     {
       "name": "backup-compatibility.mjs",
-      "size": 8048,
-      "sha256": "d77c47b2870c450b74a542b93ffe491139ad74832e6ce1bd1b55a19b8f9e7bfd"
+      "size": 8051,
+      "sha256": "78cb8e56782bd89d11e37f0a42a17924dd62dd4264968810a819ac02a1cb31fe"
     },
     {
       "name": "budget-travel-ui.mjs",
@@ -179,8 +179,8 @@
     },
     {
       "name": "index.html",
-      "size": 73110,
-      "sha256": "00d8873ad49a2dbe4b2fa1d8d28a92fa9f9ec2445c4920d96f0f0accf0bbbf84"
+      "size": 73482,
+      "sha256": "b1af03f24d186d5598c16073e49d8f8e009141d7491ba62f3bae3bd4a33cc1d7"
     },
     {
       "name": "manifest.webmanifest",
@@ -274,8 +274,8 @@
     },
     {
       "name": "release-info.json",
-      "size": 138,
-      "sha256": "11fb532e7b58e458240190c7025f6eef09ad10cb58ba7cc529602cfec7880c27"
+      "size": 148,
+      "sha256": "3f34bfbdeb2b105c183a35afd7b1106e9c8d0d74c54a462da88330ec7cabcbfc"
     },
     {
       "name": "retirement-comment.mjs",
@@ -338,9 +338,19 @@
       "sha256": "8e69bacb747b1a2c3839a50b04e725fc5c3c54780249442866468c80043c5854"
     },
     {
+      "name": "survivor-pension-calculator.mjs",
+      "size": 1577,
+      "sha256": "faf90ea626534008509b2393da9e108fc97d1e23b2ff091d7349a7ff8a5e961e"
+    },
+    {
+      "name": "survivor-pension-ui.mjs",
+      "size": 3650,
+      "sha256": "bae5f8754ab4772c8b802848935afe6ed53d8122dc470922b9c3fd04afec547a"
+    },
+    {
       "name": "sw.js",
-      "size": 4485,
-      "sha256": "f1dad78c241ad718c14f13b821a98d653130356cfd0012af4d44e416b5e154ee"
+      "size": 4566,
+      "sha256": "2e242901c0dffe113e23cb3a54e596f0b3828f9d66ddb3198e8c970fb1b58a2e"
     },
     {
       "name": "sync-controller.mjs",
