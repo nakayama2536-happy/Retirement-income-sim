@@ -33,7 +33,7 @@ export function prepareUnificationState(input,{validate}={}){
  }
  const r=buildExpenseUnificationAdoption(before.config);
  if(r.status!=='adoption-proposal-only')return {...blocked(r.reason||'SOURCE_NOT_ELIGIBLE'),codes:r.codes||[]};
- const candidate={...before,config:r.config};
+ const candidate={...before,config:r.config,scenarios:copy(before.scenarios)};
  if(snapshots.length){
   for(const entry of snapshots)candidate.scenarios[entry.index].config=entry.config;
   candidate.expenseUnificationScenarioJournal={
