@@ -71,6 +71,18 @@ try{
  assert.equal(adopted.config.expenseUnificationArchive.original.legacy[0].items[0].periods[0].amount,2);
  assert.ok(adopted.config.recoveryCompatibility.requiredFeatures.includes('legacy-expense-unification-v1'));
  assert.deepEqual(adopted.scenarios,JSON.parse(before).scenarios);
+ const coverage=await page.evaluate(async()=>{
+   const {inspectCashflowSources,resolveBaseAmount}=await import('./cashflow-sources.mjs');
+   const cfg=JSON.parse(localStorage.getItem('lifeplan-sim-state-v1')).config;
+   const view=inspectCashflowSources(cfg,{sourceProfile:'work-v0.9.7'});
+   const match=view.items.find(i=>i.variants.some(v=>v.profile==='work-v0.9.7'&&v.kind==='expense'&&v.key==='food'));
+   if(!match)return {error:'FOOD_NOT_FOUND'};
+   const a=resolveBaseAmount(view,{itemId:match.itemId,age:95});
+   const z=resolveBaseAmount(view,{itemId:match.itemId,age:96});
+   return {at95:a.status,amount95:a.amount,at96:z.status,amount96:z.amount,reason96:z.reason};
+ });
+ assert.deepEqual({at95:coverage.at95,amount95:coverage.amount95,at96:coverage.at96,amount96:coverage.amount96},
+   {at95:'resolved',amount95:2,at96:'missing',amount96:null},JSON.stringify(coverage));
  evidence.cases.push({id:'backup-and-adoption',status:'pass',backupDownloaded:true});
  await page.reload({waitUntil:'domcontentloaded'});
  await page.locator('#dashboard').waitFor({state:'visible',timeout:30000});
