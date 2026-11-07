@@ -37,7 +37,7 @@ test('画面モジュール更新時には旧キャッシュと分離した版�
  const h=harness(),prior=prefix(h.scope)+'v0.9.33-age-budget-preview-20261103';
  const oldCache=new Map([[h.scope+'mortality-ui.mjs',new Response('old-mortality-ui')]]);
  h.stores.set(prior,oldCache);
- assert.equal(cacheVersion,'v0.9.36-numbering-expense-csv-20261107');
+ assert.equal(cacheVersion,'v0.9.37-mortality-coverage-warning-20261107');
  assert.notEqual(h.current(),prior);
  await h.run('install');
  await h.run('activate');
