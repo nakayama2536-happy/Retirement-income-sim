@@ -38,10 +38,12 @@ export function mortalityExpenseItemRows(comparison){
 }
 export const mortalityExpenseAuditCsv=x=>csvString(EXPENSE_COLUMNS,mortalityExpenseAuditRows(x));
 export const mortalityExpenseItemCsv=x=>csvString(ITEM_COLUMNS,mortalityExpenseItemRows(x));
-export function downloadMortalityExpenseCsv(comparison,{documentRef=document,urlRef=URL,now=new Date()}={}){
- const files=[['monthly',mortalityExpenseAuditCsv(comparison)]];
- if(comparison.itemized)files.push(['items',mortalityExpenseItemCsv(comparison)]);
+export function downloadMortalityExpenseCsv(comparison,{kind='monthly',documentRef=document,urlRef=URL,now=new Date()}={}){
+ if(kind!=='monthly'&&kind!=='items')throw Error('未対応のCSV種別です');
+ const csv=kind==='monthly'?mortalityExpenseAuditCsv(comparison):mortalityExpenseItemCsv(comparison);
  const date=new Intl.DateTimeFormat('sv-SE',{timeZone:'Asia/Tokyo',year:'numeric',month:'2-digit',day:'2-digit'}).format(now);
- for(const [kind,csv] of files){const blob=new Blob([csv],{type:'text/csv;charset=utf-8'}),url=urlRef.createObjectURL(blob),a=documentRef.createElement('a');a.href=url;a.download='lifeplan-mortality-expense-'+kind+'-UNADOPTED-'+date+'.csv';a.click();setTimeout(()=>urlRef.revokeObjectURL(url),1000);}
- return {count:files.length};
+ const blob=new Blob([csv],{type:'text/csv;charset=utf-8'}),url=urlRef.createObjectURL(blob),a=documentRef.createElement('a');
+ a.href=url;a.download='lifeplan-mortality-expense-'+kind+'-UNADOPTED-'+date+'.csv';a.click();
+ setTimeout(()=>urlRef.revokeObjectURL(url),1000);
+ return {filename:a.download,kind,count:1};
 }
