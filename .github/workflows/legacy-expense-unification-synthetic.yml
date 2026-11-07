@@ -1,0 +1,37 @@
+name: Legacy expense unification synthetic integration (draft only)
+on:
+  pull_request:
+    paths:
+      - 'lifeplan-expense-*.mjs'
+      - 'expense-unification-*.mjs'
+      - 'apply-expense-unification-coverage.mjs'
+      - 'lifeplan-unification-*.mjs'
+      - 'run-lifeplan-unification-integration*.mjs'
+      - 'test_unification_actual_engine.mjs'
+      - '.github/workflows/legacy-expense-unification-synthetic.yml'
+permissions:
+  contents: read
+jobs:
+  isolated-synthetic-validation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - name: Checkout candidate code (no token persisted)
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Standalone synthetic guard and migration tests
+        run: node --test lifeplan-expense-migration-preflight.test.mjs lifeplan-expense-unification-candidate.test.mjs expense-unification-coverage.test.mjs run-lifeplan-unification-integration.test.mjs lifeplan-unification-equivalence.test.mjs
+      - name: Isolated actual-engine regression using pinned main source
+        shell: bash
+        run: |
+          set -euo pipefail
+          temp="$(mktemp -d)"
+          trap 'git worktree remove --force "$temp" >/dev/null 2>&1 || true; rm -rf "$temp"' EXIT
+          git worktree add --detach "$temp" 3de8df5465b1484028bd7d1b1d9db7ddbf9df81a
+          node run-lifeplan-unification-integration.mjs "$temp"
