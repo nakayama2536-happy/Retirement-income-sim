@@ -101,19 +101,23 @@ try{
   near(await number(annual(81,'expenseReduction')),120);
   mark(engine,'actual-items-plus-remaining25-are-factored-once-monthly-and-annual');
   const downloaded=[];
-  const downloadDone=new Promise((ok,fail)=>{
-    const timeout=setTimeout(()=>fail(Error('mortality expense CSV download timeout: '+downloaded.length)),15000);
-    page.on('download',d=>{downloaded.push(d);if(downloaded.length===2){clearTimeout(timeout);ok();}});
-  });
-  await page.locator('#mortalityExportExpenseCsv').click();
-  await downloadDone;
+  for(const [kind,id] of [
+    ['monthly','mortalityExportExpenseMonthlyCsv'],
+    ['items','mortalityExportExpenseItemsCsv']
+  ]){
+    const pending=page.waitForEvent('download',{timeout:15000});
+    await page.locator('#'+id).click();
+    const downloadedFile=await pending;
+    assert.match(downloadedFile.suggestedFilename(),new RegExp('-'+kind+'-'));
+    downloaded.push(downloadedFile);
+  }
   assert.equal(downloaded.length,2);
   const csvFiles=await Promise.all(downloaded.map(async d=>({name:d.suggestedFilename(),text:await readFile(await d.path(),'utf8')})));
   assert.ok(csvFiles.some(f=>f.name.includes('-monthly-')));
   assert.ok(csvFiles.some(f=>f.name.includes('-items-')));
   for(const file of csvFiles){assert.ok(file.text.startsWith('\ufeff'));assert.match(file.text,/管理予算|費目名/);}
   assert.equal(await saved(page),before,'CSV download must not adopt or save settings');
-  mark(engine,'actual-two-expense-CSV-downloads-are-read-only-and-UTF8-BOM');
+  mark(engine,'separate-expense-CSV-downloads-are-read-only-and-UTF8-BOM');
   await verifyPensionReference(page);
   await submit(page);
   assert.equal(await page.locator('#mortalityPensionBreakdown').getAttribute('data-pension-state'),'reference');
@@ -162,5 +166,5 @@ try{
   await second.close();await ctx.close();await browser.close();browser=null;
  }
  assert.deepEqual(report.blockedExternal,[]);assert.deepEqual(report.pageErrors,[]);report.status='pass';
-}catch(e){report.status='failed';report.error=e.stack||String(e);process.exitCode=1;}
+}catch(e){report.status='failed';report.error=e.stack||String(e);console.error(report.error);process.exitCode=1;}
 finally{if(browser)await browser.close();await new Promise(ok=>server.close(ok));await writeFile(resolve(out,'report.json'),JSON.stringify(report,null,2)+'\n');console.log(JSON.stringify({status:report.status,checks:report.checks.length}));}
