@@ -60,7 +60,7 @@ const mortalityCard=mountMortalityComparison(document.getElementById('mortalityC
 
 function inputValues(){
   return new Map([...document.querySelectorAll('#dashboard input, #dashboard select, #dashboard textarea')]
-    .filter(input=>input.id!=='expenseDisplaySource'&&!input.closest('#mortality, #pension, #salary, #salaryIdecoInputs, #calendarSheet, #expenseSheet, #incomeSheet, .detail-form, #step8TrialContainer, #fullPlanComparisonContainer, #privateSyncContainer'))
+    .filter(input=>input.id!=='expenseDisplaySource'&&!input.closest('#mortality, #survivorPension, #pension, #salary, #salaryIdecoInputs, #calendarSheet, #expenseSheet, #incomeSheet, .detail-form, #step8TrialContainer, #fullPlanComparisonContainer, #privateSyncContainer'))
     .map(input=>[input.id||(input.dataset.reviewKey?`review/${input.dataset.reviewKey}`:input.form?.id&&input.name?`${input.form.id}/${input.name}`:''),{input,value:input.type==='checkbox'?input.checked:input.value}])
     .filter(([key])=>key));
 }
