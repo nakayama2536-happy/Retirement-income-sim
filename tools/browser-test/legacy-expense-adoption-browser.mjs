@@ -105,6 +105,13 @@ try{
  assert.equal(csvComparison.containsStandard,true);
  assert.ok(csvComparison.lineCount>30);
  evidence.cases.push({id:'reload-annual-csv-95-96',status:'pass',missing96Unresolved:true});
+ const adoptedBackup=await page.evaluate(async()=>{
+   const {createFullBackup}=await import('./full-backup.mjs');
+   return createFullBackup(JSON.parse(localStorage.getItem('lifeplan-sim-state-v1')));
+ });
+ assert.equal(adoptedBackup.config.expenseUnificationArchive.format,'legacy-expense-unification-undo-v1');
+ const adoptedBackupPath=path.join(temp,'synthetic-adopted-backup.json');
+ await fs.writeFile(adoptedBackupPath,JSON.stringify(adoptedBackup));
  const card2=await openExpense();
  await card2.locator('#expenseUnificationAdoption button').nth(3).click();
  await page.waitForFunction(()=>JSON.parse(localStorage.getItem('lifeplan-sim-state-v1')).config.expenseUnificationArchive===undefined);
@@ -114,6 +121,24 @@ try{
  assert.equal(restored.config.expenseUnificationCandidate,undefined);
  assert.deepEqual(restored.scenarios,JSON.parse(before).scenarios);
  evidence.cases.push({id:'reload-and-targeted-undo',status:'pass',settingsRestored:true});
+
+ // A compatible full backup must restore the migrated values and its archive.
+ await page.locator('#importFile').setInputFiles(adoptedBackupPath);
+ await page.waitForFunction(()=>JSON.parse(localStorage.getItem('lifeplan-sim-state-v1')).config.expenseUnificationArchive!=null,{timeout:30000});
+ const reimported=JSON.parse(await state());
+ assert.deepEqual(reimported.config.cashflow.periodOverrides,adopted.config.cashflow.periodOverrides);
+ assert.equal(reimported.config.cashflow.detailSourceProfile,'work-v0.9.7');
+ assert.deepEqual(reimported.scenarios,adopted.scenarios);
+ evidence.cases.push({id:'same-build-adopted-backup-restore',status:'pass'});
+ // A pre-migration backup must restore the original legacy config and scenarios.
+ await page.locator('#importFile').setInputFiles(backupPath);
+ await page.waitForFunction(()=>JSON.parse(localStorage.getItem('lifeplan-sim-state-v1')).config.expenseUnificationArchive===undefined,{timeout:30000});
+ const originalRestored=JSON.parse(await state());
+ assert.equal(originalRestored.config.cashflow.detailSourceProfile,'public-v0.9');
+ assert.equal(originalRestored.config.cashflow.expenseCategories[0].items[0].periods[0].amount,2);
+ assert.deepEqual(originalRestored.scenarios,JSON.parse(before).scenarios);
+ evidence.cases.push({id:'pre-migration-full-backup-restore',status:'pass'});
+
  assert.deepEqual(errors,[],'Browser page errors: '+errors.join(' | '));
  await context.close();
 }finally{

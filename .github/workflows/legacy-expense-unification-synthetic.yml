@@ -77,6 +77,7 @@ jobs:
           node tools/stage-expense-unification-release.mjs "$source_checkout" "$candidate_checkout"
           node "$candidate_checkout/tools/package-public.mjs" "$candidate_checkout" "$distribution"
           node --test "$candidate_checkout/test_release_identity.mjs"
+          node --test tools/browser-test/legacy-expense-staged-sw.test.mjs "$distribution"
           node tools/browser-test/legacy-expense-adoption-browser.mjs "$distribution"
           test -f "$distribution/expense-unification-coverage.mjs"
           test -f "$distribution/lifeplan-expense-unification-adoption-ui.mjs"
