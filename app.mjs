@@ -1002,7 +1002,7 @@ document.querySelectorAll('[data-help]').forEach(btn=>btn.addEventListener('clic
 }));
 el('helpClose').addEventListener('click',()=>el('helpDialog').close());
 
-const CURRENT_RUNTIME_BUILD='v0.9.39-mortality-expense-audit-20261107';
+const CURRENT_RUNTIME_BUILD='v0.9.40-planning-charts-20261107';
 el('appVersion').textContent=CURRENT_RUNTIME_BUILD+'（端末で実行中）';
 const freshness=el('runtimeFreshness');
 (async()=>{
