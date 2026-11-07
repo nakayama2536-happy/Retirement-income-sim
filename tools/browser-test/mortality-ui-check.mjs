@@ -75,14 +75,33 @@ try{
   await ctx.route('**/*',r=>{if(new URL(r.request().url()).origin===origin)return r.continue();report.blockedExternal.push(r.request().url());return r.abort();});
   const page=await ctx.newPage();page.on('pageerror',e=>report.pageErrors.push({engine,error:e.message}));
   await page.goto(origin,{waitUntil:'networkidle'});await page.locator('#dashboard').waitFor({state:'visible'});
-  assert.equal(await page.locator('#appVersion').innerText(),'v0.9.36-numbering-expense-csv-20261107（端末で実行中）');
+  assert.equal(await page.locator('#appVersion').innerText(),'v0.9.38-complete-numbering-20261107（端末で実行中）');
   assert.equal(await page.locator('[data-group="results"]').getAttribute('data-step-no'),'1');
   assert.equal(await page.locator('[data-tab="mortality"]').getAttribute('data-step-no'),'1-3');
   assert.equal(await page.locator('[data-tab="pension"]').getAttribute('data-step-no'),'2-5');
   assert.equal(await page.locator('[data-tab="expenses"]').getAttribute('data-step-no'),'4-1');
   mark(engine,'navigation-numbering-visible-in-actual-application');
+  // Full hierarchy is taken from the visible expense page, not invented help text.
+  await page.locator('[data-group="expense"]').click();
+  await page.locator('[data-group-item="expense"][data-tab="expenses"]').click();
+  assert.equal(await page.locator('#expenses .expense-reconcile-grid .section-title h2').getAttribute('data-step-no'),'4-1-3');
+  assert.equal(await page.locator('#cashflowViewAge').locator('xpath=..').getAttribute('data-step-no'),'4-1-3-1');
+  const sourceLabel=page.locator('#expenseDisplaySource').locator('xpath=..');
+  assert.match(await sourceLabel.getAttribute('data-step-no'),/^4-1-3-2(?:-1)?$/);
+  const expenseSourceDetails=page.locator('#expenseDisplaySource').locator('xpath=ancestor::details[1]');
+  if(await expenseSourceDetails.count()&&!(await expenseSourceDetails.evaluate(n=>n.open)))
+    await expenseSourceDetails.locator(':scope > summary').click();
+  await page.locator('#expenseDisplaySource').selectOption('work-v0.9.7');
+  const category=page.locator('#expenseDetail > details > summary').first();
+  await category.waitFor({state:'visible'});
+  assert.equal(await category.getAttribute('data-step-no'),'4-1-3-3');
+  await category.click();
+  const child=page.locator('#expenseDetail > details:first-of-type > details > summary').first();
+  await child.waitFor({state:'visible'});
+  assert.equal(await child.getAttribute('data-step-no'),'4-1-3-3-1');
+  mark(engine,'expense-page-headings-age-source-category-and-child-numbered');
   const before=await saved(page);await open(page);await baselineInputs(page);
-  assert.equal(await input(page,'deathMonth').locator('xpath=..').getAttribute('data-step-no'),'1-2');
+  assert.equal(await input(page,'deathMonth').locator('xpath=..').getAttribute('data-step-no'),'1-3-1-2');
   mark(engine,'mortality-form-field-numbering-present');
   assert.equal(Number(await page.locator('#mortalityRemainderFactor').inputValue()),1,'初期の残額倍率は100%であること');
   for(const label of ['食費','水道光熱費','住居'])assert.ok(await factorRow(page,label).count()>0,label);
