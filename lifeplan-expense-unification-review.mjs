@@ -35,13 +35,14 @@ export function reviewExpenseUnification(config){
 export function mountExpenseUnificationReview({doc=globalThis.document,getConfig}={}){
   if(!doc?.createElement||typeof getConfig!=='function')throw Error('Preview panel requires document and configuration source');
   const host=doc.getElementById('expenses');if(!host)throw Error('Missing expenses panel');
+  if(doc.getElementById('expenseUnificationReview'))throw Error('Review panel already mounted');
   const card=doc.createElement('details');card.className='card';card.id='expenseUnificationReview';
   const summary=doc.createElement('summary');summary.textContent='旧形式から標準形式への移行前確認（参照のみ）';
   const note=doc.createElement('p');note.textContent='移行候補・95歳/96歳の費目参照・両形式の併存を確認します。診断・展開操作では設定の保存や移行は行いません。';
-  const button=doc.createElement('button');button.type='button';button.className='secondary';button.textContent='移行前診断を実行（保存しない）';
+  const button=doc.createElement('button');button.type='button';button.className='secondary';button.textContent='4-1-6-1. 移行前診断を実行（保存しない）';
   const output=doc.createElement('div');output.setAttribute('role','status');output.setAttribute('aria-live','polite');
   card.append(summary,note,button,output);
-  const anchor=host.querySelector('.expense-reconcile-grid');if(anchor)host.insertBefore(card,anchor);else host.append(card);
+  host.append(card);
   button.addEventListener('click',()=>{
     const review=reviewExpenseUnification(getConfig());output.replaceChildren();
     const headline=doc.createElement('p');headline.textContent=review.headline;

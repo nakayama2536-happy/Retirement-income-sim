@@ -5,6 +5,7 @@ on:
       - 'lifeplan-expense-*.mjs'
       - 'expense-unification-*.mjs'
       - 'apply-expense-unification-coverage.mjs'
+      - 'apply-expense-unification-review*.mjs'
       - 'lifeplan-unification-*.mjs'
       - 'run-lifeplan-unification-integration*.mjs'
       - 'test_unification_actual_engine.mjs'
@@ -26,7 +27,7 @@ jobs:
         with:
           node-version: '22'
       - name: Standalone synthetic guard and migration tests
-        run: node --test lifeplan-expense-migration-preflight.test.mjs lifeplan-expense-unification-candidate.test.mjs lifeplan-expense-unification-review.test.mjs expense-unification-coverage.test.mjs run-lifeplan-unification-integration.test.mjs lifeplan-unification-equivalence.test.mjs
+        run: node --test lifeplan-expense-migration-preflight.test.mjs lifeplan-expense-unification-candidate.test.mjs lifeplan-expense-unification-review.test.mjs apply-expense-unification-review.test.mjs expense-unification-coverage.test.mjs run-lifeplan-unification-integration.test.mjs lifeplan-unification-equivalence.test.mjs
       - name: Verify original publish manifest (unmodified source only)
         run: node --test test_release_identity.mjs
       - name: Isolated actual-engine regression using pinned main source
@@ -37,3 +38,8 @@ jobs:
           trap 'git worktree remove --force "$temp" >/dev/null 2>&1 || true; rm -rf "$temp"' EXIT
           git worktree add --detach "$temp" 3de8df5465b1484028bd7d1b1d9db7ddbf9df81a
           node run-lifeplan-unification-integration.mjs "$temp"
+          node apply-expense-unification-review.mjs "$temp"
+          node --check "$temp/app.mjs"
+          node --check "$temp/ui-numbering.mjs"
+          grep -F "4-1-6" "$temp/ui-numbering.mjs"
+          grep -F "mountExpenseUnificationReview" "$temp/app.mjs"

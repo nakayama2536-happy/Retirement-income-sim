@@ -29,3 +29,40 @@ test('source errors are not surfaced as leaked data',()=>{
  const c=fixture();c.cashflow.expenseCategories={};const r=reviewExpenseUnification(c);
  assert.equal(r.status,'blocked');assert.equal(r.adoptable,false);
 });
+
+// Browser-equivalent smoke with a minimal DOM: verifies the actual button,
+// read-only output, duplicate guard and clearing without any saved-data API.
+import {mountExpenseUnificationReview} from './lifeplan-expense-unification-review.mjs';
+function fakeDocument(){
+ const registry=new Map();
+ class Element{
+  constructor(tag){this.tagName=tag;this.children=[];this.listeners={};this.textContent='';this.attributes={};}
+  append(...items){this.children.push(...items);}
+  replaceChildren(...items){this.children=[...items];}
+  setAttribute(k,v){this.attributes[k]=v;}
+  addEventListener(k,fn){this.listeners[k]=fn;}
+  click(){this.listeners.click?.();}
+  set id(v){this._id=v;registry.set(v,this);}
+  get id(){return this._id;}
+ }
+ const host=new Element('section');registry.set('expenses',host);
+ return {doc:{createElement:t=>new Element(t),getElementById:id=>registry.get(id)},host};
+}
+test('4-1-6 card opens and diagnoses using adopted data without writing it',()=>{
+ const {doc,host}=fakeDocument();const c=fixture();const before=JSON.stringify(c);
+ const mounted=mountExpenseUnificationReview({doc,getConfig:()=>c});
+ assert.equal(host.children.length,1);assert.equal(mounted.root.id,'expenseUnificationReview');
+ const [summary, note, button, output]=mounted.root.children;
+ assert.equal(summary.textContent,'旧形式から標準形式への移行前確認（参照のみ）');
+ assert.match(button.textContent,/4-1-6-1/);button.click();
+ assert.match(output.children[1].textContent,/95歳に登録がある費目 1件／96歳に登録がある費目 0件/);
+ assert.equal(JSON.stringify(c),before);mounted.clear();assert.equal(output.children.length,0);
+ assert.throws(()=>mountExpenseUnificationReview({doc,getConfig:()=>c}),/already mounted/);
+});
+test('diagnostic result is cleared after refresh and next click uses new immutable input',()=>{
+ const {doc}=fakeDocument();let c=fixture();const mounted=mountExpenseUnificationReview({doc,getConfig:()=>c});
+ const button=mounted.root.children[2],output=mounted.root.children[3];
+ button.click();assert.match(output.children[1].textContent,/96歳に登録がある費目 0件/);
+ mounted.clear();c=fixture();c.cashflow.expenseCategories[0].items[0].periods[0].toAge=99;
+ button.click();assert.match(output.children[1].textContent,/96歳に登録がある費目 1件/);
+});
