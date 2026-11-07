@@ -21,7 +21,7 @@ test('新しいリリース候補は隔離して生成し、元ファイルは�
 test('同一版・既存出力・不正な版を拒否する',()=>{
  const tmp=fs.mkdtempSync(path.join(os.tmpdir(),'lifeplan-staged-'));
  try{
-  assert.throws(()=>stageAgeBudgetRelease(root,path.join(tmp,'old'),'v0.9.36-numbering-expense-csv-20261107'),/unchanged/);
+  assert.throws(()=>stageAgeBudgetRelease(root,path.join(tmp,'old'),'v0.9.38-complete-numbering-20261107'),/unchanged/);
   fs.mkdirSync(path.join(tmp,'existing'));
   assert.throws(()=>stageAgeBudgetRelease(root,path.join(tmp,'existing'),'v0.9.34-age-budget-preview-validation-20261103'),/destination-exists/);
   assert.throws(()=>stageAgeBudgetRelease(root,path.join(tmp,'draft'),'v0.9.33-draft-20261103'),/invalid-build-id/);
