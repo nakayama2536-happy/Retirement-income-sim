@@ -7,6 +7,7 @@
 import {dateParts} from './date-display.mjs';
 import {MortalityPreviewError,simulateMortalityPreview,PROPOSAL_FACTORS,monthlyIndex} from './mortality-preview.mjs';
 import {inspectMortalityExpenseBudget,applyMortalityExpenseMultipliers} from './mortality-itemized.mjs';
+import {auditMortalityExpense} from './mortality-expense-audit.mjs';
 
 export const MORTALITY_COSTS=Object.freeze([
  {key:'food',label:'食費',exampleAnnual:120,factor:.7},
@@ -108,7 +109,8 @@ export function calculateMortalityComparison({config,baseline,deathPerson,deathM
   survivorPublicPensionStages:stagedPension,
   funeralExpenseMan:funeral,annualAfterTaxReturnPct:config.plan?.afterTaxReturn==null||String(config.plan.afterTaxReturn).trim()===''?NaN:Number(config.plan.afterTaxReturn),
   continueUnattributedIncome:false,keepOneOffExpenses:true});
- return {mortality,original,allocation:allocation?structuredClone(allocation):null,itemized:itemized?structuredClone(itemized):null,itemFactors:computed?structuredClone(computed.costFactors):null,survivor,totalExpenseBasis:itemized?'登録済み内訳と管理予算残額の費目別倍率':ORIGINAL_BASIS};
+ const expenseAudit=auditMortalityExpense(original.monthlyDetails,mortality.monthly);
+ return {mortality,original,expenseAudit,allocation:allocation?structuredClone(allocation):null,itemized:itemized?structuredClone(itemized):null,itemFactors:computed?structuredClone(computed.costFactors):null,survivor,totalExpenseBasis:itemized?'登録済み内訳と管理予算残額の費目別倍率':ORIGINAL_BASIS};
 }
 
 export function agePeriodComparisonRows(monthlyRows,comparison){

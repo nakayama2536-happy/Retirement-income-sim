@@ -393,9 +393,13 @@ export function mountMortalityComparison(root,{getConfig,getBaseline,runPlan}){
   root.querySelector('#mortalityPreClaimHint').textContent=early?`残された方の年金開始月 ${start.slice(0,7)} の前月まで別の仮額を指定してください。受給資格や繰下げ調整を自動判定しません。`:'繰下げと受給権は別途確認';
   autoPension();
  };
- function showResult({mortality,original,allocation,itemized,itemFactors},parameters){
+ function showResult({mortality,original,expenseAudit,allocation,itemized,itemFactors},parameters){
   results.replaceChildren();results.hidden=false;
   const warn=makeEl('p','mortality-warning','仮置き・未反映の比較です。年金資格、税社保、二人万一の後の相続・精算は未計算です。');results.append(warn);
+  if(expenseAudit?.verified){
+   const line=makeEl('p','muted',`支出と資産を全${expenseAudit.months.length}か月で検算済み。管理予算からの減額合計：${formatTotal(expenseAudit.totalExpenseReduction)}（物価反映後、万円・単純合計）。死亡翌月から適用。元の管理予算は変更しません。`);
+   line.id='mortalityExpenseAuditStatus';results.append(line);
+  }
   const summary=makeEl('div','mortality-metrics');
   for(const [key,label,value] of [
     ['base','現在条件（終期末）',formatTotal(mortality.baselineFinalAsset)],
