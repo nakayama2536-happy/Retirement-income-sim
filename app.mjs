@@ -9,6 +9,7 @@ import {prepareSavedComparison,comparisonSourceFingerprint} from './full-plan-sa
 import {createConfigBackup} from './backup-compatibility.mjs';
 import {mountDetailUI} from './detail-ui.mjs';
 import {mountMortalityComparison} from './mortality-ui.mjs';
+import {mountSurvivorPensionScreen} from './survivor-pension-ui.mjs';
 import {dateWithAge,ageOn} from './date-display.mjs';
 import {mountCalendarSheet} from './calendar-ui.mjs';
 import {mountExpenseSheet} from './expense-ui.mjs';
@@ -54,6 +55,7 @@ let result = null;
 let forecast = null;
 let showActuals = false;
 let renderedInputValues=new Map();
+const survivorPensionCard=mountSurvivorPensionScreen(document.getElementById('survivorPensionContainer'));
 const mortalityCard=mountMortalityComparison(document.getElementById('mortalityComparisonContainer'),{getConfig:()=>config,getBaseline:()=>result,runPlan:runRetirementPlan});
 
 function inputValues(){
@@ -202,6 +204,7 @@ function refresh({calculated=null}={}) {
   step8TrialCard.reset();
   fullPlanCard.reset();
   mortalityCard.invalidate();
+  survivorPensionCard.invalidate();
   renderedInputValues=new Map([...inputValues()].map(([key,{value}])=>[key,value]));
   migrationPanel.render();
 }

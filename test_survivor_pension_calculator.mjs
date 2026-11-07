@@ -1,0 +1,10 @@
+import test from 'node:test';import assert from 'node:assert/strict';import {calculateSurvivor65Reference as calc,calculateDeferredBasicReference as defer} from './survivor-pension-calculator.mjs';
+test('方式Aを選択',()=>{const x=calc({deceasedEarningsBaseAnnual:200,ownEmployeeAnnual:20,ownBasicAnnual:80});assert.equal(x.selected,'A');assert.equal(x.referenceTotal,230);});
+test('方式Bを選択',()=>{const x=calc({deceasedEarningsBaseAnnual:100,ownEmployeeAnnual:90,ownBasicAnnual:80});assert.equal(x.selected,'B');assert.equal(x.survivorPensionPayable,5);});
+test('本人厚生年金が上回る場合の差額はゼロ',()=>{const x=calc({deceasedEarningsBaseAnnual:0,ownEmployeeAnnual:100,ownBasicAnnual:70});assert.equal(x.survivorPensionPayable,0);});
+test('未入力を拒否',()=>assert.throws(()=>calc({deceasedEarningsBaseAnnual:undefined,ownEmployeeAnnual:0,ownBasicAnnual:0})));
+test('負数を拒否',()=>assert.throws(()=>calc({deceasedEarningsBaseAnnual:-1,ownEmployeeAnnual:0,ownBasicAnnual:0})));
+test('NaNを拒否',()=>assert.throws(()=>calc({deceasedEarningsBaseAnnual:NaN,ownEmployeeAnnual:0,ownBasicAnnual:0})));
+test('繰下げ月数60か月',()=>assert.equal(defer({basicAt65Annual:100,monthsDeferred:60}).amount,142));
+test('繰下げ月数の不正値を拒否',()=>assert.throws(()=>defer({basicAt65Annual:100,monthsDeferred:121})));
+test('確定採用不可',()=>assert.equal(calc({deceasedEarningsBaseAnnual:100,ownEmployeeAnnual:50,ownBasicAnnual:80,eligibilityConfirmed:true}).eligibleForAdoption,false));

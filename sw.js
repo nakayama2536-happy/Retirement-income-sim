@@ -21,6 +21,7 @@ ASSETS.push("./age-budget-ui.mjs","./age-budget-candidate.mjs","./age-budget-pre
 ASSETS.push('./travel-budget-summary.mjs','./budget-travel-ui.mjs');
 ASSETS.push('./ui-numbering.css','./ui-numbering.mjs','./mortality-expense-csv.mjs','./mortality-expense-audit.mjs');
 ASSETS.push('./planning-charts.mjs');
+ASSETS.push('./survivor-pension-calculator.mjs','./survivor-pension-ui.mjs');
 const URLS=ASSETS.map(path=>new URL(path,SCOPE).href);
 const ALLOWED=new Set(URLS);
 async function requireComplete(cache){
