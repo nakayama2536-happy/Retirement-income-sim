@@ -214,8 +214,8 @@
     },
     {
       "name": "lifeplan-expense-unification-transaction.mjs",
-      "size": 6496,
-      "sha256": "8cb1c84a5859dca4683e5f992a08f5c72f012831cecdefccef5ec8284c95ba69"
+      "size": 7472,
+      "sha256": "afc719ba6a73ac9c48709be5d326c7fd05b5c80fc6f6da27948ef6d2342bb1c8"
     },
     {
       "name": "manifest.webmanifest",
