@@ -101,3 +101,27 @@ test('travel cost and tax/social expense identities stop without guessing mappin
   assert.equal(JSON.stringify(s),before);
  }
 });
+
+test('root compatibility marker prevents an old reader from interpreting migrated data',async()=>{
+ const {s,raw,store,prepared}=setup();
+ assert.deepEqual(prepared.candidate.recoveryCompatibility.requiredFeatures.includes('legacy-expense-unification-v1'),true);
+ const {inspectBackupCompatibility,CURRENT_FEATURES}=await import('./backup-compatibility.mjs');
+ const oldFeatures=CURRENT_FEATURES.filter(f=>f!=='legacy-expense-unification-v1');
+ assert.equal(inspectBackupCompatibility(prepared.candidate,{features:oldFeatures}).compatible,false);
+ assert.equal(inspectBackupCompatibility(prepared.candidate).compatible,true);
+ assert.equal((await commitPreparedUnification({store,key:'x',expectedRaw:raw,prepared,validate,writeBackup:backup,allowWrite:true})).status,'saved');
+ const migrated=JSON.parse(store.getItem('x'));
+ assert.equal(inspectBackupCompatibility(migrated,{features:oldFeatures}).compatible,false);
+ assert.equal(undoPreparedUnification({store,key:'x',expectedRaw:store.getItem('x'),validate,allowWrite:true}).status,'undone');
+ assert.deepEqual(JSON.parse(store.getItem('x')),s);
+});
+test('original root recovery compatibility is restored exactly by targeted undo',async()=>{
+ const s=fixture();
+ s.recoveryCompatibility={protocol:1,producerBuild:'synthetic-old',requiredFeatures:['salary-net-transfer-v1']};
+ const raw=JSON.stringify(s),store=storage(raw),prepared=prepareUnificationState(s,{validate});
+ assert.equal(prepared.status,'prepared');
+ assert.deepEqual(prepared.candidate.recoveryCompatibility.requiredFeatures,['salary-net-transfer-v1','legacy-expense-unification-v1']);
+ assert.equal((await commitPreparedUnification({store,key:'x',expectedRaw:raw,prepared,validate,writeBackup:backup,allowWrite:true})).status,'saved');
+ assert.equal(undoPreparedUnification({store,key:'x',expectedRaw:store.getItem('x'),validate,allowWrite:true}).status,'undone');
+ assert.deepEqual(JSON.parse(store.getItem('x')),s);
+});

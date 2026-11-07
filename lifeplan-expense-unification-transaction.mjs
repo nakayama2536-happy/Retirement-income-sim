@@ -34,13 +34,21 @@ export function prepareUnificationState(input,{validate}={}){
  const r=buildExpenseUnificationAdoption(before.config);
  if(r.status!=='adoption-proposal-only')return {...blocked(r.reason||'SOURCE_NOT_ELIGIBLE'),codes:r.codes||[]};
  const candidate={...before,config:r.config,scenarios:copy(before.scenarios)};
- if(snapshots.length){
-  for(const entry of snapshots)candidate.scenarios[entry.index].config=entry.config;
-  candidate.expenseUnificationScenarioJournal={
-   format:'legacy-expense-scenarios-v1',
-   entries:snapshots.map(({index,id})=>({index,id}))
-  };
- }
+ for(const entry of snapshots)candidate.scenarios[entry.index].config=entry.config;
+ // Older apps inspect the TOP-LEVEL recovery contract, not nested config fields.
+ // A nested-only marker would allow a destructive silent old-build load.
+ candidate.expenseUnificationScenarioJournal={
+  format:'legacy-expense-scenarios-v1',
+  entries:snapshots.map(({index,id})=>({index,id})),
+  previousRootRecoveryPresent:Object.hasOwn(before,'recoveryCompatibility'),
+  previousRootRecovery:Object.hasOwn(before,'recoveryCompatibility')?copy(before.recoveryCompatibility):null
+ };
+ candidate.recoveryCompatibility={
+  ...(object(before.recoveryCompatibility)?copy(before.recoveryCompatibility):{}),
+  protocol:1,
+  producerBuild:'v0.9.39-legacy-expense-unification-20261107',
+  requiredFeatures:[...new Set([...(Array.isArray(before.recoveryCompatibility?.requiredFeatures)?before.recoveryCompatibility.requiredFeatures:[]),REQUIRED_FEATURE])]
+ };
  try{validate(candidate)}catch{return blocked('TARGET_VALIDATION_FAILED')}
  if(!same(before,input)||candidate.scenarios.length!==input.scenarios.length)return blocked('SOURCE_CHANGED');
  return {status:'prepared',saved:false,candidate,proof:{...r.proof,convertedScenarios:snapshots.length},requiresFeature:REQUIRED_FEATURE};
@@ -78,7 +86,7 @@ export function undoPreparedUnification({store,key,expectedRaw,validate,allowWri
  const journal=before.expenseUnificationScenarioJournal;
  const reversions=[];
  if(journal!==undefined){
-  if(!object(journal)||journal.format!=='legacy-expense-scenarios-v1'||!Array.isArray(journal.entries))return blocked('SCENARIO_JOURNAL_INVALID');
+  if(!object(journal)||journal.format!=='legacy-expense-scenarios-v1'||!Array.isArray(journal.entries)||typeof journal.previousRootRecoveryPresent!=='boolean'||(journal.previousRootRecoveryPresent&&!object(journal.previousRootRecovery)))return blocked('SCENARIO_JOURNAL_INVALID');
   const seen=new Set();
   for(const entry of journal.entries){
    const idx=entry?.index,scenario=before.scenarios[idx];
@@ -93,6 +101,10 @@ export function undoPreparedUnification({store,key,expectedRaw,validate,allowWri
  if(undone.status!=='undo-proposal-only')return blocked(undone.reason||'CANNOT_UNDO');
  const next={...copy(before),config:undone.config};
  for(const entry of reversions)next.scenarios[entry.index].config=entry.config;
+ if(journal){
+  if(journal.previousRootRecoveryPresent)next.recoveryCompatibility=copy(journal.previousRootRecovery);
+  else delete next.recoveryCompatibility;
+ }
  delete next.expenseUnificationScenarioJournal;
  try{if(typeof validate!=='function')throw Error('validator');validate(next)}catch{return blocked('RESTORED_STATE_INVALID')}
  if(store.getItem(key)!==expectedRaw)return blocked('STALE_BEFORE_UNDO');
