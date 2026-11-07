@@ -27,7 +27,7 @@ jobs:
           git rev-parse HEAD > stage3-evidence/source-commit.txt
           git rev-parse HEAD^{tree} > stage3-evidence/source-tree.txt
           git archive --format=zip HEAD > stage3-evidence/committed-source-NOT-DEPLOYED.zip
-          echo '12c04f52c12da1f2368acba8b3befe96b5962e50ccfcbe6bbae3b6c94214feb2  distribution-manifest.json' | sha256sum -c -
+          node --input-type=module -e 'import fs from "node:fs";import assert from "node:assert/strict";import {collect} from "./tools/package-public.mjs";assert.equal(fs.readFileSync("distribution-manifest.json","utf8"),collect(process.cwd()).out.get("distribution-manifest.json").toString("utf8"));'
           node --test test_cloud_login_candidate.mjs test_cloud_ui_interactions.mjs test_sync_panel.mjs test_sync_master_override.mjs test_sync_master_panel.mjs test_sync_firebase.mjs tools/retirement-comment/test_integration.mjs test_release_identity.mjs test_distribution_audit.mjs test_service_worker.mjs test_step8_main_mount.mjs | tee stage3-evidence/targeted.tap
           node tools/package-public.mjs . stage3-evidence/public-candidate-NOT-DEPLOYED
           git diff --exit-code
