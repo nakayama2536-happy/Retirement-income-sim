@@ -13,6 +13,19 @@ export function prepareUnificationState(input,{validate}={}){
  if(!state(input))return blocked('INVALID_STATE');
  if(typeof validate!=='function')return blocked('TARGET_VALIDATOR_MISSING');
  const before=copy(input);
+ // Saved comparisons may carry independent legacy expense readers. Converting
+ // only the active baseline would leave a mixed-format project after adoption.
+ // Never rewrite scenario snapshots implicitly, nor claim global unification.
+ for(let i=0;i<before.scenarios.length;i++){
+  const snap=before.scenarios[i]?.config;
+  if(!object(snap))continue;
+  const expense=snap.cashflow?.expenseCategories;
+  if((Array.isArray(expense)&&expense.length>0)
+      ||snap.cashflow?.detailSourceProfile==='public-v0.9'
+      ||object(snap.expenseUnificationCandidate)
+      ||object(snap.expenseUnificationArchive))
+   return {...blocked('SAVED_SCENARIO_REQUIRES_SEPARATE_MIGRATION'),scenarioIndex:i};
+ }
  const r=buildExpenseUnificationAdoption(before.config);
  if(r.status!=='adoption-proposal-only')return {...blocked(r.reason||'SOURCE_NOT_ELIGIBLE'),codes:r.codes||[]};
  const candidate={...before,config:r.config};
