@@ -88,6 +88,9 @@ try{
   assert.equal(await page.locator('#cashflowViewAge').locator('xpath=..').getAttribute('data-step-no'),'4-1-3-1');
   const sourceLabel=page.locator('#expenseDisplaySource').locator('xpath=..');
   assert.match(await sourceLabel.getAttribute('data-step-no'),/^4-1-3-2(?:-1)?$/);
+  const expenseSourceDetails=page.locator('#expenseDisplaySource').locator('xpath=ancestor::details[1]');
+  if(await expenseSourceDetails.count()&&!(await expenseSourceDetails.evaluate(n=>n.open)))
+    await expenseSourceDetails.locator(':scope > summary').click();
   await page.locator('#expenseDisplaySource').selectOption('work-v0.9.7');
   const category=page.locator('#expenseDetail > details > summary').first();
   await category.waitFor({state:'visible'});
