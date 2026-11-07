@@ -28,7 +28,7 @@ jobs:
         with:
           node-version: '22'
       - name: Standalone synthetic guard and migration tests
-        run: node --test lifeplan-expense-migration-preflight.test.mjs lifeplan-expense-unification-candidate.test.mjs lifeplan-expense-unification-adoption.test.mjs lifeplan-expense-unification-review.test.mjs apply-expense-unification-review.test.mjs expense-unification-coverage.test.mjs run-lifeplan-unification-integration.test.mjs lifeplan-unification-equivalence.test.mjs
+        run: node --test lifeplan-expense-migration-preflight.test.mjs lifeplan-expense-unification-candidate.test.mjs lifeplan-expense-unification-adoption.test.mjs lifeplan-expense-unification-transaction.test.mjs lifeplan-expense-unification-review.test.mjs apply-expense-unification-review.test.mjs expense-unification-coverage.test.mjs run-lifeplan-unification-integration.test.mjs lifeplan-unification-equivalence.test.mjs
       - name: Verify original publish manifest (unmodified source only)
         run: node --test test_release_identity.mjs
       - name: Isolated actual-engine regression using pinned main source
