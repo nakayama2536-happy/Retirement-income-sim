@@ -209,8 +209,8 @@
     },
     {
       "name": "mortality-expense-csv.mjs",
-      "size": 5483,
-      "sha256": "6057820a174ea83a7c506def77cbd8a2ed8517be24af40916656ac5668e041cf"
+      "size": 5578,
+      "sha256": "3aada52a2f2c20647976ccbce543996fdea45ce4775ea0d8f033bf5b34c77912"
     },
     {
       "name": "mortality-expense-preset.mjs",
