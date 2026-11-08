@@ -144,3 +144,8 @@ button,input,select,textarea{font-family:inherit}
 #mortality .workflow-tab{min-height:50px;white-space:normal;line-height:1.45}
 #mortality button:focus-visible,#mortality input:focus-visible{outline:3px solid #9b591f;outline-offset:3px}
 @media(max-width:600px){#mortality .family-step-actions button{flex:1 1 100%}#mortality .family-pension-entry{padding:12px}#mortality .family-step-guide{padding:12px}}
+
+/* Keep the required review sentence as one readable flex item on small screens. */
+#mortality .family-review-check{display:flex;align-items:flex-start;gap:10px;width:100%;line-height:1.7}
+#mortality .family-review-check>input[type=checkbox]{flex:0 0 20px;min-width:20px;width:20px;height:20px;margin:3px 0 0}
+#mortality .family-review-check>span{display:block;flex:1 1 auto;min-width:0;overflow-wrap:break-word}
