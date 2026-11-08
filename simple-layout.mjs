@@ -117,7 +117,8 @@ export function simplifyLayout(doc) {
   const importLabel=byId('importFile2')?.closest('label');
   if(importLabel){const importDetails=wrap(importLabel,'重要操作：保存済み設定・バックアップを読み込む（復元）');
     importDetails.classList.add('family-danger-disclosure');
-    importDetails.prepend(doc.createElement('p')).textContent='復元の範囲と既存データへの影響を先に確認してください。開くだけでは読み込みません。';
+    const restoreCaution=doc.createElement('p');restoreCaution.textContent='復元の範囲と既存データへの影響を先に確認してください。開くだけでは読み込みません。';
+    importDetails.insertBefore(restoreCaution,importLabel);
   }
   group('backup','① 一括バックアップファイルを作る',[backups],{open:true,host:backupPanel});
   group('cloud','② クラウドの接続・保存・読込みを確認',[byId('privateSyncCard')],{host:backupPanel});
