@@ -50,6 +50,6 @@ test('家族向け操作ガイドは保存・反映を行わず、手順を示�
  assert.match(workflow,/操作案内/);
  assert.ok(mortality.includes('id="mortalityOpenPension"'));
  assert.match(mortality,/details.open=true/);
- assert.match(mortality,/年金額の入力欄を開く/);
+ assert.match(mortality,/年金の確認・入力欄を開く/);
  assert.doesNotMatch(workflow,/localStorage|replaceState|commitState|submit\(/);
 });
