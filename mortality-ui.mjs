@@ -452,6 +452,7 @@ export function mountMortalityComparison(root,{getConfig,getBaseline,runPlan}){
   renderFirstNegativeDiagnostic(results,mortality);
   for(const [kind,id,label] of [
     ['monthly','mortalityExportExpenseMonthlyCsv','月次支出CSVを保存（未採用の比較）'],
+     ['assets','mortalityExportAssetMonthlyCsv','月次資産CSVを保存（未採用の比較）'],
     ['items','mortalityExportExpenseItemsCsv','費目別支出CSVを保存（未採用の比較）']
   ]){
     const button=makeEl('button','secondary',label);button.id=id;button.type='button';
