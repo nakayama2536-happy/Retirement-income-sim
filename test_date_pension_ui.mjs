@@ -126,3 +126,26 @@ test('statement first: missing or inconsistent evidence blocks import and keeps 
  assert.equal(t.node('primaryPensionAmount').value,before);
  assert.match(t.node('primaryPensionImportNote').textContent,/一致していません/);
 });
+
+test('family pension status reflects adopted reference, not uncommitted draft',()=>{
+ const t=setup(),before=JSON.stringify(loadConfig());
+ assert.match(t.node('pensionReferenceOverview').textContent,/本人：未登録/);
+ assert.match(t.node('pensionReferenceOverview').textContent,/配偶者：未登録/);
+ for(const [suffix,value] of [['65Basic','80'],['65Earnings','39.5'],['65Transitional','0.5'],['65Total','120']])t.set('primaryPension'+suffix,value);
+ t.set('primaryPension65Source','fictional 2026 statement');
+ assert.match(t.node('pensionReferenceOverview').textContent,/本人：未登録/);
+ assert.equal(JSON.stringify(loadConfig()),before);
+ t.node('pensionForm').emit('submit');
+ t.node('pensionApply').emit('click');
+ assert.match(t.node('pensionReferenceOverview').textContent,/本人：登録済み/);
+ assert.match(t.node('pensionReferenceOverview').textContent,/配偶者：未登録/);
+});
+test('family pension input order is month then estimate and advanced options remain collapsed',()=>{
+ const t=setup();
+ assert.equal(t.node('primaryPensionAdvanced').open,undefined);
+ assert.equal(t.node('spousePensionAdvanced').open,undefined);
+ assert.equal(t.node('primaryPensionPlanDetails').open,undefined);
+ const pensionMarkup=t.node('pensionInputs').innerHTML;
+ assert(pensionMarkup.indexOf('id="primaryPensionMonth"')<pensionMarkup.indexOf('id="primaryPensionImport65"'));
+ assert(pensionMarkup.indexOf('id="spousePensionMonth"')<pensionMarkup.indexOf('id="spousePensionImport65"'));
+});

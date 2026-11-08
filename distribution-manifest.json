@@ -1,6 +1,6 @@
 {
   "kind": "public-release",
-  "runtime": "v0.9.44-family-pension-20261108",
+  "runtime": "v0.9.45-pension-clear-steps-20261108",
   "files": [
     {
       "name": "age-budget-candidate.mjs",
@@ -29,13 +29,13 @@
     },
     {
       "name": "app.mjs",
-      "size": 79274,
-      "sha256": "9ed28e35271b6f0015962951f630982e049de97a736d462a13b09d6ab6c3de04"
+      "size": 79279,
+      "sha256": "43d4dce90cd55f500100989f04443b9332d1692ac75cf75e00287e232d276db1"
     },
     {
       "name": "backup-compatibility.mjs",
-      "size": 8047,
-      "sha256": "882dcda5d1ffea3358c132dd56c1ea6ad681d717c6a1405ba9e9229247138ad1"
+      "size": 8052,
+      "sha256": "278192e636c4d3ccf6ddf5a7ac05433a58b35d33fbe7ad31bbcdd6619b346a38"
     },
     {
       "name": "budget-travel-ui.mjs",
@@ -249,8 +249,8 @@
     },
     {
       "name": "pension-ui.mjs",
-      "size": 26550,
-      "sha256": "11d4c5f7786b4645d4a9e489e3da62e2c75d6211b72f0357ef6430fc0fa81698"
+      "size": 27901,
+      "sha256": "da1c349da50346499f10807a98f93b0d03a943fd8e4ed46f0049a3d47a785ca7"
     },
     {
       "name": "pension.mjs",
@@ -274,8 +274,8 @@
     },
     {
       "name": "release-info.json",
-      "size": 131,
-      "sha256": "669515a11a237cc3b619ce9ff030c6cc1624c00f2168301ae4d7e489b8a5b23c"
+      "size": 147,
+      "sha256": "22dab164df1fc9aedf64863fd5faf9f8f8a5a354edf6a3d5787bc4abf5b0191a"
     },
     {
       "name": "retirement-comment.mjs",
@@ -334,8 +334,8 @@
     },
     {
       "name": "styles.css",
-      "size": 35191,
-      "sha256": "91ac2e8867aca664ccb3cf9ba67d2c7760e631fbac244cfef756d5c8a82cda2f"
+      "size": 35828,
+      "sha256": "ab2035b21b1a575ca5b1c563929451c8702dfb3b87cfc97de0b078dcc1dea82a"
     },
     {
       "name": "survivor-pension-calculator.mjs",
@@ -349,8 +349,8 @@
     },
     {
       "name": "sw.js",
-      "size": 4562,
-      "sha256": "11fe24f4ce07a00e8ab10fcba5d7ce307e9cf739ac7498753932f164f7d8d44c"
+      "size": 4567,
+      "sha256": "018f3de1bc61117552b4405fa86841fd83541b8b2f79c3be6f0571b2d80dc90c"
     },
     {
       "name": "sync-controller.mjs",

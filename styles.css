@@ -293,3 +293,10 @@
 #pension .pension-plan-details>details>summary{cursor:pointer;font-weight:600}
 #pension .pension-reference-master button{min-height:44px}
 @media(max-width:760px){#pension .pension-plan-details button,#pension .pension-reference-master button{width:100%}}
+
+/* Clear family pension workflow: status above the closed source card, secondary fields tucked away. */
+#pension .pension-reference-overview{grid-column:1/-1;margin:0 0 4px;padding:10px 12px;border:1px solid var(--line);border-radius:8px;background:var(--surface,#fff);font-weight:650;line-height:1.7}
+#pension .pension-step-label{margin:14px 0 6px;font-weight:650;line-height:1.65}
+#pension .pension-advanced{margin:12px 0;border:1px solid var(--line);border-radius:8px;padding:10px}
+#pension .pension-advanced>summary{font-weight:650;cursor:pointer;min-height:40px}
+#pension .pension-plan-details>label{display:block;margin-top:10px}
