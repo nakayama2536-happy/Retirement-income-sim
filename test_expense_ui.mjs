@@ -62,3 +62,14 @@ test('生活費内訳と予算整合の2枚は均等幅、狭幅では縦配置'
  assert.match(css,/\.expense-reconcile-grid\{grid-template-columns:repeat\(2,minmax\(0,1fr\)\)/);
  assert.match(css,/@media\(max-width:900px\)\{\.expense-reconcile-grid\{grid-template-columns:minmax\(0,1fr\)\}\}/);
 });
+
+test('rent change editor has cause/next-action guidance and year total without saving during preview',async()=>{
+ const t=setup();
+ await t.trial('detail','9');
+ assert.match(t.node('AmountGuide').textContent,/年間 108万円/);
+ assert.match(t.node('PreviewQuick').textContent,/変更前/);
+ assert.match(t.node('PreviewQuick').textContent,/変更後：9万円/);
+ assert.match(t.node('PreviewQuick').textContent,/管理予算の確認が必要/);
+ assert.equal(t.node('ErrorGuide').hidden,true);
+ assert.equal(t.storage.writes,0);
+});

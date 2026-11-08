@@ -34,6 +34,24 @@ function setAmount(config,path,amount){
   const key=parts.at(-1);if(!own(obj,key))throw new Error('金額が未設定です。補完せず確認してください。');
   const before=structuredClone(obj[key]);obj[key]=amount;return before;
 }
+/**
+ * Read-only diagnostics. Never invent a persistent identifier or repair existing
+ * records from labels, positions, or historic default values.
+ */
+export function expenseIdentityDiagnostic(view,{itemId,sourceProfile}={}){
+ const item=view?.items?.find(i=>i.itemId===itemId);
+ const variants=(item?.variants||[]).filter(v=>v.profile===sourceProfile);
+ const relevant=(view?.diagnostics||[]).filter(d=>!itemId||d.itemId===itemId||variants.some(v=>(v.sourceRefs||[]).some(r=>r.path===d.path)));
+ if(variants.some(v=>v.identityStatus==='missing')||relevant.some(d=>d.code==='missing-identity'))
+  return {code:'missing-identity',title:'家賃などの項目を特定する識別キー（内部ID）がありません。',
+   guidance:'元データの該当項目にIDまたはkeyが存在するか確認してください。表示名や行番号から自動設定せず、バックアップを確保してから修復対象を特定します。'};
+ if(variants.length!==1||variants.some(v=>v.identityStatus==='conflict')||relevant.some(d=>['duplicate-key','duplicate-identity','incompatible-identity'].includes(d.code)))
+  return {code:'duplicate-identity',title:'同じ識別キー（内部ID）の項目が複数あり、変更先を選べません。',
+   guidance:'項目の保存元・親項目・期間を確認してください。どちらか一方を推測して変更せず、重複元を診断してから明示的に修復します。'};
+ return {code:'identity-unresolved',title:'変更先の識別情報を一意に確認できません。',
+  guidance:'保存元、期間と識別キーの整合を確認してください。既存の設定は保持し、原因解消後に再試算してください。'};
+}
+
 const covers=(rule,age)=>rule.period.type==='all'||rule.period.type==='age'&&age>=rule.period.fromAge&&age<=rule.period.toAge;
 
 export function previewExpenseChanges(state,draft){
@@ -49,7 +67,7 @@ export function previewExpenseChanges(state,draft){
     if(matching.length!==1)throw new Error('内部ID・期間規則・出典を一意に確認できません。');
     const rule=matching[0],item=view.items.find(i=>i.itemId===edit.itemId);
     const variants=item.variants.filter(v=>v.profile===draft.sourceProfile);
-    if(variants.length!==1||variants[0].identityStatus!=='resolved')throw new Error('内部IDが重複・未確定です。');
+    if(variants.length!==1||variants[0].identityStatus!=='resolved'){const issue=expenseIdentityDiagnostic(view,{itemId:edit.itemId,sourceProfile:draft.sourceProfile});throw new Error(`${issue.title} ${issue.guidance}`);}
     const expectedRoute=draft.kind==='detail'?'budget-detail':'budget-total';
     if(item.route!==expectedRoute)throw new Error('内訳更新と管理予算変更を同じ操作へ混在させないでください。');
     if(rule.status!=='resolved'||!['all','age'].includes(rule.period.type))throw new Error('未計算・不正・未対応の元規則は変更できません。');

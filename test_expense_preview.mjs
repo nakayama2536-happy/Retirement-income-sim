@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {createExpenseDraft,previewExpenseChanges as preview,revalidateExpensePreview} from './expense-preview.mjs';
+import {createExpenseDraft,previewExpenseChanges as preview,revalidateExpensePreview,expenseIdentityDiagnostic} from './expense-preview.mjs';
 import {inspectCashflowSources} from './cashflow-sources.mjs';
 import {migrateConfig} from './storage.mjs';
 const WORK='work-v0.9.7',PUBLIC='public-v0.9';
@@ -112,4 +112,30 @@ test('overlapping budget rules are not resolved by row order',()=>{
 });
 test('input that overflows calculations is not returned as a valid proposal',()=>{
  const s=fixture();s.config.plan.inflation=100000;assert.throws(()=>preview(s,draft(s,{kind:'budget',itemId:'management-budget',amount:Number.MAX_VALUE})),/数値範囲/);
+});
+
+test('missing rent identifier is reported separately and neither input nor saved state changes',()=>{
+ const state=fixture(),line=state.config.expenseDetail.monthlyCategories[0].items[0];
+ delete line.key;
+ const before=structuredClone(state);
+ const view=inspectCashflowSources(state.config,{sourceProfile:WORK});
+ const unresolved=view.rules.find(r=>r.profile===WORK&&r.sourceRefs[0]?.path==='/expenseDetail/monthlyCategories/0/items/0');
+ assert.ok(unresolved);
+ const issue=expenseIdentityDiagnostic(view,{itemId:unresolved.itemId,sourceProfile:WORK});
+ assert.equal(issue.code,'missing-identity');
+ assert.match(issue.guidance,/バックアップ/);
+ const d=draft(state,{itemId:unresolved.itemId,amount:9});
+ assert.throws(()=>preview(state,d),/識別キー.*ありません/);
+ assert.deepEqual(state,before);
+});
+test('duplicate rent identifier is reported separately and cannot silently select a row',()=>{
+ const state=fixture();
+ state.config.expenseDetail.monthlyCategories[0].items.push({key:'rent',label:'家賃の重複例',amount:8});
+ const before=structuredClone(state);
+ const view=inspectCashflowSources(state.config,{sourceProfile:WORK});
+ const issue=expenseIdentityDiagnostic(view,{itemId:rent,sourceProfile:WORK});
+ assert.equal(issue.code,'duplicate-identity');
+ assert.match(issue.guidance,/推測して変更せず/);
+ assert.throws(()=>preview(state,draft(state,{amount:9})),/複数/);
+ assert.deepEqual(state,before);
 });

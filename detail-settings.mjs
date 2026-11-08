@@ -18,6 +18,16 @@ export function expenseEntries(c,profile){
  const root=profile==='public-v0.9'?'/cashflow/expenseCategories':'/expenseDetail/monthlyCategories';
  return (pathGet(c,root)||[]).flatMap((g,i)=>Array.isArray(g.items)&&g.items.length?g.items.map((r,j)=>({path:`${root}/${i}/items/${j}`,group:g.label||g.key,label:r.label||r.key,key:r.key,row:r})): [{path:`${root}/${i}`,group:g.label||g.key,label:g.label||g.key,key:g.key,row:g}]);
 }
+/** Read-only explanation for a selected saved expense row. No invented IDs. */
+export function expenseEntryIdentityIssue(c,profile,targetPath){
+ const entries=expenseEntries(c,profile),target=entries.find(x=>x.path===targetPath);
+ if(!target)return {code:'target-missing',message:'変更する項目が見つかりません。保存元と対象を確認し、再読み込みしてから試算してください。'};
+ if(typeof target.key!=='string'||!target.key.trim())
+  return {code:'missing-key',message:'選択した生活費の識別キー（key）が未設定です。元の設定とバックアップを確認してください。表示名からキーを自動生成せず、修復対象が確定するまで変更を保存しません。'};
+ if(entries.filter(x=>String(x.key)===String(target.key)).length!==1)
+  return {code:'duplicate-key',message:'生活費の識別キー（key）が重複しています。変更先の項目と親項目・適用期間を一意に特定できません。片方を推測して上書きせず、バックアップを確保してから重複元を確認してください。'};
+ return {code:'resolved',message:null};
+}
 function editExpense(c,d){
  if(!profiles.includes(d.profile))throw Error('内訳の保存元を選んでください。');
  const [fromAge,toAge]=range(d,c),amount=num(d.amount,'内訳金額'),monthly=d.unit==='annual'?amount/12:amount;
@@ -37,14 +47,15 @@ function editExpense(c,d){
   if(!Array.isArray(group.items))throw Error('既存の大項目の形式を確認してください。');
   if(group.items.some(r=>r.label===label))throw Error('同じ名前が登録済みです。既存項目を選んで変更してください。');
   const existing=new Set(expenseEntries(c,d.profile).map(x=>x.key));let n=1;while(existing.has(`${key}-${n}`))n++;
-  const row={key:`${key}-${n}`,label,...(d.profile==='public-v0.9'?{periods:[{fromAge:Number(c.plan.startAge),toAge:Number(c.plan.endAge),amount:0}]}:{amount:0})};group.items.push(row);target={row,key:row.key};
+  const row={key:`${key}-${n}`,label,...(d.profile==='public-v0.9'?{periods:[{fromAge:Number(c.plan.startAge),toAge:Number(c.plan.endAge),amount:0}]}:{amount:0})};group.items.push(row);target={row,key:row.key,path:expenseEntries(c,d.profile).find(entry=>entry.row===row)?.path};
  }
  if(d.profile==='public-v0.9'){
   if(!Array.isArray(target.row.periods))throw Error('この旧形式の合計項目は、既存の内訳編集から変更してください。');
   const rows=target.row.periods.map(r=>({...r,kind:'expense',key:target.key,unit:'monthly'}));
   target.row.periods=replaceAgeRangeOverride(rows,{kind:'expense',key:target.key,fromAge,toAge,amount:monthly,unit:'monthly'}).map(({kind,key,unit,...r})=>r);
  }else{
-  if(!target.key||expenseEntries(c,d.profile).filter(x=>x.key===target.key).length!==1)throw Error('内訳のキーが未設定・重複しています。');
+  const issue=expenseEntryIdentityIssue(c,d.profile,target.path);
+  if(issue.code!=='resolved')throw Error(issue.message);
   const roots=c.expenseDetail?.monthlyCategories||[],parent=roots.find(g=>(g.items||[]).includes(target.row));
   if(parent&&(c.cashflow?.periodOverrides||[]).some(r=>r.kind==='expense'&&r.key===parent.key&&Number(r.toAge)>=fromAge&&Number(r.fromAge)<=toAge))throw Error('この期間は大項目の合計で上書き中です。大項目の設定を先に確認してください。');
   setOverride(c,{kind:'expense',key:target.key,label,fromAge,toAge,amount,unit:d.unit});
