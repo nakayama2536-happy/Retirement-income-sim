@@ -165,3 +165,13 @@ button,input,select,textarea{font-family:inherit}
 #mortality .mortality-family-advanced>summary{font-size:1rem;font-weight:650;color:#8b4d2c;cursor:pointer;padding:14px 4px;min-height:52px;line-height:1.5}
 #mortality .mortality-family-advanced-body{padding-top:8px}
 @media(max-width:700px){#mortality .mortality-family-summary{padding:14px}#mortality .mortality-family-cards{grid-template-columns:1fr}#mortality .mortality-family-card>strong{font-size:1.2rem}#mortality .mortality-family-advanced{padding:0 9px 9px}}
+
+/* Existing-expense edit: three visible steps, causes and next actions. */
+#expenseSheet .expense-guide-heading{margin:18px 0 6px;font-size:1.07rem;color:#894b28;line-height:1.5}
+#expenseSheet .expense-amount-guide{background:#fff8ed;border-left:3px solid #bd7244;padding:10px 13px;line-height:1.7}
+#expenseSheet .expense-preview-quick{border:1px solid #ead3c0;background:#fffaf5;padding:12px 14px;border-radius:10px;line-height:1.75;white-space:pre-wrap}
+#expenseSheet .expense-error-guide{border:1px solid #d6a494;background:#fff6f1;padding:12px 14px;border-radius:10px;margin:10px 0;line-height:1.7}
+#expenseSheet .expense-error-guide strong{color:#873c2c}
+#expenseSheet .expense-error-guide p{margin:7px 0}
+#expenseSheet select,#expenseSheet input,#expenseSheet button{min-height:44px}
+#expenseSheet [hidden]{display:none!important}
