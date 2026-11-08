@@ -50,6 +50,26 @@ try{
  assert.equal(await page.locator('#home .home-pending > summary #pendingCount').count(),1);
  assert.deepEqual(await snapshot(),before,'home label/disclosures must not alter adopted state');
  mark('ux-request-previous-age-year-end-and-individual-home-disclosures');
+
+ // Unified disclosure: numbered summaries keep their labels, and changing an
+ // accordion never writes or changes financial input.
+ const accordion=page.locator('#home details.home-explanation').first();
+ await accordion.evaluate(el=>{el.open=false;});
+ let disclosureState=await accordion.locator('summary').evaluate(el=>({
+   text:getComputedStyle(el,'::after').content,
+   marker:getComputedStyle(el).listStyleType,
+   display:getComputedStyle(el).display
+ }));
+ assert.match(disclosureState.text,/▶ 開く/);
+ assert.equal(disclosureState.marker,'none');
+ assert.equal(disclosureState.display,'flex');
+ await accordion.locator('summary').click();
+ disclosureState=await accordion.locator('summary').evaluate(el=>getComputedStyle(el,'::after').content);
+ assert.match(disclosureState,/▼ 閉じる/);
+ await accordion.locator('summary').click();
+ assert.deepEqual(await snapshot(),before,'opening a disclosure must not adopt data');
+ mark('unified-disclosure-open-close-labels-and-native-keyboard-safe-details');
+
  await openTab('results','cashflow');
  for (const width of [390,1280]) {
    await page.setViewportSize({width,height:900});
