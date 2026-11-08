@@ -33,7 +33,7 @@ try{
  const tab=async id=>{await page.locator('[data-group="'+(id==='retirement'?'income':'manage')+'"]').click();await page.locator('[data-tab="'+id+'"]').click();};
  const state=()=>page.evaluate(()=>JSON.parse(localStorage.getItem('lifeplan-sim-state-v1')));
  const financial=()=>page.evaluate(async()=>{const {runRetirementPlan}=await import('/calc.mjs');return runRetirementPlan(JSON.parse(localStorage.getItem('lifeplan-sim-state-v1')).config,{includeMonthlyDetails:true});});
- await tab('retirement');
+ await tab('retirement');await page.locator('#retirement-workflow-tab-1').click();
  const host=page.locator('#detail-retirement'),field=host.locator('[name="conceptComment"]');
  await field.waitFor();assert.equal(await field.inputValue(),'');assert.equal(await field.getAttribute('maxlength'),'2000');
  const before=await state(),numbers=await financial();
@@ -56,11 +56,11 @@ try{
  mark('390-and-1280-layout-no-horizontal-overflow');
  await tab('settings');await page.locator('#settingsGroup-maintenance').evaluate(el=>el.open=true);await page.locator('#detailUndo').click();
  assert.deepEqual((await state()).config.retirement,before.config.retirement);assert.deepEqual((await state()).scenarios,before.scenarios);mark('undo-applied-comment-restores-original-retirement');
- await tab('retirement');await field.fill(note);await host.locator('button[type="submit"]').click();await host.locator('[data-apply]').click();
- await page.reload({waitUntil:'networkidle'});await page.locator('#dashboard').waitFor({state:'visible'});await tab('retirement');
+ await tab('retirement');await page.locator('#retirement-workflow-tab-1').click();await field.fill(note);await host.locator('button[type="submit"]').click();await host.locator('[data-apply]').click();
+ await page.reload({waitUntil:'networkidle'});await page.locator('#dashboard').waitFor({state:'visible'});await tab('retirement');await page.locator('#retirement-workflow-tab-1').click();
  assert.equal(await field.inputValue(),note);assert.deepEqual(await financial(),numbers);mark('reload-retains-multiline-comment');
  await field.fill('');await host.locator('button[type="submit"]').click();await host.locator('[data-apply]').click();
- await page.reload({waitUntil:'networkidle'});await tab('retirement');assert.equal(await field.inputValue(),'');assert.equal((await state()).config.retirement.conceptComment,'');mark('explicit-empty-comment-clears-and-persists');
+ await page.reload({waitUntil:'networkidle'});await tab('retirement');await page.locator('#retirement-workflow-tab-1').click();assert.equal(await field.inputValue(),'');assert.equal((await state()).config.retirement.conceptComment,'');mark('explicit-empty-comment-clears-and-persists');
  assert.deepEqual(blocked,[]);assert.deepEqual(errors,[]);mark('no-external-network-or-page-errors');report.status='passed';
 }catch(error){report.status='failed';report.error=error.stack;process.exitCode=1;console.error(error.stack);}
 finally{
