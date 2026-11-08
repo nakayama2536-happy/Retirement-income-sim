@@ -216,7 +216,7 @@ export function mountMortalityComparison(root,{getConfig,getBaseline,runPlan}){
  `;
  const form=root.querySelector('#mortalityForm'),state=root.querySelector('#mortalityState'),results=root.querySelector('#mortalityResults'),costBox=root.querySelector('#mortalityCostRows');
  installMortalityTabs(form);
- root.querySelector('#mortalityOpenPension').addEventListener('click',()=>{
+ root.querySelector('#mortalityOpenPension')?.addEventListener('click',()=>{
   const details=root.querySelector('#mortalityPensionSettings');
   details.open=true;
   form.elements.survivorPension.focus();
