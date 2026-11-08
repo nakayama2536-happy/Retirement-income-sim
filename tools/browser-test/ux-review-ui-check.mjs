@@ -119,7 +119,6 @@ try{
  assert.deepEqual(await snapshot(),before,'switching workflow tabs must not mutate saved data');
  mark('purpose-based-tabs-without-saving-or-losing-form-controls');
  await openTab('income','salary');
- await page.locator('#salary-workflow-tab-1').click();
  const steps=page.locator('#salaryInputs details.salary-step');
  assert.equal(await steps.count(),4);
  assert.equal(await steps.nth(0).evaluate(el=>el.open),true);
@@ -127,6 +126,9 @@ try{
  assert.equal(await steps.nth(1).evaluate(el=>el.open),true);
  assert.deepEqual(await snapshot(),before,'salary accordion must not save');
  mark('ux-request-sticky-annual-head-and-salary-disclosures');
+ await page.locator('#salary-workflow-tab-1').click();
+ assert(await page.locator('#salary .salary-optional-labor').isVisible());
+ await page.locator('#salary-workflow-tab-0').click();
  await openTab('manage','settings');
  const expected=['finance','goals','compare','maintenance'];
  const groups=page.locator('#settings > .settings-category');
