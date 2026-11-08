@@ -28,7 +28,7 @@ test('家族向け年齢期要約は既存の年間収支を読み取るだけ�
 });
 test('家族向け不足表示は最初の年齢期末のみ。月次不足や借入と断定しない',()=>{
  const rows=[{age:90,endAsset:200},{age:91,endAsset:-10},{age:92,endAsset:-200}];
- assert.deepEqual(familyAgeEndShortageSummary(rows),{status:'ready',age:91,message:'91歳期末から負の残高が確認されます'});
+ assert.deepEqual(familyAgeEndShortageSummary(rows),{status:'ready',age:91,message:'初めて年齢期末の残高がマイナスになったのは91歳期末です'});
  assert.equal(familyAgeEndShortageSummary([{age:95,endAsset:0}]).age,null);
  assert.equal(familyAgeEndShortageSummary([{age:95,endAsset:NaN}]).status,'unavailable');
  assert.equal(familyAgeEndShortageSummary([]).status,'unavailable');
