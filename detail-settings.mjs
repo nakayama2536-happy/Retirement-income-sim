@@ -47,7 +47,7 @@ function editExpense(c,d){
   if(!Array.isArray(group.items))throw Error('既存の大項目の形式を確認してください。');
   if(group.items.some(r=>r.label===label))throw Error('同じ名前が登録済みです。既存項目を選んで変更してください。');
   const existing=new Set(expenseEntries(c,d.profile).map(x=>x.key));let n=1;while(existing.has(`${key}-${n}`))n++;
-  const row={key:`${key}-${n}`,label,...(d.profile==='public-v0.9'?{periods:[{fromAge:Number(c.plan.startAge),toAge:Number(c.plan.endAge),amount:0}]}:{amount:0})};group.items.push(row);target={row,key:row.key};
+  const row={key:`${key}-${n}`,label,...(d.profile==='public-v0.9'?{periods:[{fromAge:Number(c.plan.startAge),toAge:Number(c.plan.endAge),amount:0}]}:{amount:0})};group.items.push(row);target={row,key:row.key,path:expenseEntries(c,d.profile).find(entry=>entry.row===row)?.path};
  }
  if(d.profile==='public-v0.9'){
   if(!Array.isArray(target.row.periods))throw Error('この旧形式の合計項目は、既存の内訳編集から変更してください。');
