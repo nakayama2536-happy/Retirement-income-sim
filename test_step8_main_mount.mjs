@@ -37,7 +37,7 @@ test('offline candidate assets and module dependency closure are included',()=>{
     assert.ok(runtime.includes(name),name);
     assert.match(sw,new RegExp("\\./"+name.replaceAll('.','\\.')));
   }
-  assert.equal(runtime.length,81);
+  assert.equal(runtime.length,82);
   assert.equal(out.size,84);
 });
 
