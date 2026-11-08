@@ -16,13 +16,14 @@ export async function validateAgeInputUi({browser,createTestServer,open,load,ope
    for(const tab of ['salary','nisa','ideco','retirement','pension','unemployment','events']){await openTab(page,tab);assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));}
   }
   await openTab(page,'salary');
+  await page.locator('#salary-workflow-tab-1').click();
   const optionalLabor=page.locator('#salary details.salary-optional-labor');
   if(!await optionalLabor.evaluate(n=>n.open))await optionalLabor.locator('summary').click();
   const f=page.locator('#detail-laborSpouseSide form');
   await f.locator('[name=endDate]').fill('2057-02-01');
   assert.match(await f.locator('[name=endDate]').locator('..').locator('.date-age-hint').innerText(),/配偶者.*収入の最終月：2057年1月/);
   await f.locator('[data-reset]').click();assert.deepEqual((await snapshot(page)).data,before);
-  await openTab(page,'ideco');const basic=page.locator('#detail-ideco form'),withdraw=page.locator('#detail-idecoWithdrawal form');
+  await openTab(page,'ideco');await page.locator('#ideco-workflow-tab-1').click();const basic=page.locator('#detail-ideco form'),withdraw=page.locator('#detail-idecoWithdrawal form');
   await page.locator('#ideco details').filter({has:basic}).locator('summary').click();
   await basic.locator('[name=currentBalance]').fill('101');
   await withdraw.locator('[name=receiptMode]').selectOption('annuity');await withdraw.locator('[name=annuityYears]').fill('10');
@@ -30,7 +31,7 @@ export async function validateAgeInputUi({browser,createTestServer,open,load,ope
   assert.equal(await basic.locator('[name=currentBalance]').inputValue(),'101');assert(await page.locator('#detail-ideco [role=alert]').isVisible());
   await basic.locator('[type=submit]').click();assert(await page.locator('#detail-ideco .detail-preview').isHidden());
   const adopted=(await snapshot(page)).data;assert.equal(adopted.config.ideco.lumpPercent,0);assert.equal(adopted.config.ideco.annuityYears,10);assert.equal(adopted.config.ideco.currentBalance,100);
-  await openTab(page,'ideco');await basic.locator('[data-reset]').click();assert.equal(await basic.locator('[name=lumpPercent]').inputValue(),'0');
+  await openTab(page,'ideco');await page.locator('#ideco-workflow-tab-1').click();await basic.locator('[data-reset]').click();assert.equal(await basic.locator('[name=lumpPercent]').inputValue(),'0');
   // Now the sibling form is untouched: it must refresh after another apply.
   await withdraw.locator('[name=annuityYears]').fill('5');await withdraw.locator('[type=submit]').click();await page.locator('#detail-idecoWithdrawal [data-apply]').click();
   assert.equal(await basic.locator('[name=annuityYears]').inputValue(),'5');assert.equal(await basic.locator('[name=currentBalance]').inputValue(),'100');
