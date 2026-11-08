@@ -66,7 +66,7 @@ test('month edit shows draft estimate; clicking estimate and trial do not alter 
  t.set('primaryPensionMonth','2051-09');
  assert.match(t.node('primaryPensionMonthAge').textContent,/本人71歳/);
  assert.match(t.node('primaryPensionEstimate').textContent,/180.48/);
- assert.equal(t.node('primaryPensionEstimateDetails').open,true);
+ assert.equal(t.node('primaryPensionEstimateDetails').open,undefined);
  assert.equal(t.node('primaryPensionAmount').value,170.4);
  t.node('primaryPensionUseEstimate').emit('click');
  assert.equal(t.node('primaryPensionAmount').value,'180.48');
@@ -105,7 +105,7 @@ test('statement first: 65-year values can be imported into a trial without savin
  t.set('primaryPension65Source','fictional 2026 pension statement');
  t.node('pensionReferenceDone').emit('click');
  assert.equal(t.node('pensionReferenceMaster').open,false);
- assert.equal(t.node('primaryPensionPlanDetails').open,true);
+ assert.equal(t.node('primaryPensionPlanDetails').open,undefined); // family view stays collapsed until chosen
  t.node('primaryPensionImport65').emit('click');
  assert.equal(t.node('primaryPensionBase65').value,'120');
  assert.equal(t.node('primaryPensionAmount').value,'170.4');

@@ -21,7 +21,7 @@ export function mountPensionSheet({getConfig,onCommit,showNotice}){
     el(`${key}PensionUseEstimate`).disabled=!r.ok;
     el(`${key}PensionEstimate`).textContent=r.ok?`修正見込額：${yen(r.annual)}/年（65歳基準額から${r.factor>=1?'+':''}${((r.factor-1)*100).toFixed(1)}%）。請求想定月：${dateWithAge(r.claimMonth,c,key)}。年額欄への入力は下のボタンで行います。`:r.message;
     const changed=el(`${key}PensionMonth`).value!==(c.income.pensions[key].startDate?.slice(0,7)||'');
-    if(changed)el(`${key}PensionEstimateDetails`).open=true;
+    // Keep the secondary calculation collapsed; the main import button is the normal path.
     el(`${key}PensionAmountNote`).textContent=changed?'開始月を変更しています。見込額を年額欄へ入れるか、公式資料の金額を直接入力してください。':'年額は公式資料の金額を直接入力することもできます。';
   }
   function renderBreakdown(key){
@@ -93,25 +93,25 @@ export function mountPensionSheet({getConfig,onCommit,showNotice}){
           <p class="muted" id="${key}PensionReferenceCheck" role="status">未確認</p>
         </div>`;
       const referencePanel=`<details id="pensionReferenceMaster" class="pension-reference-master">
-         <summary><strong>① ねんきん定期便を登録する（65歳基準・最初の1回）</strong></summary>
-         <p class="muted">本人と配偶者の65歳基準額を登録して、以降の試算で再利用します。金額は税引前・万円／年です。円の数値を直接入力しないでください。ここは70歳・75歳の受給年額と別の資料です。</p>
+         <summary><strong>① 年金の元データを確認・登録する（ねんきん定期便）</strong></summary>
+         <p class="muted">最初に一度だけ、ご夫婦それぞれの65歳時点の見込額を入力します。次回からは自動で読み込みます。金額の単位は「万円／年」です（例：100万円なら100）。受給開始を遅らせた年金額とは別に管理します。</p>
          <div class="pension-reference-people">${PENSION_PEOPLE.map(sourceInput).join('')}</div>
          <p id="pensionReferenceStatus" class="muted" role="status">参考資料の登録状況を確認しています。</p>
-         <button id="pensionReferenceDone" type="button" class="secondary">①の入力を閉じて②の計画設定へ進む（未反映）</button>
-         <p class="muted">閉じるだけでは保存されません。画面下部の「変更後の結果を確認」→「全体シミュレーションに反映」で初めて登録されます。年金の採用開始月・年額は自動変更しません。</p>
+         <button id="pensionReferenceDone" type="button" class="secondary">入力欄を閉じる（保存はまだされません）</button>
+         <p class="muted">入力欄を閉じても保存されません。下の「変更内容を確認」→「この内容を保存して計画に反映」の順に押してください。年金受給の開始月や金額は、取り込みボタンを押さない限り変えません。</p>
       </details>`;
-      el('pensionInputs').innerHTML=referencePanel+PENSION_PEOPLE.map(key=>`<fieldset class="pension-person"><legend>② ${names[key]}の受給計画</legend>
+      el('pensionInputs').innerHTML=referencePanel+PENSION_PEOPLE.map(key=>`<fieldset class="pension-person"><legend>② ${names[key]}の年金</legend>
         <p id="${key}PensionAdopted" class="muted"></p>
-        <details id="${key}PensionPlanDetails" class="pension-plan-details"><summary>${names[key]}の受給開始月・年額を確認・変更する</summary>
+        <details id="${key}PensionPlanDetails" class="pension-plan-details"><summary>${names[key]}の受給開始月・金額を変更する（普段は閉じておけます）</summary>
         <div id="${key}PensionReferences"></div>
-        <button id="${key}PensionImport65" type="button" class="secondary">①の定期便から開始月の見込額を計算・仮入力</button>
-        <p id="${key}PensionImportNote" class="muted" role="status">65歳の登録値を読み込み、開始月の繰上げ・繰下げ係数で概算します。現在の採用条件は未変更です。</p>
+        <button id="${key}PensionImport65" type="button" class="secondary">①の定期便から年金額を計算して入力する</button>
+        <p id="${key}PensionImportNote" class="muted" role="status">設定した受給開始月に合わせて金額を計算します。押しただけでは保存されず、今の計画も変更しません。</p>
         <label>${names[key]}の受給開始月<input id="${key}PensionMonth" type="month" min="1000-01" max="9999-12" aria-describedby="${key}PensionMonthAge"></label>
         <p id="${key}PensionMonthAge" class="muted" aria-live="polite"></p>
-        <details id="${key}PensionEstimateDetails"><summary>開始月に合わせて年金見込額を計算</summary>
-        <label>65歳から受け取る場合の年額（税引前・万円）<input id="${key}PensionBase65" type="number" min="0" step="0.0001" inputmode="decimal" placeholder="公式見込額などを入力"></label>
-        <p class="muted">登録済みの65歳比較値があれば表示します。金額と根拠を確認してください。この基準欄の編集は画面を閉じると失われ、登録済みの比較値も変更しません。</p>
-        <p id="${key}PensionEstimate" role="status"></p><button id="${key}PensionUseEstimate" class="secondary" type="button">修正見込額を年額欄に入力</button>
+        <details id="${key}PensionEstimateDetails"><summary>別の計算方法を使う（詳しい方向け）</summary>
+        <label>以前の65歳基準の試算額（税引前・万円）<input id="${key}PensionBase65" type="number" min="0" step="0.0001" inputmode="decimal" placeholder="公式見込額などを入力"></label>
+        <p class="muted">定期便の登録額とは別の参考計算です。通常は上の「①の定期便から年金額を計算して入力する」を使ってください。この欄の変更は保存されません。</p>
+        <p id="${key}PensionEstimate" role="status"></p><button id="${key}PensionUseEstimate" class="secondary" type="button">この方法の見込額を仮入力</button>
         <p class="muted">65歳に受給権があり、基礎・厚生年金を同じ月から受け取る場合の概算です。受給開始月の前月に請求する想定。加給年金・振替加算・在職による支給停止・障害／遺族年金との調整・加入継続による増額・将来改定・税社保は含みません。該当する場合は公式見込額を直接入力してください。</p>
         </details>
         <label>${names[key]}の年金年額（税引前・万円）<input id="${key}PensionAmount" type="number" min="0" step="0.0001" required inputmode="decimal"></label>
@@ -164,8 +164,8 @@ export function mountPensionSheet({getConfig,onCommit,showNotice}){
       });
       el('pensionReferenceDone').addEventListener('click',()=>{
         el('pensionReferenceMaster').open=false;
-        el('primaryPensionPlanDetails').open=true;
-        el('pensionReferenceStatus').textContent='入力は下書きです。画面下部の試算と反映操作を行うまで保存済み条件は変更されません。';
+        el('pensionReferenceStatus').textContent='入力欄を閉じました。下の「変更内容を確認」から保存してください。②の年金設定は必要なときに開けます。';
+        el('pensionReferenceStatus').textContent='下書きのままです。画面下部で変更内容を確認してから保存してください。';
       });
       for(const key of PENSION_PEOPLE){
         el(key+'PensionImport65').addEventListener('click',()=>{
@@ -187,15 +187,15 @@ export function mountPensionSheet({getConfig,onCommit,showNotice}){
             el(key+'PensionCertainty').value='scenario';
             el(key+'PensionSource').value='65歳定期便から受給開始月を概算（'+el(key+'Pension65Source').value.trim().slice(0,95)+'）';
             draft=readDraft();invalidate();error('');saveDraft();state();renderEstimate(key);renderBreakdown(key);
-            hint.textContent='開始月の概算年額 '+yen(r.annual)+' を仮入力しました。未反映です。変更後の結果を確認してください。';
-          }catch(e){hint.textContent='取り込めません：'+e.message;}
+            hint.textContent='開始月に応じた年額 '+yen(r.annual)+' を入力欄へ移しました。まだ保存していません。下の「変更内容を確認」を押してください。';
+          }catch(e){hint.textContent='まだ計算できません：'+e.message;}
         });
       }
       el('pensionDraftNote').textContent='入力途中の内容はこのブラウザに下書き保存します。ホームや年間収支への反映は、試算結果を確認した後に行います。';
     }
     for(const key of PENSION_PEOPLE){
       const p=c.income.pensions[key];
-      el(`${key}PensionAdopted`).textContent=`現在のシミュレーションで使用中：${month(p,c,key)}から ${yen(p.annualAtStart)}/年（${CERTAINTY_LABELS[p.certainty]||'未確認'}）`;
+      el(`${key}PensionAdopted`).textContent=`現在の計画：${month(p,c,key)}から年額 ${yen(p.annualAtStart)}（税引前）`;
       renderEstimate(key);renderBreakdown(key);
       const refs=Object.entries(p.alternatives||{}).filter(([age,value])=>/^\d+$/.test(age)&&typeof value==='number'&&Number.isFinite(value));
       el(`${key}PensionReferences`).innerHTML=refs.length?`<details><summary>登録済みの比較値を見る</summary><ul class="pension-reference">${refs.map(([age,value])=>`<li>${esc(age)}歳：${yen(value)}/年</li>`).join('')}</ul><p class="muted">${esc(p.note||'出典・受給条件は元の資料で確認してください。')}<br>比較値は今回の反映では変更しません。</p></details>`:'<p class="muted">比較用の見込額は未登録です。</p>';
@@ -211,7 +211,7 @@ export function mountPensionSheet({getConfig,onCommit,showNotice}){
       else if(f.some(v=>!Number.isFinite(Number(v))||Number(v)<0||Number(v)>1000))status.textContent='金額の単位を確認してください（万円／年）';
       else status.textContent=Math.abs(Number(f[0])+Number(f[1])+Number(f[2])-Number(f[3]))<=.01?'内訳合計と65歳年額が一致':'内訳合計と65歳年額に差があります';
     }
-    el('pensionReferenceStatus').textContent='定期便は下書き／採用済み設定の別管理です。保存するには変更後の結果を確認し、全体シミュレーションに反映してください。';
+    el('pensionReferenceStatus').textContent='入力途中の変更は下書きです。画面下の「変更内容を確認」で内容を確認し、その後「この内容を保存して計画に反映」を押してください。';
     state();
   }
   function reset({forget=true}={}){
