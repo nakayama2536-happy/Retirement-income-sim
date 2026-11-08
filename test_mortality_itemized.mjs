@@ -103,6 +103,27 @@ test('ages 96 through 98 reuse age-95 expense details without extending source s
  assert.ok(i>=0); assert.equal(normal.months[i].detailReferenceAge,96);
  assert.deepEqual(c,before);
 });
+test('age-96 rollforward preserves its own budget and inflation factor in comparison',()=>{
+ const c=fixture();
+ c.plan.endAge=98;c.plan.inflation=2;
+ c.budgets=[{fromAge:65,toAge:95,annualBudget:660},{fromAge:96,toAge:98,annualBudget:720}];
+ c.cashflow.detailSourceProfile='public-v0.9';
+ c.cashflow.expenseCategories=[{key:'food',label:'食費',items:[
+  {key:'food-main',label:'食費',periods:[{fromAge:65,toAge:95,amount:10}]}
+ ]}];
+ const raw=runRetirementPlan(c,{includeMonthlyDetails:true});
+ const model=inspectMortalityExpenseBudget(c,raw.monthlyDetails);
+ const i=raw.monthlyDetails.findIndex(r=>r.age===96&&r.expense>0);
+ assert.ok(i>=0);const price=raw.monthlyDetails[i].budget.priceFactor,m=model.months[i];
+ near(m.expense,60*price);near(m.known,10*price);near(m.unallocated,50*price);
+ assert.equal(m.detailReferenceAge,95);
+ const factors=Object.fromEntries(model.items.map(x=>[x.id,.5]));
+ const preview=calculateMortalityComparison({config:c,baseline:raw,deathPerson:'primary',deathMonth:'2060-01',
+  survivorTotalAnnual:210,funeralExpenseMan:0,itemFactors:factors,unallocatedFactor:1,planCalculator:runRetirementPlan,acknowledged:true});
+ const item=preview.mortality.monthly[i];
+ assert.ok(item.postDeath);
+ near(item.baselineExpense,60*price);near(item.expenseReduction,5*price);near(item.expense,55*price);
+});
 test('itemized overbudget and invalid factor stop without altering adopted data',()=>{
  const c=fixture(),raw=runRetirementPlan(c,{includeMonthlyDetails:true});
  c.expenseDetail.monthlyCategories[1].amount=100;
