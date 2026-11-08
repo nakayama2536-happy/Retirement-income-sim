@@ -46,7 +46,7 @@ test('default simulation view retains accessible opt-in and matching actual colu
 test('pending navigation focuses and scrolls without triggering input events or saving',()=>{
  const target={parentElement:{tagName:'DETAILS',open:false,parentElement:null},classList:{add(){}},matches:()=>true,focus(){this.focused=true;},scrollIntoView(){this.scrolled=true;}};
  const listeners={};let active=null;
- const context=vm.createContext({document:{addEventListener:(name,cb)=>listeners[name]=cb,querySelectorAll:()=>[]},el:()=>target,switchTab:id=>active=id});
+ const context=vm.createContext({document:{addEventListener:(name,cb)=>listeners[name]=cb,querySelectorAll:()=>[]},el:()=>target,switchTab:id=>active=id,revealWorkflowTarget:()=>false});
  const start=source.indexOf("document.addEventListener('click', e=>{"),end=source.indexOf("document.addEventListener('change'",start);
  vm.runInContext(source.slice(start,end),context);
  listeners.click({target:{closest:s=>s==='[data-open-tab]'?{dataset:{openTab:'pension',focusTarget:'spousePensionAmount'}}:null}});
