@@ -1,6 +1,6 @@
 {
   "kind": "public-release",
-  "runtime": "v0.9.42-survivor-transfer-20261108",
+  "runtime": "v0.9.43-pension-input-first-20261108",
   "files": [
     {
       "name": "age-budget-candidate.mjs",
@@ -29,13 +29,13 @@
     },
     {
       "name": "app.mjs",
-      "size": 79189,
-      "sha256": "640cb4f21989826e993f827404bd5940d26e7b0c808f6491a4f8e06159d3d191"
+      "size": 79279,
+      "sha256": "94dd4bb62f26b6385e6ef844e33601589446cbb0a3f321bcb27e4dc4bbf1c5b5"
     },
     {
       "name": "backup-compatibility.mjs",
-      "size": 8050,
-      "sha256": "988b0a32ce0a9354283e98693eca2496ea21bf5c6e02c5c85c9bb1be4f515e1b"
+      "size": 8052,
+      "sha256": "67107126409e0b25c7db54b25ee3d929ad4369f505ab879e4cedb8671ab54d57"
     },
     {
       "name": "budget-travel-ui.mjs",
@@ -179,8 +179,8 @@
     },
     {
       "name": "index.html",
-      "size": 73482,
-      "sha256": "b1af03f24d186d5598c16073e49d8f8e009141d7491ba62f3bae3bd4a33cc1d7"
+      "size": 73878,
+      "sha256": "341f1fe8a23b0a30abfc70817b9e108d2c91ec308a021a491a94a17929ce1146"
     },
     {
       "name": "manifest.webmanifest",
@@ -249,8 +249,8 @@
     },
     {
       "name": "pension-ui.mjs",
-      "size": 20964,
-      "sha256": "1599be9f1ea796c1f18c54d4cec11cae611e2bc98c550eaddb7fe77cc3f0c4e7"
+      "size": 26334,
+      "sha256": "cde17e2f189b5f100d04714c6225c83fc5beef606ba5637dd9f5f93060d01e8e"
     },
     {
       "name": "pension.mjs",
@@ -274,8 +274,8 @@
     },
     {
       "name": "release-info.json",
-      "size": 153,
-      "sha256": "f9254759166161fc83cf375bd96e789068e799b9474b782854d26343f694590f"
+      "size": 136,
+      "sha256": "ed44851b5cbe984770e6e227d312ec5d445be83b1486c8f94750322c4852bba6"
     },
     {
       "name": "retirement-comment.mjs",
@@ -334,8 +334,8 @@
     },
     {
       "name": "styles.css",
-      "size": 33081,
-      "sha256": "8e69bacb747b1a2c3839a50b04e725fc5c3c54780249442866468c80043c5854"
+      "size": 34401,
+      "sha256": "301a6cd38996ed0d081a1d242d756782566eeff3b21dfe0aee509126e11122fd"
     },
     {
       "name": "survivor-pension-calculator.mjs",
@@ -349,8 +349,8 @@
     },
     {
       "name": "sw.js",
-      "size": 4565,
-      "sha256": "6601f4252b7be7dd1df8aaceac23220664cd6973d49f12978d0a37412221fe08"
+      "size": 4567,
+      "sha256": "139950503a731c350d2ad816dffddae5328cdbc1ecf55c5c4c5f39e53ecf5bfe"
     },
     {
       "name": "sync-controller.mjs",

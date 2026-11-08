@@ -269,3 +269,18 @@
 .budget-travel-values{display:grid;grid-template-columns:minmax(170px,1fr) minmax(110px,1fr);gap:9px 14px;margin:12px 0}
 .budget-travel-values dt{font-weight:600}.budget-travel-values dd{margin:0;text-align:right;font-variant-numeric:tabular-nums}
 @media(max-width:600px){.budget-travel-values{grid-template-columns:minmax(0,1fr) auto;gap:9px}.budget-travel-values dd{overflow-wrap:anywhere}}
+
+/* Pension input-first workflow: a single source-of-truth card above compact plan cards. */
+#pension .pension-reference-master{grid-column:1 / -1;min-width:0;border:1px solid var(--line);border-radius:10px;padding:14px;background:var(--surface,#fff)}
+#pension .pension-reference-master>summary{cursor:pointer;font-size:1.04rem;padding:4px 0 9px;min-height:42px}
+#pension .pension-reference-people{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+#pension .pension-reference-person{min-width:0;border:1px solid var(--line);border-radius:8px;padding:12px}
+#pension .pension-reference-person h3{margin:0 0 8px}
+#pension .pension-reference-person input{min-width:0;width:100%}
+#pension .pension-reference-person label{display:block;margin:7px 0}
+#pension .pension-plan-details>summary{cursor:pointer;font-weight:700;min-height:42px;padding:8px 0}
+#pension .pension-plan-details button{margin:8px 0}
+#pension .pension-extra-card{border:1px solid var(--line);border-radius:10px;background:#fff;margin:12px 0;padding:12px}
+#pension .pension-extra-card>summary{cursor:pointer;font-weight:700;min-height:42px;padding:8px}
+#pension .pension-extra-card>.card{margin:8px 0 0}
+@media(max-width:760px){#pension .pension-reference-people{grid-template-columns:1fr}#pension .pension-reference-master{padding:10px}}
