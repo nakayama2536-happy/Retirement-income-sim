@@ -224,6 +224,7 @@ try{
  assert.match(await page.locator('#expensesPriceBase').innerText(),/従来方式/);
  await openTab('budget','budget');
  assert.match(await page.locator('#budgetPriceBase').innerText(),/2044年1月/);
+ await page.locator('#budget-workflow-tab-2').click();
  const periodForm=page.locator('#periodEditForm');
  const periodDetails=periodForm.locator('xpath=ancestor::details[1]');
  if(!await periodDetails.evaluate(n=>n.open))await periodDetails.locator('summary').first().click();
