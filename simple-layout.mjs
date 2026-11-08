@@ -119,3 +119,29 @@ export function annualCheckText(rows) {
     'これは計算上の整合確認であり、将来の資産や制度適合性を保証するものではありません。'
   ].filter(Boolean).join('\n');
 }
+
+
+/**
+ * Read-only family display using existing annual ledger amounts in 万円.
+ * No new projection or adoption. A negative age-end balance is NOT the first
+ * negative month; it must be described explicitly as an age-period checkpoint.
+ */
+export function familyAgeLedgerSummary(rows,selectedAge){
+ if(!Array.isArray(rows))return {status:'unavailable',reason:'年齢期の計算結果がありません'};
+ const record=rows.find(r=>r.age===Number(selectedAge));
+ if(!record)return {status:'unavailable',reason:'指定した年齢期は計算対象外です'};
+ const keys=['startAsset','investmentGain','totalIncome','expense','extraExpense','endAsset'];
+ if(keys.some(key=>!Number.isFinite(record[key])))return {status:'unavailable',reason:'この年齢期の金額を確認できません'};
+ return {status:'ready',age:record.age,startAsset:record.startAsset,
+  investmentGain:record.investmentGain,income:record.totalIncome,
+  expense:record.expense+record.extraExpense,
+  endAsset:record.endAsset,
+  netCashflow:record.totalIncome-record.expense-record.extraExpense};
+}
+export function familyAgeEndShortageSummary(rows){
+ if(!Array.isArray(rows)||!rows.length)return {status:'unavailable',message:'計算結果を確認できません'};
+ if(rows.some(r=>!Number.isFinite(r.endAsset)||!Number.isInteger(r.age)))return {status:'unavailable',message:'一部の年齢期末資産が未確認です'};
+ const negative=rows.find(r=>r.endAsset<0);
+ return {status:'ready',age:negative?.age??null,
+  message:negative?`${negative.age}歳期末から負の残高が確認されます`:'計算期間中の年齢期末には負の残高がありません'};
+}
