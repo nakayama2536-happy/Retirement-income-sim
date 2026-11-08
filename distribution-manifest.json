@@ -1,6 +1,6 @@
 {
   "kind": "public-release",
-  "runtime": "v0.9.48-unified-disclosure-20261108",
+  "runtime": "v0.9.49-mortality-asset-audit-20261108",
   "files": [
     {
       "name": "age-budget-candidate.mjs",
@@ -29,13 +29,13 @@
     },
     {
       "name": "app.mjs",
-      "size": 79415,
-      "sha256": "6b465210aed0d266ae20eb6ea910e092e44379280b056adcc1c4347a7f325d7d"
+      "size": 79418,
+      "sha256": "7973ce516ee1af38e5a92f6aa6e2f5760a107bfc1c773439c8419a46814913b3"
     },
     {
       "name": "backup-compatibility.mjs",
-      "size": 8051,
-      "sha256": "d38d49135e166b30f059b78386ee164070e95292fb3ee66fcfba5ce4377b228a"
+      "size": 8054,
+      "sha256": "5ec44ba5d0f1a3558b0376d03a2846b1137407a7e3c05c97c82bf06a3148e3a2"
     },
     {
       "name": "budget-travel-ui.mjs",
@@ -274,8 +274,8 @@
     },
     {
       "name": "release-info.json",
-      "size": 130,
-      "sha256": "76dab3051ae7af2d61d43ada036fa0ae26350d11aecea186e5547683f7555b50"
+      "size": 127,
+      "sha256": "04a7de9190b4a3c89b49d663cc3dff12c92fb0ad920f765316160075d14b7e0c"
     },
     {
       "name": "retirement-comment.mjs",
@@ -349,8 +349,8 @@
     },
     {
       "name": "sw.js",
-      "size": 4602,
-      "sha256": "c8ebabe964fbe4e26eb99da184dae8a90a088f32ea1ec2bd7075d0115ab5986b"
+      "size": 4605,
+      "sha256": "2695e36491de02b9abfd3e7c749f135f1e082e4c440dcf1858959077edf2fc01"
     },
     {
       "name": "sync-controller.mjs",
