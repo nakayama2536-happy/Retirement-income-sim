@@ -309,8 +309,8 @@
     },
     {
       "name": "simple-layout.mjs",
-      "size": 9302,
-      "sha256": "becac144029d5907776b69babea09ba0db87bedd2199dc0d4a7a1fa0f3c7f556"
+      "size": 9332,
+      "sha256": "01a8106c15fa729ba11236bb81a729e76d14f02d17531fc0ad0538088a2e63f2"
     },
     {
       "name": "state.mjs",
