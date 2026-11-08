@@ -26,13 +26,13 @@ test('asset CSV computes exact monthly balances, reduction identity, initial neg
  const f=assetFixture(),rows=mortalityAssetAuditRows(f);
  assert.equal(rows.length,2);assert.equal(rows[0].endAsset,29);assert.equal(rows[1].endAsset,-69);
  assert.equal(rows[0].firstNegative,'いいえ');assert.equal(rows[1].firstNegative,'はい');
- assert.ok(mortalityAssetAuditCsv(f).startsWith('\\ufeff年月'));
+ assert.ok(mortalityAssetAuditCsv(f).startsWith('\ufeff年月'));
  assert.ok(mortalityAssetAuditCsv(f).includes('月末資産_万円'));
 });
 test('asset CSV stops on invalid arithmetic and asset continuity',()=>{
  const f=assetFixture();f.mortality.monthly[1].endAsset=-68;
  assert.throws(()=>mortalityAssetAuditRows(f),/月末資産/);
- f.mortality.monthly[1].endAsset=-69;f.mortality.monthly[1].startAsset=30;
+ f.mortality.monthly[1].endAsset=-69;f.mortality.monthly[1].startAsset=30;f.mortality.monthly[1].endAsset=-68;
  assert.throws(()=>mortalityAssetAuditRows(f),/前月末/);
 });
 test('asset CSV never changes its input comparison',()=>{
