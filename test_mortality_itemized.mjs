@@ -1,3 +1,4 @@
+import {mortalityFactorPercentText} from './mortality-itemized-ui.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -144,4 +145,13 @@ test('separate draft retains inputs but never eligibility confirmations or adopt
    assert.equal(readMortalityDraft({...c,plan:{...c.plan,initialAsset:999}}),null);
    assert.equal(clearMortalityDraft(),true);assert.equal(readMortalityDraft(c),null);
  }finally{if(old===undefined)delete globalThis.localStorage;else globalThis.localStorage=old;}
+});
+
+test('死亡後の生活費倍率を割合で明確に表示する（未入力と0は区別）',()=>{
+ assert.match(mortalityFactorPercentText(1),/100％.*変化なし/);
+ assert.match(mortalityFactorPercentText('0.8'),/80％.*減額/);
+ assert.match(mortalityFactorPercentText(0),/0％.*減額/);
+ assert.match(mortalityFactorPercentText(1.2),/120％.*増額/);
+ assert.match(mortalityFactorPercentText(''),/入力してください/);
+ assert.match(mortalityFactorPercentText(4),/確認してください/);
 });
