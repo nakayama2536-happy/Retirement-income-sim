@@ -206,7 +206,7 @@ export function mountMortalityComparison(root,{getConfig,getBaseline,runPlan}){
  <div id="mortalityCostRows" class="mortality-costs"></div>
  <p id="mortalityAllocationTotal" class="muted" role="status"></p></div>
  </fieldset>
- <label class="check-label"><input type="checkbox" name="reviewed" required> 年金年額・万一の月・費目別倍率と残額倍率が<strong>比較用の仮定</strong>で、現在の採用条件ではないことを確認しました。</label>
+ <label class="check-label family-review-check"><input type="checkbox" name="reviewed" required><span>年金年額・万一の月・生活費の倍率が<strong>比較用の仮定</strong>であり、現在の計画や保存済み条件は変わらないことを確認しました。</span></label>
  <button id="mortalityRun" class="primary" type="submit">比較を計算（保存しない）</button>
  <button id="mortalityClear" class="secondary" type="button">結果表示をクリア</button>
  <button id="mortalityClearInputs" class="secondary" type="button">比較入力を初期化</button>
