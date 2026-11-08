@@ -67,6 +67,7 @@ const factorRow=(page,label)=>page.locator('#mortalityItemHost .mortality-item-r
 async function factors(page){
  await stage(page,1);
  await factorRow(page,'食費').fill('0.6');
+ assert.match(await page.locator('#mortalityItemHost .mortality-item-row').filter({hasText:'食費'}).locator('.family-factor-percent').innerText(),/60％/);
  await factorRow(page,'水道光熱費').fill('0.8');
  await factorRow(page,'住居').fill('1');
  await page.locator('#mortalityRemainderFactor').fill('0.8');
@@ -105,7 +106,22 @@ try{
   await child.waitFor({state:'visible'});
   assert.equal(await child.getAttribute('data-step-no'),'4-1-3-3-1');
   mark(engine,'expense-page-headings-age-source-category-and-child-numbered');
-  const before=await saved(page);await open(page);await baselineInputs(page);
+  const before=await saved(page);await open(page);
+  assert.match(await page.locator('#mortalityStepStatus').innerText(),/手順 1／3/);
+  await page.locator('#mortalityOpenPension').click();
+  assert.equal(await page.locator('#mortalityPensionSettings').evaluate(n=>n.open),true);
+  assert.equal(await page.evaluate(()=>document.activeElement?.name),'survivorPension');
+  await page.locator('#mortalityStepNext').click();
+  assert.match(await page.locator('#mortalityStepStatus').innerText(),/手順 2／3/);
+  assert.equal(await page.locator('#mortalityItemHost').isVisible(),true);
+  await page.locator('#mortalityStepNext').click();
+  assert.match(await page.locator('#mortalityStepStatus').innerText(),/手順 3／3/);
+  await page.locator('#mortalityStepPrevious').click();
+  assert.match(await page.locator('#mortalityStepStatus').innerText(),/手順 2／3/);
+  await stage(page,0);
+  assert.equal(await saved(page),before);
+  mark(engine,'family-guide-step-navigation-and-pension-reveal-preserve-adopted-values');
+  await baselineInputs(page);
   assert.equal(await input(page,'deathMonth').locator('xpath=..').getAttribute('data-step-no'),'1-3-1-2');
   mark(engine,'mortality-form-field-numbering-present');
   assert.equal(Number(await page.locator('#mortalityRemainderFactor').inputValue()),1,'初期の残額倍率は100%であること');
