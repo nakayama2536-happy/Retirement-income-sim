@@ -1,6 +1,6 @@
 {
   "kind": "public-release",
-  "runtime": "v0.9.51-family-result-20261108",
+  "runtime": "v0.9.54-expense-identity-20261109",
   "files": [
     {
       "name": "age-budget-candidate.mjs",
@@ -29,13 +29,13 @@
     },
     {
       "name": "app.mjs",
-      "size": 79410,
-      "sha256": "c26542fa7030ab8b5f6fc6066a7088ab5f5b8e00d0de5e376e8ddee527239210"
+      "size": 79413,
+      "sha256": "8171f8e48772714cedcf4cd10942cd633c7586d4404f772e93b2bccc586439e6"
     },
     {
       "name": "backup-compatibility.mjs",
-      "size": 8046,
-      "sha256": "074b0926c72be910fc65f92d214c24889ddea5c8007049c88a9a384cb6c0a82d"
+      "size": 8049,
+      "sha256": "e62ff97eb19bf1621ce73c2a5b0d33fd71f77c4e900db4642eea00f796261bff"
     },
     {
       "name": "budget-travel-ui.mjs",
@@ -114,13 +114,13 @@
     },
     {
       "name": "expense-preview.mjs",
-      "size": 9408,
-      "sha256": "fd3b72088413c4b67c296decfbe1e7ed4c9a7d5761e494d458bc323e43c252b6"
+      "size": 11230,
+      "sha256": "60abf85599f65771e2af25373bf9e7ab1a75bb70d85ba9ccf2475b50d70589c8"
     },
     {
       "name": "expense-ui.mjs",
-      "size": 7827,
-      "sha256": "a0e311ddc87aaa29620392384957b7ec181db87bb1a12b91a463a7fe00ac6c8c"
+      "size": 9362,
+      "sha256": "7c2017b3bd28db5aae79754955c5f8f7d0e21d8482b4ee7662c7258050215745"
     },
     {
       "name": "expense-workflow.mjs",
@@ -129,8 +129,8 @@
     },
     {
       "name": "family-warm-theme.css",
-      "size": 13603,
-      "sha256": "8c220cd58f282eef02e55e24c9dd6bc64d067902a06da2b3fc2df28d447463d0"
+      "size": 14441,
+      "sha256": "0881f97b9b46d335d06792502bd122b23046f5aadeff36c89e6057024d51cf1d"
     },
     {
       "name": "full-backup.mjs",
@@ -179,8 +179,8 @@
     },
     {
       "name": "index.html",
-      "size": 75326,
-      "sha256": "d16c67e0146d8dad3e84e4998ce31539d3b4b3549b0b64eab1d4a86dc6646177"
+      "size": 76339,
+      "sha256": "65494682018166dbff4be24f3fd937545e37c731159f05af767503a7b9cb4582"
     },
     {
       "name": "manifest.webmanifest",
@@ -274,8 +274,8 @@
     },
     {
       "name": "release-info.json",
-      "size": 129,
-      "sha256": "107483cf55e16d445817c45392e05cae6282c10a0beb60eed478a122343d488a"
+      "size": 144,
+      "sha256": "e39cdb6cc20c59c0dbc728c91cfcc162159ca90e3536ad0ad495cfec5a3a7f3c"
     },
     {
       "name": "retirement-comment.mjs",
@@ -349,8 +349,8 @@
     },
     {
       "name": "sw.js",
-      "size": 4597,
-      "sha256": "29863e4696e10c073bd8f049bb680debffd96d538a0790c24a4e915f7998890d"
+      "size": 4600,
+      "sha256": "081582f45295caa02390378bc156205d0c49a4d8497de1ee77c7b59403bb146f"
     },
     {
       "name": "sync-controller.mjs",
