@@ -84,13 +84,13 @@
     },
     {
       "name": "detail-settings.mjs",
-      "size": 23984,
-      "sha256": "fadda2a558aa7433d49d39ece3b9a8c65d910e3736496e0149e8a3c619cce360"
+      "size": 25114,
+      "sha256": "2c3b5b99bf343a12f51857d702754d485626ba628bb722c6e518ff3e60021b7a"
     },
     {
       "name": "detail-ui.mjs",
-      "size": 37595,
-      "sha256": "8a6da1a86cbfb2eec7f62b2a9518f8e49306348653fbacced1d92a253887c025"
+      "size": 38620,
+      "sha256": "635316c085f81ee9a78ed3d73e98dec1df694e53910838bc8b3050f1de0ac6c7"
     },
     {
       "name": "detailed-report.mjs",
@@ -129,8 +129,8 @@
     },
     {
       "name": "family-warm-theme.css",
-      "size": 14441,
-      "sha256": "0881f97b9b46d335d06792502bd122b23046f5aadeff36c89e6057024d51cf1d"
+      "size": 14740,
+      "sha256": "7dd197d005651ac6d110b131cee4f48ba6f4240fb93fca1e282a4e40c6646e5d"
     },
     {
       "name": "full-backup.mjs",
