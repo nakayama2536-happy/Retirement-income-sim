@@ -169,6 +169,7 @@ try{
   for(const width of [390,1280]){
    await page.setViewportSize({width,height:900});
    assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),'horizontal overflow '+width);
+   if(width===390){const textBox=await page.locator('#mortalityForm .family-review-check > span').boundingBox();assert.ok(textBox&&textBox.width>=210,'mobile confirmation text must have a readable width');}
    await page.screenshot({path:resolve(out,engine+'-HMORT07-'+width+'.png'),fullPage:true});
    mark(engine,'aligned-responsive-comparison-'+width);
   }
