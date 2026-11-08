@@ -1,6 +1,6 @@
 import {readMortalityExpensePreset} from './mortality-expense-preset.mjs';
 // Compatibility is evaluated before normalization, calculation or any write.
-export const APP_BUILD='v0.9.50-family-guidance-20261108';
+export const APP_BUILD='v0.9.51-family-result-20261108';
 export const CURRENT_FEATURES=['salary-net-transfer-v1','anchored-months-v1','expense-adoption-v1','income-adoption-v1','nisa-withdrawal-reference-v1','nisa-budget-shortfall-v1','unemployment-receipt-plan-v1','price-base-month-v1','opening-balance-prior-month-close-v1','ideco-received-lump-scope-v1','ideco-annuity-start-month-v1','full-plan-comparison-saved-v1','pension-breakdown-reference-v1','mortality-expense-preset-v1'];
 const object=x=>x!==null&&typeof x==='object'&&!Array.isArray(x);
 const has=(o,key)=>Object.prototype.hasOwnProperty.call(o??{},key);

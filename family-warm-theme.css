@@ -149,3 +149,19 @@ button,input,select,textarea{font-family:inherit}
 #mortality .family-review-check{display:flex;align-items:flex-start;gap:10px;width:100%;line-height:1.7}
 #mortality .family-review-check>input[type=checkbox]{flex:0 0 20px;min-width:20px;width:20px;height:20px;margin:3px 0 0}
 #mortality .family-review-check>span{display:block;flex:1 1 auto;min-width:0;overflow-wrap:break-word}
+
+/* Results first: one family-oriented summary, audit detail remains available. */
+#mortality .mortality-family-summary{border:1px solid #e8c9b2;background:#fffaf5;border-radius:14px;padding:18px 20px;margin:8px 0 18px}
+#mortality .mortality-family-summary>h3{font-size:1.25rem;line-height:1.5;color:#6b3b25;margin:0 0 8px}
+#mortality .mortality-family-context{margin:0 0 14px;line-height:1.75}
+#mortality .mortality-family-cards{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+#mortality .mortality-family-card{border:1px solid #ebd6c5;background:white;border-radius:10px;padding:14px 16px;display:flex;flex-direction:column;gap:5px;min-width:0}
+#mortality .mortality-family-card>span{font-size:.9rem;color:#4d5861;line-height:1.5}
+#mortality .mortality-family-card>strong{font-size:1.3rem;color:#563525;overflow-wrap:anywhere;font-variant-numeric:tabular-nums;line-height:1.45}
+#mortality .mortality-family-card>small{font-size:.86rem;color:#57636b;line-height:1.65}
+#mortality .mortality-family-next{padding:12px 15px;margin:16px 0 8px;border-left:4px solid #c86c3d;background:#fff3e8;line-height:1.75}
+#mortality .mortality-family-next>strong{margin-right:.4em}
+#mortality .mortality-family-advanced{border:1px solid #ead7c8;border-radius:12px;padding:0 14px 14px;margin:12px 0 18px}
+#mortality .mortality-family-advanced>summary{font-size:1rem;font-weight:650;color:#8b4d2c;cursor:pointer;padding:14px 4px;min-height:52px;line-height:1.5}
+#mortality .mortality-family-advanced-body{padding-top:8px}
+@media(max-width:700px){#mortality .mortality-family-summary{padding:14px}#mortality .mortality-family-cards{grid-template-columns:1fr}#mortality .mortality-family-card>strong{font-size:1.2rem}#mortality .mortality-family-advanced{padding:0 9px 9px}}

@@ -72,7 +72,19 @@ async function factors(page){
  await factorRow(page,'住居').fill('1');
  await page.locator('#mortalityRemainderFactor').fill('0.8');
 }
-async function submit(page){await stage(page,2);await input(page,'reviewed').check();await page.locator('#mortalityRun').click();await page.locator('#mortalityResults').waitFor({state:'visible'});}
+async function submit(page){
+ await stage(page,2);await input(page,'reviewed').check();await page.locator('#mortalityRun').click();
+ await page.locator('#mortalityResults').waitFor({state:'visible'});
+ const family=page.locator('#mortalityFamilySummary'),advanced=page.locator('#mortalityAdvancedDetails');
+ await family.waitFor({state:'visible'});
+ assert.equal(await advanced.evaluate(e=>e.open),false,'technical tables must start closed');
+ assert.match(await family.innerText(),/生活費|計画期間外/);
+ assert.match(await family.innerText(),/公的年金|計画期間外/);
+ assert.match(await family.innerText(),/マイナスになる月/);
+ assert.match(await family.innerText(),/実際の借入額や不足総額ではありません/);
+ await advanced.locator(':scope > summary').click();
+ assert.equal(await advanced.evaluate(e=>e.open),true);
+}
 let browser=null;
 try{
  for(const [engine,cls] of [['chromium',chromium],['webkit',webkit]]){
@@ -81,7 +93,7 @@ try{
   await ctx.route('**/*',r=>{if(new URL(r.request().url()).origin===origin)return r.continue();report.blockedExternal.push(r.request().url());return r.abort();});
   const page=await ctx.newPage();page.on('pageerror',e=>report.pageErrors.push({engine,error:e.message}));
   await page.goto(origin,{waitUntil:'networkidle'});await page.locator('#dashboard').waitFor({state:'visible'});
-  assert.equal(await page.locator('#appVersion').innerText(),'v0.9.50-family-guidance-20261108（端末で実行中）');
+  assert.equal(await page.locator('#appVersion').innerText(),'v0.9.51-family-result-20261108（端末で実行中）');
   assert.equal(await page.locator('[data-group="results"]').getAttribute('data-step-no'),'1');
   assert.equal(await page.locator('[data-tab="mortality"]').getAttribute('data-step-no'),'1-3');
   assert.equal(await page.locator('[data-tab="pension"]').getAttribute('data-step-no'),'2-5');
@@ -163,7 +175,7 @@ try{
   await verifyPensionReference(page);
   await submit(page);
   assert.equal(await page.locator('#mortalityPensionBreakdown').getAttribute('data-pension-state'),'reference');
-  const costD=page.locator('#mortalityResults details');await costD.locator('summary').click();
+  const costD=page.locator('#mortalityCostBreakdown').locator('xpath=ancestor::details[1]');await costD.locator(':scope > summary').click();
   assert.match(await page.locator('#mortalityCostBreakdown').innerText(),/未照合の管理予算残額/);
   mark(engine,'survivor-reference-formula-and-unreconciled-budget-visible');
   for(const width of [390,1280]){

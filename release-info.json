@@ -1,5 +1,5 @@
 {
-  "appBuild": "v0.9.50-family-guidance-20261108",
+  "appBuild": "v0.9.51-family-result-20261108",
   "releasedAt": "2026-11-08",
-  "purpose": "family-guided-mortality-ui"
+  "purpose": "family-mortality-result-summary"
 }
