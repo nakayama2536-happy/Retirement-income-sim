@@ -117,6 +117,13 @@ try{
  assert(await page.locator('#idecoBalance').isVisible());
  await page.locator('#ideco-workflow-tab-0').click();
  assert.deepEqual(await snapshot(),before,'switching workflow tabs must not mutate saved data');
+ await openTab('income','unemployment');
+ assert.equal(await page.locator('#unemployment .workflow-tab').count(),2);
+ assert(await page.locator('#detail-unemployment').isVisible());
+ await page.locator('#unemployment-workflow-tab-1').click();
+ assert(await page.locator('#unemploymentToolRun').isVisible());
+ await page.locator('#unemployment-workflow-tab-0').click();
+ assert.deepEqual(await snapshot(),before,'unemployment explanatory tab must not change saved plan');
  mark('purpose-based-tabs-without-saving-or-losing-form-controls');
  await openTab('income','salary');
  const steps=page.locator('#salaryInputs details.salary-step');
