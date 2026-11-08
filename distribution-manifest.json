@@ -214,8 +214,8 @@
     },
     {
       "name": "mortality-expense-csv.mjs",
-      "size": 5778,
-      "sha256": "dff39b6d6530ae47cf56628baddc6ab0f828695d12d1dedc847cf4f5bb4c1831"
+      "size": 7919,
+      "sha256": "09e9100a41a29edb9361ee101749c463fdf692317368143f31dbee0a05fe7eb9"
     },
     {
       "name": "mortality-expense-preset.mjs",
@@ -239,8 +239,8 @@
     },
     {
       "name": "mortality-ui.mjs",
-      "size": 59895,
-      "sha256": "1a9a3ac7aa8219b035106878810ab0c63eb12b025d2f580333bb2fbaf15359ab"
+      "size": 59996,
+      "sha256": "a8e89f51117e836347567184019b90de68285f3ed67f3bb0c9145bd2803b56a0"
     },
     {
       "name": "pension-estimate.mjs",
