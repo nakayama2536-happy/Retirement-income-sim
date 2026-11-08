@@ -100,12 +100,17 @@ async function context(browser,seed,viewport){
  });
  return result;
 }
+async function openCloudSection(page){
+ const section=page.locator('#settingsGroup-cloud');
+ if(!(await section.evaluate(el=>el.open)))await section.locator(':scope > summary').click();
+}
 async function open(ctx){
  const page=await ctx.newPage();page.setDefaultTimeout(25000);
  await page.goto(origin+'/',{waitUntil:'domcontentloaded'});
  await page.locator('#privateSyncContainer [name="syncApiKey"]').waitFor({state:'attached'});
  await page.locator('[data-group="manage"]').click();
  await page.locator('[data-tab="backup"]').click();
+ await openCloudSection(page);
  const details=page.locator('#privateSyncCard details').first();
  if(!(await details.getAttribute('open')))await details.locator('summary').first().click();
  return page;
@@ -174,12 +179,14 @@ try{
  await phone.reload({waitUntil:'domcontentloaded'});
  await phone.locator('[data-group="manage"]').click();
  await phone.locator('[data-tab="backup"]').click();
+ await openCloudSection(phone);
  await phone.locator('#privateSyncCard summary').first().click();
  assert.deepEqual(await readState(phone),previous);
  await login(phone,true);await wait(phone,'クラウドと一致しています');
  mark('mobile-restart-persistent-state-marker-and-auth');
  await edit(pc,1025);await pc.reload({waitUntil:'domcontentloaded'});
  await pc.locator('[data-group="manage"]').click();await pc.locator('[data-tab="backup"]').click();
+ await openCloudSection(pc);
  await pc.locator('#privateSyncCard summary').first().click();
  await login(pc,true);await wait(pc,'クラウドへの書込みが完了しました');
  assert.equal(cloud.document.revision,2);

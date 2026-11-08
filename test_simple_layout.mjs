@@ -13,3 +13,15 @@ test('未確定・予算超過・出典不明を保持',()=>{
 });
 test('空の結果を合格にしない',()=>assert.match(annualCheckText([]),/未確認/));
 test('未計算期間を不一致と区別せず確認不能として警告する',()=>assert.match(annualCheckText([{age:66,status:'no-period'}]),/確認できない年齢期：66歳/));
+
+test('家族向け設定・バックアップは表示と重要操作を分け、保存処理を追加しない',async()=>{
+ const {readFileSync}=await import('node:fs');
+ const source=readFileSync(new URL('./simple-layout.mjs',import.meta.url),'utf8');
+ assert.match(source,/settingsOverview\.before\(guide\)/);
+ assert.match(source,/group\('finance','条件を変更する/);
+ assert.match(source,/group\('backup','① 一括バックアップ/);
+ assert.match(source,/group\('cloud','② クラウド/);
+ assert.match(source,/group\('restore','③ 復旧用/);
+ assert.match(source,/wrap\(importLabel,'重要操作/);
+ assert.doesNotMatch(source,/localStorage|commitState|restoreFullBackup|replaceLocal|signInWith/);
+});

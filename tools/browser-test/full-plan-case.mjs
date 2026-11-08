@@ -17,6 +17,7 @@ export async function validateFullPlanUi({browser,createTestServer,open,load,ope
   await load(page,src);const before=(await snapshot(page)).data;
   await openTab(page,'settings');await page.locator('#settingsGroup-compare').evaluate(el=>el.open=true);await page.locator('#step8TrialCard details > summary').click();
   await openTab(page,'backup');
+  const cloudGroup=page.locator('#settingsGroup-cloud');await cloudGroup.evaluate(el=>el.open=true);
   const syncCard=page.locator('#privateSyncCard');
   assert.equal(await syncCard.count(),1);
   await syncCard.locator(':scope > details > summary').click();
@@ -24,6 +25,7 @@ export async function validateFullPlanUi({browser,createTestServer,open,load,ope
   assert(await syncCard.locator('[data-sync-action="6"]').isDisabled());
   assert.deepEqual((await snapshot(page)).data,before,'optional sync UI must not change data or connect without configuration');
   await openTab(page,'backup');
+  await cloudGroup.evaluate(el=>el.open=true);
   await syncCard.locator(':scope > details > summary').click();
   await openTab(page,'settings');
   const opening=page.locator('#step8TrialContainer'),full=page.locator('#fullPlanComparisonContainer');

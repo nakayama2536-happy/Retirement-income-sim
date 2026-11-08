@@ -165,3 +165,18 @@ button,input,select,textarea{font-family:inherit}
 #mortality .mortality-family-advanced>summary{font-size:1rem;font-weight:650;color:#8b4d2c;cursor:pointer;padding:14px 4px;min-height:52px;line-height:1.5}
 #mortality .mortality-family-advanced-body{padding-top:8px}
 @media(max-width:700px){#mortality .mortality-family-summary{padding:14px}#mortality .mortality-family-cards{grid-template-columns:1fr}#mortality .mortality-family-card>strong{font-size:1.2rem}#mortality .mortality-family-advanced{padding:0 9px 9px}}
+
+/* Family-safe settings and backup: reading is separate from irreversible actions. */
+.family-safe-overview{border:1px solid #e6d2c0;border-left:4px solid #b96b3c;background:#fffaf4;border-radius:10px;margin:12px 0 16px;padding:14px 18px;line-height:1.7}
+.family-safe-overview>strong{font-weight:700;color:#713f2a;font-size:1.05rem}
+.family-safe-overview>p{margin:6px 0 0;color:#44505a}
+#settings #settingsCurrentSummary{min-height:1px}
+#backup .settings-category>summary{white-space:normal;line-height:1.6}
+#backup .settings-category[data-settings-group="backup"]{border-color:#c6d5d9}
+#backup .settings-category[data-settings-group="cloud"],#backup .settings-category[data-settings-group="restore"]{border-color:#d8bfac}
+#backup .family-danger-disclosure{margin:12px 0;border:1px solid #d6a28d;background:#fff9f6;border-radius:10px}
+#backup .family-danger-disclosure>summary{padding:12px 14px;line-height:1.6;min-height:48px;font-weight:650;cursor:pointer}
+#backup .family-danger-disclosure>p{padding:0 14px;color:#6a4637}
+#backup .family-danger-disclosure>label{margin:12px 14px 16px}
+#scenarios .family-result-guide>p{margin:8px 0}
+@media(max-width:600px){.family-safe-overview{padding:12px 14px}#backup .settings-category>summary{min-height:52px}}

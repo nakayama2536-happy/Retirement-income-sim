@@ -37,7 +37,7 @@ try{
  assert.equal(beforeEnd,95);
  assert.equal(await page.locator('.topbar h1').innerText(),'ライフプランシミュレーター');
  assert.equal(await page.locator('.topbar p').count(),0);
- assert.match(await page.locator('#appVersion').innerText(),/^v0\.9\.51-family-result-20261108（端末で実行中）$/);
+ assert.match(await page.locator('#appVersion').innerText(),/^v0\.9\.52-family-safe-actions-20261108（端末で実行中）$/);
  assert.match(await page.locator('#rulesVersion').innerText(),/2026-09-24/);
  assert.match(await page.locator('#cloudDataSavedAt').innerText(),/未確認/);
  mark('concise-header-build-rule-date-and-unverified-cloud-time');
@@ -142,6 +142,9 @@ try{
  assert.deepEqual(await groups.evaluateAll(ns=>ns.map(n=>n.dataset.settingsGroup)),expected);
  assert.equal(await page.locator('#settings #settingsGroup-backup').count(),0);
  assert.equal(await page.locator('#backup #settingsGroup-backup').count(),1);
+ assert.equal(await page.locator('#settingsCurrentSummary').isVisible(),true);
+ assert.equal(await page.locator('#familySafeSettingsIntro').isVisible(),true);
+ assert.deepEqual(await snapshot(),before,'opening settings overview must not change adopted plan');
  assert.equal(await page.locator('#settingsGroup-finance').evaluate(n=>n.open),false);
  await page.locator('#settingsGroup-finance > summary').click();
  assert(await page.locator('#settingsForm').isVisible());
@@ -167,6 +170,12 @@ try{
  await openTab('manage','backup');
  assert.equal(await page.locator('#backup #exportFullBtn').count(),1);
  assert.equal(await page.locator('#backup #recoveryCheckFile').count(),1);
+ assert.equal(await page.locator('#settingsGroup-backup').evaluate(n=>n.open),true);
+ assert.equal(await page.locator('#settingsGroup-cloud').evaluate(n=>n.open),false);
+ assert.equal(await page.locator('#settingsGroup-restore').evaluate(n=>n.open),false);
+ assert.equal(await page.locator('#importFile2').locator('xpath=ancestor::details[1]').evaluate(n=>n.open),false);
+ assert.match(await page.locator('#familySafeBackupIntro').innerText(),/未確認|確認できません/);
+ await page.locator('#settingsGroup-cloud > summary').click();
  await page.locator('#privateSyncCard > details > summary').click();
  assert.match(await page.locator('#privateSyncContainer .cloud-current h4').innerText(),/状態表示/);
  assert.match(await page.locator('#privateSyncContainer').innerText(),/日常の確認/);
@@ -178,6 +187,8 @@ try{
  assert.match(await page.locator('[data-sync-action="2"]').innerText(),/^③/);
  assert.match(await page.locator('[data-sync-action="3"]').innerText(),/^④/);
  mark('cloud-state-and-action-groups-are-distinct-with-numbered-buttons');
+ await page.locator('#settingsGroup-cloud > summary').click();
+ assert.deepEqual(await snapshot(),adopted,'backup, cloud disclosures must never save settings');
  mark('ux-request-independent-backup-tab-and-secure-action-numbers');
  for(const width of [390,1280]){
   await page.setViewportSize({width,height:900});
