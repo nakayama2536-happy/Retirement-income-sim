@@ -81,7 +81,7 @@ export function installMortalityTabs(form){
  // Native validation must show the tab containing an invalid control.
  form.addEventListener('invalid',event=>{
   const index=controller.panes.findIndex(p=>p.contains(event.target));
-  if(index>=0)controller.activate(index);
+  if(index>=0){controller.activate(index);show(index);}
  },true);
 }
 
