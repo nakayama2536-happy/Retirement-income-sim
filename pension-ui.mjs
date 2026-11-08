@@ -209,7 +209,7 @@ export function mountPensionSheet({getConfig,onCommit,showNotice}){
     const latest=c.pensionWorkflow?.history?.at(-1);
     el('pensionLastApplied').textContent=latest?`${dateText(latest.at)}：${(latest.people||[]).map(k=>names[k]||k).join('・')}の年金を${latest.action==='undo'?'取消':'反映'}。${latest.planLabel?`対象：${latest.planLabel}。`:''}更新元：年金シート。`:'反映履歴はまだありません。現在の採用値は読み込んだ設定に基づきます。';
     for(const key of PENSION_PEOPLE){
-      const f=['65Basic','65Earnings','65Transitional','65Total'].map(k=>el(key+'Pension'+k).value.trim());
+      const f=['65Basic','65Earnings','65Transitional','65Total'].map(k=>String(el(key+'Pension'+k).value??'').trim());
       const source=el(key+'Pension65Source').value.trim();
       const status=el(key+'PensionReferenceCheck');
       if(f.some(v=>v==='')||!source)status.textContent='未登録または入力途中（空欄を0円とみなしません）';
