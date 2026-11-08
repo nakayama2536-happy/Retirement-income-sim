@@ -70,6 +70,20 @@ export function mountPensionSheet({getConfig,onCommit,showNotice}){
   function invalidate(){preview=null;el('pensionPreview').hidden=true;}
   function state(){
     const c=getConfig();if(!c||!draft)return;
+    const status=key=>{
+      const r=c.income?.pensions?.[key]?.reference65;
+      if(!r?.source?.trim())return '未登録';
+      const v=['basicAnnual','employeeEarningsAnnual','transitionalAnnual','totalAnnual'].map(k=>r[k]);
+      if(v.some(n=>n===null||n===undefined||n===''))return '未登録';
+      const a=v.map(Number);
+      return a.some(n=>!Number.isFinite(n)||n<0||n>1000)||Math.abs(a[0]+a[1]+a[2]-a[3])>.01?'要確認':'登録済み';
+    };
+    el('pensionQuickReference').textContent='本人：'+status('primary')+' ／ 妻：'+status('spouse');
+    for(const key of PENSION_PEOPLE){
+      const p=c.income.pensions[key];
+      el(key==='primary'?'pensionQuickPrimary':'pensionQuickSpouse').textContent=
+        month(p,c,key)+'から 年額'+yen(p.annualAtStart)+'（税引前・保存済み）';
+    }
     el('pensionState').textContent=pensionDraftMatches(c,draft)?'反映済み':'未反映の変更あり';
     el('pensionState').dataset.dirty=String(!pensionDraftMatches(c,draft));
     el('pensionUndo').disabled=!pensionUndoAvailable(c);
@@ -257,6 +271,16 @@ export function mountPensionSheet({getConfig,onCommit,showNotice}){
     el('pensionPreview').hidden=false;
     el('pensionPreview').scrollIntoView({block:'start',behavior:'smooth'});
   }
+  const openEditor=target=>{
+    // Keep the user's uncommitted draft, and show only the requested editing area.
+    if(!draft)render();
+    el('pensionEditWorkspace').open=true;
+    el('pensionReferenceMaster').open=target==='reference';
+    for(const key of PENSION_PEOPLE)el(key+'PensionPlanDetails').open=target===key;
+  };
+  el('pensionOpenReference').addEventListener('click',()=>openEditor('reference'));
+  el('pensionOpenPrimary').addEventListener('click',()=>openEditor('primary'));
+  el('pensionOpenSpouse').addEventListener('click',()=>openEditor('spouse'));
   el('pensionForm').addEventListener('input',event=>{
     const baseKey=PENSION_PEOPLE.find(k=>event.target.id===`${k}PensionBase65`);
     if(baseKey){invalidate();error('');renderEstimate(baseKey);return;}

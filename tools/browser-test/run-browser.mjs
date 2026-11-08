@@ -268,8 +268,8 @@ async function validatePensionUi(browser){
   const page=await open(context,fixture.url);await load(page,file);
   const before=(await snapshot(page)).data;
   for(const width of [390,1280]){
-   await page.setViewportSize({width,height:900});await openTab(page,'pension');
-   await page.locator('#primaryPensionPlanDetails > summary').click();
+   await page.setViewportSize({width,height:900});await openTab(page,'pension');await page.locator('#pensionOpenPrimary').click();
+   
    await page.locator('#primaryPensionMonth').fill('2051-01');
    assert((await page.locator('#primaryPensionMonthAge').innerText()).includes('本人71歳'));
    assert((await page.locator('#primaryPensionEstimate').textContent()).includes('180.48'));
@@ -279,7 +279,7 @@ async function validatePensionUi(browser){
    await page.locator('#pensionForm button[type="submit"]').click();
    assert(await page.locator('#pensionPreview').isVisible());
    assert.deepEqual((await snapshot(page)).data,before);
-   await openTab(page,'pension');
+   await openTab(page,'pension');await page.locator('#pensionOpenPrimary').click();
    const card=page.locator('#pensionForm');await card.scrollIntoViewIfNeeded();
    assert(await card.evaluate(n=>n.scrollWidth<=n.clientWidth+1));
    for(const id of ['primaryPensionMonth','primaryPensionUseEstimate','pensionReset']){
@@ -290,14 +290,14 @@ async function validatePensionUi(browser){
    assert.equal(await page.locator('#primaryPensionMonth').inputValue(),'2050-01');
    assert.equal(await page.locator('#primaryPensionAmount').inputValue(),'170.4');
   }
-  await page.locator('#primaryPensionPlanDetails > summary').click();
+  
   await page.locator('#primaryPensionMonth').fill('2051-01');await page.locator('#primaryPensionEstimateDetails > summary').click();await page.locator('#primaryPensionUseEstimate').click();
   await page.locator('#pensionForm button[type="submit"]').click();await page.locator('#pensionApply').click();
   const after=(await snapshot(page)).data;
   assert.equal(after.config.income.pensions.primary.annualAtStart,180.48);
   assert.equal(after.config.income.pensions.primary.startDate,'2051-01-01');
   assert.deepEqual(after.scenarios,before.scenarios);
-  await openTab(page,'pension');await page.locator('#pensionUndo').click();
+  await openTab(page,'pension');await page.locator('#pensionOpenPrimary').click();await page.locator('#pensionHistoryExtra > summary').click();await page.locator('#pensionUndo').click();
   const undone=(await snapshot(page)).data;
   assert.equal(undone.config.income.pensions.primary.annualAtStart,170.4);
   assert.deepEqual(undone.scenarios,before.scenarios);
