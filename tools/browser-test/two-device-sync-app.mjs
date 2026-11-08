@@ -100,18 +100,19 @@ async function context(browser,seed,viewport){
  });
  return result;
 }
+async function revealCloudDisclosures(page){
+ // Keep real UI interactions for cloud actions; opening the two native
+ // disclosures by their DOM open property avoids viewport-only test flakes.
+ await page.locator('#settingsGroup-cloud').evaluate(node=>{node.open=true;});
+ await page.locator('#privateSyncCard details').first().evaluate(node=>{node.open=true;});
+}
 async function open(ctx){
  const page=await ctx.newPage();page.setDefaultTimeout(25000);
  await page.goto(origin+'/',{waitUntil:'domcontentloaded'});
  await page.locator('#privateSyncContainer [name="syncApiKey"]').waitFor({state:'attached'});
  await page.locator('[data-group="manage"]').click();
  await page.locator('[data-tab="backup"]').click();
- const cloudGroup=page.locator('#settingsGroup-cloud');
- if(!(await cloudGroup.getAttribute('open')))await cloudGroup.locator('summary').first().click();
- // The new family-safe UI nests cloud controls in two disclosures. Open them
- // in the isolated automation without relying on viewport-dependent clicks;
- // the test below still exercises the real cloud buttons and their handlers.
- await page.locator('#privateSyncCard details').first().evaluate(node=>{node.open=true;});
+ await revealCloudDisclosures(page);
  return page;
 }
 async function login(page,persisted=false,{expectConflict=false}={}){
@@ -178,13 +179,13 @@ try{
  await phone.reload({waitUntil:'domcontentloaded'});
  await phone.locator('[data-group="manage"]').click();
  await phone.locator('[data-tab="backup"]').click();
- await phone.locator('#privateSyncCard summary').first().click();
+ await revealCloudDisclosures(phone);
  assert.deepEqual(await readState(phone),previous);
  await login(phone,true);await wait(phone,'クラウドと一致しています');
  mark('mobile-restart-persistent-state-marker-and-auth');
  await edit(pc,1025);await pc.reload({waitUntil:'domcontentloaded'});
  await pc.locator('[data-group="manage"]').click();await pc.locator('[data-tab="backup"]').click();
- await pc.locator('#privateSyncCard summary').first().click();
+ await revealCloudDisclosures(pc);
  await login(pc,true);await wait(pc,'クラウドへの書込みが完了しました');
  assert.equal(cloud.document.revision,2);
  // The new ④ is strictly read-only. Trigger the existing automatic focus event.
