@@ -114,6 +114,8 @@ try{
  await openTab('income','ideco');
  assert.equal(await page.locator('#ideco .workflow-tab').count(),3);
  await page.locator('#ideco-workflow-tab-2').click();
+ const idecoState=await page.locator('#idecoBalance').evaluate(el=>({pane:el.closest('.workflow-pane')?.id,paneHidden:el.closest('.workflow-pane')?.hidden,tabSelected:document.querySelector('#ideco-workflow-tab-2')?.getAttribute('aria-selected'),panelHidden:document.querySelector('#ideco')?.hidden,ancestors:[...function*(n){for(let x=n;x&&x.id!=='ideco';x=x.parentElement)yield [x.tagName,x.id,x.hidden,getComputedStyle(x).display]}(el)]}));
+ console.log('IDECO_TAB_DEBUG '+JSON.stringify(idecoState));
  assert(await page.locator('#idecoBalance').isVisible());
  await page.locator('#ideco-workflow-tab-0').click();
  assert.deepEqual(await snapshot(),before,'switching workflow tabs must not mutate saved data');
