@@ -43,6 +43,10 @@ try{
  mark('concise-header-build-rule-date-and-unverified-cloud-time');
  assert.equal(await page.locator('.simulation-context').count(),0);
  assert.match(await page.locator('#simulationPeriod').textContent(),/現在の計画/);
+ assert(await page.locator('#familyHomeCheckpoint').isVisible());
+ assert.match(await page.locator('#familyHomeShortage').innerText(),/歳期末|計算期間中|確認できません/);
+ assert.deepEqual(await snapshot(),before,'home read-only checkpoint must not change persisted plan');
+ mark('family-home-age-end-shortage-checkpoint-read-only');
  mark('compact-home-replaces-large-current-simulation-banner');
  assert.equal(await page.locator('#initialAssetLabel').innerText(),`${before.config.plan.startAge-1}歳期末想定資産`);
  assert.match(await page.locator('#initialAssetHelp').innerText(),/計算開始残高/);
@@ -71,6 +75,16 @@ try{
  mark('unified-disclosure-open-close-labels-and-native-keyboard-safe-details');
 
  await openTab('results','cashflow');
+ assert(await page.locator('#familyAnnualQuick').isVisible());
+ assert.equal(await page.locator('#familyCashflowAge option').count(),95-before.config.plan.startAge+1);
+ const firstIncome=await page.locator('#familyAnnualIncome').innerText();
+ assert.match(firstIncome,/万円/);
+ await page.locator('#familyCashflowAge').selectOption(String(before.config.plan.startAge+1));
+ assert.match(await page.locator('#familyAnnualExpense').innerText(),/万円/);
+ assert.match(await page.locator('#familyAnnualBalance').innerText(),/万円/);
+ assert.match(await page.locator('#familyAnnualAsset').innerText(),/万円/);
+ assert.deepEqual(await snapshot(),before,'age selection must not save or adopt');
+ mark('family-cashflow-selected-age-readonly-summary');
  for (const width of [390,1280]) {
    await page.setViewportSize({width,height:900});
    const table=page.locator('.cashflow-table-scroll');
