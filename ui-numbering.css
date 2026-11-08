@@ -50,3 +50,25 @@ body details[open] > summary::after{content:'▼ 閉じる' !important}
   body details > summary{gap:.4rem}
   body details > summary::after{font-size:.78rem}
 }
+
+
+/* Purpose-based subtabs for long screens, independent of storage. */
+.workflow-tabs{
+ display:flex;align-items:stretch;gap:6px;flex-wrap:nowrap;
+ overflow-x:auto;max-width:100%;padding:4px 0 10px;margin:8px 0 14px;
+ border-bottom:1px solid var(--border,#decbbd);scrollbar-width:thin;
+}
+.workflow-tabs .workflow-tab{
+ appearance:none;flex:0 0 auto;min-height:44px;max-width:100%;
+ padding:10px 14px;border:1px solid var(--border,#decbbd);
+ border-radius:9px 9px 0 0;background:var(--card,#fff);color:var(--text,#463d37);
+ cursor:pointer;font:inherit;font-weight:600;white-space:normal;text-align:center;
+}
+.workflow-tabs .workflow-tab[aria-selected="true"]{
+ border-color:var(--accent,#b65c31);border-bottom:3px solid var(--accent,#b65c31);
+ color:var(--accent,#a44d22);background:var(--surface,#fff8f2);
+}
+.workflow-tabs .workflow-tab:focus-visible{outline:3px solid #315d9d;outline-offset:2px}
+.workflow-pane[hidden]{display:none !important}
+.workflow-pane>article,.workflow-pane>details,.workflow-pane>.card{margin-bottom:12px}
+@media(max-width:620px){.workflow-tabs .workflow-tab{font-size:.88rem;padding:9px 10px;flex:0 0 auto}}
