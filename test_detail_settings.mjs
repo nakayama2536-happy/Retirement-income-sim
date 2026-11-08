@@ -1,6 +1,6 @@
 import test from 'node:test';import assert from 'node:assert/strict';
 import {migrateConfig,configSignature} from './storage.mjs';
-import {detailProposal as propose,verifyDetailProposal,expenseEntries,changedPaths,undoDetail} from './detail-settings.mjs';
+import {detailProposal as propose,verifyDetailProposal,expenseEntries,expenseEntryIdentityIssue,changedPaths,undoDetail} from './detail-settings.mjs';
 import {runRetirementPlan} from './calc.mjs';import {reconcileCashflow} from './cashflow-reconciliation.mjs';
 import {detailedReport,detailedCsv,groupedYearHtml} from './detailed-report.mjs';import {reviewPrompt} from './review-prompt.mjs';
 import {createFullBackup,restoreFullBackup} from './full-backup.mjs';
@@ -54,4 +54,25 @@ test('NISA利用枠が未入力でも残高を設定でき、空欄や超過額�
  const s=fixture();delete s.config.nisa;
  assert.deepEqual(propose(s,'nisa',{marketValue:200}).candidate.nisa,{marketValue:200});
  assert.throws(()=>propose(s,'nisa',{marketValue:''}));assert.throws(()=>propose(s,'nisa',{marketValue:2001}));
+});
+
+test('家賃のkeyが未設定の場合は原因を明示し、試算候補を作らず正本を守る',()=>{
+ const s=fixture();const row=s.config.expenseDetail.monthlyCategories[0].items[0];
+ delete row.key;row.label='家賃';
+ const before=structuredClone(s);
+ const path='/expenseDetail/monthlyCategories/0/items/0';
+ const issue=expenseEntryIdentityIssue(s.config,'work-v0.9.7',path);
+ assert.equal(issue.code,'missing-key');assert.match(issue.message,/未設定/);
+ assert.throws(()=>propose(s,'expense',expense({target:path,label:'家賃',amount:9})),/未設定/);
+ assert.deepEqual(s,before);
+});
+test('家賃のkey重複は候補化せず親や期間の確認を案内する',()=>{
+ const s=fixture(),group=s.config.expenseDetail.monthlyCategories[0];
+ group.items[0].label='家賃';
+ group.items.push({key:'food',label:'同じキーを持つ別項目',amount:3});
+ const before=structuredClone(s),path='/expenseDetail/monthlyCategories/0/items/0';
+ const issue=expenseEntryIdentityIssue(s.config,'work-v0.9.7',path);
+ assert.equal(issue.code,'duplicate-key');assert.match(issue.message,/重複/);
+ assert.throws(()=>propose(s,'expense',expense({target:path,label:'家賃',amount:9})),/重複/);
+ assert.deepEqual(s,before);
 });
