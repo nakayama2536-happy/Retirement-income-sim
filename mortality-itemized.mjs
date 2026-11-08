@@ -32,7 +32,7 @@ function actualLeaves(node,output){
 export function inspectMortalityExpenseBudget(config,monthlyRows,{sourceProfile=''}={}){
   if(!Array.isArray(monthlyRows)||!monthlyRows.length)stop('missing-expense-months','元の月次支出台帳がありません');
   const profile=selectMortalityExpenseProfile(config,sourceProfile);
-  const trace=profile?reconcileCashflow(config,{sourceProfile:profile}):null;
+  const trace=profile?reconcileCashflow(config,{sourceProfile:profile,expenseDetailAgeCap:95}):null;
   if(trace&&trace.months.length!==monthlyRows.length)stop('expense-month-count','費目内訳と月次資産計算の期間が一致しません');
   // An unnamed work-detail item cannot be assigned a lasting identity.
   // Keep it out of named multipliers and in the budget remainder instead.
@@ -74,7 +74,7 @@ export function inspectMortalityExpenseBudget(config,monthlyRows,{sourceProfile=
       const item=trace?.months[i]?.details?.length?null:null;
       if(!labels.has(id))labels.set(id,id);
     }
-    return {month:r.month,expense:total,known,unallocated:residual,amounts,priceFactor:r.budget?.priceFactor??null};
+    return {month:r.month,expense:total,known,unallocated:residual,amounts,priceFactor:r.budget?.priceFactor??null,detailReferenceAge:matching?.detailReferenceAge??r.age};
   });
   if(trace){
     const view=inspectCashflowSources(config,{sourceProfile:profile});
