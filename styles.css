@@ -284,3 +284,12 @@
 #pension .pension-extra-card>summary{cursor:pointer;font-weight:700;min-height:42px;padding:8px}
 #pension .pension-extra-card>.card{margin:8px 0 0}
 @media(max-width:760px){#pension .pension-reference-people{grid-template-columns:1fr}#pension .pension-reference-master{padding:10px}}
+
+/* Family-friendly pension: clear sequence, one prominent import action, calm collapsed cards. */
+#pension .pension-reference-master>summary,#pension .pension-plan-details>summary{font-size:1rem;line-height:1.6}
+#pension .pension-person>p[id$="PensionAdopted"]{font-size:.95rem;font-weight:600;line-height:1.7;overflow-wrap:anywhere}
+#pension [id$="PensionImport65"]{min-height:46px;font-weight:700;width:100%;max-width:560px}
+#pension .pension-plan-details>details,#pension .pension-plan-details>.pension-components{margin-top:12px}
+#pension .pension-plan-details>details>summary{cursor:pointer;font-weight:600}
+#pension .pension-reference-master button{min-height:44px}
+@media(max-width:760px){#pension .pension-plan-details button,#pension .pension-reference-master button{width:100%}}
