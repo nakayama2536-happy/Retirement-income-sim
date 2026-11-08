@@ -160,7 +160,7 @@ export function mountMortalityComparison(root,{getConfig,getBaseline,runPlan}){
  <form id="mortalityForm" class="mortality-form">
  <fieldset><legend>1．誰が・いつ万一となるか</legend>
  <div class="form-grid mortality-grid">
-  <label>万一を想定する方<select name="deceased"><option value="primary">本人</option><option value="spouse">配偶者</option></select></label>
+  <label>亡くなる方（計画に登録された人）<select name="deceased"><option value="primary">計画の本人</option><option value="spouse">計画の配偶者</option></select><small class="muted">「本人」は画面を操作している人ではなく、この計画の登録者を指します。</small></label>
   <label>万一を想定する月<input name="deathMonth" type="month" required aria-describedby="mortalityAgeHint"><small id="mortalityAgeHint" class="muted" aria-live="polite">年月を入力すると年齢を表示します。</small></label>
   <label>万一の月に1度だけ加える費用（万円、仮置き）<input name="funeral" type="number" step="any" min="0" value="0" required></label>
  </div>
