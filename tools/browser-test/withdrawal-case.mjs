@@ -21,6 +21,7 @@ export async function validateWithdrawalUi({browser,createTestServer,open,load,o
       const details=page.locator('#salary .salary-overview-more');
       if(!await details.evaluate(el=>el.open))await details.locator('summary').click();
     }
+    if(id==='pension'){const detail=page.locator('#pensionCurrentDetails');if(!await detail.evaluate(el=>el.open))await detail.locator(':scope > summary').click();}
     const summary=page.locator('#'+id+'CurrentSummary');assert(await summary.isVisible());assert((await summary.innerText()).includes('現在の設定の概要'));
     assert(await summary.evaluate(node=>{const panel=node.closest('section');const firstForm=panel.id==='settings'?panel.querySelector('#settingsForm'):panel.querySelector('form');return !firstForm||Boolean(node.compareDocumentPosition(firstForm)&Node.DOCUMENT_POSITION_FOLLOWING);}));
     assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));
