@@ -272,7 +272,7 @@ async function validatePensionUi(browser){
    await page.locator('#primaryPensionPlanDetails > summary').click();
    await page.locator('#primaryPensionMonth').fill('2051-01');
    assert((await page.locator('#primaryPensionMonthAge').innerText()).includes('本人71歳'));
-   assert((await page.locator('#primaryPensionEstimate').innerText()).includes('180.48'));
+   assert((await page.locator('#primaryPensionEstimate').textContent()).includes('180.48'));
    await page.locator('#primaryPensionEstimateDetails > summary').click();
    await page.locator('#primaryPensionUseEstimate').click();
    assert.equal(await page.locator('#primaryPensionAmount').inputValue(),'180.48');
