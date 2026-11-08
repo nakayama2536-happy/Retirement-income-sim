@@ -32,6 +32,7 @@ export function installWorkflowTabs(){
  splitAt('budget',['年間の生活予算','旅行に使える予算','詳しい設定'],['#budgetTravelCard',':scope > details.card']);
  splitAt('ideco',['現在の条件','受取・積立を変更','税額の参考試算'],['#detail-idecoWithdrawal','article:has(#idecoBalance)']);
  splitAt('retirement',['現在の退職金','条件を変更','税額の参考試算'],['#detail-retirement','article:has(#retirementToolRun)']);
+ selectOther('unemployment',['受給予定・入力','制度説明・参考計算'],[':scope > article:nth-of-type(2)','article:has(#unemploymentToolRun)']);
  splitAt('salary',['現在の計画','給与・アルバイトの変更'],['details.salary-optional-labor']);
  selectOther('cashflow',['年齢別の収支表','65歳の収入内訳'],['#age65IncomeAuditCard']);
  const csv=document.querySelector('#allcsv > article');
