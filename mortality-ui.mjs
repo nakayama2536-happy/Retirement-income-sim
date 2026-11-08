@@ -1,3 +1,4 @@
+import {installMortalityTabs} from './workflow-tabs.mjs';
 /** Read-only, non-adopted mortality comparison UI. No storage/cloud/network calls. */
 import {dateWithAge,ageOn,dateParts} from './date-display.mjs';
 import {downloadMortalityExpenseCsv} from './mortality-expense-csv.mjs';
@@ -208,6 +209,7 @@ export function mountMortalityComparison(root,{getConfig,getBaseline,runPlan}){
  <div id="mortalityResults" hidden></div>
  `;
  const form=root.querySelector('#mortalityForm'),state=root.querySelector('#mortalityState'),results=root.querySelector('#mortalityResults'),costBox=root.querySelector('#mortalityCostRows');
+ installMortalityTabs(form);
  const initial=blankMortalityAllocation();for(const c of MORTALITY_COSTS)costBox.append(costInputRow(c,initial.find(x=>x.key===c.key)));
  let current=null,blockedExternal=false,pensionReference=null;
  const externalUpdateMessage='別画面で保存済み条件が更新されました。再読み込みしてから万一の時期の比較を試算してください。';

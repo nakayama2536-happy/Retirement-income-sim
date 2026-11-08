@@ -42,7 +42,7 @@ test('WebCrypto encrypt/decrypt roundtrip preserves unknown future keys, events 
 test('wrong passphrase and damaged ciphertext never produce plaintext',async()=>{
  const enc=await encryptSnapshot({config:{foo:2},scenarios:[]},passphrase);
  await assert.rejects(decryptSnapshot(enc.payload,'wrong-passphrase-with-length',enc.digest),/元データは変更/);
- await assert.rejects(decryptSnapshot({...enc.payload,data:enc.payload.data.replace(/^./,'A')},passphrase,enc.digest),/元データは変更/);
+ await assert.rejects(decryptSnapshot({...enc.payload,data:(enc.payload.data[0]==='A'?'B':'A')+enc.payload.data.slice(1)},passphrase,enc.digest),/元データは変更/);
  await assert.rejects(decryptSnapshot(enc.payload,passphrase,C),/元データは変更/);
 });
 test('missing WebCrypto inputs and too short passphrase are rejected',async()=>{

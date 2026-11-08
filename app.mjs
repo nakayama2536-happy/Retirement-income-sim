@@ -9,6 +9,7 @@ import {prepareSavedComparison,comparisonSourceFingerprint} from './full-plan-sa
 import {createConfigBackup} from './backup-compatibility.mjs';
 import {mountDetailUI} from './detail-ui.mjs';
 import {mountMortalityComparison} from './mortality-ui.mjs';
+import {installWorkflowTabs,revealWorkflowTarget} from './workflow-tabs.mjs';
 import {mountSurvivorPensionScreen} from './survivor-pension-ui.mjs';
 import {dateWithAge,ageOn} from './date-display.mjs';
 import {mountCalendarSheet} from './calendar-ui.mjs';
@@ -941,6 +942,7 @@ document.addEventListener('click', e=>{
     switchTab(navigation.dataset.openTab);
     const target=el(navigation.dataset.focusTarget);
     if(target){
+      revealWorkflowTarget(target);
       document.querySelectorAll('.input-destination').forEach(n=>n.classList.remove('input-destination'));
       for(let parent=target.parentElement;parent;parent=parent.parentElement)if(parent.tagName==='DETAILS')parent.open=true;
       if(!target.matches('input,select,textarea,button,a'))target.setAttribute('tabindex','-1');
@@ -975,6 +977,7 @@ function switchTab(id){
 }
 document.querySelectorAll('[data-group]').forEach(btn=>btn.addEventListener('click',()=>{const first=document.querySelector(`[data-group-item="${btn.dataset.group}"]`);if(first)switchTab(first.dataset.tab);}));
 document.querySelectorAll('[data-tab]').forEach(btn=>btn.addEventListener('click',()=>switchTab(btn.dataset.tab)));
+installWorkflowTabs();
 const migrationPanel=mountMigration({onCommit:()=>{const saved=loadState();config=saved.config;scenarios=saved.scenarios;refresh();}});
 syncPanel=mountSyncPanel(el('privateSyncContainer'),{
  getState:()=>loadState(),validateState:value=>validateSavedState(value),
@@ -1005,7 +1008,7 @@ document.querySelectorAll('[data-help]').forEach(btn=>btn.addEventListener('clic
 }));
 el('helpClose').addEventListener('click',()=>el('helpDialog').close());
 
-const CURRENT_RUNTIME_BUILD='v0.9.47-mortality-age95-detail-20261108';
+const CURRENT_RUNTIME_BUILD='v0.9.48-unified-disclosure-20261108';
 el('appVersion').textContent=CURRENT_RUNTIME_BUILD+'（端末で実行中）';
 const freshness=el('runtimeFreshness');
 (async()=>{

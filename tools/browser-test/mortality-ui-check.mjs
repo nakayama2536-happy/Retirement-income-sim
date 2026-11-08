@@ -24,6 +24,7 @@ const server=createServer(async(req,res)=>{
 });
 await new Promise(ok=>server.listen(0,'127.0.0.1',ok));const origin='http://127.0.0.1:'+server.address().port;
 const input=(p,n)=>p.locator('#mortalityForm [name="'+n+'"]');
+const stage=(p,n)=>p.locator('#mortalityForm-workflow-tab-'+n).click();
 const open=async p=>{await p.locator('[data-group=results]').click();await p.locator('[data-tab=mortality]').click();};
 const number=async x=>Number((await x.innerText()).replace(/[,万円\s]/g,''));
 const near=(x,y)=>assert.ok(Math.abs(x-y)<.11,String(x)+' != '+String(y));
@@ -41,14 +42,17 @@ const init=ctx=>ctx.addInitScript(data=>{
  }
 },seed);
 async function baselineInputs(page){
+ await stage(page,0);
  const settings=page.locator('#mortalityPensionSettings');
  if(!await settings.evaluate(n=>n.open))await settings.locator('summary').click();
  await input(page,'deathMonth').fill('2060-01');
  await input(page,'survivorPension').fill('210');
+ await stage(page,1);
  await page.locator('#mortalityItemState').waitFor({state:'visible'});
  assert.match(await page.locator('#mortalityItemState').innerText(),/未照合残額/);
 }
 async function verifyPensionReference(page){
+ await stage(page,0);
  const d=page.locator('#mortalityForm details');
  if(!await d.evaluate(n=>n.open))await d.locator('summary').click();
  for(const [name,value] of [['deceasedEarnings','160'],['survivorEmployee','50'],['survivorBasic','90']])await input(page,name).fill(value);
@@ -61,12 +65,13 @@ async function verifyPensionReference(page){
 }
 const factorRow=(page,label)=>page.locator('#mortalityItemHost .mortality-item-row').filter({hasText:label}).locator('input');
 async function factors(page){
+ await stage(page,1);
  await factorRow(page,'食費').fill('0.6');
  await factorRow(page,'水道光熱費').fill('0.8');
  await factorRow(page,'住居').fill('1');
  await page.locator('#mortalityRemainderFactor').fill('0.8');
 }
-async function submit(page){await input(page,'reviewed').check();await page.locator('#mortalityRun').click();await page.locator('#mortalityResults').waitFor({state:'visible'});}
+async function submit(page){await stage(page,2);await input(page,'reviewed').check();await page.locator('#mortalityRun').click();await page.locator('#mortalityResults').waitFor({state:'visible'});}
 let browser=null;
 try{
  for(const [engine,cls] of [['chromium',chromium],['webkit',webkit]]){
@@ -75,7 +80,7 @@ try{
   await ctx.route('**/*',r=>{if(new URL(r.request().url()).origin===origin)return r.continue();report.blockedExternal.push(r.request().url());return r.abort();});
   const page=await ctx.newPage();page.on('pageerror',e=>report.pageErrors.push({engine,error:e.message}));
   await page.goto(origin,{waitUntil:'networkidle'});await page.locator('#dashboard').waitFor({state:'visible'});
-  assert.equal(await page.locator('#appVersion').innerText(),'v0.9.47-mortality-age95-detail-20261108（端末で実行中）');
+  assert.equal(await page.locator('#appVersion').innerText(),'v0.9.48-unified-disclosure-20261108（端末で実行中）');
   assert.equal(await page.locator('[data-group="results"]').getAttribute('data-step-no'),'1');
   assert.equal(await page.locator('[data-tab="mortality"]').getAttribute('data-step-no'),'1-3');
   assert.equal(await page.locator('[data-tab="pension"]').getAttribute('data-step-no'),'2-5');
@@ -159,6 +164,7 @@ try{
   assert.equal(await page.locator('#mortalityResults').isHidden(),true);
   for(const key of ['reviewed','entitlement','claimed','deferral'])assert.equal(await input(page,key).isChecked(),false);
   mark(engine,'reload-retains-draft-values-but-not-calculation-or-eligibility');
+  await stage(page,2);
   await page.locator('#mortalityClearInputs').click();
   assert.equal(await input(page,'deathMonth').inputValue(),'');
   assert.equal(Number(await page.locator('#mortalityRemainderFactor').inputValue()),1,'入力クリア後の残額倍率は100%');

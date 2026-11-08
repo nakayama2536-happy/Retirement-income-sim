@@ -55,7 +55,12 @@ export async function validateWithdrawalUi({browser,createTestServer,open,load,o
   assert.deepEqual((await snapshot(page)).data,after.data);
   await openTab(page,'nisa');assert((await page.locator('#nisaCurrentSummary').innerText()).includes('毎月定額'));await page.screenshot({path:path.join(out,'W1-nisa.png'),fullPage:true});
   await openTab(page,'allcsv');assert((await page.locator('#detailCsvTable thead').innerText()).includes('NISA取崩し可能額（参考）'));await page.locator('#detailCsvPeriod').selectOption('annual');
-  const pending=page.waitForEvent('download');await page.locator('#downloadDetailedCsv').click();const download=await pending,stream=await download.createReadStream(),chunks=[];for await(const chunk of stream)chunks.push(chunk);assert(Buffer.concat(chunks).toString().includes('NISA期末残高（参考）'));
+  // The CSV action lives in the second workflow tab after the UI split.
+  await page.locator('#allcsv-workspace-workflow-tab-1').click();
+  assert(await page.locator('#downloadDetailedCsv').isVisible(),'CSV保存ボタンが保存用タブに表示される');
+  assert(await page.locator('#downloadDetailedCsv').isEnabled(),'CSV保存ボタンが有効である');
+  const [download]=await Promise.all([page.waitForEvent('download'),page.locator('#downloadDetailedCsv').click()]);
+  const stream=await download.createReadStream(),chunks=[];for await(const chunk of stream)chunks.push(chunk);assert(Buffer.concat(chunks).toString().includes('NISA期末残高（参考）'));
   await openTab(page,'settings');await page.locator('#settingsGroup-maintenance').evaluate(el=>el.open=true);await page.locator('#detailUndo').click();assert.deepEqual((await snapshot(page)).data,before.data);
   for(const width of [390,1280]){
    await page.setViewportSize({width,height:900});await openTab(page,'budget');
@@ -89,8 +94,8 @@ export async function validateWithdrawalUi({browser,createTestServer,open,load,o
   await page.reload();await page.locator('#dashboard').waitFor({state:'visible'});assert.deepEqual((await snapshot(page)).data,autoSaved.data);
   // Reload clears undo, so restore the same isolated synthetic fixture for subsequent cases.
   await load(page,file);assert.deepEqual((await snapshot(page)).data,before.data);
-  await openTab(page,'ideco');const i=page.locator('#detail-idecoWithdrawal form');await i.locator('[name=receiptMode]').selectOption('annuity');await i.locator('[name=annuityYears]').fill('10');await i.locator('[name=annuityReturn]').fill('0');await i.locator('[type=submit]').click();assert(await page.locator('#detail-idecoWithdrawal [data-apply]').isVisible());assert.deepEqual((await snapshot(page)).data,before.data);
-  await openTab(page,'ideco');await page.locator('#detail-idecoWithdrawal [data-apply]').click();const receipt=await snapshot(page);assert.equal(receipt.data.config.ideco.lumpPercent,0);assert.equal(receipt.data.config.ideco.annuityPercent,100);assert.equal(receipt.data.config.ideco.annuityYears,10);assert.deepEqual(receipt.data.scenarios,before.data.scenarios);
+  await openTab(page,'ideco');await page.locator('#ideco-workflow-tab-1').click();const i=page.locator('#detail-idecoWithdrawal form');await i.locator('[name=receiptMode]').selectOption('annuity');await i.locator('[name=annuityYears]').fill('10');await i.locator('[name=annuityReturn]').fill('0');await i.locator('[type=submit]').click();assert(await page.locator('#detail-idecoWithdrawal [data-apply]').isVisible());assert.deepEqual((await snapshot(page)).data,before.data);
+  await openTab(page,'ideco');await page.locator('#ideco-workflow-tab-1').click();await page.locator('#detail-idecoWithdrawal [data-apply]').click();const receipt=await snapshot(page);assert.equal(receipt.data.config.ideco.lumpPercent,0);assert.equal(receipt.data.config.ideco.annuityPercent,100);assert.equal(receipt.data.config.ideco.annuityYears,10);assert.deepEqual(receipt.data.scenarios,before.data.scenarios);
   await openTab(page,'ideco');assert((await page.locator('#idecoCurrentSummary').innerText()).includes('全額を年金'));await page.screenshot({path:path.join(out,'W1-ideco.png'),fullPage:true});
   await openTab(page,'settings');await page.locator('#settingsGroup-maintenance').evaluate(el=>el.open=true);await page.locator('#detailUndo').click();assert.deepEqual((await snapshot(page)).data,before.data);
   await openTab(page,'nisa');const nf=page.locator('#detail-nisaWithdrawal form');await nf.locator('[name=mode]').selectOption('all');await nf.locator('[name=startMonth]').fill(month);await nf.locator('[type=submit]').click();await page.locator('#detail-nisaWithdrawal [data-apply]').click();const saved=await snapshot(page);

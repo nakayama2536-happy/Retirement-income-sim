@@ -45,7 +45,7 @@ export function stageAgeBudgetRelease(sourceDir,targetDir,buildId){
   write(dest,'test_distribution_audit.mjs',s=>s.replace("x.runtime.length,67","x.runtime.length,71").replace("x.out.size,70","x.out.size,74").replace("m.files.length,69","m.files.length,73"));
   write(dest,'test_release_identity.mjs',s=>s.replaceAll(old,buildId));
   const staged=collect(dest);
-  if(staged.runtime.length!==81||staged.out.size!==84)throw Error('unexpected-release-file-count');
+  if(staged.runtime.length!==82||staged.out.size!==85)throw Error('unexpected-release-file-count');
   // collect() is imported from the source revision; its generator embeds the
   // source release ID. Preserve its independently calculated file hashes and
   // use the candidate ID that was written to the staged packager above.

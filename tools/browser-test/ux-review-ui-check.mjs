@@ -37,7 +37,7 @@ try{
  assert.equal(beforeEnd,95);
  assert.equal(await page.locator('.topbar h1').innerText(),'ライフプランシミュレーター');
  assert.equal(await page.locator('.topbar p').count(),0);
- assert.match(await page.locator('#appVersion').innerText(),/^v0\.9\.47-mortality-age95-detail-20261108（端末で実行中）$/);
+ assert.match(await page.locator('#appVersion').innerText(),/^v0\.9\.48-unified-disclosure-20261108（端末で実行中）$/);
  assert.match(await page.locator('#rulesVersion').innerText(),/2026-09-24/);
  assert.match(await page.locator('#cloudDataSavedAt').innerText(),/未確認/);
  mark('concise-header-build-rule-date-and-unverified-cloud-time');
@@ -50,6 +50,26 @@ try{
  assert.equal(await page.locator('#home .home-pending > summary #pendingCount').count(),1);
  assert.deepEqual(await snapshot(),before,'home label/disclosures must not alter adopted state');
  mark('ux-request-previous-age-year-end-and-individual-home-disclosures');
+
+ // Unified disclosure: numbered summaries keep their labels, and changing an
+ // accordion never writes or changes financial input.
+ const accordion=page.locator('#home details.home-explanation').first();
+ await accordion.evaluate(el=>{el.open=false;});
+ let disclosureState=await accordion.locator('summary').evaluate(el=>({
+   text:getComputedStyle(el,'::after').content,
+   marker:getComputedStyle(el).listStyleType,
+   display:getComputedStyle(el).display
+ }));
+ assert.match(disclosureState.text,/▶ 開く/);
+ assert.equal(disclosureState.marker,'none');
+ assert.equal(disclosureState.display,'flex');
+ await accordion.locator('summary').click();
+ disclosureState=await accordion.locator('summary').evaluate(el=>getComputedStyle(el,'::after').content);
+ assert.match(disclosureState,/▼ 閉じる/);
+ await accordion.locator('summary').click();
+ assert.deepEqual(await snapshot(),before,'opening a disclosure must not adopt data');
+ mark('unified-disclosure-open-close-labels-and-native-keyboard-safe-details');
+
  await openTab('results','cashflow');
  for (const width of [390,1280]) {
    await page.setViewportSize({width,height:900});
@@ -65,6 +85,46 @@ try{
    assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),'annual table overflow '+width);
    await page.screenshot({path:resolve(out,`ux-request-year-table-${width}.png`),fullPage:true});
  }
+
+ // Purpose-based tabs preserve the underlying inputs, IDs, and adopted state.
+ assert.equal(await page.locator('#cashflow .workflow-tab').count(),2);
+ await page.locator('#cashflow-workflow-tab-1').click();
+ assert(await page.locator('#age65IncomeAuditCard').isVisible());
+ await page.locator('#cashflow-workflow-tab-0').click();
+ assert(await page.locator('#yearCashflowTable').isVisible());
+ await openTab('results','mortality');
+ assert.equal(await page.locator('#mortalityForm .workflow-tab').count(),3);
+ await page.locator('#mortalityForm-workflow-tab-1').click();
+ assert(await page.locator('#mortalityItemHost').isVisible());
+ await page.locator('#mortalityForm-workflow-tab-2').click();
+ assert(await page.locator('#mortalityRun').isVisible());
+ assert.equal(await page.locator('#mortalityForm #mortalityRun').count(),1);
+ await openTab('results','allcsv');
+ assert.equal(await page.locator('#allcsv-workspace .workflow-tab').count(),2);
+ await page.locator('#allcsv-workspace-workflow-tab-1').click();
+ assert(await page.locator('#detailColumnPicker').isVisible());
+ await page.locator('#allcsv-workspace-workflow-tab-0').click();
+ assert(await page.locator('#detailCsvTable').isVisible());
+ await openTab('budget','budget');
+ assert.equal(await page.locator('#budget .workflow-tab').count(),3);
+ await page.locator('#budget-workflow-tab-1').click();
+ assert(await page.locator('#budgetTravelCard').isVisible());
+ await page.locator('#budget-workflow-tab-0').click();
+ assert(await page.locator('#detail-budgetTable').isVisible());
+ await openTab('income','ideco');
+ assert.equal(await page.locator('#ideco .workflow-tab').count(),3);
+ await page.locator('#ideco-workflow-tab-2').click();
+ assert(await page.locator('#idecoBalance').isVisible());
+ await page.locator('#ideco-workflow-tab-0').click();
+ assert.deepEqual(await snapshot(),before,'switching workflow tabs must not mutate saved data');
+ await openTab('income','unemployment');
+ assert.equal(await page.locator('#unemployment .workflow-tab').count(),2);
+ assert(await page.locator('#detail-unemployment').isVisible());
+ await page.locator('#unemployment-workflow-tab-1').click();
+ assert(await page.locator('#unemploymentToolRun').isVisible());
+ await page.locator('#unemployment-workflow-tab-0').click();
+ assert.deepEqual(await snapshot(),before,'unemployment explanatory tab must not change saved plan');
+ mark('purpose-based-tabs-without-saving-or-losing-form-controls');
  await openTab('income','salary');
  const steps=page.locator('#salaryInputs details.salary-step');
  assert.equal(await steps.count(),4);
@@ -73,6 +133,9 @@ try{
  assert.equal(await steps.nth(1).evaluate(el=>el.open),true);
  assert.deepEqual(await snapshot(),before,'salary accordion must not save');
  mark('ux-request-sticky-annual-head-and-salary-disclosures');
+ await page.locator('#salary-workflow-tab-1').click();
+ assert(await page.locator('#salary .salary-optional-labor').isVisible());
+ await page.locator('#salary-workflow-tab-0').click();
  await openTab('manage','settings');
  const expected=['finance','goals','compare','maintenance'];
  const groups=page.locator('#settings > .settings-category');
@@ -122,6 +185,7 @@ try{
   await page.screenshot({path:resolve(out,'settings-'+width+'.png'),fullPage:true});
   for(const tab of ['nisa','ideco']){
    await openTab('income',tab);
+   if(tab==='ideco')await page.locator('#ideco-workflow-tab-1').click();
    const kind=tab==='nisa'?'nisaWithdrawal':'idecoWithdrawal';
    const form=page.locator(`#detail-${kind} .form-grid`);
    await form.waitFor({state:'visible'});
@@ -160,6 +224,7 @@ try{
  assert.match(await page.locator('#expensesPriceBase').innerText(),/従来方式/);
  await openTab('budget','budget');
  assert.match(await page.locator('#budgetPriceBase').innerText(),/2044年1月/);
+ await page.locator('#budget-workflow-tab-2').click();
  const periodForm=page.locator('#periodEditForm');
  const periodDetails=periodForm.locator('xpath=ancestor::details[1]');
  if(!await periodDetails.evaluate(n=>n.open))await periodDetails.locator('summary').first().click();

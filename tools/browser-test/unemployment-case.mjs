@@ -12,6 +12,7 @@ export async function validateUnemploymentUi({browser,createTestServer,open,load
   await openTab(page,'unemployment');await page.locator('#detail-unemployment [data-apply]').click();const adopted=await snapshot(page);assert.equal(adopted.data.config.unemployment.receiptPlan.dailyYen,'6000');assert.deepEqual(adopted.data.scenarios,before.data.scenarios);
   await openTab(page,'home');await page.locator('#homeTimelineGuide summary').click();assert((await page.locator('#timeline').textContent()).includes('高年齢求職者給付金'));
   await openTab(page,'salary');
+  await page.locator('#salary-workflow-tab-1').click();
   const optionalLabor=page.locator('#salary details.salary-optional-labor');
   if(!await optionalLabor.evaluate(n=>n.open))await optionalLabor.locator('summary').click();
   const side=page.locator('#detail-laborPrimarySide');
@@ -20,7 +21,7 @@ export async function validateUnemploymentUi({browser,createTestServer,open,load
   await side.locator('[data-reset]').click();assert.equal(await side.locator('[name=monthlyGross]').inputValue(),old);
   assert.deepEqual((await snapshot(page)).data,adopted.data);
   // snapshot exports from Settings; return to the editor before interacting.
-  await openTab(page,'salary');
+  await openTab(page,'salary');await page.locator('#salary-workflow-tab-1').click();
   await side.locator('[name=monthlyGross]').fill('9');
   await side.locator('[name=startDate]').fill('2045-04-01');
   await side.locator('[name=endDate]').fill('2056-02-01');

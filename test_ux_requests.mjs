@@ -49,3 +49,15 @@ test('6-1 four settings groups plus an independent backup tab reuse original con
  }
  assert.match(layout,/host\.append\(box\)/);assert.match(layout,/body\.append\(node\)/);
 });
+
+test('1-1 and 1-2 disclosure states use the same right-end labels without disturbing reference numbers',()=>{
+ const disclosure=text('./ui-numbering.css');
+ assert.match(disclosure,/body details > summary\{/);
+ assert.match(disclosure,/list-style:none/);
+ assert.match(disclosure,/summary::-webkit-details-marker\{display:none\}/);
+ assert.match(disclosure,/content:'▶ 開く' !important/);
+ assert.match(disclosure,/content:'▼ 閉じる' !important/);
+ assert.match(disclosure,/margin-inline-start:auto/);
+ assert.match(disclosure,/\.step-numbered::before/);
+ assert.doesNotMatch(disclosure,/localStorage|saveState\s*\(|indexedDB/);
+});
