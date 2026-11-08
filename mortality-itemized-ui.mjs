@@ -15,6 +15,13 @@ export function registeredMonthlyAmount(item,month){
   return null; // Unsupported price bases are not guessed.
 }
 const moneyText=value=>value===null?'未確認':Number(value).toLocaleString('ja-JP',{minimumFractionDigits:2,maximumFractionDigits:2})+'万円';
+export function mortalityFactorPercentText(raw){
+ if(raw===null||raw===undefined||String(raw).trim()==='')return '倍率を入力してください';
+ const n=Number(raw);if(!Number.isFinite(n)||n<0||n>3)return '倍率を確認してください（0～3）';
+ const pct=(n*100).toLocaleString('ja-JP',{maximumFractionDigits:2});
+ return '元の金額の'+pct+'％'+(n===1?'（変化なし）':n<1?'（減額）':'（増額）');
+}
+
 /** Display totals use the exact unrounded monthly engine amounts, never the rounded labels. */
 export function mortalityItemizedTotals(items,month,factors,unallocatedFactor){
   if(!Array.isArray(items)||!month||typeof month.expense!=='number'||typeof month.unallocated!=='number')throw Error('費目内訳を確認してください');
@@ -128,12 +135,13 @@ export function mountMortalityItemizedControls(root,{getConfig,runPlan,onChange}
         const base=registeredMonthlyAmount(item,month);
         const cells=[el('span','',item.label),el('span','',moneyText(base)),el('span','',moneyText(amount))];
         for(let i=0;i<cells.length;i++)cells[i].dataset.mortalityColumn=labels[i];
-        const factorCell=el('span','mortality-item-factor');factorCell.dataset.mortalityColumn=labels[3];factorCell.append(field);
+        const factorCell=el('span','mortality-item-factor');factorCell.dataset.mortalityColumn=labels[3];const pct=el('small','family-factor-percent',mortalityFactorPercentText(field.value));factorCell.append(field,pct);
         const impact=el('span','mortality-item-impact');impact.dataset.mortalityColumn=labels[4];
         try{impact.textContent=moneyText(amount*val(field,item.label));}catch{impact.textContent='未計算';}
         row.append(...cells,factorCell,impact);
         field.addEventListener('input',()=>{
           savedFactors[item.id]=field.value;
+          pct.textContent=mortalityFactorPercentText(field.value);
           try{row.lastElementChild.textContent=moneyText(amount*val(field,item.label));}
           catch{row.lastElementChild.textContent='未計算';}
           factorText();onChange();
