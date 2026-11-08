@@ -84,8 +84,8 @@
     },
     {
       "name": "detail-settings.mjs",
-      "size": 25114,
-      "sha256": "2c3b5b99bf343a12f51857d702754d485626ba628bb722c6e518ff3e60021b7a"
+      "size": 25182,
+      "sha256": "b4d5c3215755ee04445981e67c41f0739189d962622426bfaba83290cd26e397"
     },
     {
       "name": "detail-ui.mjs",
