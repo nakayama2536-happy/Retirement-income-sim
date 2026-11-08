@@ -1,6 +1,6 @@
 {
   "kind": "public-release",
-  "runtime": "v0.9.46-pension-three-cards-20261108",
+  "runtime": "v0.9.47-mortality-age95-detail-20261108",
   "files": [
     {
       "name": "age-budget-candidate.mjs",
@@ -29,13 +29,13 @@
     },
     {
       "name": "app.mjs",
-      "size": 79279,
-      "sha256": "44b2529193af48fce2ce788653613f5705802c7fe19d45d0e8156e0e422944ff"
+      "size": 79282,
+      "sha256": "b91c4aadf3373df36060646285be1c4744f1c0b702bf3b26060e8471227ff714"
     },
     {
       "name": "backup-compatibility.mjs",
-      "size": 8052,
-      "sha256": "136c4c0803488d44804aedb947bc3e8090a23729fadce4b1841c7da1ad4d2860"
+      "size": 8055,
+      "sha256": "f6e4bdbce131cffc74a2e2ab1d97f13b0bc1f1a25d9ae6782ee903df737a07a3"
     },
     {
       "name": "budget-travel-ui.mjs",
@@ -64,8 +64,8 @@
     },
     {
       "name": "cashflow-reconciliation.mjs",
-      "size": 8170,
-      "sha256": "c04a09e28b991732b9a7cd6fbb7557d39fb08757290f8a3e2f4f20a8d8e695a8"
+      "size": 8430,
+      "sha256": "329f238081ee2ed77d878dd6346fcb85a1ff43726cd7b88c9a3b004fe8dd0ba0"
     },
     {
       "name": "cashflow-sources.mjs",
@@ -214,8 +214,8 @@
     },
     {
       "name": "mortality-expense-csv.mjs",
-      "size": 5614,
-      "sha256": "00f3266538e8f6c3a1abc46e8c02a0da147eb2f4267870b1fa71f1295a37b67f"
+      "size": 5778,
+      "sha256": "dff39b6d6530ae47cf56628baddc6ab0f828695d12d1dedc847cf4f5bb4c1831"
     },
     {
       "name": "mortality-expense-preset.mjs",
@@ -229,8 +229,8 @@
     },
     {
       "name": "mortality-itemized.mjs",
-      "size": 7333,
-      "sha256": "e539529831d8886b9b0e0e3e00ef769d390a246686618926b895bd26180fcf2b"
+      "size": 7411,
+      "sha256": "3da9610a3c1fe4f41325711ff3a6d8677abca3ceb6778973f4668566bf160c72"
     },
     {
       "name": "mortality-preview.mjs",
@@ -274,8 +274,8 @@
     },
     {
       "name": "release-info.json",
-      "size": 138,
-      "sha256": "0022163772ac44a915acf655e4ac0847d19873d6425b4dc3c2d6d5c1945f6fcd"
+      "size": 149,
+      "sha256": "b5972ff406bfe7d5fe2f59ab7b61bc948905af2ce9deee9aa71810bb08e1c25e"
     },
     {
       "name": "retirement-comment.mjs",
@@ -349,8 +349,8 @@
     },
     {
       "name": "sw.js",
-      "size": 4567,
-      "sha256": "62c537349a7d2ea43cd44cdc48775f9fdb5ce8597282374df7f952b4c252e0b6"
+      "size": 4570,
+      "sha256": "b3ba98e55446a64bf416555928d710dcb7da1b0bb1a6ec5e18adec2689dedbc5"
     },
     {
       "name": "sync-controller.mjs",

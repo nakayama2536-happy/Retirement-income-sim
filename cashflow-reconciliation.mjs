@@ -19,7 +19,7 @@ export function priceBaseForMonth(base,priceFactor) {
 
 // Generate source and trace together from one immutable snapshot. Callers cannot
 // accidentally pair a stale trace or candidate calendar with another setting.
-export function reconcileCashflow(config,{sourceProfile='unknown',identityBindings=[],calculationOptions={}}={}) {
+export function reconcileCashflow(config,{sourceProfile='unknown',identityBindings=[],calculationOptions={},expenseDetailAgeCap=null}={}) {
   const snapshot=structuredClone(config);
   const view=inspectCashflowSources(snapshot,{sourceProfile,identityBindings});
   const calculation=runRetirementPlan(snapshot,{...calculationOptions,includeMonthlyDetails:true});
@@ -47,9 +47,11 @@ export function reconcileCashflow(config,{sourceProfile='unknown',identityBindin
   }
   const months=calculation.monthlyDetails.map(m=>{
     const factor=m.budget?.priceFactor??null;
-    const details=roots.map(item=>detail(item,m.age,factor));
+    // Death comparison only: keep age-95 detail rules after age 95, but use each month's price and budget.
+    const detailAge=expenseDetailAgeCap===null?m.age:Math.min(m.age,expenseDetailAgeCap);
+    const details=roots.map(item=>detail(item,detailAge,factor));
     const knownSubtotal=details.reduce((s,d)=>s+(d.knownSubtotal??d.priced.amount??0),0);
-    const complete=roots.some(i=>i.kind==='expense')&&details.length>0&&details.every(d=>d.priced.status==='resolved')&&!blockers.length&&!comparisonDiagnostics.some(d=>!(d.code==='deferred-tax-calculation'&&d.itemId&&resolve(d.itemId,m.age).status==='resolved'))&&Number.isFinite(knownSubtotal);
+    const complete=roots.some(i=>i.kind==='expense')&&details.length>0&&details.every(d=>d.priced.status==='resolved')&&!blockers.length&&!comparisonDiagnostics.some(d=>!(d.code==='deferred-tax-calculation'&&d.itemId&&resolve(d.itemId,detailAge).status==='resolved'))&&Number.isFinite(knownSubtotal);
     const detailTotal=complete?knownSubtotal:null;
     let budgetBase, budgetCheck;
     if(!m.budget) {
@@ -76,7 +78,7 @@ export function reconcileCashflow(config,{sourceProfile='unknown',identityBindin
       return {itemId:i.itemId,route:i.route,base,priced:priceBaseForMonth(base,factor),includedInBudgetComparison:false};
     });
     return {calendarMode,month:m.month,date:m.date,age:m.age,annualAge:m.annualAge,annualRowIndex:m.annualRowIndex,baseDate:m.baseDate,monthsFromBase:m.monthsFromBase,phase:m.phase,cashflowMode:m.cashflowMode,
-      scope:m.budget?'asset-funded':'family-reference',budgetReferenceAge:m.budget?.budgetAge??null,priceFactor:factor,
+      scope:m.budget?'asset-funded':'family-reference',budgetReferenceAge:m.budget?.budgetAge??null,detailReferenceAge:detailAge,priceFactor:factor,
       budget:{base:budgetBase,check:budgetCheck,actualExpense:m.expense},details,detailTotal,knownSubtotal:Number.isFinite(knownSubtotal)?knownSubtotal:null,assessment,gap,references,
       actual:{expense:m.expense,extraExpense:m.extraExpense,totalIncome:m.totalIncome,endAsset:m.endAsset},
       // These are inner components only, never summed into actual or detail totals.
