@@ -38,9 +38,32 @@ export function mortalityExpenseItemRows(comparison){
 }
 export const mortalityExpenseAuditCsv=x=>csvString(EXPENSE_COLUMNS,mortalityExpenseAuditRows(x));
 export const mortalityExpenseItemCsv=x=>csvString(ITEM_COLUMNS,mortalityExpenseItemRows(x));
+
+/** Full read-only asset ledger for mortality comparisons; actual figures remain in the browser. */
+export const ASSET_COLUMNS=[['month','年月'],['age','本人年齢期'],['postDeath','死亡翌月以降'],['startAsset','月初資産_万円'],['investmentGain','運用益_万円'],['income','比較後収入_万円'],['baselineExpense','基準管理予算_万円'],['expenseReduction','管理予算減額_万円'],['expense','比較後管理予算_万円'],['extraExpense','臨時支出_万円'],['funeralExpense','死亡月一時費用_万円'],['endAsset','月末資産_万円'],['identityStatus','資産・支出検算'],['firstNegative','初回資産マイナス月']];
+export function mortalityAssetAuditRows(comparison){
+ const {monthly,base}=requirePreview(comparison);
+ const keys=['startAsset','investmentGain','income','baselineExpense','expenseReduction','expense','extraExpense','funeralExpense','endAsset'];
+ let previousEnd=null,firstNegative=null;
+ return monthly.map((r,i)=>{
+  if(keys.some(key=>!finite(r[key])))throw Error(r.month+': 月次資産計算の項目が未確認です');
+  const expected=r.startAsset+r.investmentGain+r.income-r.expense-r.extraExpense-r.funeralExpense;
+  if(!close(expected,r.endAsset))throw Error(r.month+': 月末資産の検算が一致しません');
+  if(previousEnd!==null&&!close(previousEnd,r.startAsset))throw Error(r.month+': 前月末と当月初の資産が一致しません');
+  previousEnd=r.endAsset;
+  if(firstNegative===null&&r.endAsset<0)firstNegative=r.month;
+  return {month:r.month,age:base[i].annualAge,postDeath:r.postDeath?'はい':'いいえ',
+   startAsset:r.startAsset,investmentGain:r.investmentGain,income:r.income,
+   baselineExpense:r.baselineExpense,expenseReduction:r.expenseReduction,expense:r.expense,
+   extraExpense:r.extraExpense,funeralExpense:r.funeralExpense,endAsset:r.endAsset,
+   identityStatus:'一致',firstNegative:r.endAsset<0&&firstNegative===r.month?'はい':'いいえ'};
+ });
+}
+export const mortalityAssetAuditCsv=x=>csvString(ASSET_COLUMNS,mortalityAssetAuditRows(x));
+
 export function downloadMortalityExpenseCsv(comparison,{kind='monthly',documentRef=document,urlRef=URL,now=new Date()}={}){
- if(kind!=='monthly'&&kind!=='items')throw Error('未対応のCSV種別です');
- const csv=kind==='monthly'?mortalityExpenseAuditCsv(comparison):mortalityExpenseItemCsv(comparison);
+ if(kind!=='monthly'&&kind!=='items'&&kind!=='assets')throw Error('未対応のCSV種別です');
+ const csv=kind==='monthly'?mortalityExpenseAuditCsv(comparison):kind==='items'?mortalityExpenseItemCsv(comparison):mortalityAssetAuditCsv(comparison);
  const date=new Intl.DateTimeFormat('sv-SE',{timeZone:'Asia/Tokyo',year:'numeric',month:'2-digit',day:'2-digit'}).format(now);
  const blob=new Blob([csv],{type:'text/csv;charset=utf-8'}),url=urlRef.createObjectURL(blob),a=documentRef.createElement('a');
  a.href=url;a.download='lifeplan-mortality-expense-'+kind+'-UNADOPTED-'+date+'.csv';a.click();
