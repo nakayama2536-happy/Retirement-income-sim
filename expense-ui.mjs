@@ -1,5 +1,5 @@
 import {loadExpenseState,applyExpensePreview,undoExpenseApply,expenseUndoStatus} from './expense-workflow.mjs';
-import {createExpenseDraft,previewExpenseChanges} from './expense-preview.mjs';
+import {createExpenseDraft,previewExpenseChanges,expenseIdentityDiagnostic} from './expense-preview.mjs';
 import {inspectCashflowSources,cashflowSourceSignature as signature} from './cashflow-sources.mjs';
 import {migrateConfig} from './storage.mjs';
 const normalized=s=>({config:migrateConfig(s.config),scenarios:s.scenarios.map(x=>({...x,config:migrateConfig(x.config)}))});
@@ -13,8 +13,24 @@ const basis=r=>r.priceBasis==='plan-start-base'?'計画開始時の価格':r.pri
 export function mountExpenseSheet({getState,onCommit,showNotice,storage=localStorage,doc=document}){
  const el=id=>doc.getElementById('expense'+id);
  let base=null,preview=null,rules=[],busy=false,blocked=false;
- const error=s=>{el('Error').textContent=s;el('Error').hidden=!s;};
- function invalidate(){preview=null;el('Preview').hidden=true;el('Reviewed').checked=false;}
+ const error=s=>{
+  el('Error').textContent=s;el('Error').hidden=!s;
+  const needsHelp=Boolean(s)&&/識別|内部ID|キー|変更対象|一意|重複/.test(s);
+  el('ErrorGuide').hidden=!needsHelp;
+  if(needsHelp){
+   const view=base&&el('Source').value?inspectCashflowSources(base.config,{sourceProfile:el('Source').value}):null;
+   const issue=view?expenseIdentityDiagnostic(view,{itemId:selected()?.itemId,sourceProfile:el('Source').value}):null;
+   el('ErrorAction').textContent=issue?.guidance||'保存元、項目、期間、ID・keyの重複を確認してください。復元・更新前にバックアップを保存してください。';
+  }else el('ErrorAction').textContent='';
+ };
+ function invalidate(){preview=null;el('Preview').hidden=true;el('Reviewed').checked=false;el('PreviewQuick').textContent='';}
+ function updateAmountGuide(){
+  const r=selected(),v=el('Amount').value.trim(),n=v===''?null:Number(v);
+  const value=r&&v!==''&&Number.isFinite(n)&&n>=0
+    ?r.unit==='monthly'?`月額 ${money(n)}（年間 ${money(n*12)}）`:r.unit==='annual'?`年額 ${money(n)}（月額換算 ${money(n/12)}）`:`金額 ${money(n)}`
+    :'変更後の金額を入力してください。空欄は0万円として扱いません。';
+  el('AmountGuide').textContent=value;
+ }
  function buttons(){
   for(const id of ['Source','Kind','Rule','Amount'])el(id).disabled=busy||blocked;
   el('Trial').disabled=busy||blocked||!rules.length;
@@ -22,7 +38,7 @@ export function mountExpenseSheet({getState,onCommit,showNotice,storage=localSto
   el('Undo').disabled=busy||blocked||!base||!expenseUndoStatus(base).available;
  }
  function selected(){return rules[Number(el('Rule').value)];}
- function selection(){invalidate();const r=selected();el('Amount').value=r?String(r.rawAmount):'';el('Adopted').textContent=r?`採用値：${money(r.rawAmount)}／${unit(r)}・${period(r)}・${basis(r)}\n内部ID：${r.itemId}\n出典：${r.sourceRefs.map(x=>x.path).join(', ')}`:'出典と項目を選択してください。';el('Status').textContent='未試算';buttons();}
+ function selection(){invalidate();const r=selected();el('Amount').value=r?String(r.rawAmount):'';el('Adopted').textContent=r?`採用値：${money(r.rawAmount)}／${unit(r)}・${period(r)}・${basis(r)}\n内部ID：${r.itemId}\n出典：${r.sourceRefs.map(x=>x.path).join(', ')}`:'出典と項目を選択してください。';el('Status').textContent='未試算';updateAmountGuide();buttons();}
  function rebuild(){
   rules=[];el('Rule').replaceChildren();
   if(base&&el('Source').value){
@@ -46,7 +62,7 @@ export function mountExpenseSheet({getState,onCommit,showNotice,storage=localSto
  }
  for(const id of ['Source','Kind'])el(id).addEventListener('change',()=>{if(busy||blocked)return;error('');rebuild();});
  el('Rule').addEventListener('change',()=>{if(!busy&&!blocked){error('');selection();}});
- el('Amount').addEventListener('input',()=>{invalidate();el('Status').textContent='未反映の入力あり';buttons();});
+ el('Amount').addEventListener('input',()=>{invalidate();error('');updateAmountGuide();el('Status').textContent='未反映の入力あり';buttons();});
  el('Reviewed').addEventListener('change',buttons);
  el('Trial').addEventListener('click',()=>{
   if(busy||blocked)return;invalidate();error('');
@@ -57,6 +73,7 @@ export function mountExpenseSheet({getState,onCommit,showNotice,storage=localSto
    const draft=createExpenseDraft(base,{sourceProfile:el('Source').value,kind:el('Kind').value});
    draft.edits=[{itemId:r.itemId,ruleRef:r.ruleRef,amount:Number(text),unit:r.unit,priceBasis:r.priceBasis}];
    preview=previewExpenseChanges(base,draft);const p=preview.patches[0];
+   el('PreviewQuick').textContent=`変更前：${money(p.before)}／${unit(r)} → 変更後：${money(p.after)}／${unit(r)}（${period(r)}）。${draft.kind==='detail'?'生活費の内訳を変更します。資産予測には管理予算の確認が必要です。':'管理予算の変更が資産予測に反映されます。'}`;
    el('PreviewBody').textContent=[preview.notice,`${money(p.before)} → ${money(p.after)}／${unit(r)}・${period(r)}・${basis(r)}`,
     `適用月：${p.applicableMonths.join('、')}`,p.suppressedMonths.length?`上位規則に置換される月：${p.suppressedMonths.join('、')}`:'',
     `最終資産：${money(preview.finalAssetBefore)} → ${money(preview.finalAssetAfter)}`,
