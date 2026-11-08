@@ -22,7 +22,7 @@ export async function validateDetailUi({browser,createTestServer,open,load,openT
   await openTab(page,'expenses');const f=page.locator('#detail-expense form');await f.locator('[name=profile]').selectOption('work-v0.9.7');await f.locator('[name=group]').selectOption('insurance');await f.locator('[name=label]').fill('架空保険');await f.locator('[name=amount]').fill('1');await f.locator('button[type=submit]').click();await page.locator('#detail-expense [data-apply]').click();
   const after=(await snapshot(page)).data;assert.equal(after.config.expenseDetail.monthlyCategories.at(-1).items[0].label,'架空保険');assert.deepEqual(after.scenarios,before.scenarios);
   await openTab(page,'allcsv');assert((await page.locator('#detailCsvTable').innerText()).includes('架空保険'));
-  const pending=page.waitForEvent('download');await page.locator('#downloadDetailedCsv').click();const download=await pending;assert((await download.suggestedFilename()).endsWith('.csv'));
+  await page.locator('#allcsv-workspace-workflow-tab-1').click();const pending=page.waitForEvent('download');await page.locator('#downloadDetailedCsv').click();const download=await pending;assert((await download.suggestedFilename()).endsWith('.csv'));
   await openTab(page,'review');await page.locator('#makeReviewPrompt').click();assert((await page.locator('#reviewPromptText').inputValue()).includes('架空保険'));
   await openTab(page,'settings');await page.locator('#settingsGroup-maintenance').evaluate(el=>el.open=true);await page.locator('#detailUndo').click();const undone=(await snapshot(page)).data;assert.deepEqual(undone,before);
   await openTab(page,'rules');assert.equal(await page.locator('#rules input,#rules form').count(),0);
@@ -40,10 +40,10 @@ export async function validateLaborTrendUi({browser,createTestServer,open,load,o
   const page=await open(context,fixture.url),errors=[];page.on('pageerror',e=>errors.push(e.message));await load(page,path.join(here,'synthetic-full.json'));const before=(await snapshot(page)).data;
   for(const width of [390,1280]){
    await page.setViewportSize({width,height:900});await openTab(page,'salary');
-   const optionalLabor=page.locator('#salary details.salary-optional-labor');
+   await page.locator('#salary-workflow-tab-1').click();const optionalLabor=page.locator('#salary details.salary-optional-labor');
    if(!await optionalLabor.evaluate(n=>n.open))await optionalLabor.locator('summary').click();
    for(const id of ['laborPrimaryRegular','laborPrimarySide','laborSpouseRegular','laborSpouseSide'])assert(await page.locator('#detail-'+id+' form').isVisible());
-   assert.equal(await page.locator('#salary #salary_receipt_ideco').count(),0);
+   await page.locator('#salary-workflow-tab-0').click();assert.equal(await page.locator('#salary #salary_receipt_ideco').count(),0);
    assert.deepEqual(await page.locator('#salaryInputs > details.salary-step > fieldset > legend').allTextContents(),['1. 生活費の負担を切り替える月','2. 給与生活中の家計と資産の入出金','3. 切替後の生活費・労働収入','4. 年金・iDeCo・臨時収支の扱い']);
    const laborStep=page.locator('#salaryInputs > details.salary-step').nth(2);
    if(!await laborStep.evaluate(n=>n.open))await laborStep.locator('summary').click();
@@ -58,10 +58,10 @@ export async function validateLaborTrendUi({browser,createTestServer,open,load,o
    assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));
    await page.screenshot({path:path.join(out,`L1-navigation-${width}.png`)});
   }
-  await openTab(page,'ideco');assert(await page.locator('#salary_receipt_ideco').isVisible());
+  await openTab(page,'ideco');await page.locator('#ideco-workflow-tab-1').click();assert(await page.locator('#salary_receipt_ideco').isVisible());
   await page.locator('#salary_receipt_ideco').selectOption('separate');
   assert.deepEqual((await snapshot(page)).data,before);
-  await openTab(page,'salary');await page.locator('#salaryReset').click();
+  await openTab(page,'salary');await page.locator('#salary-workflow-tab-0').click();await page.locator('#salaryReset').click();
   await openTab(page,'allcsv');assert.equal(await page.locator('#detailCsvPeriod').inputValue(),'monthly');
   const rowCount=await page.locator('#detailCsvTable tbody tr').count();assert(rowCount>12);
   assert.equal(await page.locator('#detailCsvIncludeDetails').isChecked(),false);
@@ -69,7 +69,7 @@ export async function validateLaborTrendUi({browser,createTestServer,open,load,o
   assert(normalHeaders.includes('iDeCo一時金の資産計上額'));assert(normalHeaders.includes('その他の臨時・追加収入'));
   assert(!normalHeaders.includes('一時金・臨時・追加収入'));assert(!normalHeaders.includes('本人の労働収入'));
   const normalCount=await page.locator('[data-column-id]').count();
-  const incomeGroup=page.locator('#detailColumnPicker details').filter({has:page.locator('[data-column-section="収入"]')});
+  await page.locator('#allcsv-workspace-workflow-tab-1').click();const incomeGroup=page.locator('#detailColumnPicker details').filter({has:page.locator('[data-column-section="収入"]')});
   await incomeGroup.locator('summary').click();
   assert.equal(await incomeGroup.locator('.trend-picker-total').count(),1);
   assert(await incomeGroup.locator('.trend-picker-child').count()>0);
@@ -80,7 +80,7 @@ export async function validateLaborTrendUi({browser,createTestServer,open,load,o
 
   await page.locator('#detailCsvIncludeDetails').check();
   assert(await page.locator('[data-column-id]').count()>normalCount);
-  assert((await page.locator('#detailCsvTable thead').innerText()).includes('本人の労働収入'));
+  await page.locator('#allcsv-workspace-workflow-tab-0').click();assert((await page.locator('#detailCsvTable thead').innerText()).includes('本人の労働収入'));await page.locator('#allcsv-workspace-workflow-tab-1').click();
   const detailPending=page.waitForEvent('download');await page.locator('#downloadDetailedCsv').click();
   const detailDownload=await detailPending,detailChunks=[];for await(const chunk of await detailDownload.createReadStream())detailChunks.push(chunk);
   assert(Buffer.concat(detailChunks).toString().split('\r\n')[0].includes('本人の労働収入'));
@@ -95,8 +95,8 @@ export async function validateLaborTrendUi({browser,createTestServer,open,load,o
   for(const section of ['NISA','iDeCo']){
    const group=page.locator('#detailColumnPicker details').filter({has:page.locator(`[data-column-section="${section}"]`)});await group.locator('summary').click();await group.locator('[data-column-section]').check();
   }
-  const headers=await page.locator('#detailCsvTable thead').innerText();assert(headers.includes('NISA'));assert(headers.includes('iDeCo'));assert(!headers.includes('食費'));
-  const pending=page.waitForEvent('download');await page.locator('#downloadDetailedCsv').click();const download=await pending;const stream=await download.createReadStream(),chunks=[];for await(const chunk of stream)chunks.push(chunk);const csv=Buffer.concat(chunks).toString();
+  await page.locator('#allcsv-workspace-workflow-tab-0').click();const headers=await page.locator('#detailCsvTable thead').innerText();assert(headers.includes('NISA'));assert(headers.includes('iDeCo'));assert(!headers.includes('食費'));
+  await page.locator('#allcsv-workspace-workflow-tab-1').click();const pending=page.waitForEvent('download');await page.locator('#downloadDetailedCsv').click();const download=await pending;const stream=await download.createReadStream(),chunks=[];for await(const chunk of stream)chunks.push(chunk);const csv=Buffer.concat(chunks).toString();
   assert(csv.includes('NISA'));assert(csv.includes('iDeCo'));assert(!csv.includes('食費'));assert.equal(csv.split('\r\n').length,rowCount+2);
   assert.equal(await page.locator('#detailCsvIncludeStatus').isChecked(),false);assert(!csv.split('\r\n')[0].includes(' 状態'));
   await page.locator('#detailCsvIncludeStatus').check();
@@ -104,18 +104,18 @@ export async function validateLaborTrendUi({browser,createTestServer,open,load,o
   const statusChunks=[];for await(const chunk of await statusDownload.createReadStream())statusChunks.push(chunk);
   const statusCsv=Buffer.concat(statusChunks).toString();assert(statusCsv.split('\r\n')[0].includes(' 状態'));assert.equal(statusCsv.split('\r\n').length,csv.split('\r\n').length);
   await page.locator('#detailCsvIncludeStatus').uncheck();
-  for(const period of ['annual','calendar']){await page.locator('#detailCsvPeriod').selectOption(period);assert(await page.locator('#detailCsvTable tbody tr').count()<rowCount);assert((await page.locator('#detailCsvTable thead').innerText()).includes('NISA'));}
+  await page.locator('#allcsv-workspace-workflow-tab-0').click();for(const period of ['annual','calendar']){await page.locator('#detailCsvPeriod').selectOption(period);assert(await page.locator('#detailCsvTable tbody tr').count()<rowCount);assert((await page.locator('#detailCsvTable thead').innerText()).includes('NISA'));}
   await page.screenshot({path:path.join(out,'L1-selected-trend.png')});
   await openTab(page,'review');await page.locator('#makeReviewPrompt').click();assert((await page.locator('#reviewPromptText').inputValue()).includes('保存済み'));
   assert.deepEqual((await snapshot(page)).data,before);
   await openTab(page,'salary');
-  const optionalLabor=page.locator('#salary details.salary-optional-labor');
+  await page.locator('#salary-workflow-tab-1').click();const optionalLabor=page.locator('#salary details.salary-optional-labor');
   if(!await optionalLabor.evaluate(n=>n.open))await optionalLabor.locator('summary').click();
   const f=page.locator('#detail-laborSpouseRegular form');
   await f.locator('[name=monthlyGross]').fill('4');await f.locator('[name=startDate]').fill(data.config.plan.startDate);await f.locator('[name=endDate]').fill(`${Number(data.config.plan.startDate.slice(0,4))+1}${data.config.plan.startDate.slice(4)}`);
   if(await f.locator('[name=useIndividualLabor]').count())await f.locator('[name=useIndividualLabor]').check();
   await f.locator('[type=submit]').click();assert(await page.locator('#detail-laborSpouseRegular [data-apply]').isVisible());
-  assert.deepEqual((await snapshot(page)).data,before);await openTab(page,'salary');await page.locator('#detail-laborSpouseRegular [data-apply]').click();
+  assert.deepEqual((await snapshot(page)).data,before);await openTab(page,'salary');await page.locator('#salary-workflow-tab-1').click();await page.locator('#detail-laborSpouseRegular [data-apply]').click();
   const after=(await snapshot(page)).data;assert.equal(after.config.employment.spouse.regularWork.monthlyGross,4);assert.deepEqual(after.config.employment.primary,before.config.employment.primary);assert.deepEqual(after.scenarios,before.scenarios);
   await openTab(page,'settings');await page.locator('#settingsGroup-maintenance').evaluate(el=>el.open=true);await page.locator('#detailUndo').click();assert.deepEqual((await snapshot(page)).data,before);assert.deepEqual(errors,[]);record.status='pass';
  }catch(e){record.status='failed-or-harness-error';record.error=e.stack;throw Object.assign(e,{detailRecord:record});}
