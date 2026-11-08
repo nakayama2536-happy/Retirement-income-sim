@@ -40,3 +40,16 @@ test('将来資産を示してから操作入口を表示し、3画面からホ�
   assert.equal(links.length,4,'既存3画面と新設の遺族年金専用画面に戻る導線がある');
   assert.match(html,/<section id="survivorPension" class="panel" hidden><div class="family-lite-back"/);
 });
+
+test('家族向け操作ガイドは保存・反映を行わず、手順を示すだけ',()=>{
+ const workflow=readFileSync(new URL('./workflow-tabs.mjs',import.meta.url),'utf8');
+ const mortality=readFileSync(new URL('./mortality-ui.mjs',import.meta.url),'utf8');
+ assert.match(workflow,/mortalityStepNext/);
+ assert.match(workflow,/mortalityStepPrevious/);
+ assert.match(workflow,/type='button'/);
+ assert.match(workflow,/操作案内/);
+ assert.match(mortality,/id=\\"mortalityOpenPension\\"/);
+ assert.match(mortality,/details.open=true/);
+ assert.match(mortality,/年金額の入力欄を開く/);
+ assert.doesNotMatch(workflow,/localStorage|replaceState|commitState|submit\(/);
+});
