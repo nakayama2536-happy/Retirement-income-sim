@@ -414,8 +414,8 @@
     },
     {
       "name": "workflow-tabs.mjs",
-      "size": 4482,
-      "sha256": "dafb95531e1ba455221a9ecdf0eeac2f0445946699c1cebdaeae451065d252ab"
+      "size": 4525,
+      "sha256": "bb858ad64f290d8ce6c7cdebd546254a8772926ee3e07573970e6b3eadf45deb"
     },
     {
       "name": "write-access.mjs",
