@@ -20,3 +20,33 @@
  .step-numbered::before{margin-inline-end:.25em}
  #expenseDetail details{overflow-wrap:anywhere}
 }
+
+
+/* Disclosure controls: one visual rule across the whole app.
+   A summary may already use ::before for its stable section number, so only
+   ::after is used for the interactive state. Native <details> remains in
+   control of keyboard operation, focus and expanded/collapsed state.
+   The rule is display-only and never changes adopted data. */
+body details > summary{
+  display:flex;
+  align-items:center;
+  gap:.65rem;
+  cursor:pointer;
+  list-style:none;
+  min-height:44px;
+}
+body details > summary::-webkit-details-marker{display:none}
+body details > summary::after{
+  content:'▶ 開く' !important;
+  margin-inline-start:auto;
+  flex:0 0 auto;
+  font-size:.82rem;
+  font-weight:650;
+  white-space:nowrap;
+  color:var(--accent);
+}
+body details[open] > summary::after{content:'▼ 閉じる' !important}
+@media (max-width:600px){
+  body details > summary{gap:.4rem}
+  body details > summary::after{font-size:.78rem}
+}
