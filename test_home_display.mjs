@@ -4,6 +4,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
 import {runRetirementPlan,formatMan} from './calc.mjs';
+import {familyAgeEndShortageSummary} from './simple-layout.mjs';
 const source=fs.readFileSync(new URL('./app.mjs',import.meta.url),'utf8');
 const html=fs.readFileSync(new URL('./index.html',import.meta.url),'utf8');
 function fn(name){const start=source.indexOf(`function ${name}(`),end=source.indexOf('\nfunction ',start+1);assert.ok(start>=0);return source.slice(start,end<0?undefined:end);}
@@ -11,7 +12,7 @@ class Node {textContent='';innerHTML='';className='';dataset={};children=[];attr
 function setup(){
  const config=JSON.parse(fs.readFileSync(new URL('./tools/browser-test/synthetic-full.json',import.meta.url))).config;
  const nodes=new Map();const el=id=>{if(!nodes.has(id))nodes.set(id,new Node());return nodes.get(id);};
- const context=vm.createContext({config,result:runRetirementPlan(config),forecast:null,showActuals:false,el,document:{createElement:()=>new Node(),createElementNS:()=>new Node()},money:v=>`${formatMan(v,0)}万円`,formatMan,projectIdeco:()=>null,renderReviewAlerts(){},renderPending(){},escapeHtml:s=>String(s).replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;')});
+ const context=vm.createContext({config,result:runRetirementPlan(config),forecast:null,showActuals:false,el,familyAgeEndShortageSummary,renderFamilyAnnualQuick(){},document:{createElement:()=>new Node(),createElementNS:()=>new Node()},money:v=>`${formatMan(v,0)}万円`,formatMan,projectIdeco:()=>null,renderReviewAlerts(){},renderPending(){},escapeHtml:s=>String(s).replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;')});
  vm.runInContext(['renderHome','derivePending','renderYearTable','drawPolyline','drawChart'].map(fn).join('\n'),context);
  return {context,el,config};
 }
