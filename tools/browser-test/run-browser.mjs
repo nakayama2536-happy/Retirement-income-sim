@@ -291,7 +291,7 @@ async function validatePensionUi(browser){
    assert.equal(await page.locator('#primaryPensionAmount').inputValue(),'170.4');
   }
   
-  await page.locator('#primaryPensionMonth').fill('2051-01');await page.locator('#primaryPensionEstimateDetails > summary').click();await page.locator('#primaryPensionUseEstimate').click();
+  await page.locator('#pensionOpenPrimary').click();await page.locator('#primaryPensionMonth').fill('2051-01');await page.locator('#primaryPensionEstimateDetails > summary').click();await page.locator('#primaryPensionUseEstimate').click();
   await page.locator('#pensionForm button[type="submit"]').click();await page.locator('#pensionApply').click();
   const after=(await snapshot(page)).data;
   assert.equal(after.config.income.pensions.primary.annualAtStart,180.48);
