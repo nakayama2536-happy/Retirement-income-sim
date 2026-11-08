@@ -17,7 +17,7 @@ import {mountExpenseSheet} from './expense-ui.mjs';
 import {mountIncomeSheet} from './income-ui.mjs';
 import {expenseDisplayModel,expenseDisplayHtml,expenseDisplayProfile} from './expense-display.mjs';
 import {annualCashflowSummaries} from './annual-cashflow.mjs';
-import {simplifyLayout,annualCheckText} from './simple-layout.mjs';
+import {simplifyLayout,annualCheckText,familyAgeLedgerSummary,familyAgeEndShortageSummary} from './simple-layout.mjs';
 import {basicSettingsValues,priceBaseExplanation,planPeriodUpdate,planPeriodDelete,verifyPeriodPlan,parsePeriodForm,proposalStamp,formatPeriodRow} from './ui-entry-guards.mjs';
 import {taxSocialMethodAudit,taxSocialMethodHtml} from './tax-social-audit.mjs';
 import {downloadAnnualCsv} from './annual-csv.mjs';
@@ -235,6 +235,8 @@ function renderHome() {
   el('currentAsset').textContent = money(config.plan.initialAsset);
   el('finalAsset').textContent = goalAsset===null?'未計算':money(goalAsset);
   el('finalThreshold').textContent = target ? money(target.threshold) : '未設定';
+  const checkpoint=familyAgeEndShortageSummary(result.rows);
+  el('familyHomeShortage').textContent=checkpoint.message;
   el('reserve').textContent = money(result.reserve);
   el('afterReserve').textContent = money(result.finalAfterReserveUse);
   el('reserveUsedThreshold').textContent = money(result.reserveUsedThreshold);
@@ -485,7 +487,32 @@ function renderAge65IncomeAudit(){
   </details>`;
 }
 
+function renderFamilyAnnualQuick(){
+ const ageControl=el('familyCashflowAge');
+ if(!ageControl||!result)return;
+ const prev=Number(ageControl.value);
+ const rows=result.rows??[];
+ ageControl.replaceChildren(...rows.map(r=>{const option=document.createElement('option');option.value=String(r.age);option.textContent=r.age+'歳期';return option;}));
+ const age=rows.some(r=>r.age===prev)?prev:rows[0]?.age;
+ if(age!==undefined)ageControl.value=String(age);
+ const summary=familyAgeLedgerSummary(rows,age);
+ const fields=['familyAnnualIncome','familyAnnualExpense','familyAnnualBalance','familyAnnualAsset'];
+ if(summary.status!=='ready'){
+  for(const id of fields)el(id).textContent='未確認';
+  el('familyAnnualNote').textContent=summary.reason+'。保存済み条件は変わりません。';
+  return;
+ }
+ el('familyAnnualIncome').textContent=money(summary.income);
+ el('familyAnnualExpense').textContent=money(summary.expense);
+ el('familyAnnualBalance').textContent=(summary.netCashflow>=0?'+':'')+money(summary.netCashflow);
+ el('familyAnnualAsset').textContent=money(summary.endAsset);
+ el('familyAnnualBalance').className=summary.netCashflow<0?'neg':summary.netCashflow>0?'pos':'';
+ el('familyAnnualAsset').className=summary.endAsset<0?'neg':'';
+ el('familyAnnualNote').textContent=summary.age+'歳期の月次計算を集計した年額（万円）です。資産増減には運用益等も含まれるため収支差と一致しません。収支のマイナスは直ちに資金枯渇を意味しません。';
+}
+
 function renderYearTable() {
+  renderFamilyAnnualQuick();
   const body = el('yearRows'); body.innerHTML = '';
   result.rows.forEach(r => {
     const a = config.actuals?.[r.age];
@@ -918,6 +945,7 @@ el('periodEditForm').elements.kind.addEventListener('change',e=>{
   }
 });
 el('cashflowViewAge').addEventListener('change', ()=>{renderExpenseDetail();planningCharts.renderExpense();});
+el('familyCashflowAge').addEventListener('change',renderFamilyAnnualQuick);
 el('expenseDisplaySource').addEventListener('change', ()=>{renderExpenseDetail();planningCharts.renderExpense();});
 el('exportAnnualCsvBtn').addEventListener('click',()=>{if(!config)return;const x=downloadAnnualCsv(config,{sourceProfile:el('expenseDisplaySource').value});showNotice(`年間収支CSV（${x.rowCount}期間）を作成しました。保存先を確認してください。`);});
 el('certaintyForm').addEventListener('submit', saveCertainty);
@@ -1008,7 +1036,7 @@ document.querySelectorAll('[data-help]').forEach(btn=>btn.addEventListener('clic
 }));
 el('helpClose').addEventListener('click',()=>el('helpDialog').close());
 
-const CURRENT_RUNTIME_BUILD='v0.9.54-expense-identity-20261109';
+const CURRENT_RUNTIME_BUILD='v0.9.55-family-ui-integration-20261109';
 el('appVersion').textContent=CURRENT_RUNTIME_BUILD+'（端末で実行中）';
 const freshness=el('runtimeFreshness');
 (async()=>{

@@ -26,7 +26,7 @@ function preview(state,profile='work-v0.9.7',kind='detail',amount=6){
 function yearCells(state,result){
  const rows=[];const body={innerHTML:'',appendChild:r=>rows.push(r.innerHTML)};
  const start=app.indexOf('function renderYearTable()'),end=app.indexOf('\nfunction ',start+10);
- vm.runInNewContext(app.slice(start,end)+';renderYearTable();',{config:state.config,result,formatMan,el:()=>body,document:{createElement:()=>({innerHTML:''})}});
+ vm.runInNewContext(app.slice(start,end)+';renderYearTable();',{config:state.config,result,formatMan,renderFamilyAnnualQuick(){},el:()=>body,document:{createElement:()=>({innerHTML:''})}});
  return rows.map(r=>[...r.matchAll(/<td[^>]*>(.*?)<\/td>/g)].map(x=>x[1]));
 }
 for(const kind of ['detail','budget'])test(`integrated ${kind}: saved result, annual table and undo agree`,async()=>{

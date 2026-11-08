@@ -1,5 +1,5 @@
 {
-  "appBuild": "v0.9.54-expense-identity-20261109",
+  "appBuild": "v0.9.55-family-ui-integration-20261109",
   "releasedAt": "2026-11-08",
-  "purpose": "expense-identity-diagnostic-and-guided-edit"
+  "purpose": "family-ui-integration-readonly-guidance"
 }

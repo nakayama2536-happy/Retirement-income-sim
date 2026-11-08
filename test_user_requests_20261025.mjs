@@ -48,7 +48,9 @@ test('R09: displayed ①②③④ is only a stable mapping over the previous sec
 test('R10: backup/sync is a real independent tab and reuses original import/export/recovery controls',()=>{
  assert.match(html,/data-group-item="manage" data-tab="backup"/);
  assert.match(html,/section id="backup" class="panel" hidden/);
- assert.match(layout,/host:byId\('backup'\)/);
+ assert.match(layout,/host:backupPanel/);
+ assert.match(layout,/group\('cloud'/);
+ assert.match(layout,/group\('restore'/);
  for(const id of ['privateSyncCard','importFile2','exportFullBtn','exportBtn','recoveryCheckFile'])assert.match(html,new RegExp(`id="${id}"`));
  assert.match(layout,/byId\('recoveryCheckFile'\)\?\.closest\('article'\)/);
  assert.match(css,/:is\(#settings,#backup\) \.settings-category/);

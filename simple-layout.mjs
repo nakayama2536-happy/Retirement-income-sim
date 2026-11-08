@@ -88,6 +88,15 @@ export function simplifyLayout(doc) {
     return box;
   };
   const settingsOverview=byId('settingsCurrentSummary')?.closest('article');
+  // The adopted settings overview stays visible when all editing sections are closed.
+  // These are explanation-only nodes: no event listeners or persisted values are changed.
+  if(settingsOverview){
+    const guide=doc.createElement('div');guide.className='family-safe-overview';guide.id='familySafeSettingsIntro';
+    guide.setAttribute('role','note');
+    const title=doc.createElement('strong');title.textContent='まずは保存済みの計画を確認';
+    const note=doc.createElement('p');note.textContent='下の一覧は現在の計画です。見るだけでは変更されません。資産・利回り・計算期間を変更するときだけ、該当する設定を開いてください。';
+    guide.append(title,note);settingsOverview.before(guide);
+  }
   const finance=byId('settingsForm')?.closest('article');
   const backups=byId('exportFullBtn')?.closest('article');
   const goals=byId('detail-goal')?.closest('article');
@@ -98,8 +107,23 @@ export function simplifyLayout(doc) {
   const recoveryCard=byId('recoveryCheckFile')?.closest('article');
   if(recovery)recovery.querySelector('summary').textContent='詳細設定：計算期間';
   const settingsColumns=finance?.parentElement;
-  group('backup','クラウド・バックアップと復旧確認',[byId('privateSyncCard'),backups,recoveryCard],{open:true,host:byId('backup')});
-  group('finance','計画の基本条件｜資産・利回り・物価',[settingsOverview,finance]);
+  const backupPanel=byId('backup');
+  const backupIntro=doc.createElement('div');backupIntro.className='family-safe-overview';backupIntro.id='familySafeBackupIntro';
+  const backupTitle=doc.createElement('strong');backupTitle.textContent='最初に確認：端末の保存とバックアップは別です';
+  const backupText=doc.createElement('p');backupText.textContent='この画面を開いただけでは、端末保存の成功やクラウド同期の完了を確認できません。バックアップはボタンを押してファイルを作り、保存先を確認してください。クラウドの最終状態は接続後に確認が必要です。';
+  backupIntro.append(backupTitle,backupText);backupPanel.prepend(backupIntro);
+  // Import changes stored data: keep the original file input and handler, but hide it
+  // behind an explicit separate action rather than beside a download button.
+  const importLabel=byId('importFile2')?.closest('label');
+  if(importLabel){const importDetails=wrap(importLabel,'重要操作：保存済み設定・バックアップを読み込む（復元）');
+    importDetails.classList.add('family-danger-disclosure');
+    const restoreCaution=doc.createElement('p');restoreCaution.textContent='復元の範囲と既存データへの影響を先に確認してください。開くだけでは読み込みません。';
+    importDetails.insertBefore(restoreCaution,importLabel);
+  }
+  group('backup','① 一括バックアップファイルを作る',[backups],{open:true,host:backupPanel});
+  group('cloud','② クラウドの接続・保存・読込みを確認',[byId('privateSyncCard')],{host:backupPanel});
+  group('restore','③ 復旧用ファイルの適合性を確認',[recoveryCard],{host:backupPanel});
+  group('finance','条件を変更する｜資産・利回り・物価',[finance]);
   group('goals','計算期間・年齢別目標',[byId('detail-horizon'),goals]);
   group('compare','比較試算・未採用案',[byId('step8TrialCard')]);
   group('maintenance','表示・確度・復旧などの補助機能',[display,certainty,recovery,undo]);
@@ -118,4 +142,29 @@ export function annualCheckText(rows) {
     rows.some(r => !r.sourceProfile) ? '参考内訳の採用元が未確定の期間があります。必要な場合は生活費・保険の詳細で確認してください。' : '',
     'これは計算上の整合確認であり、将来の資産や制度適合性を保証するものではありません。'
   ].filter(Boolean).join('\n');
+}
+
+/**
+ * Read-only family display using existing annual ledger amounts in 万円.
+ * No new projection or adoption. A negative age-end balance is NOT the first
+ * negative month; it must be described explicitly as an age-period checkpoint.
+ */
+export function familyAgeLedgerSummary(rows,selectedAge){
+ if(!Array.isArray(rows))return {status:'unavailable',reason:'年齢期の計算結果がありません'};
+ const record=rows.find(r=>r.age===Number(selectedAge));
+ if(!record)return {status:'unavailable',reason:'指定した年齢期は計算対象外です'};
+ const keys=['startAsset','investmentGain','totalIncome','expense','extraExpense','endAsset'];
+ if(keys.some(key=>!Number.isFinite(record[key])))return {status:'unavailable',reason:'この年齢期の金額を確認できません'};
+ return {status:'ready',age:record.age,startAsset:record.startAsset,
+  investmentGain:record.investmentGain,income:record.totalIncome,
+  expense:record.expense+record.extraExpense,
+  endAsset:record.endAsset,
+  netCashflow:record.totalIncome-record.expense-record.extraExpense};
+}
+export function familyAgeEndShortageSummary(rows){
+ if(!Array.isArray(rows)||!rows.length)return {status:'unavailable',message:'計算結果を確認できません'};
+ if(rows.some(r=>!Number.isFinite(r.endAsset)||!Number.isInteger(r.age)))return {status:'unavailable',message:'一部の年齢期末資産が未確認です'};
+ const negative=rows.find(r=>r.endAsset<0);
+ return {status:'ready',age:negative?.age??null,
+  message:negative?`初めて年齢期末の残高がマイナスになったのは${negative.age}歳期末です`:'計算期間中の年齢期末には負の残高がありません'};
 }
