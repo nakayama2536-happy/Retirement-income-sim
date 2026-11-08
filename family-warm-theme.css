@@ -175,3 +175,7 @@ button,input,select,textarea{font-family:inherit}
 #expenseSheet .expense-error-guide p{margin:7px 0}
 #expenseSheet select,#expenseSheet input,#expenseSheet button{min-height:44px}
 #expenseSheet [hidden]{display:none!important}
+
+#detail-expense .detail-expense-step{grid-column:1/-1;padding:10px 14px;border-left:3px solid #bd7244;background:#fffaf3;line-height:1.75;margin:8px 0}
+#detail-expense .detail-expense-step>strong{color:#864623;margin-right:.45em}
+#detail-expense .detail-preview .detail-expense-step{margin:12px 0}
