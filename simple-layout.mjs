@@ -88,6 +88,15 @@ export function simplifyLayout(doc) {
     return box;
   };
   const settingsOverview=byId('settingsCurrentSummary')?.closest('article');
+  // The adopted settings overview stays visible when all editing sections are closed.
+  // These are explanation-only nodes: no event listeners or persisted values are changed.
+  if(settingsOverview){
+    const guide=doc.createElement('div');guide.className='family-safe-overview';guide.id='familySafeSettingsIntro';
+    guide.setAttribute('role','note');
+    const title=doc.createElement('strong');title.textContent='まずは保存済みの計画を確認';
+    const note=doc.createElement('p');note.textContent='下の一覧は現在の計画です。見るだけでは変更されません。資産・利回り・計算期間を変更するときだけ、該当する設定を開いてください。';
+    guide.append(title,note);settingsOverview.before(guide);
+  }
   const finance=byId('settingsForm')?.closest('article');
   const backups=byId('exportFullBtn')?.closest('article');
   const goals=byId('detail-goal')?.closest('article');
@@ -98,8 +107,22 @@ export function simplifyLayout(doc) {
   const recoveryCard=byId('recoveryCheckFile')?.closest('article');
   if(recovery)recovery.querySelector('summary').textContent='詳細設定：計算期間';
   const settingsColumns=finance?.parentElement;
-  group('backup','クラウド・バックアップと復旧確認',[byId('privateSyncCard'),backups,recoveryCard],{open:true,host:byId('backup')});
-  group('finance','計画の基本条件｜資産・利回り・物価',[settingsOverview,finance]);
+  const backupPanel=byId('backup');
+  const backupIntro=doc.createElement('div');backupIntro.className='family-safe-overview';backupIntro.id='familySafeBackupIntro';
+  const backupTitle=doc.createElement('strong');backupTitle.textContent='最初に確認：端末の保存とバックアップは別です';
+  const backupText=doc.createElement('p');backupText.textContent='この画面を開いただけでは、端末保存の成功やクラウド同期の完了を確認できません。バックアップはボタンを押してファイルを作り、保存先を確認してください。クラウドの最終状態は接続後に確認が必要です。';
+  backupIntro.append(backupTitle,backupText);backupPanel.prepend(backupIntro);
+  // Import changes stored data: keep the original file input and handler, but hide it
+  // behind an explicit separate action rather than beside a download button.
+  const importLabel=byId('importFile2')?.closest('label');
+  if(importLabel){const importDetails=wrap(importLabel,'重要操作：保存済み設定・バックアップを読み込む（復元）');
+    importDetails.classList.add('family-danger-disclosure');
+    importDetails.prepend(doc.createElement('p')).textContent='復元の範囲と既存データへの影響を先に確認してください。開くだけでは読み込みません。';
+  }
+  group('backup','① 一括バックアップファイルを作る',[backups],{open:true,host:backupPanel});
+  group('cloud','② クラウドの接続・保存・読込みを確認',[byId('privateSyncCard')],{host:backupPanel});
+  group('restore','③ 復旧用ファイルの適合性を確認',[recoveryCard],{host:backupPanel});
+  group('finance','条件を変更する｜資産・利回り・物価',[finance]);
   group('goals','計算期間・年齢別目標',[byId('detail-horizon'),goals]);
   group('compare','比較試算・未採用案',[byId('step8TrialCard')]);
   group('maintenance','表示・確度・復旧などの補助機能',[display,certainty,recovery,undo]);
