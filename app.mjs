@@ -967,7 +967,7 @@ el('showActuals').addEventListener('change',e=>{
 });
 
 function switchTab(id){
-  if(['salary','pension'].includes(id)&&el('sharedTaxTool'))el(id).appendChild(el('sharedTaxTool').closest('details.supplementary')||el('sharedTaxTool'));
+  if(['salary','pension'].includes(id)&&el('sharedTaxTool')){const container=id==='pension'&&el('pensionTaxExtra')?el('pensionTaxExtra'):el(id);container.appendChild(el('sharedTaxTool').closest('details.supplementary')||el('sharedTaxTool'));}
   const group=document.querySelector(`[data-tab="${id}"]`)?.dataset.groupItem;
   if(group){document.querySelectorAll('[data-group]').forEach(b=>b.classList.toggle('active',b.dataset.group===group));document.querySelectorAll('[data-group-item]').forEach(b=>b.hidden=b.dataset.groupItem!==group);}
   document.querySelectorAll('[data-tab]').forEach(b=>b.classList.toggle('active',b.dataset.tab===id));
@@ -1005,7 +1005,7 @@ document.querySelectorAll('[data-help]').forEach(btn=>btn.addEventListener('clic
 }));
 el('helpClose').addEventListener('click',()=>el('helpDialog').close());
 
-const CURRENT_RUNTIME_BUILD='v0.9.42-survivor-transfer-20261108';
+const CURRENT_RUNTIME_BUILD='v0.9.43-pension-input-first-20261108';
 el('appVersion').textContent=CURRENT_RUNTIME_BUILD+'（端末で実行中）';
 const freshness=el('runtimeFreshness');
 (async()=>{

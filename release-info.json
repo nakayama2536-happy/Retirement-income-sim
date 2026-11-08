@@ -1,5 +1,5 @@
 {
-  "appBuild": "v0.9.42-survivor-transfer-20261108",
+  "appBuild": "v0.9.43-pension-input-first-20261108",
   "releasedAt": "2026-11-08",
-  "purpose": "reuse-private-reference65-and-stage-mortality-trial"
+  "purpose": "pension-statement-first-workflow"
 }

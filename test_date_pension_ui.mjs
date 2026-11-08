@@ -97,3 +97,32 @@ test('manual official amount remains possible; base input is transient and draft
  t.node('pensionForm').emit('submit');assert.equal(t.node('pensionPreview').hidden,false);
  assert.equal(loadConfig().income.pensions.spouse.annualAtStart,60);
 });
+
+test('statement first: 65-year values can be imported into a trial without saving adopted settings',()=>{
+ const t=setup(),before=JSON.stringify(loadConfig());
+ assert.equal(t.node('pensionReferenceMaster').open,true);
+ for(const [suffix,value] of [['65Basic','80'],['65Earnings','39.5'],['65Transitional','0.5'],['65Total','120']])t.set('primaryPension'+suffix,value);
+ t.set('primaryPension65Source','fictional 2026 pension statement');
+ t.node('pensionReferenceDone').emit('click');
+ assert.equal(t.node('pensionReferenceMaster').open,false);
+ assert.equal(t.node('primaryPensionPlanDetails').open,true);
+ t.node('primaryPensionImport65').emit('click');
+ assert.equal(t.node('primaryPensionBase65').value,'120');
+ assert.equal(t.node('primaryPensionAmount').value,'170.4');
+ assert.equal(t.node('primaryPensionCertainty').value,'scenario');
+ assert.equal(JSON.stringify(loadConfig()),before);
+ t.node('pensionForm').emit('submit');
+ assert.equal(t.node('pensionPreview').hidden,false);
+ assert.equal(JSON.stringify(loadConfig()),before);
+});
+test('statement first: missing or inconsistent evidence blocks import and keeps current amount',()=>{
+ const t=setup(),before=t.node('primaryPensionAmount').value;
+ t.node('primaryPensionImport65').emit('click');
+ assert.equal(t.node('primaryPensionAmount').value,before);
+ assert.match(t.node('primaryPensionImportNote').textContent,/未入力/);
+ for(const [suffix,value] of [['65Basic','70'],['65Earnings','40'],['65Transitional','1'],['65Total','120']])t.set('primaryPension'+suffix,value);
+ t.set('primaryPension65Source','fictional statement');
+ t.node('primaryPensionImport65').emit('click');
+ assert.equal(t.node('primaryPensionAmount').value,before);
+ assert.match(t.node('primaryPensionImportNote').textContent,/一致していません/);
+});
