@@ -143,5 +143,5 @@ export function familyAgeEndShortageSummary(rows){
  if(rows.some(r=>!Number.isFinite(r.endAsset)||!Number.isInteger(r.age)))return {status:'unavailable',message:'一部の年齢期末資産が未確認です'};
  const negative=rows.find(r=>r.endAsset<0);
  return {status:'ready',age:negative?.age??null,
-  message:negative?`${negative.age}歳期末から負の残高が確認されます`:'計算期間中の年齢期末には負の残高がありません'};
+  message:negative?`初めて年齢期末の残高がマイナスになったのは${negative.age}歳期末です`:'計算期間中の年齢期末には負の残高がありません'};
 }
