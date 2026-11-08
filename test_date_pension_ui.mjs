@@ -105,7 +105,7 @@ test('statement first: 65-year values can be imported into a trial without savin
  t.set('primaryPension65Source','fictional 2026 pension statement');
  t.node('pensionReferenceDone').emit('click');
  assert.equal(t.node('pensionReferenceMaster').open,false);
- assert.equal(t.node('primaryPensionPlanDetails').open,true);
+ assert.equal(t.node('primaryPensionPlanDetails').open,undefined); // family view stays collapsed until chosen
  t.node('primaryPensionImport65').emit('click');
  assert.equal(t.node('primaryPensionBase65').value,'120');
  assert.equal(t.node('primaryPensionAmount').value,'170.4');
