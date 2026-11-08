@@ -42,3 +42,18 @@ export function revealWorkflowTarget(target){
  for(const {panes,activate} of controllers.values())for(let i=0;i<panes.length;i++)if(panes[i].contains(target)){activate(i);return true;}
  return false;
 }
+
+export function installMortalityTabs(form){
+ if(!form||controllers.has(form.id))return;
+ const fieldsets=[...form.querySelectorAll(':scope > fieldset')];
+ const review=form.querySelector(':scope > label.check-label');
+ const buttons=[...form.querySelectorAll(':scope > button')];
+ if(fieldsets.length!==2||!review||buttons.length<1)return;
+ setup(form,['1．死亡時期・年金','2．残された人の生活費','3．確認して試算'],[[fieldsets[0]],[fieldsets[1]],[review,...buttons]]);
+ const controller=controllers.get(form.id);
+ // Native validation must show the tab containing an invalid control.
+ form.addEventListener('invalid',event=>{
+  const index=controller.panes.findIndex(p=>p.contains(event.target));
+  if(index>=0)controller.activate(index);
+ },true);
+}
