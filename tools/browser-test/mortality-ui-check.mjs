@@ -67,6 +67,7 @@ const factorRow=(page,label)=>page.locator('#mortalityItemHost .mortality-item-r
 async function factors(page){
  await stage(page,1);
  await factorRow(page,'食費').fill('0.6');
+ assert.match(await page.locator('#mortalityItemHost .mortality-item-row').filter({hasText:'食費'}).locator('.family-factor-percent').innerText(),/60％/);
  await factorRow(page,'水道光熱費').fill('0.8');
  await factorRow(page,'住居').fill('1');
  await page.locator('#mortalityRemainderFactor').fill('0.8');
@@ -80,7 +81,7 @@ try{
   await ctx.route('**/*',r=>{if(new URL(r.request().url()).origin===origin)return r.continue();report.blockedExternal.push(r.request().url());return r.abort();});
   const page=await ctx.newPage();page.on('pageerror',e=>report.pageErrors.push({engine,error:e.message}));
   await page.goto(origin,{waitUntil:'networkidle'});await page.locator('#dashboard').waitFor({state:'visible'});
-  assert.equal(await page.locator('#appVersion').innerText(),'v0.9.49-mortality-asset-audit-20261108（端末で実行中）');
+  assert.equal(await page.locator('#appVersion').innerText(),'v0.9.50-family-guidance-20261108（端末で実行中）');
   assert.equal(await page.locator('[data-group="results"]').getAttribute('data-step-no'),'1');
   assert.equal(await page.locator('[data-tab="mortality"]').getAttribute('data-step-no'),'1-3');
   assert.equal(await page.locator('[data-tab="pension"]').getAttribute('data-step-no'),'2-5');
@@ -105,7 +106,22 @@ try{
   await child.waitFor({state:'visible'});
   assert.equal(await child.getAttribute('data-step-no'),'4-1-3-3-1');
   mark(engine,'expense-page-headings-age-source-category-and-child-numbered');
-  const before=await saved(page);await open(page);await baselineInputs(page);
+  const before=await saved(page);await open(page);
+  assert.match(await page.locator('#mortalityStepStatus').innerText(),/手順 1／3/);
+  await page.locator('#mortalityOpenPension').click();
+  assert.equal(await page.locator('#mortalityPensionSettings').evaluate(n=>n.open),true);
+  assert.equal(await page.evaluate(()=>document.activeElement?.name),'survivorPension');
+  await page.locator('#mortalityStepNext').click();
+  assert.match(await page.locator('#mortalityStepStatus').innerText(),/手順 2／3/);
+  assert.equal(await page.locator('#mortalityItemHost').isVisible(),true);
+  await page.locator('#mortalityStepNext').click();
+  assert.match(await page.locator('#mortalityStepStatus').innerText(),/手順 3／3/);
+  await page.locator('#mortalityStepPrevious').click();
+  assert.match(await page.locator('#mortalityStepStatus').innerText(),/手順 2／3/);
+  await stage(page,0);
+  assert.equal(await saved(page),before);
+  mark(engine,'family-guide-step-navigation-and-pension-reveal-preserve-adopted-values');
+  await baselineInputs(page);
   assert.equal(await input(page,'deathMonth').locator('xpath=..').getAttribute('data-step-no'),'1-3-1-2');
   mark(engine,'mortality-form-field-numbering-present');
   assert.equal(Number(await page.locator('#mortalityRemainderFactor').inputValue()),1,'初期の残額倍率は100%であること');
@@ -153,6 +169,7 @@ try{
   for(const width of [390,1280]){
    await page.setViewportSize({width,height:900});
    assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),'horizontal overflow '+width);
+   if(width===390){const textBox=await page.locator('#mortalityForm .family-review-check > span').boundingBox();assert.ok(textBox&&textBox.width>=210,'mobile confirmation text must have a readable width');}
    await page.screenshot({path:resolve(out,engine+'-HMORT07-'+width+'.png'),fullPage:true});
    mark(engine,'aligned-responsive-comparison-'+width);
   }

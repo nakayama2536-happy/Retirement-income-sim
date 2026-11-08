@@ -160,7 +160,7 @@ export function mountMortalityComparison(root,{getConfig,getBaseline,runPlan}){
  <form id="mortalityForm" class="mortality-form">
  <fieldset><legend>1．誰が・いつ万一となるか</legend>
  <div class="form-grid mortality-grid">
-  <label>万一を想定する方<select name="deceased"><option value="primary">本人</option><option value="spouse">配偶者</option></select></label>
+  <label>亡くなる方（計画に登録された人）<select name="deceased"><option value="primary">計画の本人</option><option value="spouse">計画の配偶者</option></select><small class="muted">「本人」は画面を操作している人ではなく、この計画の登録者を指します。</small></label>
   <label>万一を想定する月<input name="deathMonth" type="month" required aria-describedby="mortalityAgeHint"><small id="mortalityAgeHint" class="muted" aria-live="polite">年月を入力すると年齢を表示します。</small></label>
   <label>万一の月に1度だけ加える費用（万円、仮置き）<input name="funeral" type="number" step="any" min="0" value="0" required></label>
  </div>
@@ -169,7 +169,12 @@ export function mountMortalityComparison(root,{getConfig,getBaseline,runPlan}){
  <div id="mortalityPensionBreakdown" role="status" aria-live="polite"></div><p class="muted">上の年金額は登録情報から計算した<strong>参考内訳</strong>です。比較に実際に使うのは、下の詳細設定にある「残された人の公的年金合計（仮年額）」です。受給資格を確認していない参考金額を、確定した年金収入として自動採用するものではありません。</p>
  <p class="muted">万一の月は元の年金、翌月から仮年額を12等分する近似です。葬儀費0は「今回の比較に費用を入れない」仮定であり、実費0円の認定ではありません。</p>
 
- <details id="mortalityPensionSettings"><summary>年金の詳細設定・試算用年額の調整（必要な場合のみ）</summary>
+ <div class="family-pension-entry" role="note">
+ <strong>確認するのは、残された方の公的年金の合計（年額）です。</strong>
+ <p>遺族年金だけの金額ではありません。資料で確認できない金額は確定額として扱わず、仮定を明示して比較してください。</p>
+ <button type="button" class="secondary" id="mortalityOpenPension">年金の確認・入力欄を開く</button>
+ </div>
+ <details id="mortalityPensionSettings"><summary>詳しい年金の入力・参考計算（任意）</summary>
   <div class="form-grid mortality-grid">
    <label>残された人の公的年金合計（試算に使用する仮年額・万円／年）<input name="survivorPension" type="number" step="any" min="0" required placeholder="要確認：遺族年金を含む合計年額"></label>
    <label id="mortalityPreClaimRow" hidden>残された人の老齢年金受給前の公的年金合計（万円／年、仮置き）<input name="preClaimPension" type="number" step="any" min="0" placeholder="受給前の参考年額"><small id="mortalityPreClaimHint" class="muted">繰下げと受給権は別途確認</small></label>
@@ -190,6 +195,7 @@ export function mountMortalityComparison(root,{getConfig,getBaseline,runPlan}){
  </fieldset>
  <fieldset><legend>2．残された人の生活費（費目別の変更）</legend><p>倍率の見方：<strong>1.0倍＝元と同じ100％、0.8倍＝80％（20％減）、1.2倍＝120％（20％増）</strong>です。費目ごとに入力した倍率で比較します。入力しただけでは現在の計画は変更されません。</p>
  <p class="muted">登録済みの生活費を費目別に参照し、残された人の生活費倍率を設定します。支出は「元の管理予算 − 減額分」で計算し、物価係数の二重適用を防ぎます。</p>
+ <p class="family-factor-helper">入力例：<strong>1.0＝100％（変化なし）／0.8＝80％（20％減）／0.5＝50％（半分）／0＝0％</strong>。倍率は費目ごとに設定でき、画面の合計額へ反映されます。</p>
  <input type="hidden" id="mortalityExpenseSource" value="work-v0.9.7"><p class="muted">登録済みの費目内訳を参照します。専用の死亡後倍率が設定されている場合は、その登録元と倍率を初期値として読み込みます。各倍率は試算用で、採用済み予算やクラウドを変更しません。</p>
  <p id="mortalityItemSourceNote" class="muted"></p>
  <div id="mortalityItemHost" class="mortality-item-rows"></div>
@@ -200,7 +206,7 @@ export function mountMortalityComparison(root,{getConfig,getBaseline,runPlan}){
  <div id="mortalityCostRows" class="mortality-costs"></div>
  <p id="mortalityAllocationTotal" class="muted" role="status"></p></div>
  </fieldset>
- <label class="check-label"><input type="checkbox" name="reviewed" required> 年金年額・万一の月・費目別倍率と残額倍率が<strong>比較用の仮定</strong>で、現在の採用条件ではないことを確認しました。</label>
+ <label class="check-label family-review-check"><input type="checkbox" name="reviewed" required><span>年金年額・万一の月・生活費の倍率が<strong>比較用の仮定</strong>であり、現在の計画や保存済み条件は変わらないことを確認しました。</span></label>
  <button id="mortalityRun" class="primary" type="submit">比較を計算（保存しない）</button>
  <button id="mortalityClear" class="secondary" type="button">結果表示をクリア</button>
  <button id="mortalityClearInputs" class="secondary" type="button">比較入力を初期化</button>
@@ -210,6 +216,11 @@ export function mountMortalityComparison(root,{getConfig,getBaseline,runPlan}){
  `;
  const form=root.querySelector('#mortalityForm'),state=root.querySelector('#mortalityState'),results=root.querySelector('#mortalityResults'),costBox=root.querySelector('#mortalityCostRows');
  installMortalityTabs(form);
+ root.querySelector('#mortalityOpenPension')?.addEventListener('click',()=>{
+  const details=root.querySelector('#mortalityPensionSettings');
+  details.open=true;
+  form.elements.survivorPension.focus();
+ });
  const initial=blankMortalityAllocation();for(const c of MORTALITY_COSTS)costBox.append(costInputRow(c,initial.find(x=>x.key===c.key)));
  let current=null,blockedExternal=false,pensionReference=null;
  const externalUpdateMessage='別画面で保存済み条件が更新されました。再読み込みしてから万一の時期の比較を試算してください。';
