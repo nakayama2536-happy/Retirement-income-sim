@@ -1,6 +1,6 @@
 {
   "kind": "public-release",
-  "runtime": "v0.9.47-mortality-age95-detail-20261108",
+  "runtime": "v0.9.48-unified-disclosure-20261108",
   "files": [
     {
       "name": "age-budget-candidate.mjs",
@@ -29,13 +29,13 @@
     },
     {
       "name": "app.mjs",
-      "size": 79282,
-      "sha256": "b91c4aadf3373df36060646285be1c4744f1c0b702bf3b26060e8471227ff714"
+      "size": 79278,
+      "sha256": "2708a9ac2d63ffb5d6ed3a3ee35b1c6b80ea6f576a92016c6a14fdf7b3572df4"
     },
     {
       "name": "backup-compatibility.mjs",
-      "size": 8055,
-      "sha256": "f6e4bdbce131cffc74a2e2ab1d97f13b0bc1f1a25d9ae6782ee903df737a07a3"
+      "size": 8051,
+      "sha256": "d38d49135e166b30f059b78386ee164070e95292fb3ee66fcfba5ce4377b228a"
     },
     {
       "name": "budget-travel-ui.mjs",
@@ -274,8 +274,8 @@
     },
     {
       "name": "release-info.json",
-      "size": 149,
-      "sha256": "b5972ff406bfe7d5fe2f59ab7b61bc948905af2ce9deee9aa71810bb08e1c25e"
+      "size": 130,
+      "sha256": "76dab3051ae7af2d61d43ada036fa0ae26350d11aecea186e5547683f7555b50"
     },
     {
       "name": "retirement-comment.mjs",
@@ -349,8 +349,8 @@
     },
     {
       "name": "sw.js",
-      "size": 4570,
-      "sha256": "b3ba98e55446a64bf416555928d710dcb7da1b0bb1a6ec5e18adec2689dedbc5"
+      "size": 4566,
+      "sha256": "0a4d81ef84d0afffe9cb9de57aed4299b768e1120520c3a489c5515316cb98e0"
     },
     {
       "name": "sync-controller.mjs",
@@ -394,8 +394,8 @@
     },
     {
       "name": "ui-numbering.css",
-      "size": 632,
-      "sha256": "1f5d0d07af57bb2348f3a176beecf389294615c28414a65e7b4d3b301d1fbee9"
+      "size": 1558,
+      "sha256": "7b42930cba49bc88739fb545087b73a738df74b7b50bc41229a7d1106911a2c6"
     },
     {
       "name": "ui-numbering.mjs",
