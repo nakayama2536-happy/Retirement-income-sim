@@ -57,9 +57,32 @@ export function installMortalityTabs(form){
  if(fieldsets.length!==2||!review||buttons.length<1)return;
  setup(form,['1．死亡時期・年金','2．残された人の生活費','3．確認して試算'],[[fieldsets[0]],[fieldsets[1]],[review,...buttons]]);
  const controller=controllers.get(form.id);
+ // Read-only, in-page guidance: never changes a setting or skips native validation.
+ const guide=document.createElement('div');guide.className='family-step-guide';guide.setAttribute('role','group');guide.setAttribute('aria-label','もしものときの家計：操作案内');
+ const status=document.createElement('p');status.className='family-step-status';status.id='mortalityStepStatus';status.setAttribute('role','status');status.setAttribute('aria-live','polite');
+ const note=document.createElement('p');note.className='family-step-hint';note.id='mortalityStepHint';
+ const actions=document.createElement('div');actions.className='family-step-actions';
+ const back=document.createElement('button');back.type='button';back.className='secondary';back.id='mortalityStepPrevious';back.textContent='前の手順へ';
+ const next=document.createElement('button');next.type='button';next.className='primary';next.id='mortalityStepNext';
+ actions.append(back,next);guide.append(status,note,actions);navAfter(form,guide);
+ const descriptions=[
+  '亡くなる方と年月、費用を確認します。年金の仮年額を確認できない場合は、確定額として入力しないでください。',
+  '生活費が亡くなった後に何％になるか確認します。1.0倍は変化なし、0.8倍は20％減です。',
+  '比較条件を確認して「比較を計算（保存しない）」を押します。この操作では今の計画は変更されません。'
+ ];
+ let step=0;
+ const show=index=>{step=index;status.textContent='手順 '+(index+1)+'／3：'+['亡くなる時期・年金','残された人の生活費','確認して試算'][index];note.textContent=descriptions[index];back.disabled=index===0;next.hidden=index===2;next.textContent=index===0?'次へ：生活費を確認':'次へ：試算前の確認';};
+ const move=index=>{if(index<0||index>2)return;controller.activate(index,true);show(index);guide.scrollIntoView?.({block:'nearest',behavior:'auto'});};
+ back.addEventListener('click',()=>move(step-1));next.addEventListener('click',()=>move(step+1));
+ const tabs=form.querySelectorAll(':scope > .workflow-tabs > .workflow-tab');
+ tabs.forEach((tab,index)=>tab.addEventListener('click',()=>show(index)));
+ form.addEventListener('keydown',event=>{if(!['ArrowLeft','ArrowRight','Home','End'].includes(event.key))return;const index=[...tabs].indexOf(event.target);if(index>=0)queueMicrotask(()=>{const active=[...tabs].findIndex(t=>t.getAttribute('aria-selected')==='true');if(active>=0)show(active);});});
+ show(0);
  // Native validation must show the tab containing an invalid control.
  form.addEventListener('invalid',event=>{
   const index=controller.panes.findIndex(p=>p.contains(event.target));
   if(index>=0)controller.activate(index);
  },true);
 }
+
+function navAfter(form,guide){const nav=form.querySelector(':scope > .workflow-tabs');if(nav)nav.after(guide);}
