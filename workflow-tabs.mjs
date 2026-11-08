@@ -5,7 +5,11 @@ function setup(root,labels,groups){
  const nav=document.createElement('div');nav.className='workflow-tabs';nav.setAttribute('role','tablist');nav.setAttribute('aria-label','この画面の操作');
  const panes=labels.map((_,i)=>{const p=document.createElement('div');p.className='workflow-pane';p.id=root.id+'-workflow-pane-'+i;p.setAttribute('role','tabpanel');return p;});
  const tabs=labels.map((label,i)=>{const b=document.createElement('button');b.type='button';b.className='workflow-tab';b.textContent=label;b.id=root.id+'-workflow-tab-'+i;b.setAttribute('role','tab');b.setAttribute('aria-controls',panes[i].id);panes[i].setAttribute('aria-labelledby',b.id);nav.append(b);return b;});
- const activate=(i,focus=false)=>{tabs.forEach((b,n)=>{b.setAttribute('aria-selected',String(i===n));b.tabIndex=i===n?0:-1;panes[n].hidden=n!==i;});if(focus)tabs[i].focus();};
+ const activate=(i,focus=false)=>{tabs.forEach((b,n)=>{b.setAttribute('aria-selected',String(i===n));b.tabIndex=i===n?0:-1;panes[n].hidden=n!==i;});
+  // The existing iDeCo tax calculator is inside an older details container.
+  // Reveal that container when the separate reference-calculation tab is chosen.
+  if(root.id==='ideco'&&i===2){const node=panes[i].querySelector('#idecoBalance');for(let p=node?.parentElement;p&&p!==panes[i];p=p.parentElement)if(p.tagName==='DETAILS')p.open=true;}
+  if(focus)tabs[i].focus();};
  tabs.forEach((b,i)=>{b.addEventListener('click',()=>activate(i));b.addEventListener('keydown',e=>{if(!['ArrowLeft','ArrowRight','Home','End'].includes(e.key))return;e.preventDefault();const n=e.key==='Home'?0:e.key==='End'?tabs.length-1:(i+(e.key==='ArrowRight'?1:tabs.length-1))%tabs.length;activate(n,true);});});
  root.prepend(nav,...panes);
  groups.forEach((g,i)=>g.forEach(node=>panes[i].append(node)));
