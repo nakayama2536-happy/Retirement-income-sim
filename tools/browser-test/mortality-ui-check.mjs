@@ -80,7 +80,7 @@ try{
   await ctx.route('**/*',r=>{if(new URL(r.request().url()).origin===origin)return r.continue();report.blockedExternal.push(r.request().url());return r.abort();});
   const page=await ctx.newPage();page.on('pageerror',e=>report.pageErrors.push({engine,error:e.message}));
   await page.goto(origin,{waitUntil:'networkidle'});await page.locator('#dashboard').waitFor({state:'visible'});
-  assert.equal(await page.locator('#appVersion').innerText(),'v0.9.48-unified-disclosure-20261108（端末で実行中）');
+  assert.equal(await page.locator('#appVersion').innerText(),'v0.9.49-mortality-asset-audit-20261108（端末で実行中）');
   assert.equal(await page.locator('[data-group="results"]').getAttribute('data-step-no'),'1');
   assert.equal(await page.locator('[data-tab="mortality"]').getAttribute('data-step-no'),'1-3');
   assert.equal(await page.locator('[data-tab="pension"]').getAttribute('data-step-no'),'2-5');
@@ -127,7 +127,8 @@ try{
   const downloaded=[];
   for(const [kind,id] of [
     ['monthly','mortalityExportExpenseMonthlyCsv'],
-    ['items','mortalityExportExpenseItemsCsv']
+    ['items','mortalityExportExpenseItemsCsv'],
+    ['assets','mortalityExportAssetMonthlyCsv']
   ]){
     const pending=page.waitForEvent('download',{timeout:15000});
     await page.locator('#'+id).click();
@@ -135,13 +136,14 @@ try{
     assert.match(downloadedFile.suggestedFilename(),new RegExp('-'+kind+'-'));
     downloaded.push(downloadedFile);
   }
-  assert.equal(downloaded.length,2);
+  assert.equal(downloaded.length,3);
   const csvFiles=await Promise.all(downloaded.map(async d=>({name:d.suggestedFilename(),text:await readFile(await d.path(),'utf8')})));
   assert.ok(csvFiles.some(f=>f.name.includes('-monthly-')));
   assert.ok(csvFiles.some(f=>f.name.includes('-items-')));
+  assert.ok(csvFiles.some(f=>f.name.includes('-assets-')&&f.text.includes('月末資産_万円')&&f.text.includes('資産・支出検算')));
   for(const file of csvFiles){assert.ok(file.text.startsWith('\ufeff'));assert.match(file.text,/管理予算|費目名/);}
   assert.equal(await saved(page),before,'CSV download must not adopt or save settings');
-  mark(engine,'separate-expense-CSV-downloads-are-read-only-and-UTF8-BOM');
+  mark(engine,'expense-and-asset-CSV-downloads-are-read-only-and-UTF8-BOM');
   await verifyPensionReference(page);
   await submit(page);
   assert.equal(await page.locator('#mortalityPensionBreakdown').getAttribute('data-pension-state'),'reference');

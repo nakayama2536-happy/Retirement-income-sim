@@ -4,6 +4,7 @@ import fs from 'node:fs';
 import {migrateConfig} from './storage.mjs';
 import {runRetirementPlan} from './calc.mjs';
 import {simulateMortalityPreview,estimateSurvivorReference65,monthlyIndex} from './mortality-preview.mjs';
+import {mortalityAssetAuditRows} from './mortality-expense-csv.mjs';
 import {blankMortalityAllocation,fictionalMortalityAllocation,validateMortalityAllocation,allocateMortalityBudgetRows,calculateMortalityComparison,survivorPensionTiming,agePeriodComparisonRows} from './mortality-comparison.mjs';
 const approx=(a,b,t=1e-7)=>assert.ok(Math.abs(a-b)<t,`${a} != ${b}`);
 function fixture(){
@@ -110,4 +111,13 @@ test('age-period reductions equal monthly sums with inflation, return and one-of
  approx(x.mortality.monthly.reduce((sum,r)=>sum+r.funeralExpense,0),80);
  approx(x.mortality.monthly.reduce((sum,r)=>sum+r.extraExpense,0),25);
  approx(periods.reduce((sum,p)=>sum+p.expenseReduction,0),x.mortality.monthly.reduce((sum,r)=>sum+r.expenseReduction,0));
+});
+
+test('full mortality monthly asset export reconciles the actual engine and first deficit month',()=>{
+ const comparison=compare();
+ const rows=mortalityAssetAuditRows(comparison);
+ assert.equal(rows.length,comparison.mortality.monthly.length);
+ assert.equal(rows.at(-1).endAsset,comparison.mortality.finalAsset);
+ assert.equal(rows.find(r=>r.firstNegative==='はい')?.month??null,comparison.mortality.firstNegativeMonth);
+ assert.ok(rows.every(r=>r.identityStatus==='一致'));
 });
