@@ -1,5 +1,5 @@
 {
-  "appBuild": "v0.9.46-pension-three-cards-20261108",
+  "appBuild": "v0.9.47-mortality-age95-detail-20261108",
   "releasedAt": "2026-11-08",
-  "purpose": "compact-three-card-pension-summary"
+  "purpose": "mortality-age95-expense-detail-rollforward"
 }
