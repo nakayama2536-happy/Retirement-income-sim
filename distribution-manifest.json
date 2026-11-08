@@ -29,8 +29,8 @@
     },
     {
       "name": "app.mjs",
-      "size": 79278,
-      "sha256": "2708a9ac2d63ffb5d6ed3a3ee35b1c6b80ea6f576a92016c6a14fdf7b3572df4"
+      "size": 79415,
+      "sha256": "6b465210aed0d266ae20eb6ea910e092e44379280b056adcc1c4347a7f325d7d"
     },
     {
       "name": "backup-compatibility.mjs",
@@ -239,8 +239,8 @@
     },
     {
       "name": "mortality-ui.mjs",
-      "size": 59808,
-      "sha256": "4e8fe70cd3821506fc921a141ccb8998a9f37388d1f7e435089e538f848ff7b2"
+      "size": 59895,
+      "sha256": "1a9a3ac7aa8219b035106878810ab0c63eb12b025d2f580333bb2fbaf15359ab"
     },
     {
       "name": "pension-estimate.mjs",
@@ -349,8 +349,8 @@
     },
     {
       "name": "sw.js",
-      "size": 4566,
-      "sha256": "0a4d81ef84d0afffe9cb9de57aed4299b768e1120520c3a489c5515316cb98e0"
+      "size": 4602,
+      "sha256": "c8ebabe964fbe4e26eb99da184dae8a90a088f32ea1ec2bd7075d0115ab5986b"
     },
     {
       "name": "sync-controller.mjs",
@@ -394,8 +394,8 @@
     },
     {
       "name": "ui-numbering.css",
-      "size": 1558,
-      "sha256": "7b42930cba49bc88739fb545087b73a738df74b7b50bc41229a7d1106911a2c6"
+      "size": 2694,
+      "sha256": "2a744beb87ab8fce0dffce6051ed3f3f42dc9ed65d0ceefa9d3cf32b2758debb"
     },
     {
       "name": "ui-numbering.mjs",
@@ -411,6 +411,11 @@
       "name": "withdrawal-plan.mjs",
       "size": 4133,
       "sha256": "d7912923e1c6d8c37c3adee03197f314476ee0c7d0f3b3004c5fb73eb304e1f7"
+    },
+    {
+      "name": "workflow-tabs.mjs",
+      "size": 4482,
+      "sha256": "dafb95531e1ba455221a9ecdf0eeac2f0445946699c1cebdaeae451065d252ab"
     },
     {
       "name": "write-access.mjs",
