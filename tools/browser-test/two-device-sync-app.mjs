@@ -108,8 +108,10 @@ async function open(ctx){
  await page.locator('[data-tab="backup"]').click();
  const cloudGroup=page.locator('#settingsGroup-cloud');
  if(!(await cloudGroup.getAttribute('open')))await cloudGroup.locator('summary').first().click();
- const details=page.locator('#privateSyncCard details').first();
- if(!(await details.getAttribute('open')))await details.locator('summary').first().click();
+ // The new family-safe UI nests cloud controls in two disclosures. Open them
+ // in the isolated automation without relying on viewport-dependent clicks;
+ // the test below still exercises the real cloud buttons and their handlers.
+ await page.locator('#privateSyncCard details').first().evaluate(node=>{node.open=true;});
  return page;
 }
 async function login(page,persisted=false,{expectConflict=false}={}){
