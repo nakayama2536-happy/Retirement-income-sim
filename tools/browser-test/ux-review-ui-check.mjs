@@ -185,6 +185,7 @@ try{
   await page.screenshot({path:resolve(out,'settings-'+width+'.png'),fullPage:true});
   for(const tab of ['nisa','ideco']){
    await openTab('income',tab);
+   if(tab==='ideco')await page.locator('#ideco-workflow-tab-1').click();
    const kind=tab==='nisa'?'nisaWithdrawal':'idecoWithdrawal';
    const form=page.locator(`#detail-${kind} .form-grid`);
    await form.waitFor({state:'visible'});
