@@ -55,8 +55,8 @@ let result = null;
 let forecast = null;
 let showActuals = false;
 let renderedInputValues=new Map();
-const survivorPensionCard=mountSurvivorPensionScreen(document.getElementById('survivorPensionContainer'));
 const mortalityCard=mountMortalityComparison(document.getElementById('mortalityComparisonContainer'),{getConfig:()=>config,getBaseline:()=>result,runPlan:runRetirementPlan});
+const survivorPensionCard=mountSurvivorPensionScreen(document.getElementById('survivorPensionContainer'),{getConfig:()=>config,onTransfer:reference=>{mortalityCard.stageReference(reference);switchTab('mortality');}});
 
 function inputValues(){
   return new Map([...document.querySelectorAll('#dashboard input, #dashboard select, #dashboard textarea')]
@@ -1005,7 +1005,7 @@ document.querySelectorAll('[data-help]').forEach(btn=>btn.addEventListener('clic
 }));
 el('helpClose').addEventListener('click',()=>el('helpDialog').close());
 
-const CURRENT_RUNTIME_BUILD='v0.9.41-survivor-reference-20261108';
+const CURRENT_RUNTIME_BUILD='v0.9.42-survivor-transfer-20261108';
 el('appVersion').textContent=CURRENT_RUNTIME_BUILD+'（端末で実行中）';
 const freshness=el('runtimeFreshness');
 (async()=>{

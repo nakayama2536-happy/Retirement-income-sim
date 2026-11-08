@@ -591,5 +591,20 @@ root.querySelector('#mortalityClearInputs')?.addEventListener('click',()=>{
   }catch(error){invalid(`比較できません：${error.message}`);}
  });
  allocationInfo();ageHint();clearPensionReference();
- return {invalidate({external=false}={}){if(external===true)blockedExternal=true;else itemizedControls?.refresh();ageHint();clearPensionReference();for(const key of ['entitlement','claimed','deferral'])form.elements[key].checked=false;for(const id of ['mortalityRun','mortalityEstimatePension'])root.querySelector('#'+id).disabled=blockedExternal;root.querySelector('#mortalityEstimateNotice').textContent=blockedExternal?externalUpdateMessage:'保存済み条件の変更後は受給条件を再確認してください。';invalid('保存済みの条件が更新されたため、万一の時期の試算を無効にしました。必要なら再試算してください。');form.elements.reviewed.checked=false;},getCurrentComparison(){return current;}};
+ return {stageReference(input){
+  requireFreshBaseline();
+  if(!input||!['primary','spouse'].includes(input.deceased))throw Error('死亡想定が不正です');
+  for(const key of ['deceasedEarnings','ownEmployee','ownBasic'])
+   if(typeof input[key]!=='number'||!Number.isFinite(input[key])||input[key]<0||input[key]>1000)throw Error('年金は万円／年の確定した数値で転記してください');
+  form.elements.deceased.value=input.deceased;
+  form.elements.deceasedEarnings.value=String(input.deceasedEarnings);
+  form.elements.survivorEmployee.value=String(input.ownEmployee);
+  form.elements.survivorBasic.value=String(input.ownBasic);
+  form.elements.survivorPension.value=''; // never adopt an unchecked reference as income
+  for(const key of ['entitlement','claimed','deferral','reviewed'])form.elements[key].checked=false;
+  clearPensionReference();ageHint();invalid('遺族年金の65歳基準内訳を仮入力しました。受給資格を確認し「確認した条件で参考合計を入力する」を実行してください。');
+  root.querySelector('#mortalityPensionSettings').open=true;
+  root.querySelector('#mortalityEstimateNotice').textContent='参考内訳を転記しました。死亡月と受給資格・請求・繰下げ影響の確認後に参考合計を再計算してください。';
+  saveInputs();
+ },invalidate({external=false}={}){if(external===true)blockedExternal=true;else itemizedControls?.refresh();ageHint();clearPensionReference();for(const key of ['entitlement','claimed','deferral'])form.elements[key].checked=false;for(const id of ['mortalityRun','mortalityEstimatePension'])root.querySelector('#'+id).disabled=blockedExternal;root.querySelector('#mortalityEstimateNotice').textContent=blockedExternal?externalUpdateMessage:'保存済み条件の変更後は受給条件を再確認してください。';invalid('保存済みの条件が更新されたため、万一の時期の試算を無効にしました。必要なら再試算してください。');form.elements.reviewed.checked=false;},getCurrentComparison(){return current;}};
 }
