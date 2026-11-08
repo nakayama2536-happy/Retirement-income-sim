@@ -106,6 +106,8 @@ async function open(ctx){
  await page.locator('#privateSyncContainer [name="syncApiKey"]').waitFor({state:'attached'});
  await page.locator('[data-group="manage"]').click();
  await page.locator('[data-tab="backup"]').click();
+ const cloudGroup=page.locator('#settingsGroup-cloud');
+ if(!(await cloudGroup.getAttribute('open')))await cloudGroup.locator('summary').first().click();
  const details=page.locator('#privateSyncCard details').first();
  if(!(await details.getAttribute('open')))await details.locator('summary').first().click();
  return page;
