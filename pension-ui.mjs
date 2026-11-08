@@ -21,7 +21,7 @@ export function mountPensionSheet({getConfig,onCommit,showNotice}){
     el(`${key}PensionUseEstimate`).disabled=!r.ok;
     el(`${key}PensionEstimate`).textContent=r.ok?`修正見込額：${yen(r.annual)}/年（65歳基準額から${r.factor>=1?'+':''}${((r.factor-1)*100).toFixed(1)}%）。請求想定月：${dateWithAge(r.claimMonth,c,key)}。年額欄への入力は下のボタンで行います。`:r.message;
     const changed=el(`${key}PensionMonth`).value!==(c.income.pensions[key].startDate?.slice(0,7)||'');
-    if(changed)el(`${key}PensionEstimateDetails`).open=true;
+    // Keep the secondary calculation collapsed; the main import button is the normal path.
     el(`${key}PensionAmountNote`).textContent=changed?'開始月を変更しています。見込額を年額欄へ入れるか、公式資料の金額を直接入力してください。':'年額は公式資料の金額を直接入力することもできます。';
   }
   function renderBreakdown(key){
