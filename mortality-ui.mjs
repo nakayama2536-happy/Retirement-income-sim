@@ -90,6 +90,50 @@ function renderFirstNegativeDiagnostic(target,mortality){
  target.append(section);
 }
 
+
+/** Read-only family view of the exact monthly trial, never a second projection. */
+export function mortalityFamilyResultModel({mortality,original,parameters}){
+ const monthly=mortality?.monthly,baseline=original?.monthlyDetails;
+ if(!Array.isArray(monthly)||!Array.isArray(baseline))throw Error('月次結果が未確認です');
+ const i=monthly.findIndex(row=>row.month===mortality.firstChangedMonth);
+ const post=i>=0&&baseline[i]?.month===monthly[i]?.month?monthly[i]:null;
+ const before=post?baseline[i]:null;
+ if(post&&['expense','expenseReduction','publicPension'].some(k=>!Number.isFinite(post[k])))throw Error('生活費・年金の数値が未確認です');
+ if(before&&!Number.isFinite(before.expense))throw Error('基準生活費が未確認です');
+ if(!Number.isFinite(mortality.finalAsset))throw Error('最終資産が未確認です');
+ return {deceased:parameters.deceased==='primary'?'計画の本人':'計画の配偶者',
+ deathMonth:parameters.deathMonth,referenceMonth:post?.month??null,
+ expense:post?.expense??null,reduction:post?.expenseReduction??null,
+ pension:post?.publicPension??null,baselineExpense:before?.expense??null,
+ firstNegativeMonth:mortality.firstNegativeMonth??null,lastMonth:monthly.at(-1)?.month??null,finalAsset:mortality.finalAsset};
+}
+function renderMortalityFamilySummary({mortality,original,parameters}){
+ const m=mortalityFamilyResultModel({mortality,original,parameters}),section=makeEl('section','mortality-family-summary');
+ section.id='mortalityFamilySummary';section.append(makeEl('h3','','もしものとき、家計はどうなる？'));
+ section.append(makeEl('p','mortality-family-context',m.deceased+'が'+m.deathMonth+'に亡くなる想定です。今の計画や保存済みの条件は変わりません。'));
+ const cards=makeEl('div','mortality-family-cards');
+ const add=(key,label,value,note)=>{
+  const card=makeEl('article','mortality-family-card');card.dataset.familyMetric=key;
+  card.append(makeEl('span','',label),makeEl('strong','',value),makeEl('small','',note));cards.append(card);
+ };
+ if(m.referenceMonth){
+  const relation=m.reduction>0?'基準より'+formatTotal(m.reduction)+'減額':m.reduction<0?'基準より'+formatTotal(Math.abs(m.reduction))+'増額':'基準から変更なし';
+  add('expense','残された方の生活費（月額）',formatTotal(m.expense),m.referenceMonth+'の比較：'+relation);
+  add('pension','残された方の公的年金（月額・仮定）',formatTotal(m.pension),'遺族年金だけでなく公的年金全体の仮額です');
+ }else{
+  section.append(makeEl('p','mortality-warning','亡くなった翌月が計算期間外のため、死亡後の年金・生活費は確認できません。'));
+ }
+ add('depletion','月末資産が初めてマイナスになる月',m.firstNegativeMonth??'計算期間内にはなし',
+  m.firstNegativeMonth?'最初の負残高。実際に生活できる期間を保証するものではありません':'負残高がなくても将来の安全を保証しません');
+ add('terminal','計画期間末の計算上の資産',formatTotal(m.finalAsset),
+  (m.lastMonth??'終期')+'時点。負の残高は実際の借入額や不足総額ではありません');
+ section.append(cards);
+ const next=makeEl('p','mortality-family-next');
+ next.append(makeEl('strong','','次に確認したいこと：'),makeEl('span','','公的年金の受給資格・実際の見込み額と、無理のない生活費を確認してください。'));
+ section.append(next,makeEl('p','muted','仮定に基づく参考比較です。税・社会保険・相続等の未対応部分があります。'));
+ return section;
+}
+
 function renderPensionBreakdown(target,reference){
  target.replaceChildren();target.dataset.pensionState=reference?'reference':'unknown';
  if(!reference){target.append(makeEl('p','muted','内訳未確認：入力した公的年金合計をそのまま試算に使います。自身の年金・遺族年金の内訳は推定せず、遺族年金を別途自動加算しません。'));return;}
@@ -499,7 +543,10 @@ export function mountMortalityComparison(root,{getConfig,getBaseline,runPlan}){
   const worstPanel=makeEl('section');worstPanel.id='mortalityWorstResultPanel';
   worstPanel.append(makeEl('h3','','最悪シミュレーション（比較用の仮定）'));
   worstPanel.append(makeEl('p','muted',`対象：${parameters.deceased==='primary'?'本人':'配偶者'}／万一を想定する月：${parameters.deathMonth}。本人70歳の例は2044年8月です。別の月を選ぶと、その月の比較案になります。`));
-  worstPanel.append(...Array.from(results.children));
+  const advanced=makeEl('details','mortality-family-advanced');advanced.id='mortalityAdvancedDetails';
+  advanced.append(makeEl('summary','','計算の詳しい内容・比較表・CSVを見る'));
+  const advancedBody=makeEl('div','mortality-family-advanced-body');advancedBody.append(...Array.from(results.children));advanced.append(advancedBody);
+  worstPanel.append(renderMortalityFamilySummary({mortality,original,parameters}),advanced);
   const standardPanel=makeEl('section');standardPanel.id='mortalityStandardResultPanel';
   standardPanel.append(makeEl('h3','','標準シミュレーション'));
   standardPanel.append(makeEl('p','muted','ご夫婦が現在の採用計画どおり暮らす場合の基準案です。万一の仮定は反映していません。計算期間は元の設定に従い、自動で100歳まで延長しません。'));
