@@ -44,7 +44,7 @@ export function revealWorkflowTarget(target){
 }
 
 export function installMortalityTabs(form){
- if(!form||controllers.has(form.id))return;
+ if(!form||typeof form.querySelectorAll!=='function'||controllers.has(form.id))return;
  const fieldsets=[...form.querySelectorAll(':scope > fieldset')];
  const review=form.querySelector(':scope > label.check-label');
  const buttons=[...form.querySelectorAll(':scope > button')];
