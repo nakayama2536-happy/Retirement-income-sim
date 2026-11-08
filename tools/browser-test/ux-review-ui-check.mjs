@@ -85,7 +85,41 @@ try{
    assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),'annual table overflow '+width);
    await page.screenshot({path:resolve(out,`ux-request-year-table-${width}.png`),fullPage:true});
  }
+
+ // Purpose-based tabs preserve the underlying inputs, IDs, and adopted state.
+ assert.equal(await page.locator('#cashflow .workflow-tab').count(),2);
+ await page.locator('#cashflow-workflow-tab-1').click();
+ assert(await page.locator('#age65IncomeAuditCard').isVisible());
+ await page.locator('#cashflow-workflow-tab-0').click();
+ assert(await page.locator('#yearCashflowTable').isVisible());
+ await openTab('results','mortality');
+ assert.equal(await page.locator('#mortalityForm .workflow-tab').count(),3);
+ await page.locator('#mortalityForm-workflow-tab-1').click();
+ assert(await page.locator('#mortalityItemHost').isVisible());
+ await page.locator('#mortalityForm-workflow-tab-2').click();
+ assert(await page.locator('#mortalityRun').isVisible());
+ assert.equal(await page.locator('#mortalityForm #mortalityRun').count(),1);
+ await openTab('results','allcsv');
+ assert.equal(await page.locator('#allcsv-workspace .workflow-tab').count(),2);
+ await page.locator('#allcsv-workspace-workflow-tab-1').click();
+ assert(await page.locator('#detailColumnPicker').isVisible());
+ await page.locator('#allcsv-workspace-workflow-tab-0').click();
+ assert(await page.locator('#detailCsvTable').isVisible());
+ await openTab('budget','budget');
+ assert.equal(await page.locator('#budget .workflow-tab').count(),3);
+ await page.locator('#budget-workflow-tab-1').click();
+ assert(await page.locator('#budgetTravelCard').isVisible());
+ await page.locator('#budget-workflow-tab-0').click();
+ assert(await page.locator('#detail-budgetTable').isVisible());
+ await openTab('income','ideco');
+ assert.equal(await page.locator('#ideco .workflow-tab').count(),3);
+ await page.locator('#ideco-workflow-tab-2').click();
+ assert(await page.locator('#idecoBalance').isVisible());
+ await page.locator('#ideco-workflow-tab-0').click();
+ assert.deepEqual(await snapshot(),before,'switching workflow tabs must not mutate saved data');
+ mark('purpose-based-tabs-without-saving-or-losing-form-controls');
  await openTab('income','salary');
+ await page.locator('#salary-workflow-tab-1').click();
  const steps=page.locator('#salaryInputs details.salary-step');
  assert.equal(await steps.count(),4);
  assert.equal(await steps.nth(0).evaluate(el=>el.open),true);
