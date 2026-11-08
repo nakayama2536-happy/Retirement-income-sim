@@ -93,21 +93,24 @@ export function mountPensionSheet({getConfig,onCommit,showNotice}){
           <p class="muted" id="${key}PensionReferenceCheck" role="status">未確認</p>
         </div>`;
       const referencePanel=`<details id="pensionReferenceMaster" class="pension-reference-master">
-         <summary><strong>① 年金の元データを確認・登録する（ねんきん定期便）</strong></summary>
+         <summary><strong>① 年金の元データ（ねんきん定期便）を確認・登録</strong></summary>
          <p class="muted">最初に一度だけ、ご夫婦それぞれの65歳時点の見込額を入力します。次回からは自動で読み込みます。金額の単位は「万円／年」です（例：100万円なら100）。受給開始を遅らせた年金額とは別に管理します。</p>
          <div class="pension-reference-people">${PENSION_PEOPLE.map(sourceInput).join('')}</div>
          <p id="pensionReferenceStatus" class="muted" role="status">参考資料の登録状況を確認しています。</p>
          <button id="pensionReferenceDone" type="button" class="secondary">入力欄を閉じる（保存はまだされません）</button>
          <p class="muted">入力欄を閉じても保存されません。下の「変更内容を確認」→「この内容を保存して計画に反映」の順に押してください。年金受給の開始月や金額は、取り込みボタンを押さない限り変えません。</p>
       </details>`;
-      el('pensionInputs').innerHTML=referencePanel+PENSION_PEOPLE.map(key=>`<fieldset class="pension-person"><legend>② ${names[key]}の年金</legend>
+      const statusLine='<p id="pensionReferenceOverview" class="pension-reference-overview" role="status" aria-live="polite">登録状況を確認しています。</p>';
+      el('pensionInputs').innerHTML=statusLine+referencePanel+PENSION_PEOPLE.map(key=>`<fieldset class="pension-person"><legend>② ${names[key]}の年金</legend>
         <p id="${key}PensionAdopted" class="muted"></p>
         <details id="${key}PensionPlanDetails" class="pension-plan-details"><summary>${names[key]}の受給開始月・金額を変更する（普段は閉じておけます）</summary>
-        <div id="${key}PensionReferences"></div>
-        <button id="${key}PensionImport65" type="button" class="secondary">①の定期便から年金額を計算して入力する</button>
-        <p id="${key}PensionImportNote" class="muted" role="status">設定した受給開始月に合わせて金額を計算します。押しただけでは保存されず、今の計画も変更しません。</p>
+        <p class="pension-step-label">まず、受け取りを始める月を確認してください。</p>
         <label>${names[key]}の受給開始月<input id="${key}PensionMonth" type="month" min="1000-01" max="9999-12" aria-describedby="${key}PensionMonthAge"></label>
         <p id="${key}PensionMonthAge" class="muted" aria-live="polite"></p>
+        <p class="pension-step-label">次に、①の資料から年金額を計算します。</p>
+        <button id="${key}PensionImport65" type="button" class="secondary">定期便から年金額を計算して仮入力</button>
+        <p id="${key}PensionImportNote" class="muted" role="status">金額はまだ保存されません。結果を確認してから画面下の保存操作を行ってください。</p>
+        <div id="${key}PensionReferences"></div>
         <details id="${key}PensionEstimateDetails"><summary>別の計算方法を使う（詳しい方向け）</summary>
         <label>以前の65歳基準の試算額（税引前・万円）<input id="${key}PensionBase65" type="number" min="0" step="0.0001" inputmode="decimal" placeholder="公式見込額などを入力"></label>
         <p class="muted">定期便の登録額とは別の参考計算です。通常は上の「①の定期便から年金額を計算して入力する」を使ってください。この欄の変更は保存されません。</p>
@@ -116,6 +119,7 @@ export function mountPensionSheet({getConfig,onCommit,showNotice}){
         </details>
         <label>${names[key]}の年金年額（税引前・万円）<input id="${key}PensionAmount" type="number" min="0" step="0.0001" required inputmode="decimal"></label>
         <p id="${key}PensionAmountNote" class="muted"></p>
+        <details id="${key}PensionAdvanced" class="pension-advanced"><summary>詳しい情報・出典を確認する（通常は操作不要）</summary>
         <details class="pension-components" id="${key}PensionComponents"><summary>基礎年金・厚生年金を分けて入力（遺族年金計算の参考資料）</summary>
         <p class="muted">未入力は未確認のまま保持します。既存の合計額を自動分割せず、内訳を入力しても合計年金や資産計算を自動変更しません。全額入力した場合は元の合計年額と照合します。</p>
         <div class="form-grid pension-component-grid">
@@ -131,6 +135,7 @@ export function mountPensionSheet({getConfig,onCommit,showNotice}){
         </details>
         <label>${names[key]}の金額の確度<select id="${key}PensionCertainty">${options}</select></label>
         <label>${names[key]}の出典・メモ<input id="${key}PensionSource" type="text" maxlength="160" placeholder="資料名・確認日など"></label>
+        </details>
         </details>
       </fieldset>`).join('');
       for(const key of PENSION_PEOPLE){
@@ -211,6 +216,17 @@ export function mountPensionSheet({getConfig,onCommit,showNotice}){
       else if(f.some(v=>!Number.isFinite(Number(v))||Number(v)<0||Number(v)>1000))status.textContent='金額の単位を確認してください（万円／年）';
       else status.textContent=Math.abs(Number(f[0])+Number(f[1])+Number(f[2])-Number(f[3]))<=.01?'内訳合計と65歳年額が一致':'内訳合計と65歳年額に差があります';
     }
+    const adoptionStatus=key=>{
+      const ref=c.income?.pensions?.[key]?.reference65;
+      if(!ref||!ref.source?.trim())return '未登録';
+      const vals=['basicAnnual','employeeEarningsAnnual','transitionalAnnual','totalAnnual'].map(k=>ref[k]);
+      if(vals.some(x=>x===null||x===undefined||x===''))return '未登録';
+      const numbers=vals.map(Number);
+      if(numbers.some(n=>!Number.isFinite(n)||n<0||n>1000)||Math.abs(numbers[0]+numbers[1]+numbers[2]-numbers[3])>0.01)return '要確認';
+      return '登録済み';
+    };
+    const labels=PENSION_PEOPLE.map(k=>names[k]+'：'+adoptionStatus(k)).join(' ／ ');
+    el('pensionReferenceOverview').textContent='① 定期便の登録状況（保存済み）：'+labels+(pensionDraftMatches(c,draft)?'':' ／ 入力中の変更あり（未保存）');
     el('pensionReferenceStatus').textContent='入力途中の変更は下書きです。画面下の「変更内容を確認」で内容を確認し、その後「この内容を保存して計画に反映」を押してください。';
     state();
   }
