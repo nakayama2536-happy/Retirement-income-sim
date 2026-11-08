@@ -34,6 +34,12 @@
 <div id="dashboard" hidden>
 <section id="home" class="panel"><div class="home-result-lead"><h2>将来のお金の見通し</h2><p>まずは将来の資産額を確認しましょう。次に、下のグラフで途中の増減を見られます。</p><p class="muted">金額は現在の設定に基づく予測です。この画面を見るだけでは、計画は変わりません。</p></div>
 
+<div id="familyHomeCheckpoint" class="card family-readonly-checkpoint" role="region" aria-label="現在の計画の資金不足確認">
+ <h3>途中でお金が足りなくなる時期は？</h3>
+ <p id="familyHomeShortage" role="status">計算中です</p>
+ <p class="muted">年齢期末の資産から確認する目安です。途中の月に資産がマイナスになる時期は、この表示だけでは判断できません。負の残高は実際の借入額や不足総額ではありません。</p>
+ <button type="button" class="link-btn" data-open-tab="cashflow">年齢別の収支を確認する</button>
+</div>
 <div class="hero-grid">
 <article class="card target-overview"><h2 id="targetStatusLabel">最終年齢末のお金</h2><small id="simulationPeriod" class="home-plan-range" hidden></small><div class="target-metrics"><div><span id="finalTargetLabel">目標資産額</span><strong id="finalThreshold"></strong></div><div><span id="finalPredictionLabel">予測資産額</span><strong id="finalAsset"></strong></div><div><span id="finalMarginLabel">目標より多い・少ない金額</span><strong id="finalMargin"></strong></div></div><p class="home-goal-status">目標との比較：<strong id="status"></strong></p><small id="targetStatusNote"></small><button class="link-btn" data-open-tab="settings" data-focus-target="detail-goal">目標額を変更する</button></article>
 <article class="card"><span id="initialAssetLabel">63歳期末想定資産</span><strong id="currentAsset"></strong><small id="initialAssetHelp">64歳期の計算開始残高として登録した計画値です。</small></article>
@@ -69,7 +75,20 @@
 <article class="card"><div class="section-title"><h2>保留事項</h2><span id="pendingCount" class="pill"></span></div><p class="muted">変更できる項目は入力欄へ移動できます。移動だけでは保存・反映しません。外部確認や未対応項目は区別して表示します。</p><div id="pendingList" class="pending-list"></div></article>
 </section>
 
-<section id="cashflow" class="panel" hidden><div class="family-lite-back" style="margin:0 0 12px"><button type="button" class="link-btn" data-open-tab="home" aria-label="将来のお金の見通しへ戻る">← ホームに戻る</button></div><div class="home-result-lead"><h2>年齢ごとの収入・支出</h2><p>まずは下の「1年ごとの収入と支出のまとめ」を見て、家計が変わる年齢を探しましょう。</p><p class="muted">この画面を見る・表示を切り替える・CSVを出力する操作では、現在の計画は変わりません。</p></div><details class="card home-explanation" id="cashflowReadingGuide"><summary><strong>収入と支出の表の見方</strong></summary><p>気になる年齢が見つかったら、その年の収入・支出の内訳を確認できます。金額は万円単位です。</p><p class="muted">生活費の内訳は支出合計に含まれています。NISAの売却・振替など、資産内でお金を移動するだけの取引は収入に重複して数えません。</p></details>
+<section id="cashflow" class="panel" hidden><div class="family-lite-back" style="margin:0 0 12px"><button type="button" class="link-btn" data-open-tab="home" aria-label="将来のお金の見通しへ戻る">← ホームに戻る</button></div><div class="home-result-lead"><h2>年齢ごとの収入・支出</h2><p>まずは下の「1年ごとの収入と支出のまとめ」を見て、家計が変わる年齢を探しましょう。</p><p class="muted">この画面を見る・表示を切り替える・CSVを出力する操作では、現在の計画は変わりません。</p></div><article class="card family-annual-quick" id="familyAnnualQuick" aria-label="選んだ年齢期の家計の目安">
+ <h3>気になる年齢の家計を確認する</h3>
+ <label for="familyCashflowAge">何歳のとき？</label>
+ <select id="familyCashflowAge" aria-describedby="familyCashflowHelp"></select>
+ <p id="familyCashflowHelp" class="muted">選ぶだけで表示が変わります。保存済みの条件は変更されません。</p>
+ <div class="family-annual-metrics" id="familyAnnualMetrics" role="status">
+  <div><span>この年齢期の収入（年額）</span><strong id="familyAnnualIncome">未確認</strong></div>
+  <div><span>この年齢期の支出（年額）</span><strong id="familyAnnualExpense">未確認</strong></div>
+  <div><span>収入と支出の差（年額）</span><strong id="familyAnnualBalance">未確認</strong></div>
+  <div><span>年齢期末の計算上の資産</span><strong id="familyAnnualAsset">未確認</strong></div>
+ </div>
+ <p class="muted" id="familyAnnualNote">同じ年齢期の月次計算を年額に集計した参考値です。収支差と資産増減は運用益などのため一致しません。生活費内訳や資産間振替は二重加算しません。</p>
+</article>
+<details class="card home-explanation" id="cashflowReadingGuide"><summary><strong>収入と支出の表の見方</strong></summary><p>気になる年齢が見つかったら、その年の収入・支出の内訳を確認できます。金額は万円単位です。</p><p class="muted">生活費の内訳は支出合計に含まれています。NISAの売却・振替など、資産内でお金を移動するだけの取引は収入に重複して数えません。</p></details>
 <details id="age65IncomeAuditCard" class="card home-explanation"><summary><strong>65歳の収入が多い理由・受取条件を確認</strong></summary><div id="age65IncomeAudit" role="region" aria-label="65歳期の収入内訳と確認事項"></div></details>
 <article class="card"><div class="section-title"><h2>1年ごとの収入と支出のまとめ</h2><button class="info" data-help="年間収支サマリー" data-help-text="資産推移と同じ月次計算を年齢期ごとに集計します。管理予算が支出の正本です。生活費内訳、家計内振替、税社会保険参考額、iDeCo掛金を合計へ重ねません。">ⓘ</button></div><div id="annualCashflowSummary" class="summary-box"></div><button id="exportAnnualCsvBtn" type="button" class="secondary">この収支の一覧をCSVで保存</button><p class="muted">さらに詳しい金額は「詳しい計算結果・保存」で確認できます。ここでは現在設定を年齢期ごとに出力します。未確定値は0円にせず空欄にし、状態列と未確定月数を残します。</p></article>
 
