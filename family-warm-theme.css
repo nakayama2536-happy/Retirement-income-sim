@@ -194,3 +194,21 @@ button,input,select,textarea{font-family:inherit}
 #backup .family-danger-disclosure>label{margin:12px 14px 16px}
 #scenarios .family-result-guide>p{margin:8px 0}
 @media(max-width:600px){.family-safe-overview{padding:12px 14px}#backup .settings-category>summary{min-height:52px}}
+
+
+/* Family view: yearly figures read directly from existing monthly aggregation. */
+#home .family-readonly-checkpoint{border-left:4px solid #b46c3a;background:#fffaf4;margin:14px 0;padding:14px 18px}
+#home .family-readonly-checkpoint>h3{margin:0 0 4px;font-size:1.06rem;line-height:1.5}
+#home #familyHomeShortage{font-size:1.12rem;font-weight:700;color:#643c2d;margin:8px 0}
+#home .family-readonly-checkpoint .muted{line-height:1.75}
+#cashflow .family-annual-quick{background:#fffaf5;border:1px solid #ecd5c3;padding:18px 20px}
+#cashflow .family-annual-quick>h3{margin:0 0 8px;line-height:1.5}
+#cashflow .family-annual-quick>label{display:block;font-weight:650;margin:4px 0}
+#cashflow #familyCashflowAge{font-size:1rem;min-height:48px;max-width:320px;width:100%}
+#cashflow .family-annual-metrics{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:14px 0}
+#cashflow .family-annual-metrics>div{border:1px solid #e8d7cb;border-radius:10px;padding:12px 16px;background:#fff;display:flex;flex-direction:column;gap:5px;min-width:0}
+#cashflow .family-annual-metrics span{font-size:.88rem;line-height:1.6;color:#4d5a65}
+#cashflow .family-annual-metrics strong{font-size:1.2rem;line-height:1.55;overflow-wrap:anywhere;font-variant-numeric:tabular-nums}
+#cashflow .family-annual-metrics strong.neg{color:#a33b32}
+#cashflow .family-annual-metrics strong.pos{color:#2b6553}
+@media(max-width:700px){#cashflow .family-annual-metrics{grid-template-columns:1fr}#cashflow .family-annual-quick{padding:12px 14px}}
