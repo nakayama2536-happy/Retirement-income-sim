@@ -127,7 +127,8 @@ try{
   const downloaded=[];
   for(const [kind,id] of [
     ['monthly','mortalityExportExpenseMonthlyCsv'],
-    ['items','mortalityExportExpenseItemsCsv']
+    ['items','mortalityExportExpenseItemsCsv'],
+    ['assets','mortalityExportAssetMonthlyCsv']
   ]){
     const pending=page.waitForEvent('download',{timeout:15000});
     await page.locator('#'+id).click();
@@ -135,13 +136,14 @@ try{
     assert.match(downloadedFile.suggestedFilename(),new RegExp('-'+kind+'-'));
     downloaded.push(downloadedFile);
   }
-  assert.equal(downloaded.length,2);
+  assert.equal(downloaded.length,3);
   const csvFiles=await Promise.all(downloaded.map(async d=>({name:d.suggestedFilename(),text:await readFile(await d.path(),'utf8')})));
   assert.ok(csvFiles.some(f=>f.name.includes('-monthly-')));
   assert.ok(csvFiles.some(f=>f.name.includes('-items-')));
+  assert.ok(csvFiles.some(f=>f.name.includes('-assets-')&&f.text.includes('月末資産_万円')&&f.text.includes('資産・支出検算')));
   for(const file of csvFiles){assert.ok(file.text.startsWith('\ufeff'));assert.match(file.text,/管理予算|費目名/);}
   assert.equal(await saved(page),before,'CSV download must not adopt or save settings');
-  mark(engine,'separate-expense-CSV-downloads-are-read-only-and-UTF8-BOM');
+  mark(engine,'expense-and-asset-CSV-downloads-are-read-only-and-UTF8-BOM');
   await verifyPensionReference(page);
   await submit(page);
   assert.equal(await page.locator('#mortalityPensionBreakdown').getAttribute('data-pension-state'),'reference');
