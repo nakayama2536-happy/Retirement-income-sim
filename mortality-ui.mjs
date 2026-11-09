@@ -209,6 +209,7 @@ export function mountMortalityComparison(root,{getConfig,getBaseline,runPlan}){
   <label>万一の月に1度だけ加える費用（万円、仮置き）<input name="funeral" type="number" step="any" min="0" value="0" required></label>
  </div>
  <p class="muted">登録済みの65歳基準情報から参考内訳を表示します。年金の受給前・資格未確認の場合は、参考額を確定収入として自動入力しません。年金合計への遺族年金の二重加算は行いません。</p>
+ <p class="muted">この参考計算は、残された方が65歳以上で、ご自身の老齢年金を受給中の場合を対象とします。老齢年金を70歳まで繰下げ待機している期間には、そのまま適用できません。遺族厚生年金の受給権が繰下げに与える影響は、年金の種類・受給権の発生日・2028年4月施行予定の制度改正と経過措置によって異なります。この画面はこれらを自動判定しません。日本年金機構などで確認したうえで、受給前後の期間別の公的年金合計を入力してください。</p>
  <div id="mortalityPensionAuto" class="mortality-metric" role="status" aria-live="polite">万一の月を選ぶと、年金シートの65歳基準内訳から参考額を照合します。</div>
  <div id="mortalityPensionBreakdown" role="status" aria-live="polite"></div><p class="muted">上の年金額は登録情報から計算した<strong>参考内訳</strong>です。比較に実際に使うのは、下の詳細設定にある「残された人の公的年金合計（仮年額）」です。受給資格を確認していない参考金額を、確定した年金収入として自動採用するものではありません。</p>
  <p class="muted">万一の月は元の年金、翌月から仮年額を12等分する近似です。葬儀費0は「今回の比較に費用を入れない」仮定であり、実費0円の認定ではありません。</p>
