@@ -12,7 +12,7 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           ref: ${{ github.event.pull_request.head.sha }}
           persist-credentials: false
@@ -26,7 +26,7 @@ jobs:
           mkdir -p tools/browser-test/browser-results
           git rev-parse HEAD > tools/browser-test/browser-results/source-commit.txt
           git rev-parse HEAD^{tree} > tools/browser-test/browser-results/source-tree.txt
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v5
         with:
           node-version: '22'
       - name: Install pinned test dependency
@@ -49,7 +49,7 @@ jobs:
           node /tmp/lifeplan-age-budget-staged/tools/package-public.mjs /tmp/lifeplan-age-budget-staged /tmp/lifeplan-age-budget-public
           node --test /tmp/lifeplan-age-budget-staged/test_age_budget_candidate.mjs /tmp/lifeplan-age-budget-staged/test_age_budget_preview_export.mjs /tmp/lifeplan-age-budget-staged/test_age_budget_ui.mjs /tmp/lifeplan-age-budget-staged/test_distribution_audit.mjs /tmp/lifeplan-age-budget-staged/test_release_identity.mjs
       - name: Preserve candidate release bundle as CI artifact only
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: age-budget-preview-candidate-${{ github.event.pull_request.head.sha }}
           path: /tmp/lifeplan-age-budget-public/
@@ -57,7 +57,7 @@ jobs:
           retention-days: 7
       - name: Keep synthetic test evidence
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: isolated-browser-evidence
           path: tools/browser-test/browser-results/
