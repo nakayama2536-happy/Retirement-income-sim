@@ -1,5 +1,5 @@
 {
-  "appBuild": "v0.9.56-expense-ui-cache-candidate-20261111",
-  "releasedAt": null,
-  "purpose": "candidate:expense-reference-draft-and-cache-update;not-deployed"
+  "appBuild": "v0.9.56-expense-ui-cache-20261112",
+  "releasedAt": "2026-11-12",
+  "purpose": "mortality-expense-draft-restoration-and-pwa-cache-refresh"
 }
