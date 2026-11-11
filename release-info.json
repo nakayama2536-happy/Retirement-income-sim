@@ -1,5 +1,5 @@
 {
-  "appBuild": "v0.9.55-family-ui-integration-20261109",
-  "releasedAt": "2026-11-08",
-  "purpose": "family-ui-integration-readonly-guidance"
+  "appBuild": "v0.9.56-expense-ui-cache-candidate-20261111",
+  "releasedAt": null,
+  "purpose": "candidate:expense-reference-draft-and-cache-update;not-deployed"
 }
