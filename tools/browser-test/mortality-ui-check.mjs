@@ -93,7 +93,7 @@ try{
   await ctx.route('**/*',r=>{if(new URL(r.request().url()).origin===origin)return r.continue();report.blockedExternal.push(r.request().url());return r.abort();});
   const page=await ctx.newPage();page.on('pageerror',e=>report.pageErrors.push({engine,error:e.message}));
   await page.goto(origin,{waitUntil:'networkidle'});await page.locator('#dashboard').waitFor({state:'visible'});
-  assert.equal(await page.locator('#appVersion').innerText(),'v0.9.55-family-ui-integration-20261109（端末で実行中）');
+  assert.equal(await page.locator('#appVersion').innerText(),'v0.9.56-expense-ui-cache-20261112（端末で実行中）');
   assert.equal(await page.locator('[data-group="results"]').getAttribute('data-step-no'),'1');
   assert.equal(await page.locator('[data-tab="mortality"]').getAttribute('data-step-no'),'1-3');
   assert.equal(await page.locator('[data-tab="pension"]').getAttribute('data-step-no'),'2-5');
@@ -152,6 +152,30 @@ try{
   near(await number(annual(80,'expenseReduction')),110);
   near(await number(annual(81,'expenseReduction')),120);
   mark(engine,'actual-items-plus-remaining25-are-factored-once-monthly-and-annual');
+  // The same rendered comparison must remain correct when switching result tabs.
+  assert.equal(await page.locator('#mortalityWorstResultPanel').isVisible(),true);
+  await page.locator('#mortalityStandardTab').click();
+  assert.equal(await page.locator('#mortalityStandardResultPanel').isVisible(),true);
+  assert.equal(await page.locator('#mortalityWorstResultPanel').isHidden(),true);
+  await page.locator('#mortalityWorstTab').click();
+  assert.equal(await page.locator('#mortalityWorstResultPanel').isVisible(),true);
+  near(await number(page.locator('[data-budget-term="result"]')),45);
+  mark(engine,'standard-and-mortality-tab-switch-preserves-reduced-budget');
+  // A death-month edit must invalidate the old preview and move reduction one month.
+  await stage(page,0);
+  await input(page,'deathMonth').fill('2060-02');
+  assert.equal(await page.locator('#mortalityResults').isHidden(),true);
+  await stage(page,1);
+  assert.match(await page.locator('#mortalityItemState').innerText(),/2060-03/);
+  await submit(page);
+  assert.match(await page.locator('#mortalityBudgetIdentity').innerText(),/2060-03/);
+  near(await number(page.locator('[data-budget-term="result"]')),45);
+  mark(engine,'death-month-change-invalidates-and-recalculates-next-month-budget');
+  // Restore original synthetic scenario for subsequent annual/CSV assertions.
+  await stage(page,0);
+  await input(page,'deathMonth').fill('2060-01');
+  await submit(page);
+  near(await number(page.locator('[data-budget-term="result"]')),45);
   const downloaded=[];
   for(const [kind,id] of [
     ['monthly','mortalityExportExpenseMonthlyCsv'],

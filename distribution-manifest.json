@@ -1,6 +1,6 @@
 {
   "kind": "public-release",
-  "runtime": "v0.9.55-family-ui-integration-20261109",
+  "runtime": "v0.9.56-expense-ui-cache-20261112",
   "files": [
     {
       "name": "age-budget-candidate.mjs",
@@ -29,13 +29,13 @@
     },
     {
       "name": "app.mjs",
-      "size": 81220,
-      "sha256": "fbd27fb2d714845f9d9ac33e135a8e7604b2e5e6b74137f52d8ceae14506c51b"
+      "size": 81215,
+      "sha256": "c8ccde42ab1e2f0c4bf548b2999b51c9014c4d2ab8807e40dc35f6a5efb8d8f7"
     },
     {
       "name": "backup-compatibility.mjs",
-      "size": 8054,
-      "sha256": "bddc9c2f6db2d89c430da7a18c5459e5993819634d6807f4c17290adcb041160"
+      "size": 8049,
+      "sha256": "4c5e9e3f93cda4dc7d370d1b0a82e0b05a8be986debed2a6dccab347ec2de34e"
     },
     {
       "name": "budget-travel-ui.mjs",
@@ -224,8 +224,8 @@
     },
     {
       "name": "mortality-itemized-ui.mjs",
-      "size": 13492,
-      "sha256": "ea84a83e25d71f5c351f28a9836c4919f9370578f73620525084822da107314c"
+      "size": 13963,
+      "sha256": "c11f6db063439ae46d215cf6b0aa899c0bf78c50b5a85a79144b9948221e2d41"
     },
     {
       "name": "mortality-itemized.mjs",
@@ -274,8 +274,8 @@
     },
     {
       "name": "release-info.json",
-      "size": 145,
-      "sha256": "ea5fbf30e65cb00accc7cae1f8abb2b247a648bfc8d4d91ea74502710e3cb42b"
+      "size": 158,
+      "sha256": "67b59615a023ce12dd0a50cc8bf99e99e29fa1eed5255469b04ca6c1970d95e3"
     },
     {
       "name": "retirement-comment.mjs",
@@ -349,8 +349,8 @@
     },
     {
       "name": "sw.js",
-      "size": 4605,
-      "sha256": "35419c13a7f979e2e0ea09ba89c528c670fad31621d0dca9c81822274c56813a"
+      "size": 4600,
+      "sha256": "bcd1dc7ab01e0f52ba77e03bfff8033963e448fdd395d9481e54db194f615b69"
     },
     {
       "name": "sync-controller.mjs",
