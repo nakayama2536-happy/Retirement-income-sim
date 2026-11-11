@@ -61,7 +61,7 @@ export function mountMortalityItemizedControls(root,{getConfig,runPlan,onChange}
   if(!host)return null; // legacy synthetic DOM harness lacks HTML parser
   const select=root.querySelector('#mortalityExpenseSource'),remain=root.querySelector('#mortalityRemainderFactor');
   const status=root.querySelector('#mortalityItemState'),dateInput=root.querySelector('#mortalityForm').elements.deathMonth;
-  let model=null,savedFactors={},lastDeceased=root.querySelector('#mortalityForm').elements.deceased.value;
+  let model=null,savedFactors={},selectedProfile=null,lastDeceased=root.querySelector('#mortalityForm').elements.deceased.value;
   function read(){
     if(!model)throw Error('費目別の元データが確認できていません');
     // No post-death month exists at or after the plan's final month.
@@ -114,7 +114,8 @@ export function mountMortalityItemizedControls(root,{getConfig,runPlan,onChange}
       const plan=runPlan(cfg,{includeMonthlyDetails:true});
       const registered=readMortalityExpensePreset(cfg);
       const preset=registered?.deceased===deceased?registered:null;
-      select.value=registered?.sourceProfile||'work-v0.9.7';
+      if(selectedProfile===null)selectedProfile=registered?.sourceProfile||'work-v0.9.7';
+      select.value=selectedProfile;
       model=inspectMortalityExpenseBudget(cfg,plan.monthlyDetails,{sourceProfile:select.value});
       const month=referenceExpenseMonth(model.months,dateInput.value);
       if(!month){
@@ -173,14 +174,18 @@ export function mountMortalityItemizedControls(root,{getConfig,runPlan,onChange}
     if(!draft)return;
     const v=draft.values||{};
     // A same-config local draft takes precedence over the saved suggestion.
-    select.value=readMortalityExpensePreset(getConfig())?.sourceProfile||'work-v0.9.7';
+    const fromDraft=v.sourceProfile;
+    if(typeof fromDraft==='string'&&!['public-v0.9','work-v0.9.7'].includes(fromDraft)){
+      model=null;status.textContent='保存された支出内訳の参照元が不正です。下書きを確認してください。';return;
+    }
+    selectedProfile=fromDraft||readMortalityExpensePreset(getConfig())?.sourceProfile||'work-v0.9.7';
     if(typeof v.residualFactor==='string')remain.value=v.residualFactor;
     savedFactors={...(draft.factors||{})};
     refresh({takeCurrent:false});
   }
-  select.addEventListener('change',()=>{refresh();onChange();});
+  select.addEventListener('change',()=>{selectedProfile=select.value;savedFactors={};refresh({takeCurrent:false});onChange();});
   remain.addEventListener('input',()=>{factorText();onChange();});
-  function clear(){savedFactors={};const p=readMortalityExpensePreset(getConfig());select.value=p?.sourceProfile||'work-v0.9.7';remain.value=String(p?.unallocatedFactor??1);refresh({takeCurrent:false});}
+  function clear(){savedFactors={};const p=readMortalityExpensePreset(getConfig());selectedProfile=p?.sourceProfile||'work-v0.9.7';select.value=selectedProfile;remain.value=String(p?.unallocatedFactor??1);refresh({takeCurrent:false});}
   try{remain.value=String(readMortalityExpensePreset(getConfig())?.unallocatedFactor??1);}
   catch{remain.value='1';} // refresh() reports invalid saved values and blocks the comparison.
   refresh();
