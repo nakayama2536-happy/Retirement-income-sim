@@ -21,12 +21,13 @@ export async function validateFullPlanUi({browser,createTestServer,open,load,ope
   await cloudGroup.evaluate(node=>{node.open=true;});
   const syncCard=page.locator('#privateSyncCard');
   assert.equal(await syncCard.count(),1);
-  await syncCard.locator(':scope > details > summary').click();
+  assert(await syncCard.locator('[data-flow="upload"]').isVisible());
   assert(await syncCard.locator('[data-sync-action="1"]').isVisible());
   assert(await syncCard.locator('[data-sync-action="6"]').isDisabled());
   assert.deepEqual((await snapshot(page)).data,before,'optional sync UI must not change data or connect without configuration');
   await openTab(page,'backup');
-  await syncCard.locator(':scope > details > summary').click();
+  await syncCard.locator('[data-flow="download"]').click();
+  assert(await syncCard.locator('[data-sync-action="7"]').isDisabled());
   await openTab(page,'settings');
   const opening=page.locator('#step8TrialContainer'),full=page.locator('#fullPlanComparisonContainer');
   for(const [name,value] of [['startMonth','2044-09'],['salaryLastMonth','2044-08'],['priceBaseMonth','2044-08'],['openingAsOfMonth','2044-08'],['openingAmount','100'],['annuityStartMonth','2044-09']])await opening.locator('[name="'+name+'"]').fill(value);
