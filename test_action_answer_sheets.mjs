@@ -36,3 +36,19 @@ test('生活費・追加収入の試算・反映・取消だけに確認済み�
   assert.match(src,/保存済みですが表示|保存処理は完了/);
  }
 });
+
+
+test('年金・給与生活の保存と試算は同じ基準の直下表示を使用する',()=>{
+ for(const name of ['pension-ui.mjs','salary-ui.mjs']){
+  const src=fs.readFileSync(new URL('./'+name,import.meta.url),'utf8');
+  assert.match(src,/mountActionAnswer/);
+  assert.match(src,/feedback\(/);
+  assert.match(src,/'pending'/);
+  assert.match(src,/'info'/);
+  assert.match(src,/'success'/);
+  assert.match(src,/'warning'/);
+  assert.match(src,/'error'/);
+ }
+ const index=fs.readFileSync(new URL('./index.html',import.meta.url),'utf8');
+ for(const id of ['pensionTrial','salaryTrial'])assert.ok(index.includes('id="'+id+'"'),id);
+});
