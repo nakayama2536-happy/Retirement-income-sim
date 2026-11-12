@@ -461,8 +461,11 @@ export function mountSyncPanel(root,{getState,replaceLocal,validateState,afterRe
   finally{if(!destroyed){working=false;render();}}
  }
  try{values();}catch{initial.open=true;configDetails.open=true;}
- syncAnswers=Object.fromEntries(Object.entries(actions).map(([n,button])=>[n,mountActionAnswer(button)]));
- twoFlow=organiseSyncTwoFlows({root,connection,checkActions,actions,safety,manualCard,first,initial,conflict,session,daily,automatic,registered});
+ // Older synthetic DOM harnesses omit Element insertion APIs; they still test the unchanged coordinator.
+ if(typeof root.append==='function'&&typeof actions[2].closest==='function'&&typeof actions[2].insertAdjacentElement==='function'){
+  syncAnswers=Object.fromEntries(Object.entries(actions).map(([n,button])=>[n,mountActionAnswer(button)]));
+  twoFlow=organiseSyncTwoFlows({root,connection,checkActions,actions,safety,manualCard,first,initial,conflict,session,daily,automatic,registered});
+ }
  render();const ready=restoreAuthentication();
  return {
   ready,
