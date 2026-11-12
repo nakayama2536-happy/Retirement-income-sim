@@ -7,11 +7,21 @@ export class Element {
  setAttribute(k,v){this.attributes[k]=String(v);if(k==='name'||k==='id'||k==='type')this[k]=String(v);if(k.startsWith('data-'))this.dataset[k.slice(5).replace(/-([a-z])/g,(_,s)=>s.toUpperCase())]=String(v);}
  getAttribute(k){return this.attributes[k]??null;}
  appendChild(n){if(n.parentNode)n.parentNode.children=n.parentNode.children.filter(x=>x!==n);n.parentNode=this;this.children.push(n);return n;}
+ append(...ns){for(const n of ns)this.appendChild(n);}
+ prepend(...ns){for(const n of [...ns].reverse()){if(n.parentNode)n.parentNode.children=n.parentNode.children.filter(x=>x!==n);n.parentNode=this;this.children.unshift(n);}}
+ remove(){if(this.parentNode){this.parentNode.children=this.parentNode.children.filter(x=>x!==this);this.parentNode=null;}}
+ insertAdjacentElement(position,n){
+  if(position!=='afterend'||!this.parentNode)throw TypeError('unsupported insertion');
+  if(n.parentNode)n.parentNode.children=n.parentNode.children.filter(x=>x!==n);
+  const siblings=this.parentNode.children;
+  const index=siblings.indexOf(this);n.parentNode=this.parentNode;siblings.splice(index+1,0,n);return n;
+ }
  replaceChildren(...ns){for(const n of this.children)n.parentNode=null;this.children=[];this._text='';for(const n of ns)this.appendChild(n);}
  addEventListener(type,f){if(!this.listeners.has(type))this.listeners.set(type,new Set());this.listeners.get(type).add(f);}
  removeEventListener(type,f){this.listeners.get(type)?.delete(f);}
  async emit(type,opts={}){const e={type,target:this,defaultPrevented:false,preventDefault(){this.defaultPrevented=true;},...opts};for(const f of this.listeners.get(type)||[])await f(e);return e;}
- closest(selector){for(let n=this;n;n=n.parentNode){if(selector.startsWith('#')&&!selector.includes(' ')&&!selector.includes(',')){if(n.id===selector.slice(1))return n;}
+ closest(selector){for(let n=this;n;n=n.parentNode){if(selector.startsWith('.')&&((n.attributes.class||n.className||'').split(/\s+/).includes(selector.slice(1))))return n;
+  if(selector.startsWith('#')&&!selector.includes(' ')&&!selector.includes(',')){if(n.id===selector.slice(1))return n;}
   if(selector==='#dashboard input, #dashboard select, #dashboard textarea'&&['input','select','textarea'].includes(this.tagName)&&n.id==='dashboard')return this;}
   return null;}
  get form(){for(let n=this.parentNode;n;n=n.parentNode)if(n.tagName==='form')return n;return null;}
