@@ -93,7 +93,7 @@ try{
   await ctx.route('**/*',r=>{if(new URL(r.request().url()).origin===origin)return r.continue();report.blockedExternal.push(r.request().url());return r.abort();});
   const page=await ctx.newPage();page.on('pageerror',e=>report.pageErrors.push({engine,error:e.message}));
   await page.goto(origin,{waitUntil:'networkidle'});await page.locator('#dashboard').waitFor({state:'visible'});
-  assert.equal(await page.locator('#appVersion').innerText(),'v0.9.57-asset-overlay-20261112（端末で実行中）');
+  assert.equal(await page.locator('#appVersion').innerText(),'v0.9.58-unified-input-backup-20261112（端末で実行中）');
   assert.equal(await page.locator('[data-group="results"]').getAttribute('data-step-no'),'1');
   assert.equal(await page.locator('[data-tab="mortality"]').getAttribute('data-step-no'),'1-3');
   assert.equal(await page.locator('[data-tab="pension"]').getAttribute('data-step-no'),'2-5');
