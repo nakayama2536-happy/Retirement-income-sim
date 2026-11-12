@@ -5,6 +5,7 @@ import {createServer} from 'node:http';
 import {readFile,writeFile,mkdir} from 'node:fs/promises';
 import {resolve,extname,sep} from 'node:path';
 import {chromium} from 'playwright';
+import {APP_BUILD} from '../../backup-compatibility.mjs';
 const root=resolve('.'),out=resolve('ux-review-browser-evidence');
 await mkdir(out,{recursive:true});
 const fixture=JSON.parse(await readFile('tools/browser-test/synthetic-full.json','utf8'));
@@ -37,7 +38,7 @@ try{
  assert.equal(beforeEnd,95);
  assert.equal(await page.locator('.topbar h1').innerText(),'ライフプランシミュレーター');
  assert.equal(await page.locator('.topbar p').count(),0);
- assert.match(await page.locator('#appVersion').innerText(),/^v0\.9\.59-guided-sync-answers-20261112（端末で実行中）$/);
+ assert.equal(await page.locator('#appVersion').innerText(),`${APP_BUILD}（端末で実行中）`);
  assert.match(await page.locator('#rulesVersion').innerText(),/2026-09-24/);
  assert.match(await page.locator('#cloudDataSavedAt').innerText(),/未確認/);
  mark('concise-header-build-rule-date-and-unverified-cloud-time');

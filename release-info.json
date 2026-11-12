@@ -1,5 +1,5 @@
 {
-  "appBuild": "v0.9.59-guided-sync-answers-20261112",
-  "releasedAt": "2026-11-12",
-  "purpose": "guided-sync-and-inline-action-answers"
+  "appBuild": "v0.9.60-inline-reference-export-answers-20261113",
+  "releasedAt": "2026-11-13",
+  "purpose": "inline-reference-and-export-action-answers"
 }

@@ -189,9 +189,38 @@ export function mountDetailUI({getState,commit,notice}){
  el('detailCsvIncludeDetails').addEventListener('change',()=>{renderColumnPicker();renderReport();});
  el('detailSelectAll').addEventListener('change',e=>{if(!report)return;for(const c of availableColumns()){if(e.target.checked)excluded.delete(c.id);else excluded.add(c.id);}renderColumnPicker();renderReport();});
  el('detailColumnPicker').addEventListener('change',e=>{const {columnId,columnSection}=e.target.dataset;const cols=columnId?availableColumns().filter(c=>c.id===columnId):availableColumns().filter(c=>c.section===columnSection);for(const c of cols){if(e.target.checked)excluded.delete(c.id);else excluded.add(c.id);}const open=[...el('detailColumnPicker').querySelectorAll('details[open]')].map(d=>d.querySelector('[data-column-section]').dataset.columnSection);renderColumnPicker();for(const d of el('detailColumnPicker').querySelectorAll('details'))if(open.includes(d.querySelector('[data-column-section]').dataset.columnSection))d.open=true;renderReport();});
- el('downloadDetailedCsv').addEventListener('click',()=>{renderReport();if(!report)return;download(trendCsv(report,selectedColumns().map(c=>c.id),{includeStatus:el('detailCsvIncludeStatus').checked}),`lifeplan-items-${report.period}.csv`,'text/csv;charset=utf-8');});
- el('makeReviewPrompt').addEventListener('click',()=>{try{el('reviewPromptText').value=reviewPrompt(getState(),{sourceProfile:el('detailCsvSource').value});el('reviewPromptText').hidden=false;el('downloadReviewPrompt').disabled=false;notice('確認依頼文を作成しました。内容を確認してからChatGPTへ貼り付けてください。');}catch(e){notice(e.message,'error');}});
- el('downloadReviewPrompt').addEventListener('click',()=>download(el('reviewPromptText').value,'lifeplan-review-prompt.txt'));
+ const detailedCsvAnswer=mountActionAnswer(el('downloadDetailedCsv'));
+ const reviewAnswer=mountActionAnswer(el('makeReviewPrompt'));
+ const reviewDownloadAnswer=mountActionAnswer(el('downloadReviewPrompt'));
+ el('detailCsvSource').addEventListener('change',()=>{
+  el('reviewPromptText').value='';el('reviewPromptText').hidden=true;el('downloadReviewPrompt').disabled=true;
+  reviewAnswer.invalidate();reviewDownloadAnswer.invalidate();
+ });
+ for(const id of ['detailCsvSource','detailCsvPeriod','detailCsvAge','detailCsvIncludeStatus','detailCsvIncludeDetails','detailSelectAll','detailColumnPicker']){
+  el(id).addEventListener('change',()=>detailedCsvAnswer.invalidate());
+ }
+ el('downloadDetailedCsv').addEventListener('click',()=>{
+  try{
+   renderReport();
+   if(!report||!selectedColumns().length){detailedCsvAnswer.show({kind:'warning',body:'CSVに出力する項目を選択してください。'});return;}
+   download(trendCsv(report,selectedColumns().map(c=>c.id),{includeStatus:el('detailCsvIncludeStatus').checked}),`lifeplan-items-${report.period}.csv`,'text/csv;charset=utf-8');
+   detailedCsvAnswer.show({kind:'info',body:'選択した項目の全期間CSVについてダウンロードを開始しました。計画は変更していません。',next:'保存先を確認してください。'});
+  }catch(e){detailedCsvAnswer.show({kind:'error',body:'CSV出力を開始できませんでした。保存済みの計画は変更していません。'});}
+ });
+ el('makeReviewPrompt').addEventListener('click',()=>{
+  try{
+   el('reviewPromptText').value=reviewPrompt(getState(),{sourceProfile:el('detailCsvSource').value});
+   el('reviewPromptText').hidden=false;el('downloadReviewPrompt').disabled=false;
+   reviewAnswer.show({kind:'info',body:'AI相談用の文章を作成しました。外部への送信はしていません。',next:'個人情報を確認してから必要な部分だけ共有してください。'});
+  }catch(e){el('reviewPromptText').value='';el('reviewPromptText').hidden=true;el('downloadReviewPrompt').disabled=true;reviewAnswer.show({kind:'error',body:'AI相談文を作成できませんでした。以前の相談文は破棄しました。条件を確認してください。'});}
+ });
+ el('downloadReviewPrompt').addEventListener('click',()=>{
+  if(!el('reviewPromptText').value){reviewDownloadAnswer.show({kind:'warning',body:'先に相談用文章を作成してください。'});return;}
+  try{
+   download(el('reviewPromptText').value,'lifeplan-review-prompt.txt');
+   reviewDownloadAnswer.show({kind:'info',body:'相談用文章のダウンロードを開始しました。AIには送信していません。',next:'保存先と共有する内容を確認してください。'});
+  }catch(e){reviewDownloadAnswer.show({kind:'error',body:'相談用文章のダウンロードを開始できませんでした。'});}
+ });
  return {render(){const c=getState().config;if(!c)return;for(const kind of Object.keys(fname))if(!forms.has(kind))initForm(kind,c);const signature=configSignature(getState());if(renderedSignature!==signature){for(const ctx of forms.values()){ctx.proposal=null;ctx.box.hidden=true;}renderedSignature=signature;el('reviewPromptText').value='';el('reviewPromptText').hidden=true;el('downloadReviewPrompt').disabled=true;}
   el('detailCsvSource').value=expenseDisplayProfile(c,el('detailCsvSource').value)||'';renderAnnual();renderReport();
   for(const ctx of [...forms.values()]){

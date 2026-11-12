@@ -84,6 +84,13 @@ test('FIX C: CSV action and annual cashflow summary are connected to development
  assert.equal(html.includes('id="exportAnnualCsvBtn"'),true);assert.equal(html.includes('id="annualCashflowSummary"'),true);assert.equal(app.includes('downloadAnnualCsv'),true);
 });
 test('FIX D: full export reads integrated state and preserves its envelope',()=>{
- const exportHandler=app.split("el('exportFullBtn').addEventListener")[1].split('\n')[0];
- assert.ok(exportHandler.includes('loadStateForTransfer()'));assert.ok(exportHandler.includes('createFullBackup(state)'));assert.equal(exportHandler.includes('config, scenarios}'),false);
+ const start=app.indexOf("mountJsonExport('exportFullBtn'");
+ assert.ok(start>=0,'full backup must be mounted with the shared action answer');
+ const handler=app.slice(start,app.indexOf("function mountReferenceTool",start));
+ assert.match(handler,/loadStateForTransfer\(\)/);
+ assert.match(handler,/createFullBackup\(state\)/);
+ assert.doesNotMatch(handler,/config, scenarios\}/);
+ const wrapper=app.slice(app.indexOf('function mountJsonExport'),start);
+ assert.match(wrapper,/downloadJson\(payload,filename\(\)\)/);
+ assert.match(wrapper,/kind:'info'/);
 });

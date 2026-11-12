@@ -1,6 +1,6 @@
 {
   "kind": "public-release",
-  "runtime": "v0.9.59-guided-sync-answers-20261112",
+  "runtime": "v0.9.60-inline-reference-export-answers-20261113",
   "files": [
     {
       "name": "action-answer.css",
@@ -39,13 +39,13 @@
     },
     {
       "name": "app.mjs",
-      "size": 81437,
-      "sha256": "c60fd3af7fb3afed6aa92274893082c759265b23d5794db79bc8f2faf876dae4"
+      "size": 85129,
+      "sha256": "b92d2de683555bdf362183c90486f488bcd139e9cf8c358ef06a0c13a0e4a9db"
     },
     {
       "name": "backup-compatibility.mjs",
-      "size": 8306,
-      "sha256": "7c74c6d5b9402bd026045dd68ac32aaf3471eb7b8e6e4429fed1798b5491242a"
+      "size": 8318,
+      "sha256": "db258c5002e1e878558009b240c7da3c19f30d794319560ba37e059176c48451"
     },
     {
       "name": "budget-travel-ui.mjs",
@@ -99,8 +99,8 @@
     },
     {
       "name": "detail-ui.mjs",
-      "size": 40118,
-      "sha256": "d716109ec8154c0e41a46a8c360eb4e96ee716d41de63793b7d136336253a301"
+      "size": 42212,
+      "sha256": "05566fd14958e340a895af9353e9a43e3d455d23a521dd21d04f88fb6a320696"
     },
     {
       "name": "detailed-report.mjs",
@@ -289,8 +289,8 @@
     },
     {
       "name": "release-info.json",
-      "size": 141,
-      "sha256": "fda1a2200273623405ce90e2b5c477fef455c16be72374798dbbe79a747de582"
+      "size": 158,
+      "sha256": "ec4729dd2db53a8c9381208284e3c3cda51d8038f3271a678aa4936b470d3bb9"
     },
     {
       "name": "retirement-comment.mjs",
@@ -364,8 +364,8 @@
     },
     {
       "name": "sw.js",
-      "size": 4758,
-      "sha256": "b39a126447ef7dae1f05254141ea84262cf71d63b40d8e9ff9bd7340530ef08d"
+      "size": 4770,
+      "sha256": "55466462e243600cec33fcd6a370cb039a17dc11ba20414436739fb76777085b"
     },
     {
       "name": "sync-answer-bridge.mjs",
