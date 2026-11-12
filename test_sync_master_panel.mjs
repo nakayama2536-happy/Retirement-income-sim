@@ -6,12 +6,21 @@ import {FakeCipherCloud} from './sync-policy.mjs';
 const phrase='synthetic-crypto-secret-long-enough';
 const local=(amount)=>({config:{plan:{startDate:'2038-01-01',initialAsset:amount},reviews:{'70':{note:'fiction'}}},scenarios:[{id:'only-synthetic'}],futureEnvelope:{v:3}});
 class Element{
- constructor(tag,ownerDocument){this.tagName=tag.toUpperCase();this.ownerDocument=ownerDocument;this.children=[];this.listeners={};this.checked=false;this.disabled=false;this.hidden=false;this.value='';this.textContent='';this.attributes={};this.classList={add(){}};}
+ constructor(tag,ownerDocument){this.tagName=tag.toUpperCase();this.ownerDocument=ownerDocument;this.children=[];this.parentNode=null;this.listeners={};this.checked=false;this.disabled=false;this.hidden=false;this.value='';this.textContent='';this.attributes={};this.classList={add(){}};}
  setAttribute(k,v){this.attributes[k]=String(v);if(k==='name')this.name=v;}
- appendChild(x){this.children.push(x);return x;}
- replaceChildren(...items){this.children=items;}
+ appendChild(x){x.remove?.();x.parentNode=this;this.children.push(x);return x;}
+ replaceChildren(...items){for(const child of this.children)child.parentNode=null;this.children=[];for(const x of items)this.appendChild(x);}
  addEventListener(name,fn){(this.listeners[name]??=[]).push(fn);}
  async emit(name){for(const fn of this.listeners[name]??[])await fn({preventDefault(){}});}
+ /* The deterministic DOM retains native relocation semantics used by the real UI. */
+ get parentElement(){return this.parentNode??null;}
+ append(...nodes){for(const node of nodes)this.appendChild(node);}
+ prepend(...nodes){for(const node of [...nodes].reverse()){node.remove?.();node.parentNode=this;this.children.unshift(node);}}
+ remove(){if(this.parentNode){this.parentNode.children=this.parentNode.children.filter(n=>n!==this);this.parentNode=null;}}
+ removeChild(node){if(node.parentNode!==this)throw Error('not a child');node.remove();return node;}
+ insertAdjacentElement(position,node){if(position!=='afterend'||!this.parentNode)throw Error('invalid position');node.remove?.();const siblings=this.parentNode.children,index=siblings.indexOf(this);node.parentNode=this.parentNode;siblings.splice(index+1,0,node);return node;}
+ closest(selector){if(selector.startsWith('.')){for(let node=this;node;node=node.parentNode){if((node.attributes?.class||node.className||'').split(/\\s+/).includes(selector.slice(1)))return node;}}return null;}
+
 }
 const doc={createElement(tag){return new Element(tag,doc);},addEventListener(){},removeEventListener(){},querySelector(){return null;},activeElement:null};
 const all=x=>[x,...x.children.flatMap(all)];
