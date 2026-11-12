@@ -129,8 +129,8 @@
     },
     {
       "name": "expense-ui.mjs",
-      "size": 9362,
-      "sha256": "7c2017b3bd28db5aae79754955c5f8f7d0e21d8482b4ee7662c7258050215745"
+      "size": 10631,
+      "sha256": "09dbed1ae559b142274b30f2e2834a1cc4b397d51bcb6f0bf98be678314a134f"
     },
     {
       "name": "expense-workflow.mjs",
@@ -179,8 +179,8 @@
     },
     {
       "name": "income-ui.mjs",
-      "size": 6439,
-      "sha256": "1e34171c017f449588ac39ecef0306431bd47ef64ce264805e0936469bc2e429"
+      "size": 7637,
+      "sha256": "fb5678ddc4b7387c8fe3fbaa79df87cd02200ba232efa3d82dd47ebb51650bce"
     },
     {
       "name": "income-workflow.mjs",
