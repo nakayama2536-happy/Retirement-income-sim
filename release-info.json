@@ -1,5 +1,5 @@
 {
-  "appBuild": "v0.9.58-unified-input-backup-20261112",
+  "appBuild": "v0.9.59-guided-sync-answers-20261112",
   "releasedAt": "2026-11-12",
-  "purpose": "unified-input-parameter-backup-and-sync"
+  "purpose": "guided-sync-and-inline-action-answers"
 }
