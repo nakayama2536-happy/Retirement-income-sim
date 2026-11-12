@@ -1,3 +1,4 @@
+import {loadState,saveInputDraft,readInputDraft,clearInputDraft} from './storage.mjs';
 /** Isolated, unadopted comparison-input cache. It never alters plan storage. */
 const KEY='lifeplan-mortality-input-draft-v1';
 const allowed=['deceased','deathMonth','survivorPension','preClaimPension','funeral',
@@ -10,7 +11,8 @@ function signature(config){
 export function readMortalityDraft(config){
   try{
     if(!config||!globalThis.localStorage)return null;
-    const blob=JSON.parse(localStorage.getItem(KEY)||'null');
+    const state=loadState();
+    const blob=Object.hasOwn(state,'savedInputs')?readInputDraft('mortality'):JSON.parse(localStorage.getItem(KEY)||'null');
     if(blob?.version!==1||blob.context!==signature(config)||!blob.values||typeof blob.values!=='object')return null;
     const values=Object.fromEntries(allowed.filter(k=>typeof blob.values[k]==='string').map(k=>[k,blob.values[k]]));
     const factors=blob.factors&&typeof blob.factors==='object'&&!Array.isArray(blob.factors)?
@@ -23,10 +25,12 @@ export function saveMortalityDraft(config,values,factors={}){
     if(!config||!globalThis.localStorage)return false;
     const clean=Object.fromEntries(allowed.filter(k=>typeof values?.[k]==='string').map(k=>[k,values[k]]));
     const safe=Object.fromEntries(Object.entries(factors).filter(([k,v])=>typeof k==='string'&&k.length<256&&typeof v==='string'&&v.length<64));
-    localStorage.setItem(KEY,JSON.stringify({version:1,context:signature(config),values:clean,factors:safe}));
+    const entry={version:1,context:signature(config),values:clean,factors:safe};
+    if(loadState()?.config)saveInputDraft('mortality',entry);
+    else localStorage.setItem(KEY,JSON.stringify(entry));
     return true;
   }catch{return false;}
 }
 export function clearMortalityDraft(){
-  try{globalThis.localStorage?.removeItem(KEY);return true;}catch{return false;}
+  try{if(loadState()?.config)clearInputDraft('mortality');else globalThis.localStorage?.removeItem(KEY);return true;}catch{return false;}
 }

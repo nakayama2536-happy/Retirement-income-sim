@@ -314,6 +314,7 @@ export function mountMortalityComparison(root,{getConfig,getBaseline,runPlan}){
  <button id="mortalityClearInputs" class="secondary" type="button">比較入力を初期化</button>
  </form>
  <p id="mortalityState" role="status" class="muted">まだ比較していません。現在の資産計算や保存データは変わりません。</p>
+ <p id="mortalityDraftSaveNotice" role="status" class="muted"></p>
  <div id="mortalityResults" hidden></div>
  `;
  const form=root.querySelector('#mortalityForm'),state=root.querySelector('#mortalityState'),results=root.querySelector('#mortalityResults'),costBox=root.querySelector('#mortalityCostRows');
@@ -353,7 +354,9 @@ export function mountMortalityComparison(root,{getConfig,getBaseline,runPlan}){
     const values=Object.fromEntries(fields.map(k=>[k,form.elements[k]?.value||'']));
     values.sourceProfile=root.querySelector('#mortalityExpenseSource').value;
     values.residualFactor=root.querySelector('#mortalityRemainderFactor').value;
-    saveMortalityDraft(getConfig(),values,itemizedControls.factorDraft());
+    const persisted=saveMortalityDraft(getConfig(),values,itemizedControls.factorDraft());
+    const notice=root.querySelector('#mortalityDraftSaveNotice');
+    if(notice){notice.textContent=persisted?'比較入力の必要なパラメータを一括バックアップ・同期対象に保存しました。':'比較入力の保存に失敗しました。現在の入力は他端末や一括バックアップへ反映されません。';notice.className=persisted?'muted':'mortality-warning';}
   };
   itemizedControls=mountMortalityItemizedControls(root,{getConfig,runPlan,onChange:()=>{
     form.elements.reviewed.checked=false;

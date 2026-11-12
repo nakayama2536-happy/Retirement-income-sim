@@ -35,7 +35,7 @@ import {
   fukuyamaCarePremium2026, lateElderlyMedicalPremium2026, lateElderlyMedicalPremium2026Details, fukuyamaNhiPremium2026, fukuyamaNhiPremium2026Details,
   replaceAgeRangeOverride, estimateAnnualTaxSocial, applyCarDisposalTransfer, expenseDetailRows
 } from './calc.mjs';
-import { loadState, replaceState, STATE_KEY, downloadJson, migrateConfig, configSignature } from './storage.mjs';
+import { loadState, loadStateForTransfer, replaceState, STATE_KEY, downloadJson, migrateConfig, configSignature } from './storage.mjs';
 import { commitPlanState } from './state.mjs';
 import { RULES } from './rules.mjs';
 import { mountPensionSheet } from './pension-ui.mjs';
@@ -957,7 +957,7 @@ el('saveScenarioBtn').addEventListener('click', saveCurrentScenario);
 el('importFile').addEventListener('change', e=>{ const f=e.target.files?.[0]; if(f) importConfig(f).catch(err=>showNotice(`読込失敗: ${err.message}`,'error')); });
 el('importFile2').addEventListener('change', e=>{ const f=e.target.files?.[0]; if(f) importConfig(f).catch(err=>showNotice(`読込失敗: ${err.message}`,'error')); });
 el('exportBtn').addEventListener('click',()=>{ if(config) downloadJson(createConfigBackup(config),`lifeplan-backup-${new Date().toISOString().slice(0,10)}.json`); });
-el('exportFullBtn').addEventListener('click',()=>{try{const state=loadState();if(!state.config)return;downloadJson(createFullBackup(state),`lifeplan-full-backup-${new Date().toISOString().slice(0,10)}.json`);}catch(e){showNotice(`一括バックアップを作成できません。${e.message}`,'error');}});
+el('exportFullBtn').addEventListener('click',()=>{try{const state=loadStateForTransfer();if(!state.config)return;downloadJson(createFullBackup(state),`lifeplan-full-backup-${new Date().toISOString().slice(0,10)}.json`);}catch(e){showNotice(`一括バックアップを作成できません。${e.message}`,'error');}});
 el('pensionToolRun').addEventListener('click',runPensionTool);
 el('idecoToolRun').addEventListener('click',runIdecoTool);
 el('retirementToolRun').addEventListener('click',runRetirementTool);
@@ -1008,9 +1008,9 @@ document.querySelectorAll('[data-tab]').forEach(btn=>btn.addEventListener('click
 installWorkflowTabs();
 const migrationPanel=mountMigration({onCommit:()=>{const saved=loadState();config=saved.config;scenarios=saved.scenarios;refresh();}});
 syncPanel=mountSyncPanel(el('privateSyncContainer'),{
- getState:()=>loadState(),validateState:value=>validateSavedState(value),
+ getState:()=>loadStateForTransfer(),validateState:value=>validateSavedState(value),
  exportLocalBackup:state=>downloadJson(createFullBackup(state),`lifeplan-conflict-device-before-cloud-${new Date().toISOString().replace(/[:.]/g,'-')}.json`),
- replaceLocal:(next,expected)=>replaceState(next,expected),
+ replaceLocal:(next,expected)=>{if(configSignature(loadStateForTransfer())!==configSignature(expected))throw Error('端末の入力条件が変更されました。再照合してください');return replaceState(next,loadState());},
  afterReplace:()=>{const saved=loadState();config=saved.config;scenarios=saved.scenarios;refresh();},
  writeAllowed:()=>writeAccess.writable,writeAccessReason:()=>writeAccess.reason,
  onCloudMetadata:iso=>{
@@ -1036,7 +1036,7 @@ document.querySelectorAll('[data-help]').forEach(btn=>btn.addEventListener('clic
 }));
 el('helpClose').addEventListener('click',()=>el('helpDialog').close());
 
-const CURRENT_RUNTIME_BUILD='v0.9.57-asset-overlay-20261112';
+const CURRENT_RUNTIME_BUILD='v0.9.58-unified-input-backup-20261112';
 el('appVersion').textContent=CURRENT_RUNTIME_BUILD+'（端末で実行中）';
 const freshness=el('runtimeFreshness');
 (async()=>{

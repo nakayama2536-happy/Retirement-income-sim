@@ -74,7 +74,7 @@ test('I08 移行候補の別画面更新を保存前に拒否',()=>{
  globalThis.localStorage=new Memory();const source=legacy(localStorage),view=inspectMigration();localStorage.data.set(source.scenarioKey,JSON.stringify(fixture(200).scenarios));assert.throws(()=>migrateSelected(view,source.id),/別画面/);assert.equal(localStorage.getItem(STATE_KEY),null);
 });
 test('I08 古いバックアップ→現在版は全体保持・互換情報を出力',()=>{
- const current=setup(),old=fixture(80);restoreFullBackup(current,old);assert.deepEqual(loadState(),old);const exported=createFullBackup(loadState());assert.equal(exported.recoveryCompatibility.producerBuild,APP_BUILD);assert.deepEqual(exported.config,old.config);assert.deepEqual(exported.scenarios,old.scenarios);
+ const current=setup(),old=fixture(80);restoreFullBackup(current,old);assert.deepEqual(loadState(),{...old,savedInputs:{version:1,mortality:null,salary:null,pension:null}});const exported=createFullBackup(loadState());assert.equal(exported.recoveryCompatibility.producerBuild,APP_BUILD);assert.deepEqual(exported.config,old.config);assert.deepEqual(exported.scenarios,old.scenarios);
 });
 for(const [feature,mutate] of [
  ['salary-net-transfer-v1',s=>s.config.cashflow.salaryLife={mode:'net-transfer-v1'}],['anchored-months-v1',s=>s.scenarios[1].config.plan.calendarMode='anchored-months-v1'],['expense-adoption-v1',s=>s.config.expenseWorkflow={history:[]}],['income-adoption-v1',s=>s.config.incomeWorkflow={history:[]}]

@@ -29,6 +29,7 @@ const open=async p=>{await p.locator('[data-group=results]').click();await p.loc
 const number=async x=>Number((await x.innerText()).replace(/[,万円\s]/g,''));
 const near=(x,y)=>assert.ok(Math.abs(x-y)<.11,String(x)+' != '+String(y));
 const saved=page=>page.evaluate(()=>localStorage.getItem('lifeplan-sim-state-v1'));
+const adoptedOnly=raw=>{const x=JSON.parse(raw);delete x.savedInputs;delete x.recoveryCompatibility;return JSON.stringify(x);};
 const context=(browser)=>browser.newContext({viewport:{width:1280,height:900},serviceWorkers:'block'});
 const init=ctx=>ctx.addInitScript(data=>{
  if(localStorage.getItem('lifeplan-sim-state-v1')===null)localStorage.setItem('lifeplan-sim-state-v1',JSON.stringify(data));
@@ -93,7 +94,7 @@ try{
   await ctx.route('**/*',r=>{if(new URL(r.request().url()).origin===origin)return r.continue();report.blockedExternal.push(r.request().url());return r.abort();});
   const page=await ctx.newPage();page.on('pageerror',e=>report.pageErrors.push({engine,error:e.message}));
   await page.goto(origin,{waitUntil:'networkidle'});await page.locator('#dashboard').waitFor({state:'visible'});
-  assert.equal(await page.locator('#appVersion').innerText(),'v0.9.57-asset-overlay-20261112（端末で実行中）');
+  assert.equal(await page.locator('#appVersion').innerText(),'v0.9.58-unified-input-backup-20261112（端末で実行中）');
   assert.equal(await page.locator('[data-group="results"]').getAttribute('data-step-no'),'1');
   assert.equal(await page.locator('[data-tab="mortality"]').getAttribute('data-step-no'),'1-3');
   assert.equal(await page.locator('[data-tab="pension"]').getAttribute('data-step-no'),'2-5');
@@ -182,6 +183,7 @@ try{
   await input(page,'deathMonth').fill('2060-01');
   await submit(page);
   near(await number(page.locator('[data-budget-term="result"]')),45);
+  const beforeCsv=await saved(page);
   const downloaded=[];
   for(const [kind,id] of [
     ['monthly','mortalityExportExpenseMonthlyCsv'],
@@ -200,7 +202,7 @@ try{
   assert.ok(csvFiles.some(f=>f.name.includes('-items-')));
   assert.ok(csvFiles.some(f=>f.name.includes('-assets-')&&f.text.includes('月末資産_万円')&&f.text.includes('資産・支出検算')));
   for(const file of csvFiles){assert.ok(file.text.startsWith('\ufeff'));assert.match(file.text,/管理予算|費目名/);}
-  assert.equal(await saved(page),before,'CSV download must not adopt or save settings');
+  assert.equal(await saved(page),beforeCsv,'CSV download must not modify any saved fields');
   mark(engine,'expense-and-asset-CSV-downloads-are-read-only-and-UTF8-BOM');
   await verifyPensionReference(page);
   await submit(page);
@@ -215,7 +217,8 @@ try{
    await page.screenshot({path:resolve(out,engine+'-HMORT07-'+width+'.png'),fullPage:true});
    mark(engine,'aligned-responsive-comparison-'+width);
   }
-  assert.equal(await saved(page),before);assert.equal(await page.evaluate(()=>__mortalityWrites),0);
+  assert.equal(adoptedOnly(await saved(page)),adoptedOnly(before));
+  assert((await page.evaluate(()=>__mortalityWrites))>0,'comparison inputs should be saved without adoption');
   mark(engine,'comparison-writes-no-adopted-settings-or-scenarios');
   await page.reload({waitUntil:'networkidle'});await page.locator('#dashboard').waitFor({state:'visible'});await open(page);
   assert.equal(await input(page,'deathMonth').inputValue(),'2060-01');
@@ -229,7 +232,8 @@ try{
   await page.locator('#mortalityClearInputs').click();
   assert.equal(await input(page,'deathMonth').inputValue(),'');
   assert.equal(Number(await page.locator('#mortalityRemainderFactor').inputValue()),1,'入力クリア後の残額倍率は100%');
-  assert.equal(await saved(page),before);
+  assert.equal(adoptedOnly(await saved(page)),adoptedOnly(before));
+  assert.equal(JSON.parse(await saved(page)).savedInputs?.mortality,null,'reset should clear only mortality input snapshot');
   mark(engine,'clear-draft-alone-preserves-adopted-plan');
   await baselineInputs(page);await factors(page);await submit(page);
   const second=await ctx.newPage();second.on('pageerror',e=>report.pageErrors.push({engine,error:e.message}));
@@ -237,7 +241,7 @@ try{
   await baselineInputs(second);await factors(second);await submit(second);
   const checkReadOnly=async p=>p.evaluate(async()=>{const {assertWriteAccess}=await import('/write-access.mjs');try{assertWriteAccess();return false;}catch{return true;}});
   assert.equal(await checkReadOnly(second),true);
-  assert.equal(await saved(second),before);
+  assert.equal(adoptedOnly(await saved(second)),adoptedOnly(before));
   mark(engine,'second-tab-readonly-comparison-without-adoption');
   // The owner changes another setting; the second tab must invalidate the stale trial.
   await page.locator('[data-group=manage]').click();await page.locator('[data-tab=settings]').click();

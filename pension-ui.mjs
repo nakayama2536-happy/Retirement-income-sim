@@ -64,7 +64,7 @@ export function mountPensionSheet({getConfig,onCommit,showNotice}){
     }));
   }
   function saveDraft(){
-    try{savePensionDraft({context:pensionDraftContext(getConfig()),draft});el('pensionDraftNote').textContent='開始月・年額などの入力途中の内容は、このブラウザに下書き保存します。「全体シミュレーションに反映」を押すまで、ホームや年間収支は変わりません。';}
+    try{savePensionDraft({context:pensionDraftContext(getConfig()),draft});el('pensionDraftNote').textContent='開始月・年額などの未反映入力は一括バックアップ・クラウド同期の対象に含まれます。「全体シミュレーションに反映」を押すまでは、計算結果や採用済み条件を変更しません。';}
     catch{el('pensionDraftNote').textContent='試算中の入力を端末に保存できませんでした。画面を閉じると入力が失われます。';}
   }
   function invalidate(){preview=null;el('pensionPreview').hidden=true;}

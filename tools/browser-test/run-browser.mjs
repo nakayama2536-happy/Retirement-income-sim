@@ -149,6 +149,10 @@ async function run(browser,id,mode){
    const withoutProducer=snapshot=>{
     const copy=structuredClone(snapshot);
     delete copy.data.recoveryCompatibility.producerBuild;
+    // The new optional comparison-input snapshot is a validated backup extension,
+    // not a mutation of the stored plan, annual figures, or comparison output.
+    delete copy.data.savedInputs;
+    copy.data.recoveryCompatibility.requiredFeatures=(copy.data.recoveryCompatibility.requiredFeatures||[]).filter(f=>f!=='comparison-input-snapshot-v1');
     copy.comparison=copy.comparison.filter(row=>!age100Labels.includes(row[0]));
     return copy;
    };
@@ -161,7 +165,7 @@ async function run(browser,id,mode){
    assert.equal(after.data.recoveryCompatibility.producerBuild,APP_BUILD);
    // PR #36 and PR #37 already have the current comparison layout. Only the exported
    // backup's producer label may differ; every displayed value and saved field remains exact.
-   const withoutProducer=value=>{const copy=structuredClone(value);delete copy.data.recoveryCompatibility.producerBuild;copy.comparison=copy.comparison.map(row=>row.map((cell,i)=>i>0&&cell==='対象外'?'対象外（計算期間外）':cell));return copy;};
+   const withoutProducer=value=>{const copy=structuredClone(value);delete copy.data.recoveryCompatibility.producerBuild;delete copy.data.savedInputs;copy.data.recoveryCompatibility.requiredFeatures=(copy.data.recoveryCompatibility.requiredFeatures||[]).filter(f=>f!=='comparison-input-snapshot-v1');copy.comparison=copy.comparison.map(row=>row.map((cell,i)=>i>0&&cell==='対象外'?'対象外（計算期間外）':cell));return copy;};
    assert.deepEqual(withoutProducer(after),withoutProducer(before));
   }else assert.deepEqual(after,before);
   record.after=await state(page);
@@ -194,7 +198,7 @@ async function run(browser,id,mode){
    record.layout=[];
    for(const width of [390,1280]){
     await page.setViewportSize({width,height:900});
-    for(const [name,card,expected] of [['backup',backup,'未反映の下書き'],['recovery',recovery,'復元は行いません']]){
+    for(const [name,card,expected] of [['backup',backup,'万一の比較入力'],['recovery',recovery,'復元は行いません']]){
      assert((await card.innerText()).includes(expected));
      await card.scrollIntoViewIfNeeded();
      const bounds=await card.boundingBox();
@@ -278,7 +282,12 @@ async function validatePensionUi(browser){
    assert.equal(await page.locator('#primaryPensionAmount').inputValue(),'180.48');
    await page.locator('#pensionForm button[type="submit"]').click();
    assert(await page.locator('#pensionPreview').isVisible());
-   assert.deepEqual((await snapshot(page)).data,before);
+   const trialData=(await snapshot(page)).data;
+   // Comparing an unadopted pension trial should preserve the adopted plan
+   // while its input-only snapshot is now intentionally included in backups.
+   assert(trialData.savedInputs?.pension?.draft?.primary,'unadopted pension input must be backed up');
+   const removeDraft=x=>{const c=structuredClone(x);delete c.savedInputs;delete c.recoveryCompatibility.producerBuild;return c;};
+   assert.deepEqual(removeDraft(trialData),removeDraft(before));
    await openTab(page,'pension');await page.locator('#pensionOpenPrimary').click();
    const card=page.locator('#pensionForm');await card.scrollIntoViewIfNeeded();
    assert(await card.evaluate(n=>n.scrollWidth<=n.clientWidth+1));
