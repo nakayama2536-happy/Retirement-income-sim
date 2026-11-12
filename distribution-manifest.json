@@ -1,6 +1,6 @@
 {
   "kind": "public-release",
-  "runtime": "v0.9.56-expense-ui-cache-20261112",
+  "runtime": "v0.9.57-asset-overlay-20261112",
   "files": [
     {
       "name": "age-budget-candidate.mjs",
@@ -29,13 +29,13 @@
     },
     {
       "name": "app.mjs",
-      "size": 81215,
-      "sha256": "c8ccde42ab1e2f0c4bf548b2999b51c9014c4d2ab8807e40dc35f6a5efb8d8f7"
+      "size": 81212,
+      "sha256": "7a8a384d12430e82f09af8918a6d060d1102a3be17f90788935f5220df45a1a3"
     },
     {
       "name": "backup-compatibility.mjs",
-      "size": 8049,
-      "sha256": "4c5e9e3f93cda4dc7d370d1b0a82e0b05a8be986debed2a6dccab347ec2de34e"
+      "size": 8046,
+      "sha256": "e38e71a9a4bf4fc2bf2b82e989876cfa4fa916bcd58d0420f28bb83d9f1c1b81"
     },
     {
       "name": "budget-travel-ui.mjs",
@@ -239,8 +239,8 @@
     },
     {
       "name": "mortality-ui.mjs",
-      "size": 65772,
-      "sha256": "06d2cdad9079dbe2b5338ca7e7b368d96f8dde2f2411463eb9f3e2073d6d78da"
+      "size": 71222,
+      "sha256": "6d843d0213b673bc9b8dc8e0eb47c0f1da6269e74523cbc5a7940faa79c31920"
     },
     {
       "name": "pension-estimate.mjs",
@@ -274,8 +274,8 @@
     },
     {
       "name": "release-info.json",
-      "size": 158,
-      "sha256": "67b59615a023ce12dd0a50cc8bf99e99e29fa1eed5255469b04ca6c1970d95e3"
+      "size": 136,
+      "sha256": "eb6ea777103bc1f4a637d235a531c2a7749a37e0632325d386b4ec5ec52f5942"
     },
     {
       "name": "retirement-comment.mjs",
@@ -349,8 +349,8 @@
     },
     {
       "name": "sw.js",
-      "size": 4600,
-      "sha256": "bcd1dc7ab01e0f52ba77e03bfff8033963e448fdd395d9481e54db194f615b69"
+      "size": 4597,
+      "sha256": "a25df37afd03f09c41e64cfff8f7f077b00cd738e636dd102272a226db6f626e"
     },
     {
       "name": "sync-controller.mjs",

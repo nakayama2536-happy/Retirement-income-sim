@@ -1,5 +1,5 @@
 {
-  "appBuild": "v0.9.56-expense-ui-cache-20261112",
+  "appBuild": "v0.9.57-asset-overlay-20261112",
   "releasedAt": "2026-11-12",
-  "purpose": "mortality-expense-draft-restoration-and-pwa-cache-refresh"
+  "purpose": "mortality-standard-worst-asset-overlay"
 }
