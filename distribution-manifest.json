@@ -39,8 +39,8 @@
     },
     {
       "name": "app.mjs",
-      "size": 81437,
-      "sha256": "c60fd3af7fb3afed6aa92274893082c759265b23d5794db79bc8f2faf876dae4"
+      "size": 85117,
+      "sha256": "b0f227982c0be004f42428b3d441eac7d1e29fa723b32720b0cef0f170d35f87"
     },
     {
       "name": "backup-compatibility.mjs",
@@ -99,8 +99,8 @@
     },
     {
       "name": "detail-ui.mjs",
-      "size": 40118,
-      "sha256": "d716109ec8154c0e41a46a8c360eb4e96ee716d41de63793b7d136336253a301"
+      "size": 42212,
+      "sha256": "05566fd14958e340a895af9353e9a43e3d455d23a521dd21d04f88fb6a320696"
     },
     {
       "name": "detailed-report.mjs",
