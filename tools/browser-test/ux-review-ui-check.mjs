@@ -180,8 +180,9 @@ try{
  assert.match(await page.locator('[data-sync-action="4"]').innerText(),/保存内容の差分を確認する/);
  assert.match(await page.locator('[data-sync-action="2"]').innerText(),/クラウドに保存する/);
  await page.locator('#privateSyncContainer [data-flow="download"]').click();
- assert(await page.locator('[data-sync-action="3"]').isVisible());
- assert.match(await page.locator('[data-sync-action="3"]').innerText(),/スマホに読み込む/);
+ assert(await page.locator('[data-sync-action="7"]').isVisible(),'未登録端末ではクラウドからの初回取込を案内');
+ assert(await page.locator('[data-sync-action="7"]').isDisabled(),'未接続時の初回取込を保護');
+ assert.equal(await page.locator('[data-sync-action="3"]').isVisible(),false,'未登録端末では通常の読込操作を隠す');
  mark('cloud-state-and-action-groups-are-distinct-with-numbered-buttons');
  mark('ux-request-independent-backup-tab-and-secure-action-numbers');
  for(const width of [390,1280]){
