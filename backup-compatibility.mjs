@@ -1,13 +1,17 @@
+import {validateInputSnapshots} from './input-snapshots.mjs';
 import {readMortalityExpensePreset} from './mortality-expense-preset.mjs';
 // Compatibility is evaluated before normalization, calculation or any write.
-export const APP_BUILD='v0.9.57-asset-overlay-20261112';
-export const CURRENT_FEATURES=['salary-net-transfer-v1','anchored-months-v1','expense-adoption-v1','income-adoption-v1','nisa-withdrawal-reference-v1','nisa-budget-shortfall-v1','unemployment-receipt-plan-v1','price-base-month-v1','opening-balance-prior-month-close-v1','ideco-received-lump-scope-v1','ideco-annuity-start-month-v1','full-plan-comparison-saved-v1','pension-breakdown-reference-v1','mortality-expense-preset-v1'];
+export const APP_BUILD='v0.9.58-unified-input-backup-20261112';
+export const CURRENT_FEATURES=['salary-net-transfer-v1','anchored-months-v1','expense-adoption-v1','income-adoption-v1','nisa-withdrawal-reference-v1','nisa-budget-shortfall-v1','unemployment-receipt-plan-v1','price-base-month-v1','opening-balance-prior-month-close-v1','ideco-received-lump-scope-v1','ideco-annuity-start-month-v1','full-plan-comparison-saved-v1','pension-breakdown-reference-v1','mortality-expense-preset-v1','comparison-input-snapshot-v1'];
 const object=x=>x!==null&&typeof x==='object'&&!Array.isArray(x);
 const has=(o,key)=>Object.prototype.hasOwnProperty.call(o??{},key);
 const validMonth=v=>typeof v==='string'&&/^\d{4}-(0[1-9]|1[0-2])$/.test(v);
 function requiredFeatures(value){
- const configs=value.config?[value.config,...(Array.isArray(value.scenarios)?value.scenarios.map(s=>s?.config):[])]:[value];
  const features=new Set();
+ if(Object.prototype.hasOwnProperty.call(value??{},'savedInputs')){
+  validateInputSnapshots(value.savedInputs);features.add('comparison-input-snapshot-v1');
+ }
+ const configs=value.config?[value.config,...(Array.isArray(value.scenarios)?value.scenarios.map(s=>s?.config):[])]:[value];
  for(const c of configs){
   if(c?.unemployment?.receiptPlan!=null){if(c.unemployment.receiptPlan.version!==1)throw new Error("未対応の失業給付形式です。");features.add("unemployment-receipt-plan-v1");}
   if(c?.nisa?.withdrawal!=null){if(c.nisa.withdrawal.version!==1)throw new Error('未対応のNISA取り崩し形式です。');features.add('nisa-withdrawal-reference-v1');if(c.nisa.withdrawal.mode==='budget')features.add('nisa-budget-shortfall-v1');}
