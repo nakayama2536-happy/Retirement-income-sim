@@ -9,6 +9,7 @@ import {dateWithAge,updateDateInputHints} from './date-display.mjs';
 import {expenseDisplayProfile} from './expense-display.mjs';
 import {runRetirementPlan} from './calc.mjs';
 import {reviewPrompt} from './review-prompt.mjs';
+import {mountActionAnswer} from './action-answer.mjs';
 const opt=rows=>rows.map(([v,l])=>`<option value="${esc(v)}">${esc(l)}</option>`).join('');
 const input=(name,label,type='number',value='',extra='')=>`<label>${label}<input name="${name}" type="${type}" value="${esc(value??'')}" ${type==='number'?'step="any" min="0"':''} ${extra}></label>`;
 const select=(name,label,rows)=>`<label>${label}<select name="${name}">${opt(rows)}</select></label>`;
@@ -125,11 +126,13 @@ export function mountDetailUI({getState,commit,notice}){
   if(kind==='idecoWithdrawal')return currentSummaryHtml(c,'ideco').replace('現在の設定の概要','今回の試算プラン').replace('保存済みの条件です。入力途中・未反映の試算は含みません。','まだ保存していない候補です。');
   return '';
  }
- function initForm(kind,c){
+ function initForm(kind,c,completed=null){
   const host=el(`detail-${kind}`);if(!host)return;
   host.innerHTML=`<h2>${fname[kind]}</h2><form id="detail-form-${kind}" class="detail-form" data-detail-kind="${kind}"><div class="form-grid">${fields(kind,c)}</div><div class="pension-actions"><button type="submit" class="primary">${kind==='horizon'?'延長を試算':'変更後の結果を確認（未反映）'}</button><button type="button" class="secondary" data-reset>${kind==='horizon'?'入力を取り消す':'未反映の入力を取り消す'}</button></div><p class="muted">試算結果は、この入力欄のすぐ下に表示します。入力・試算だけでは保存しません。「全体シミュレーションに反映」で保存し、ホーム・収支表・CSVを更新します。「未反映の入力を取り消す」は入力欄だけを保存済みの値に戻します。</p></form><div class="detail-preview" hidden></div><p class="inline-error" role="alert" hidden></p>`;
-  const form=host.querySelector('form'),box=host.querySelector('.detail-preview'),error=host.querySelector('[role=alert]');const ctx={kind,form,box,error,proposal:null,sourceSignature:detailFormSourceSignature(kind,c),stale:false};forms.set(kind,ctx);populate(kind,form,c);ctx.initialValuesSignature=configSignature(values(form));if(kind==='horizon'&&Number(c.plan.endAge)>=100)form.querySelector('[type=submit]').disabled=true;
-  const invalidate=()=>{ctx.proposal=null;box.hidden=true;error.hidden=!ctx.stale;};
+  const form=host.querySelector('form'),box=host.querySelector('.detail-preview'),error=host.querySelector('[role=alert]');const ctx={kind,form,box,error,proposal:null,sourceSignature:detailFormSourceSignature(kind,c),stale:false};forms.set(kind,ctx);
+   ctx.trialAnswer=form.querySelector('[type=submit]')?.parentNode?mountActionAnswer(form.querySelector('[type=submit]')):null;
+   if(completed){box.hidden=false;const done=document.createElement('button');done.type='button';done.disabled=true;done.className='primary';done.textContent='全体シミュレーションに反映（処理済み）';box.append(done);mountActionAnswer(done).show({kind:'success',body:completed,confirmed:true});}populate(kind,form,c);ctx.initialValuesSignature=configSignature(values(form));if(kind==='horizon'&&Number(c.plan.endAge)>=100)form.querySelector('[type=submit]').disabled=true;
+  const invalidate=()=>{ctx.trialAnswer?.invalidate();ctx.proposal=null;box.hidden=true;error.hidden=!ctx.stale;};
   if(kind==='budgetTable')form.addEventListener('click',e=>{if(e.target.closest('[data-add-budget]')){appendBudgetRow(form);invalidate();}if(e.target.closest('[data-remove-budget]')){e.target.closest('tr').remove();invalidate();}});
   form.addEventListener('input',()=>{invalidate();hint(form,getState().config);});
   form.addEventListener('change',e=>{
@@ -148,16 +151,19 @@ export function mountDetailUI({getState,commit,notice}){
    updateWithdrawalFields(kind,form);hint(form,c);
   });
   form.querySelector('[data-reset]').addEventListener('click',()=>initForm(kind,getState().config));
-  form.addEventListener('submit',event=>{event.preventDefault();try{
+  form.addEventListener('submit',event=>{event.preventDefault();ctx.trialAnswer?.show({kind:'pending',body:'入力中の条件で資産推移を試算しています。'});try{
    if(ctx.stale)throw Error('この入力の元になった設定が別の操作で更新されています。未反映の入力を控え、「未反映の入力を取り消す」で最新の設定を読み直してください。');
    const state=getState(),p=detailProposal(state,laborEditors[kind]?'labor':kind,laborEditors[kind]?{...values(form),person:laborEditors[kind][0],job:laborEditors[kind][1]}:values(form));ctx.proposal=p;box.hidden=false;error.hidden=true;
    box.innerHTML=`<h3 tabindex="-1">試算結果（まだ反映していません）</h3>${kind==='expense'?`<p class="detail-expense-step"><strong>③ 変更前後の確認</strong> 変更後：${esc(p.values.amount)}万円／${p.values.unit==='annual'?'年':'月'}（${p.values.unit==='monthly'?'年間'+esc(Number(p.values.amount)*12)+'万円':'月額換算'+esc(Number(p.values.amount)/12)+'万円'}）。元の項目・期間は上の入力欄と保存済み一覧で確認してください。管理予算は別途確認します。</p>`:''}${withdrawalPreview(p.candidate,kind)}<p>${esc(fname[kind])}：${p.changed?'変更あり':'変更なし'}。最終資産 ${p.before.toLocaleString('ja-JP',{maximumFractionDigits:2})} → ${p.after.toLocaleString('ja-JP',{maximumFractionDigits:2})}万円</p><details><summary>変更する入力値・期間を確認</summary><dl>${Object.entries(values(form)).filter(([k])=>!['target','eventTarget','rows'].includes(k)).map(([k,v])=>`<dt>${esc(form.elements[k]?.closest('label')?.childNodes[0]?.textContent||k)}</dt><dd>${esc(['date','month'].includes(form.elements[k]?.type)?dateWithAge(v,p.candidate,form.dataset.person||'primary'):form.elements[k]?.tagName==='SELECT'?form.elements[k].selectedOptions[0]?.textContent:v)}</dd>`).join('')}</dl></details><p>${p.values.useIndividualLabor?'給与生活終了後の収入方式を本人・配偶者の個別設定へ置き換えます。従来の夫婦合計額は重ねて計上しません。':kind==='expense'?'内訳のみの変更です。資産推移を変えるには、内訳を確認した後「内訳合計を年間予算にする」を試算してください。':['nisa','nisaWithdrawal'].includes(kind)?'NISAは開始資産の内数です。合計資産・運用利回りは変えません。':kind==='retirement'&&!p.values.postReceipt?'退職金の参考条件・構想コメントを更新します。退職金収入は追加しません。':'既存の計算方法・期間方式を使って全期間を再計算します。'}</p><button type="button" class="primary" data-apply ${p.changed?'':'disabled'}>全体シミュレーションに反映</button>`;
+   ctx.trialAnswer?.show({kind:'info',body:`${fname[kind]}：最終資産 ${p.before.toLocaleString('ja-JP',{maximumFractionDigits:2})} → ${p.after.toLocaleString('ja-JP',{maximumFractionDigits:2})}万円。まだ保存していません。`});
    box.querySelector('h3').focus({preventScroll:true});box.scrollIntoView({block:'nearest'});
-   box.querySelector('[data-apply]').addEventListener('click',()=>{try{
+   const applyButton=box.querySelector('[data-apply]'),applyAnswer=applyButton?.parentNode?mountActionAnswer(applyButton):null;
+   applyButton.addEventListener('click',()=>{applyAnswer?.show({kind:'pending',body:'保存状態を確認しています。'});try{
     const current=getState(),next=verifyDetailProposal(current,ctx.proposal),patches=changedPaths(current.config,next);
-    if(!commit(next))return;undo=patches;ctx.proposal=null;initForm(kind,getState().config);el('detailUndo').disabled=false;notice('保存しました。年次表・CSVを現在の設定で更新しました。');
-   }catch(e){error.textContent=e.message;error.hidden=false;}});
-  }catch(e){invalidate();error.textContent=e.message;error.hidden=false;}});
+    if(!commit(next)){applyAnswer?.show({kind:'warning',body:'保存完了を確認できません。入力と現在の計画を確認してください。'});return;}
+    undo=patches;ctx.proposal=null;initForm(kind,getState().config,`${fname[kind]}を保存し、計画に反映しました。年次表・CSVは更新後の設定に基づきます。`);el('detailUndo').disabled=false;notice('保存しました。年次表・CSVを現在の設定で更新しました。');
+   }catch(e){error.textContent=e.message;error.hidden=false;applyAnswer?.show({kind:'error',body:`操作を完了できませんでした。${e.message}`});}});
+  }catch(e){invalidate();error.textContent=e.message;error.hidden=false;ctx.trialAnswer?.show({kind:'error',body:e.message});}});
  }
  function availableColumns(){return report?visibleTrendColumns(report,el('detailCsvIncludeDetails').checked):[];}
  function selectedColumns(){return report?availableColumns().filter(c=>!excluded.has(c.id)):[];}
