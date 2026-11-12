@@ -1,6 +1,6 @@
 import test from 'node:test';import assert from 'node:assert/strict';import fs from 'node:fs';import crypto from 'node:crypto';
 import {collect} from './tools/package-public.mjs';
-import {mountMortalityComparison} from './mortality-ui.mjs';
+import {mountMortalityComparison,mortalityAssetOverlayData} from './mortality-ui.mjs';
 import {requiredAdditionalCapitalAt64} from './mortality-comparison.mjs';
 import {runRetirementPlan} from './calc.mjs';
 const read=n=>fs.readFileSync(new URL(n,import.meta.url),'utf8');
@@ -31,6 +31,27 @@ test('standard and worst simulation results are separate switchable panels',()=>
  stdTab.handlers.click();assert.equal(standard.hidden,false);assert.equal(worst.hidden,true);
  worstTab.handlers.click();assert.equal(standard.hidden,true);assert.equal(worst.hidden,false);
 }));
+
+test('overlay graph shows standard and worst assets together with review guidance',()=>withMortalityUI(({ids,run,find,content})=>{
+ assert.ok(run());
+ const root=ids.get('#mortalityResults');
+ const panel=find(root,'#mortalityOverlayGraphPanel');
+ assert.ok(panel);
+ assert.match(content(panel),/標準案と最悪ケースの資産推移（同時表示）/);
+ assert.match(content(panel),/開始資産や65歳以降の就労条件/);
+ assert.match(content(panel),/計画終期末の資産：標準案/);
+}));
+test('overlay detects monthly shortfall even if year-end values recover above zero',()=>{
+ const periods=[{age:65,baselineEndAsset:10,previewEndAsset:10},{age:66,baselineEndAsset:20,previewEndAsset:20}];
+ const baseline=[{month:'2040-01',endAsset:-2},{month:'2040-12',endAsset:10},{month:'2041-12',endAsset:20}];
+ const worst=[{month:'2040-01',endAsset:1},{month:'2040-12',endAsset:10},{month:'2041-12',endAsset:20}];
+ const data=mortalityAssetOverlayData(periods,{monthlyDetails:baseline},{monthly:worst});
+ assert.equal(data.standardFirstNegative,'2040-01');
+ assert.equal(data.worstFirstNegative,null);
+ assert.equal(data.rows.length,2);
+ assert.throws(()=>mortalityAssetOverlayData(periods,{monthlyDetails:baseline},{monthly:worst.slice(1)}),/一致しません/);
+ assert.throws(()=>mortalityAssetOverlayData([{age:65,baselineEndAsset:NaN,previewEndAsset:10}],{monthlyDetails:baseline},{monthly:worst}),/不足しています/);
+});
 test('UI uses shared stage boundary, no age or 70-year pension inferred from existing totals',()=>{assert.match(ui,/survivorPensionTiming\(c,p,val\)/);assert.match(comparison,/needsPreClaim:monthlyIndex\(start\)>firstIndex/);assert.match(ui,/未配分/);});
 test('totals explain extra expenses and same-month income change',()=>{assert.match(ui,/mortalityMonthlyTransition/);assert.match(ui,/mortalityCostBreakdown/);assert.match(ui,/比較：臨時支出（一時費用込）/);assert.match(ui,/同じ年月の基準案と比較案/);});
 
@@ -39,7 +60,7 @@ test('totals explain extra expenses and same-month income change',()=>{assert.ma
 function withMortalityUI(check){
  const ids=new Map(),attrs=new Map(),previousDocument=globalThis.document;
  class Element{
-  constructor(tag='div'){this.tagName=tag.toUpperCase();this.name='';this.value='';this.checked=false;this.hidden=false;this.required=false;this.disabled=false;this.dataset={};this.handlers={};this.children=[];this.textContent='';this.attributes=new Map();}
+  constructor(tag='div'){this.tagName=tag.toUpperCase();this.name='';this.value='';this.checked=false;this.hidden=false;this.required=false;this.disabled=false;this.dataset={};this.handlers={};this.children=[];this.textContent='';this.attributes=new Map();this.style={};}
   append(...v){for(const child of v)if(child&&typeof child!=='string')child.parentElement=this;this.children.push(...v);}
   replaceChildren(...v){this.children=[...v];}
   setAttribute(k,v){this.attributes.set(k,String(v));attrs.set(`[${k}="${v}"]`,this);}
@@ -55,7 +76,7 @@ function withMortalityUI(check){
   addEventListener(name,callback){this.handlers[name]=callback;}
  }
  const find=(node,selector)=>{for(const child of node.children){if(typeof child==='string')continue;if(child.matches(selector))return child;const found=find(child,selector);if(found)return found;}return undefined;};
- globalThis.document={createElement:tag=>new Element(tag)};
+ globalThis.document={createElement:tag=>new Element(tag),createElementNS:(_ns,tag)=>new Element(tag)};
  try{
   const root=new Element(),form=new Element('form');ids.set('#mortalityForm',form);root.append(form);
   for(const id of ['mortalityState','mortalityResults','mortalityCostRows','mortalityAllocationTotal','mortalityAgeHint','mortalityPreClaimRow','mortalityPreClaimHint','mortalityEstimateNotice','mortalityPensionBreakdown','mortalityFictionalCosts','mortalityResetCosts','mortalityEstimatePension','mortalityClear','mortalityRun']){const element=new Element();element.id=id;ids.set('#'+id,element);root.append(element);}
