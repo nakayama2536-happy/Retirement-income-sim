@@ -1,7 +1,17 @@
 {
   "kind": "public-release",
-  "runtime": "v0.9.58-unified-input-backup-20261112",
+  "runtime": "v0.9.59-guided-sync-answers-20261112",
   "files": [
+    {
+      "name": "action-answer.css",
+      "size": 1135,
+      "sha256": "97e2d91c43f0dedfc691a166b7bd1ebcf26f7803c1415611450c3d3eee603fdb"
+    },
+    {
+      "name": "action-answer.mjs",
+      "size": 1983,
+      "sha256": "e167e9efc2b8ebfb19581d67fb9986b699b4cbdf62ec9bab06f23f0f249c6ba6"
+    },
     {
       "name": "age-budget-candidate.mjs",
       "size": 3403,
@@ -29,13 +39,13 @@
     },
     {
       "name": "app.mjs",
-      "size": 81438,
-      "sha256": "d33154a8023f981cee2ac1dee409288ebd2f114b226c7a481982ed1b5f81bcbb"
+      "size": 81437,
+      "sha256": "c60fd3af7fb3afed6aa92274893082c759265b23d5794db79bc8f2faf876dae4"
     },
     {
       "name": "backup-compatibility.mjs",
-      "size": 8307,
-      "sha256": "d9235e3f336ed6c5abb6b263c4b180db3137abe7762e23336ce3cd30949ea526"
+      "size": 8306,
+      "sha256": "7c74c6d5b9402bd026045dd68ac32aaf3471eb7b8e6e4429fed1798b5491242a"
     },
     {
       "name": "budget-travel-ui.mjs",
@@ -89,8 +99,8 @@
     },
     {
       "name": "detail-ui.mjs",
-      "size": 38620,
-      "sha256": "635316c085f81ee9a78ed3d73e98dec1df694e53910838bc8b3050f1de0ac6c7"
+      "size": 40118,
+      "sha256": "d716109ec8154c0e41a46a8c360eb4e96ee716d41de63793b7d136336253a301"
     },
     {
       "name": "detailed-report.mjs",
@@ -119,8 +129,8 @@
     },
     {
       "name": "expense-ui.mjs",
-      "size": 9362,
-      "sha256": "7c2017b3bd28db5aae79754955c5f8f7d0e21d8482b4ee7662c7258050215745"
+      "size": 10631,
+      "sha256": "09dbed1ae559b142274b30f2e2834a1cc4b397d51bcb6f0bf98be678314a134f"
     },
     {
       "name": "expense-workflow.mjs",
@@ -169,8 +179,8 @@
     },
     {
       "name": "income-ui.mjs",
-      "size": 6439,
-      "sha256": "1e34171c017f449588ac39ecef0306431bd47ef64ce264805e0936469bc2e429"
+      "size": 7637,
+      "sha256": "fb5678ddc4b7387c8fe3fbaa79df87cd02200ba232efa3d82dd47ebb51650bce"
     },
     {
       "name": "income-workflow.mjs",
@@ -179,8 +189,8 @@
     },
     {
       "name": "index.html",
-      "size": 78931,
-      "sha256": "9c4849f9f68b185d9ef9a5653272dabfb62cf82fd9fa783ae6398d36781a0fbd"
+      "size": 79176,
+      "sha256": "2707e28a723dfbb36bbb7c19b907628cc321ee0883c421f9942f5b07368d1853"
     },
     {
       "name": "input-snapshots.mjs",
@@ -244,8 +254,8 @@
     },
     {
       "name": "mortality-ui.mjs",
-      "size": 71709,
-      "sha256": "e66eaee0687111b41d32fce042de78bb71dec1fc79ad8bfd1ea54f8de9187964"
+      "size": 72446,
+      "sha256": "420e4e81d771b5423c1d677a3d4fc90d82a46d9b95e29fa29fcd45204b86579b"
     },
     {
       "name": "pension-estimate.mjs",
@@ -254,8 +264,8 @@
     },
     {
       "name": "pension-ui.mjs",
-      "size": 29323,
-      "sha256": "1128e28c789179863cebbfd9b02c48c750d85edf74da46f8b119c22ff8a0a84a"
+      "size": 31381,
+      "sha256": "613675b0aaf154e38a14fcc8665b3630ae0ff50c43a1663f192b80e3ddcd8391"
     },
     {
       "name": "pension.mjs",
@@ -279,8 +289,8 @@
     },
     {
       "name": "release-info.json",
-      "size": 144,
-      "sha256": "286ed45dd15e9aad6b6f16eabc828e5f78b0a06124fef6b044e3c77877d68557"
+      "size": 141,
+      "sha256": "fda1a2200273623405ce90e2b5c477fef455c16be72374798dbbe79a747de582"
     },
     {
       "name": "retirement-comment.mjs",
@@ -304,8 +314,8 @@
     },
     {
       "name": "salary-ui.mjs",
-      "size": 22393,
-      "sha256": "fb28d145c75b2369214e80dd1483fb5276d932bb990d10814283235779582c05"
+      "size": 23982,
+      "sha256": "db71d0d883b5ad6634c0d4558ed7b27cc1977964f9fa7766af0ebab7b18e0e28"
     },
     {
       "name": "salary-workflow.mjs",
@@ -354,8 +364,13 @@
     },
     {
       "name": "sw.js",
-      "size": 4628,
-      "sha256": "9b4e0209e467414ee9d3513295fc441196cf37c9040698a47c46f78c4afb7985"
+      "size": 4758,
+      "sha256": "b39a126447ef7dae1f05254141ea84262cf71d63b40d8e9ff9bd7340530ef08d"
+    },
+    {
+      "name": "sync-answer-bridge.mjs",
+      "size": 877,
+      "sha256": "3fd27672c05de1f158dc29bf97a23e0348d162f70bd3b4c642023e0cba4c5da7"
     },
     {
       "name": "sync-controller.mjs",
@@ -374,13 +389,23 @@
     },
     {
       "name": "sync-panel.mjs",
-      "size": 41634,
-      "sha256": "c9115ae53bd78261f55b1dfe241cdf43457608214912f7484e1e8b515a618b97"
+      "size": 42446,
+      "sha256": "1077ffac4d00338aa21e05c1fe0e848d1e14ec25ed6d97b6b2d3be392a681e73"
     },
     {
       "name": "sync-policy.mjs",
       "size": 2695,
       "sha256": "505da533a08f8da6c908ffc10740f6a10157aa99496a7ebf2edc36dd9a63105b"
+    },
+    {
+      "name": "sync-two-flows.css",
+      "size": 716,
+      "sha256": "2fbefccb448fefd4f7ada26f1f008341e60940b8194aa01c5a074fad7d7551c8"
+    },
+    {
+      "name": "sync-two-flows.mjs",
+      "size": 4459,
+      "sha256": "2da20e8060b0fe3f2822be42253033f8bd0c0e2ffd4299e61e973159d51f521d"
     },
     {
       "name": "tax-social-audit.mjs",

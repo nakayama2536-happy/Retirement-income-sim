@@ -3,6 +3,7 @@ import {PENSION_PEOPLE,pensionDraftFromConfig,pensionDraftContext,pensionDraftMa
 import {configSignature,saveConfigIfUnchanged,savePensionDraft,loadPensionDraft,clearPensionDraft} from './storage.mjs';
 import {dateWithAge,dateAgeHint} from './date-display.mjs';
 import {estimatePensionAtMonth} from './pension-estimate.mjs';
+import {mountActionAnswer} from './action-answer.mjs';
 
 const names={primary:'本人',spouse:'配偶者'};
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -14,6 +15,9 @@ const taxAnnual=(c,age)=>plannedTaxSocialAnnual(c,age)??0;
 
 export function mountPensionSheet({getConfig,onCommit,showNotice}){
   let draft=null, preview=null;
+  const answer=Object.fromEntries(['pensionTrial','pensionApply','pensionUndo'].map(id=>[id,el(id)?.parentNode?mountActionAnswer(el(id)):null]));
+  const feedback=(id,kind,body,confirmed=false)=>answer[id]?.show({kind,body,confirmed});
+  const stale=()=>{for(const x of Object.values(answer))x?.invalidate();};
   function estimate(key){return estimatePensionAtMonth({birthDate:getConfig().people?.[key]?.birthDate,startMonth:el(`${key}PensionMonth`).value,base65:el(`${key}PensionBase65`).value});}
   function renderEstimate(key){
     const c=getConfig(),r=estimate(key);
@@ -67,7 +71,7 @@ export function mountPensionSheet({getConfig,onCommit,showNotice}){
     try{savePensionDraft({context:pensionDraftContext(getConfig()),draft});el('pensionDraftNote').textContent='開始月・年額などの未反映入力は一括バックアップ・クラウド同期の対象に含まれます。「全体シミュレーションに反映」を押すまでは、計算結果や採用済み条件を変更しません。';}
     catch{el('pensionDraftNote').textContent='試算中の入力を端末に保存できませんでした。画面を閉じると入力が失われます。';}
   }
-  function invalidate(){preview=null;el('pensionPreview').hidden=true;}
+  function invalidate(){stale();preview=null;el('pensionPreview').hidden=true;}
   function state(){
     const c=getConfig();if(!c||!draft)return;
     const status=key=>{
@@ -299,25 +303,29 @@ export function mountPensionSheet({getConfig,onCommit,showNotice}){
   });
   el('pensionForm').addEventListener('submit',event=>{
     event.preventDefault();error('');draft=readDraft();saveDraft();
-    try{preview=previewPension(getConfig(),draft);renderPreview();}catch(e){invalidate();error(e.message);}
+    try{feedback('pensionTrial','pending','年金の条件変更による資産推移を計算しています。');preview=previewPension(getConfig(),draft);renderPreview();const current=runRetirementPlan(getConfig());feedback('pensionTrial','info',`最終資産：${yen(current.finalAsset)} → ${yen(preview.result.finalAsset)}。年金の変更はまだ保存していません。`);}catch(e){invalidate();error(e.message);feedback('pensionTrial','error',e.message);}
   });
-  el('pensionReset').addEventListener('click',()=>{reset();render();});
+  el('pensionReset').addEventListener('click',()=>{reset();render();feedback('pensionTrial','info','年金の未反映の入力を元に戻しました。採用中の年金条件は変更していません。');});
   el('pensionApply').addEventListener('click',()=>{
-    error('');
+    error('');feedback('pensionApply','pending','年金の変更を保存しています。');
     let applied;
     try{applied=applyPensionPreview(getConfig(),preview,saveConfigIfUnchanged);}
-    catch(e){error(`反映できませんでした。${e.message}`);return;}
-    reset();onCommit(applied);render();
+    catch(e){error(`反映できませんでした。${e.message}`);feedback('pensionApply','error',`反映できませんでした。${e.message}`);return;}
+    reset();try{onCommit(applied);render();}
+    catch(e){error('保存後の画面更新を確認できません。再読み込みして保存状態を確認してください。');feedback('pensionApply','warning',`保存後の表示更新を確認できません。${e.message}`);return;}
     showNotice(applied.changed?'年金を集計表に反映し、全期間を再計算しました。':'採用中の設定と同じため、更新はありません。');
+    feedback('pensionApply',applied.changed?'success':'info',applied.changed?'年金の変更を保存し、全期間を再計算しました。':'採用中の年金設定と同じため、変更はありません。',Boolean(applied.changed));
   });
   el('pensionUndo').addEventListener('click',()=>{
-    error('');const keepDraft=draft&&!pensionDraftMatches(getConfig(),draft);
+    error('');feedback('pensionUndo','pending','直前の年金反映の取消を確認しています。');const keepDraft=draft&&!pensionDraftMatches(getConfig(),draft);
     let undone;
     try{undone=undoPensionApply(getConfig(),saveConfigIfUnchanged);}
-    catch(e){error(`取消できませんでした。${e.message}`);return;}
+    catch(e){error(`取消できませんでした。${e.message}`);feedback('pensionUndo','error',`取消できませんでした。${e.message}`);return;}
     if(keepDraft)invalidate();else reset();
-    onCommit(undone);render();if(keepDraft)saveDraft();
+    try{onCommit(undone);render();if(keepDraft)saveDraft();}
+    catch(e){error('取消処理後の表示確認ができません。再読み込みして保存状態を確認してください。');feedback('pensionUndo','warning',`取消後の状態を確認できません。${e.message}`);return;}
     showNotice('直前の年金反映を取り消しました。');
+    feedback('pensionUndo','success','直前の年金反映の取消を保存しました。',true);
   });
   return {render,reset,invalidate};
 }

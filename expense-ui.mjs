@@ -2,6 +2,7 @@ import {loadExpenseState,applyExpensePreview,undoExpenseApply,expenseUndoStatus}
 import {createExpenseDraft,previewExpenseChanges,expenseIdentityDiagnostic} from './expense-preview.mjs';
 import {inspectCashflowSources,cashflowSourceSignature as signature} from './cashflow-sources.mjs';
 import {migrateConfig} from './storage.mjs';
+import {mountActionAnswer} from './action-answer.mjs';
 const normalized=s=>({config:migrateConfig(s.config),scenarios:s.scenarios.map(x=>({...x,config:migrateConfig(x.config)}))});
 export function assertExpenseScreenMatches(raw,displayed){
  if(signature(normalized(raw))!==signature(normalized(displayed)))throw new Error('保存内容と表示中の設定が異なります。再読み込みしてください。');
@@ -13,6 +14,9 @@ const basis=r=>r.priceBasis==='plan-start-base'?'計画開始時の価格':r.pri
 export function mountExpenseSheet({getState,onCommit,showNotice,storage=localStorage,doc=document}){
  const el=id=>doc.getElementById('expense'+id);
  let base=null,preview=null,rules=[],busy=false,blocked=false;
+ const answer=Object.fromEntries(['Trial','Apply','Undo'].map(id=>[id,el(id)?.parentNode?mountActionAnswer(el(id)):null]));
+ const respond=(id,kind,body,confirmed=false)=>answer[id]?.show({kind,body,confirmed});
+ const staleAnswers=()=>{for(const item of Object.values(answer))item?.invalidate();};
  const error=s=>{
   el('Error').textContent=s;el('Error').hidden=!s;
   const needsHelp=Boolean(s)&&/識別|内部ID|キー|変更対象|一意|重複/.test(s);
@@ -23,7 +27,7 @@ export function mountExpenseSheet({getState,onCommit,showNotice,storage=localSto
    el('ErrorAction').textContent=issue?.guidance||'保存元、項目、期間、ID・keyの重複を確認してください。復元・更新前にバックアップを保存してください。';
   }else el('ErrorAction').textContent='';
  };
- function invalidate(){preview=null;el('Preview').hidden=true;el('Reviewed').checked=false;el('PreviewQuick').textContent='';}
+ function invalidate(){staleAnswers();preview=null;el('Preview').hidden=true;el('Reviewed').checked=false;el('PreviewQuick').textContent='';}
  function updateAmountGuide(){
   const r=selected(),v=el('Amount').value.trim(),n=v===''?null:Number(v);
   const value=r&&v!==''&&Number.isFinite(n)&&n>=0
@@ -65,7 +69,7 @@ export function mountExpenseSheet({getState,onCommit,showNotice,storage=localSto
  el('Amount').addEventListener('input',()=>{invalidate();error('');updateAmountGuide();el('Status').textContent='未反映の入力あり';buttons();});
  el('Reviewed').addEventListener('change',buttons);
  el('Trial').addEventListener('click',()=>{
-  if(busy||blocked)return;invalidate();error('');
+  if(busy||blocked)return;invalidate();error('');respond('Trial','pending','入力内容から変更前後の結果を計算しています。');
   try{
    const current=loadExpenseState(storage);assertExpenseScreenMatches(current,getState());
    if(signature(current)!==signature(base))throw new Error('保存内容が更新されています。再読み込みしてください。');
@@ -84,17 +88,19 @@ export function mountExpenseSheet({getState,onCommit,showNotice,storage=localSto
     ...preview.months.filter(m=>m.detailBefore!==m.detailAfter||m.expenseBefore!==m.expenseAfter).map(m=>`${m.month}：内訳 ${m.detailBefore===null?'未確定':money(m.detailBefore)} → ${m.detailAfter===null?'未確定':money(m.detailAfter)}／資産計算支出 ${money(m.expenseBefore)} → ${money(m.expenseAfter)}`)
    ].filter(Boolean).join('\n');
    el('Preview').hidden=false;el('Status').textContent=preview.changed?'試算済み・未反映':'採用値と同じ（保存不要）';
-  }catch(e){error(e.message);}
+   respond('Trial','info',el('PreviewQuick').textContent+' 最終資産：'+money(preview.finalAssetBefore)+' → '+money(preview.finalAssetAfter)+'。現在の計画は変更していません。');
+  }catch(e){error(e.message);respond('Trial','error',e.message);}
   buttons();
  });
  async function action(undo){
   if(busy||blocked||(!undo&&(!preview?.changed||!el('Reviewed').checked)))return;
-  busy=true;buttons();error('');let saved;
+  busy=true;buttons();error('');respond(undo?'Undo':'Apply','pending','保存処理を確認しています。');let saved;
   try{assertExpenseScreenMatches(loadExpenseState(storage),getState());saved=undo?await undoExpenseApply(base,{storage}):await applyExpensePreview(base,preview,{storage});}
-  catch(e){error(`保存できませんでした。入力は保持しています。${e.message}`);busy=false;buttons();return;}
+  catch(e){error(`保存できませんでした。入力は保持しています。${e.message}`);respond(undo?'Undo':'Apply','error',`保存できませんでした。入力は保持しています。${e.message}`);busy=false;buttons();return;}
   base=saved.state;invalidate();rebuild();el('Status').textContent=undo?'取消を保存しました':'反映済み';
   try{onCommit(saved);showNotice(undo?'直前の金額変更を取り消しました。':'集計表に反映して保存しました。');}
-  catch{blocked=true;error('保存済みですが表示を更新できません。再読み込みしてください。');busy=false;buttons();return;}
+  catch{blocked=true;error('保存済みですが表示を更新できません。再読み込みしてください。');respond(undo?'Undo':'Apply','warning','保存処理は完了しましたが、表示を更新できません。再読み込みして保存内容を確認してください。');busy=false;buttons();return;}
+  respond(undo?'Undo':'Apply','success',undo?'直前の金額変更の取消を保存しました。':'生活費・管理予算の変更を保存し、集計表に反映しました。',true);
   busy=false;render();
  }
  el('Apply').addEventListener('click',()=>action(false));el('Undo').addEventListener('click',()=>action(true));

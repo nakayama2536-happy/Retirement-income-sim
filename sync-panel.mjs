@@ -4,6 +4,9 @@ import {createFirebaseStore,validateFirebaseConfig} from './sync-firebase.mjs';
 import {createSyncCoordinator} from './sync-controller.mjs';
 import {validSyncMarker} from './sync-policy.mjs';
 import {snapshotDigest} from './sync-crypto.mjs';
+import {organiseSyncTwoFlows} from './sync-two-flows.mjs';
+import {mountActionAnswer} from './action-answer.mjs';
+import {syncAnswerFromResult} from './sync-answer-bridge.mjs';
 export const SYNC_PUBLIC_CONFIG_KEY='lifeplan-private-sync-config-v1';
 export const SYNC_MARKER_KEY='lifeplan-private-sync-marker-v1';
 export const SYNC_ROLLBACK_KEY='lifeplan-private-sync-previous-v1';
@@ -106,6 +109,7 @@ export function mountSyncPanel(root,{getState,replaceLocal,validateState,afterRe
  let remoteExists=null,previewOK=false,previewAction=null,pendingEditorChange=false,authMode='unknown',localGeneration=0;
  let lastOutcome={status:'UNCONNECTED'},lastCheck=null,lastWrite=null,lastRead=null,manualMessage='',autoMessage='まだ実行していません。';
  let comparison=null,comparisonStale=false,conflictBackupDigest=null;
+ let twoFlow=null,syncAnswers=null;
  const dateText=d=>d?d.toLocaleString('ja-JP',{hour12:false}):'この起動では未確認';
  const now=()=>clock();
  root.replaceChildren();root.classList.add('cloud-panel');
@@ -277,6 +281,7 @@ export function mountSyncPanel(root,{getState,replaceLocal,validateState,afterRe
   backupCheck.disabled=working;
   initialNote.textContent=reg?'初回設定は完了しています。普段は上段の操作をご利用ください。':'⑥は最初の1台・クラウドが空のときだけ。別端末を追加する場合は②で確認して⑦を使用します。';
   staleNote.hidden=!comparisonStale;diff.hidden=!comparison;first.hidden=reg;
+  twoFlow?.renderVisibility();
  }
  function showComparison(s){
   comparison=s;comparisonStale=false;diffBody.replaceChildren();
@@ -313,6 +318,7 @@ export function mountSyncPanel(root,{getState,replaceLocal,validateState,afterRe
    '成功を確認できない操作は、保存完了とは扱いません。';
   manualMessage=`${n==='3b-backup'?'④-B-1':numbers[n]}「${n==='3b-backup'?'端末の一括JSONバックアップ':n===1&&authMode==='signed-in'?'自動保存を開始':CLOUD_ACTIONS[n]}」の結果｜${dateText(now())}\n${text}\n${effect}`;
   manual.textContent=manualMessage;
+   syncAnswers?.[n]?.show(syncAnswerFromResult(r,cloudResultText(r)));
  }
  async function guarded(n,task){
   if(working||destroyed)return;working=true;const token=epoch,generation=localGeneration;render();
@@ -455,6 +461,11 @@ export function mountSyncPanel(root,{getState,replaceLocal,validateState,afterRe
   finally{if(!destroyed){working=false;render();}}
  }
  try{values();}catch{initial.open=true;configDetails.open=true;}
+ // Older synthetic DOM harnesses omit Element insertion APIs; they still test the unchanged coordinator.
+ if(typeof root.append==='function'&&typeof actions[2].closest==='function'&&typeof actions[2].insertAdjacentElement==='function'){
+  syncAnswers=Object.fromEntries(Object.entries(actions).map(([n,button])=>[n,mountActionAnswer(button)]));
+  twoFlow=organiseSyncTwoFlows({root,connection,checkActions,actions,safety,manualCard,first,initial,conflict,session,daily,automatic,registered});
+ }
  render();const ready=restoreAuthentication();
  return {
   ready,

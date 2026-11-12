@@ -5,6 +5,7 @@ import {downloadMortalityExpenseCsv} from './mortality-expense-csv.mjs';
 import {estimateSurvivorReference65,MortalityPreviewError} from './mortality-preview.mjs';
 import {mountMortalityItemizedControls} from './mortality-itemized-ui.mjs';
 import {readMortalityDraft,saveMortalityDraft,clearMortalityDraft} from './mortality-draft.mjs';
+import {mountActionAnswer} from './action-answer.mjs';
 import {MORTALITY_COSTS,blankMortalityAllocation,fictionalMortalityAllocation,
  calculateMortalityComparison,survivorPensionTiming,agePeriodComparisonRows,requiredAdditionalCapitalAt64,validateMortalityAllocation,ORIGINAL_BASIS} from './mortality-comparison.mjs';
 
@@ -318,6 +319,8 @@ export function mountMortalityComparison(root,{getConfig,getBaseline,runPlan}){
  <div id="mortalityResults" hidden></div>
  `;
  const form=root.querySelector('#mortalityForm'),state=root.querySelector('#mortalityState'),results=root.querySelector('#mortalityResults'),costBox=root.querySelector('#mortalityCostRows');
+ const compareButton=root.querySelector('#mortalityRun');
+ const compareAnswer=compareButton?.parentNode?mountActionAnswer(compareButton):null;
  installMortalityTabs(form);
  root.querySelector('#mortalityOpenPension')?.addEventListener('click',()=>{
   const details=root.querySelector('#mortalityPensionSettings');
@@ -329,7 +332,7 @@ export function mountMortalityComparison(root,{getConfig,getBaseline,runPlan}){
  const externalUpdateMessage='別画面で保存済み条件が更新されました。再読み込みしてから万一の時期の比較を試算してください。';
  const requireFreshBaseline=()=>{if(blockedExternal)throw new MortalityPreviewError('external-state-changed',externalUpdateMessage);};
  const values=()=>({deceased:form.elements.deceased.value,deathMonth:form.elements.deathMonth.value,survivorPension:form.elements.survivorPension.value,funeral:form.elements.funeral.value});
- const invalid=msg=>{results.hidden=true;results.replaceChildren();current=null;state.textContent=blockedExternal?externalUpdateMessage:msg;state.className='muted';};
+ const invalid=msg=>{compareAnswer?.invalidate();results.hidden=true;results.replaceChildren();current=null;state.textContent=blockedExternal?externalUpdateMessage:msg;state.className='muted';};
  const pensionFields=['deceased','deathMonth','survivorPension','preClaimPension','deceasedEarnings','survivorEmployee','survivorBasic','entitlement','claimed','deferral'];
  const pensionSignature=()=>JSON.stringify({config:getConfig(),fields:pensionFields.map(key=>[key,form.elements[key].value,form.elements[key].checked])});
  const clearPensionReference=()=>{pensionReference=null;renderPensionBreakdown(root.querySelector('#mortalityPensionBreakdown'),null);root.querySelector('#mortalityEstimateNotice').textContent='';};
@@ -700,7 +703,7 @@ root.querySelector('#mortalityClearInputs')?.addEventListener('click',()=>{
 });
  form.addEventListener('invalid',e=>{let node=e.target.parentElement;while(node&&node!==form){if(node.tagName==='DETAILS')node.open=true;node=node.parentElement;}},true);
  form.addEventListener('submit',e=>{
-  e.preventDefault();invalid('架空または仮置き条件を照合しています。');
+  e.preventDefault();invalid('架空または仮置き条件を照合しています。');compareAnswer?.show({kind:'pending',body:'万一の比較条件を計算しています。'});
   try{
    requireFreshBaseline();validPensionReference();const c=getConfig(),b=getBaseline();if(!c||!b)throw Error('現在設定を読み込んでください');
    const v=values();const x=calculateMortalityComparison({config:c,baseline:b,deathPerson:v.deceased,deathMonth:v.deathMonth,survivorTotalAnnual:requiredNumber(form.elements.survivorPension,'万一の後の年金年額'),survivorPensionBeforeClaimAnnual:form.elements.preClaimPension.required?requiredNumber(form.elements.preClaimPension,'老齢年金受給開始前の年金仮年額'):null,funeralExpenseMan:requiredNumber(form.elements.funeral,'万一の際の一時費用'),
@@ -710,8 +713,9 @@ root.querySelector('#mortalityClearInputs')?.addEventListener('click',()=>{
       expenseSourceProfile:itemizedControls.read().expenseSourceProfile}:{}),
     planCalculator:runPlan,acknowledged:form.elements.reviewed.checked});
    current=x;showResult(x,{...v,survivorPension:Number(v.survivorPension),funeral:Number(v.funeral)});saveInputs();
-   state.textContent='比較計算が完了しました（採用・保存・クラウド書込みなし）。';
-  }catch(error){invalid(`比較できません：${error.message}`);}
+   state.textContent='比較計算が完了しました。採用済み計画は変更していません。比較入力はバックアップ・同期対象に保存される場合があります。';
+   compareAnswer?.show({kind:'info',body:'万一の比較計算が完了しました。採用済みの計画は変更していません。比較入力はバックアップ・同期対象のため、保存状況を確認してください。'});
+  }catch(error){invalid(`比較できません：${error.message}`);compareAnswer?.show({kind:'error',body:`比較できません：${error.message}`});}
  });
  allocationInfo();ageHint();clearPensionReference();
  return {stageReference(input){

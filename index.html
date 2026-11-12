@@ -5,6 +5,8 @@
 <meta name="apple-mobile-web-app-title" content="ライフプランシミュレーター">
 <meta name="theme-color" content="#1d2733"><title>ライフプランシミュレーター</title>
 <link rel="manifest" href="manifest.webmanifest"><link rel="apple-touch-icon" href="icons/icon-192.png"><link rel="stylesheet" href="styles.css"><link rel="stylesheet" href="family-warm-theme.css"><link rel="stylesheet" href="ui-numbering.css">
+<link rel="stylesheet" href="./action-answer.css">
+<link rel="stylesheet" href="./sync-two-flows.css">
 </head>
 <body class="simulation-only">
 <header class="topbar"><h1>ライフプランシミュレーター</h1><div class="version" role="group" aria-label="アプリ・制度・クラウドの情報"><span>アプリ版：<b id="appVersion"></b></span><span>公開版との照合：<b id="runtimeFreshness" role="status">確認中</b></span><span>制度基準日：<b id="rulesVersion"></b></span><span>クラウド最終保存：<b id="cloudDataSavedAt">未確認（接続・解除後に確認）</b></span></div></header>
@@ -107,7 +109,7 @@
 <details class="pension-extra-card" id="pensionCurrentDetails"><summary>現在の設定を詳しく見る</summary><div id="pensionCurrentSummary" class="current-setting-summary"></div></details>
 <details id="pensionEditWorkspace" class="pension-edit-workspace"><summary>年金情報の入力・変更（変更するときだけ開く）</summary>
 <form id="pensionForm"><div id="pensionInputs" class="pension-grid"></div>
-<div class="pension-actions"><button class="primary" type="submit">変更内容を確認（まだ保存しません）</button><button id="pensionReset" class="secondary" type="button">未反映の入力を取り消す</button></div>
+<div class="pension-actions"><button id="pensionTrial" class="primary" type="submit">変更内容を確認（まだ保存しません）</button><button id="pensionReset" class="secondary" type="button">未反映の入力を取り消す</button></div>
 <p class="muted">「変更後の結果を確認（未反映）」は結果の確認だけです。「未反映の入力を取り消す」は本人・配偶者の編集中の入力を破棄し、保存済みの開始月・年額などに戻します。「この内容を保存して計画に反映」で保存します。</p>
 <p id="pensionDraftNote" class="muted"></p></form></details>
 <p class="muted">月内に誕生日があるときは「64→65歳」のように表示します。年齢は誕生日基準の表示で、制度上の年齢到達日とは区別します。</p>
@@ -122,7 +124,7 @@
 <section id="salary" class="panel" hidden><article class="card"><h2>年齢期ごとの収入推移</h2><p class="muted">採用済みの収入内訳。採用済みの設定から表示します。表示のみで保存条件は変更しません。</p><div id="planningIncomeChart" role="region" aria-label="年齢期ごとの収入推移">計算中</div></article>
 <article class="card"><div class="section-title"><h2>給与生活シート：生活費を資産で賄う時期・入出金</h2><span id="salaryState" class="pill" role="status"></span></div>
 <p>まず「現在の計画」を確認してください。変更したい項目だけを開き、試算結果を見てから反映できます。</p><div class="salary-overview"><h3>現在の計画に反映されている条件</h3><p id="salaryAdopted" class="salary-overview-adopted"></p><div id="salaryAdoptedTimeline" class="salary-time-flow"></div><p class="muted">ここは採用済みの条件です。入力中の変更や比較用の仮設定は含みません。実際の退職日・年金受給日は変わりません。</p></div><details class="salary-overview-more"><summary>現在の設定をすべて確認する</summary><div id="salaryCurrentSummary" class="current-setting-summary"></div></details><div id="salaryEditStatus" class="salary-edit-status" role="status" aria-live="polite"></div><p class="muted">変更する場合：①切替月 → ②家計と資産の入出金 → ③切替後の生活費・収入 → ④年金などの計上先。必要な項目だけ開いてください。</p>
-<form id="salaryForm"><div id="salaryInputs" class="pension-grid"></div><div class="pension-actions"><button class="primary" type="submit">変更後の結果を確認（未反映）</button><button id="salaryReset" type="button" class="secondary">未反映の入力を取り消す</button></div><p id="salaryDraftNote" class="muted"></p></form>
+<form id="salaryForm"><div id="salaryInputs" class="pension-grid"></div><div class="pension-actions"><button id="salaryTrial" class="primary" type="submit">変更後の結果を確認（未反映）</button><button id="salaryReset" type="button" class="secondary">未反映の入力を取り消す</button></div><p id="salaryDraftNote" class="muted"></p></form>
 <p id="salaryError" class="inline-error" role="alert" hidden></p></article>
 <article id="salaryPreview" class="card" hidden><h2>反映前の差分確認</h2><div id="salaryPreviewBody"></div>
 <div class="pension-actions"><button id="salaryBackup" class="secondary" type="button">反映前のバックアップを保存</button><button id="salaryApply" class="primary" type="button" disabled>全体シミュレーションに反映</button></div>
@@ -241,7 +243,7 @@
 
 <section id="backup" class="panel" hidden><p class="muted">端末・クラウドの保存状況、設定JSONと一括バックアップ、復旧用ファイルの事前確認を行います。確認するだけではデータを変更しません。</p></section>
 <section id="settings" class="panel" hidden>
-<article class="card" id="privateSyncCard"><details><summary>クラウド保存・読込み（PC・iPhone共通）</summary><div id="privateSyncContainer"></div></details></article>
+<article class="card" id="privateSyncCard"><h2>パソコンとスマホの同期</h2><p class="muted">操作する方向を選び、上から順番に進めてください。通常はクラウドへの保存と読込みは自動です。</p><div id="privateSyncContainer"></div></article>
 <article class="card" id="step8TrialCard"><details><summary>計算開始月・開始残高・iDeCo受取月の比較試算（未採用案の保存可）</summary><p class="muted">現在設定を変更しない比較入力です。開始残高の接続試算は保存しません。全条件比較案は明示保存できますが、採用・上書きはしません。制度・税の適合性は未検証です。</p><div id="step8TrialContainer"></div><div id="fullPlanComparisonContainer"></div></details></article>
 <article class="card"><h2>現在の計画条件（保存済み）</h2><p>採用済みの条件です。変更は各設定の反映操作後に保存されます。</p><div id="settingsCurrentSummary" class="current-setting-summary"></div></article>
 <article class="card" id="detail-horizon"></article>

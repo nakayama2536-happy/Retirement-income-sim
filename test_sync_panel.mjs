@@ -6,12 +6,21 @@ import {mountSyncPanel,hasExternalEditorFocus,SYNC_PUBLIC_CONFIG_KEY,SYNC_MARKER
 import {FakeCipherCloud} from './sync-policy.mjs';
 import {encryptSnapshot} from './sync-crypto.mjs';
 class NodeElement{
- constructor(tag,doc){this.tagName=tag;this.ownerDocument=doc;this.children=[];this.listeners={};this.value='';this.checked=false;this.disabled=false;this.textContent='';this.attributes={};this.classList={add(){}};}
+ constructor(tag,doc){this.tagName=tag;this.ownerDocument=doc;this.children=[];this.parentNode=null;this.dataset={};this.listeners={};this.value='';this.checked=false;this.disabled=false;this.textContent='';this.attributes={};this.classList={add(){}};}
  setAttribute(k,v){this.attributes[k]=String(v);if(k==='name')this.name=v;}
- appendChild(x){this.children.push(x);return x;}
- replaceChildren(...items){this.children=items;}
+ appendChild(x){x.remove?.();x.parentNode=this;this.children.push(x);return x;}
+ replaceChildren(...items){for(const child of this.children)child.parentNode=null;this.children=[];for(const x of items)this.appendChild(x);}
  addEventListener(k,fn){(this.listeners[k]??=[]).push(fn);}
  async emit(k){for(const fn of this.listeners[k]||[])await fn({preventDefault(){}});}
+ 
+ get parentElement(){return this.parentNode??null;}
+ append(...nodes){for(const node of nodes)this.appendChild(node);}
+ prepend(...nodes){for(const node of [...nodes].reverse()){node.remove?.();node.parentNode=this;this.children.unshift(node);}}
+ remove(){if(this.parentNode){this.parentNode.children=this.parentNode.children.filter(n=>n!==this);this.parentNode=null;}}
+ removeChild(node){if(node.parentNode!==this)throw Error('not a child');node.remove();return node;}
+ insertAdjacentElement(position,node){if(position!=='afterend'||!this.parentNode)throw Error('invalid position');node.remove?.();const siblings=this.parentNode.children,index=siblings.indexOf(this);node.parentNode=this.parentNode;siblings.splice(index+1,0,node);return node;}
+ closest(selector){if(selector.startsWith('.')){for(let node=this;node;node=node.parentNode){if((node.attributes?.class||node.className||'').split(/\s+/).includes(selector.slice(1)))return node;}}return null;}
+
 }
 const doc={createElement(tag){return new NodeElement(tag,doc)},addEventListener(){},removeEventListener(){}};
 const walk=x=>[x,...(x.children||[]).flatMap(walk)];

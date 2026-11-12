@@ -1,7 +1,7 @@
 // Scope identifies this installation. Never sweep origin-wide or legacy caches.
 const SCOPE=new URL(self.registration.scope);
 const CACHE_PREFIX=`lifeplan-sim:${encodeURIComponent(SCOPE.href)}:`;
-const CACHE=`${CACHE_PREFIX}v0.9.58-unified-input-backup-20261112`;
+const CACHE=`${CACHE_PREFIX}v0.9.59-guided-sync-answers-20261112`;
 const ASSETS=['./','./index.html','./styles.css','./family-warm-theme.css','./app.mjs','./calc.mjs','./calendar-mode.mjs','./calendar-workflow.mjs','./calendar-ui.mjs','./salary-life.mjs','./salary-workflow.mjs','./salary-ui.mjs','./storage.mjs','./state.mjs','./migration.mjs','./migration-ui.mjs','./pension.mjs','./pension-ui.mjs','./rules.mjs','./manifest.webmanifest','./icons/icon-192.png','./icons/icon-512.png'];
 ASSETS.push('./expense-display.mjs','./annual-cashflow.mjs','./annual-csv.mjs','./full-backup.mjs','./expense-ui.mjs','./expense-workflow.mjs','./expense-preview.mjs','./cashflow-sources.mjs','./cashflow-reconciliation.mjs');
 ASSETS.push('./income-ui.mjs','./income-workflow.mjs','./income-preview.mjs');
@@ -13,6 +13,7 @@ ASSETS.push('./unemployment-plan.mjs');
 ASSETS.push('./simple-layout.mjs');
 ASSETS.push('./step8-trial-workflow.mjs','./step8-trial-ui.mjs','./full-plan-comparison.mjs','./full-plan-ui.mjs','./full-plan-saved.mjs');
 ASSETS.push('./sync-policy.mjs','./sync-crypto.mjs','./sync-controller.mjs','./sync-firebase.mjs','./sync-panel.mjs');
+ASSETS.push('./action-answer.mjs','./action-answer.css','./sync-answer-bridge.mjs','./sync-two-flows.mjs','./sync-two-flows.css');
 ASSETS.push('./retirement-comment.mjs');
 ASSETS.push('./ui-entry-guards.mjs');
 ASSETS.push('./release-info.json');

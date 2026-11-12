@@ -84,7 +84,11 @@ const wait=async(page,text)=>{await page.waitForFunction(expected=>{const s=docu
 const actionByOldLabel={'Firebaseに本人ログインして確認':1,'クラウド内容と端末内容を照合（書込みなし）':4,
  'この端末を初回の同期元にする':6,'確認したクラウドをこの端末へ初回取込':7};
 const action=(page,n)=>page.locator('#privateSyncContainer [data-sync-action="'+n+'"]');
-const click=(page,label)=>action(page,actionByOldLabel[label]).click();
+const click=async(page,label)=>{const n=actionByOldLabel[label];
+ if(n===3||n===7)await page.locator('#privateSyncContainer [data-flow="download"]').click();
+ if(n===2||n===6)await page.locator('#privateSyncContainer [data-flow="upload"]').click();
+ await action(page,n).click();
+};
 const edit=(page,value)=>page.evaluate(value=>{const k='lifeplan-sim-state-v1';const state=JSON.parse(localStorage.getItem(k));state.config.plan.initialAsset=value;localStorage.setItem(k,JSON.stringify(state));},value);
 let pcBrowser,phoneBrowser,pcContext,phoneContext,pc,phone;
 async function context(browser,seed,viewport){
