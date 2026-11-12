@@ -1,3 +1,4 @@
+import {stateForFullTransfer,setInputSnapshot,getInputSnapshot} from './input-snapshots.mjs';
 import {projectNisaWithdrawal} from './withdrawal-plan.mjs';
 import {unemploymentPlan} from './unemployment-plan.mjs';
 import {calendarMode} from './calendar-mode.mjs';
@@ -41,6 +42,15 @@ export function migrateConfig(config) {
 }
 
 export const STATE_KEY='lifeplan-sim-state-v1';
+export function loadStateForTransfer(){return stateForFullTransfer(loadState(),globalThis.localStorage);}
+export function saveInputDraft(key,entry){
+  assertWriteAccess();const raw=loadState();if(!raw?.config)throw Error('採用済み計画を先に読み込んでください');
+  const complete=stateForFullTransfer(raw,globalThis.localStorage);
+  return saveState(setInputSnapshot(complete,key,entry),raw);
+}
+export function readInputDraft(key){return getInputSnapshot(loadState(),key);}
+export function clearInputDraft(key){return saveInputDraft(key,null);}
+
 function normalizeState(state){
   assertBackupCompatibility(state);
   if(!state||!Array.isArray(state.scenarios))throw new Error('保存データの形式を確認してください。');
@@ -93,9 +103,9 @@ export function saveConfigIfUnchanged(next,expected){
   saveState({...current,config:next},current);
 }
 const PENSION_DRAFT_KEY='lifeplan-sim-pension-draft-v0.9';
-export function savePensionDraft(draft){assertWriteAccess();localStorage.setItem(PENSION_DRAFT_KEY,JSON.stringify(draft));}
-export function loadPensionDraft(){try{return JSON.parse(localStorage.getItem(PENSION_DRAFT_KEY)||'null');}catch{return null;}}
-export function clearPensionDraft(){assertWriteAccess();localStorage.removeItem(PENSION_DRAFT_KEY);}
+export function savePensionDraft(draft){saveInputDraft('pension',draft);}
+export function loadPensionDraft(){try{const state=loadState();if(Object.hasOwn(state,'savedInputs'))return getInputSnapshot(state,'pension');return JSON.parse(localStorage.getItem(PENSION_DRAFT_KEY)||'null');}catch{return null;}}
+export function clearPensionDraft(){clearInputDraft('pension');}
 export function loadConfig() {
   return loadState().config;
 }
