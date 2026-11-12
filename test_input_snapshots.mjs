@@ -14,6 +14,21 @@ class Memory{items=new Map();writes=0;fail=false;getItem(k){return this.items.ge
 function fixture(){return {config:structuredClone(sample.config),scenarios:[]};}
 function setup(){globalThis.localStorage=new Memory();saveState(fixture());return loadState();}
 function payload(){return {deceased:'primary',deathMonth:'2060-01',survivorPension:'210',preClaimPension:'0',funeral:'100',sourceProfile:'work-v0.9.7',residualFactor:'0.8',entitlement:'true'};}
+test('比較入力の保存は既存計画と比較案の未補完フィールドを無断更新しない',()=>{
+ globalThis.localStorage=new Memory();
+ const raw=fixture();
+ raw.scenarios=[{id:'synthetic-raw',name:'架空案',config:structuredClone(raw.config)}];
+ delete raw.config.employment.primary.sideWork.startMode;
+ delete raw.scenarios[0].config.employment.primary.sideWork.startMode;
+ localStorage.setItem(STATE_KEY,JSON.stringify(raw));
+ const normalized=loadState();
+ assert.equal(normalized.config.employment.primary.sideWork.startMode,'after_high_age_benefit');
+ assert.equal(saveMortalityDraft(normalized.config,payload(),{food:'0.6'}),true);
+ const actual=JSON.parse(localStorage.getItem(STATE_KEY));
+ assert.deepEqual(actual.config,raw.config);
+ assert.deepEqual(actual.scenarios,raw.scenarios);
+ assert.equal(actual.savedInputs.mortality.values.deathMonth,'2060-01');
+});
 test('万一の入力値だけを一括バックアップと同期対象の統合状態に保存、採用設定と結果は維持',()=>{
  const base=setup(),copy=structuredClone(base.config);
  assert.equal(saveMortalityDraft(base.config,payload(),{'food':'0.6'}),true);
