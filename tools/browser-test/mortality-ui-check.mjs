@@ -4,6 +4,7 @@ import {createServer} from 'node:http';
 import {readFile,writeFile,mkdir} from 'node:fs/promises';
 import {resolve,extname,sep} from 'node:path';
 import {chromium,webkit} from 'playwright';
+import {APP_BUILD} from '../../backup-compatibility.mjs';
 const root=resolve('.'),out=resolve('mortality-browser-evidence');await mkdir(out,{recursive:true});
 const seed=JSON.parse(await readFile(resolve(root,'tools/browser-test/mortality-synthetic.json'),'utf8'));
 /* This gate's independently expected 55→45 monthly example is nominal, with
