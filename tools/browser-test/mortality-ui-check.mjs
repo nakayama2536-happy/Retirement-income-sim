@@ -152,6 +152,12 @@ try{
   near(await number(annual(80,'expenseReduction')),110);
   near(await number(annual(81,'expenseReduction')),120);
   mark(engine,'actual-items-plus-remaining25-are-factored-once-monthly-and-annual');
+  const overlay=page.locator('#mortalityOverlayGraphPanel');
+  assert.equal(await overlay.isVisible(),true,'comparison overlay must be visible above tabs');
+  assert.equal(await overlay.locator('svg[role="img"] polyline').count(),2,'both baseline and worst paths must render');
+  assert.match(await overlay.innerText(),/標準案と最悪ケースの資産推移/);
+  assert.match(await overlay.innerText(),/計画終期末の資産：標準案/);
+  mark(engine,'standard-and-worst-asset-lines-are-visible-together');
   // The same rendered comparison must remain correct when switching result tabs.
   assert.equal(await page.locator('#mortalityWorstResultPanel').isVisible(),true);
   await page.locator('#mortalityStandardTab').click();
