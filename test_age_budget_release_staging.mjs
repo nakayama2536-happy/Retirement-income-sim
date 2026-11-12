@@ -2,6 +2,7 @@ import test from 'node:test';import assert from 'node:assert/strict';
 import fs from 'node:fs';import os from 'node:os';import path from 'node:path';import {fileURLToPath} from 'node:url';
 import {stageAgeBudgetRelease} from './tools/stage-age-budget-release.mjs';
 import {collect} from './tools/package-public.mjs';
+import {APP_BUILD} from './backup-compatibility.mjs';
 const root=path.dirname(fileURLToPath(import.meta.url));
 test('新しいリリース候補は隔離して生成し、元ファイルは不変',()=>{
  const tmp=fs.mkdtempSync(path.join(os.tmpdir(),'lifeplan-staged-'));
@@ -21,7 +22,7 @@ test('新しいリリース候補は隔離して生成し、元ファイルは�
 test('同一版・既存出力・不正な版を拒否する',()=>{
  const tmp=fs.mkdtempSync(path.join(os.tmpdir(),'lifeplan-staged-'));
  try{
-  assert.throws(()=>stageAgeBudgetRelease(root,path.join(tmp,'old'),'v0.9.59-guided-sync-answers-20261112'),/unchanged/);
+  assert.throws(()=>stageAgeBudgetRelease(root,path.join(tmp,'old'),APP_BUILD),/unchanged/);
   fs.mkdirSync(path.join(tmp,'existing'));
   assert.throws(()=>stageAgeBudgetRelease(root,path.join(tmp,'existing'),'v0.9.34-age-budget-preview-validation-20261103'),/destination-exists/);
   assert.throws(()=>stageAgeBudgetRelease(root,path.join(tmp,'draft'),'v0.9.33-draft-20261103'),/invalid-build-id/);

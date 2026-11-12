@@ -3,6 +3,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import vm from 'node:vm';
 import fs from 'node:fs';
+import {APP_BUILD} from './backup-compatibility.mjs';
 const source=fs.readFileSync(new URL('./sw.js',import.meta.url),'utf8');
 const prefix=scope=>`lifeplan-sim:${encodeURIComponent(scope)}:`;
 const cacheVersion=source.match(/const CACHE=`\$\{CACHE_PREFIX\}([^`]+)`/)?.[1];
@@ -37,7 +38,7 @@ test('画面モジュール更新時には旧キャッシュと分離した版�
  const h=harness(),prior=prefix(h.scope)+'v0.9.33-age-budget-preview-20261103';
  const oldCache=new Map([[h.scope+'mortality-ui.mjs',new Response('old-mortality-ui')]]);
  h.stores.set(prior,oldCache);
- assert.equal(cacheVersion,'v0.9.59-guided-sync-answers-20261112');
+ assert.equal(cacheVersion,APP_BUILD);
  assert.notEqual(h.current(),prior);
  await h.run('install');
  await h.run('activate');
