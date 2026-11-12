@@ -13,6 +13,7 @@ ASSETS.push('./unemployment-plan.mjs');
 ASSETS.push('./simple-layout.mjs');
 ASSETS.push('./step8-trial-workflow.mjs','./step8-trial-ui.mjs','./full-plan-comparison.mjs','./full-plan-ui.mjs','./full-plan-saved.mjs');
 ASSETS.push('./sync-policy.mjs','./sync-crypto.mjs','./sync-controller.mjs','./sync-firebase.mjs','./sync-panel.mjs');
+ASSETS.push('./action-answer.mjs','./action-answer.css','./sync-answer-bridge.mjs','./sync-two-flows.mjs','./sync-two-flows.css');
 ASSETS.push('./retirement-comment.mjs');
 ASSETS.push('./ui-entry-guards.mjs');
 ASSETS.push('./release-info.json');
