@@ -3,6 +3,7 @@ import {formatMan,defaultPrimarySideWorkStart} from './calc.mjs';
 import {configSignature,downloadJson} from './storage.mjs';
 import {salaryDraftFromConfig,previewSalary,applySalaryPreview,undoSalaryApply,salaryUndoAvailable,salaryDraftMatches,saveSalaryScenario,saveSalaryDraft,loadSalaryDraft,clearSalaryDraft} from './salary-workflow.mjs';
 import {parseMonth} from './salary-life.mjs';
+import {mountActionAnswer} from './action-answer.mjs';
 const el=id=>document.getElementById(id);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const money=n=>`${formatMan(n,2)}万円`;
@@ -29,8 +30,11 @@ export function salaryDraftNeedsProtection(config,draft,hasUserDraft=false){
 
 export function mountSalarySheet({getState,onCommit,showNotice}){
   let draft=null,preview=null,busy=false,hasUserSalaryDraft=false;
+  const answer=Object.fromEntries(['salaryTrial','salaryApply','salaryUndo','salarySaveScenario','salaryBackup'].map(id=>[id,el(id)?.parentNode?mountActionAnswer(el(id)):null]));
+  const feedback=(id,kind,body,confirmed=false)=>answer[id]?.show({kind,body,confirmed});
+  const stale=()=>{for(const x of Object.values(answer))x?.invalidate();};
   const error=message=>{el('salaryError').textContent=message;el('salaryError').hidden=!message;};
-  function invalidate(){preview=null;el('salaryPreview').hidden=true;el('salaryApply').disabled=true;el('salarySaveScenario').disabled=true;}
+  function invalidate(){stale();preview=null;el('salaryPreview').hidden=true;el('salaryApply').disabled=true;el('salarySaveScenario').disabled=true;}
   function persist(){hasUserSalaryDraft=true;try{saveSalaryDraft(getState().config,draft);el('salaryDraftNote').textContent='入力中の条件をこの端末に保存しました。集計表は反映するまで変わりません。';}catch{el('salaryDraftNote').textContent='入力を保存できませんでした。画面を閉じると入力が失われます。採用済み設定は変更していません。';}}
   function read(){
     const d=structuredClone(draft),s=d.settings;
@@ -161,10 +165,10 @@ export function mountSalarySheet({getState,onCommit,showNotice}){
   },true);
   el('salaryForm').addEventListener('input',event=>{if(event.target.id==='salary_lastSalaryMonth')el('salary_monthsConfirmed').value='';changed();});
   el('salaryIdecoInputs').addEventListener('input',()=>changed());
-  el('salaryForm').addEventListener('submit',event=>{event.preventDefault();error('');draft=read();persist();try{preview=previewSalary(getState(),draft);renderPreview();}catch(e){invalidate();error(e.message);}});
+  el('salaryForm').addEventListener('submit',event=>{event.preventDefault();error('');draft=read();persist();try{feedback('salaryTrial','pending','給与生活の条件を試算しています。');preview=previewSalary(getState(),draft);renderPreview();feedback('salaryTrial','info',`最終資産：${money(preview.before.finalAsset)} → ${money(preview.result.finalAsset)}。現在の採用済み計画は変更していません。`);}catch(e){invalidate();error(e.message);feedback('salaryTrial','error',e.message);}});
   el('salaryReset').addEventListener('click',()=>{reset();render();});
   function action(kind){
-    if(busy)return;busy=true;error('');for(const id of ['salaryApply','salaryUndo','salarySaveScenario'])el(id).disabled=true;
+    if(busy)return;busy=true;error('');const actionId=kind==='save'?'salarySaveScenario':kind==='undo'?'salaryUndo':'salaryApply';feedback(actionId,'pending','変更を確認しています。');for(const id of ['salaryApply','salaryUndo','salarySaveScenario'])el(id).disabled=true;
     try{
       const previewId=preview?.id;
       const keepDraft=draft&&!salaryDraftMatches(getState().config,draft);
@@ -174,12 +178,13 @@ export function mountSalarySheet({getState,onCommit,showNotice}){
       if(kind==='save'){preview=previewSalary(getState(),draft);preview.id=previewId;renderPreview();}
       if(draft)persist();
       showNotice(kind==='save'?'試算条件を新しい比較案として保存しました。現在の採用値は保持しています。':kind==='undo'?'直前の給与生活の反映を取り消しました。':'給与生活の条件を集計表に反映しました。');
-    }catch(e){error(`操作を完了できませんでした。${e.message}`);}
+      feedback(actionId,'success',kind==='save'?'比較案を保存しました。採用中の計画は変更していません。':kind==='undo'?'給与生活の直前の反映を取り消しました。':'給与生活の変更を計画に反映しました。',true);
+    }catch(e){error(`操作を完了できませんでした。${e.message}`);feedback(actionId,'warning',`操作の完了を確認できません。保存状態を確認してから再操作してください。${e.message}`);}
     finally{busy=false;state();el('salaryApply').disabled=!preview?.changed;el('salarySaveScenario').disabled=!preview;}
   }
   el('salaryApply').addEventListener('click',()=>action('apply'));
   el('salaryUndo').addEventListener('click',()=>action('undo'));
   el('salarySaveScenario').addEventListener('click',()=>action('save'));
-  el('salaryBackup').addEventListener('click',()=>{const s=getState();downloadJson({schemaVersion:'0.9',exportedAt:new Date().toISOString(),config:s.config,scenarios:s.scenarios},'lifeplan-before-salary-change.json');showNotice('バックアップの保存先を確認してください。');});
+  el('salaryBackup').addEventListener('click',()=>{try{const s=getState();downloadJson({schemaVersion:'0.9',exportedAt:new Date().toISOString(),config:s.config,scenarios:s.scenarios},'lifeplan-before-salary-change.json');showNotice('バックアップの保存先を確認してください。');feedback('salaryBackup','info','バックアップファイルの保存を開始しました。端末のダウンロード先とファイル内容を確認してください。');}catch(e){feedback('salaryBackup','error',`バックアップを作成できませんでした。${e.message}`);}});
   return {render,reset,invalidate};
 }
