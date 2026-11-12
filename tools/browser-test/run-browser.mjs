@@ -198,7 +198,7 @@ async function run(browser,id,mode){
    record.layout=[];
    for(const width of [390,1280]){
     await page.setViewportSize({width,height:900});
-    for(const [name,card,expected] of [['backup',backup,'未反映の下書き'],['recovery',recovery,'復元は行いません']]){
+    for(const [name,card,expected] of [['backup',backup,'万一の比較入力'],['recovery',recovery,'復元は行いません']]){
      assert((await card.innerText()).includes(expected));
      await card.scrollIntoViewIfNeeded();
      const bounds=await card.boundingBox();
