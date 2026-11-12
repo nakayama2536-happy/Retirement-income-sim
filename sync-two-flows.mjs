@@ -23,7 +23,9 @@ export function organiseSyncTwoFlows({root,connection,checkActions,actions,safet
  }
  // Existing buttons are moved with their original listeners and answer nodes, never cloned.
  const wrappers={};
- for(const n of [2,3,6,7]){wrappers[n]=actions[n].closest('.cloud-action');if(!wrappers[n])throw TypeError('操作ボタンが見つかりません');}
+ for(const n of [2,3,6,7]){wrappers[n]=actions[n].parentNode;
+  const cl=String(wrappers[n]?.getAttribute?.('class')??wrappers[n]?.attributes?.class??'');
+  if(!wrappers[n]||!cl.split(/\s+/).includes('cloud-action'))throw TypeError('操作ボタンの親要素が一致しません: '+n);}
  actions[4].textContent='保存内容の差分を確認する';
  actions[2].textContent='クラウドに保存する';
  actions[3].textContent='スマホに読み込む';
