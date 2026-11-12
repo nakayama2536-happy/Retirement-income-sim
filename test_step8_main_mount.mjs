@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import {collect} from './tools/package-public.mjs';
+import {APP_BUILD} from './backup-compatibility.mjs';
 const read=f=>fs.readFileSync(new URL(f,import.meta.url),'utf8');
 const app=read('./app.mjs'),html=read('./index.html'),sw=read('./sw.js');
 
@@ -42,7 +43,7 @@ test('offline candidate assets and module dependency closure are included',()=>{
 });
 
 test('candidate service worker is versioned separately without cache deletion or forced update',()=>{
-  assert.match(sw,/const CACHE=`\$\{CACHE_PREFIX\}v0\.9\.59-guided-sync-answers-20261112`/);
+  assert.equal(sw.match(/const CACHE=`\$\{CACHE_PREFIX\}([^`]+)`/)?.[1],APP_BUILD);
   assert.doesNotMatch(sw,/caches\.delete\(/);
   assert.doesNotMatch(sw,/skipWaiting\s*\(/);
 });
