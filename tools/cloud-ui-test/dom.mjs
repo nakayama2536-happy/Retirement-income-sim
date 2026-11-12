@@ -10,6 +10,7 @@ export class Element {
  append(...ns){for(const n of ns)this.appendChild(n);}
  prepend(...ns){for(const n of [...ns].reverse()){if(n.parentNode)n.parentNode.children=n.parentNode.children.filter(x=>x!==n);n.parentNode=this;this.children.unshift(n);}}
  remove(){if(this.parentNode){this.parentNode.children=this.parentNode.children.filter(x=>x!==this);this.parentNode=null;}}
+ removeChild(n){if(n.parentNode!==this)throw Error('not a child');n.remove();return n;}
  insertAdjacentElement(position,n){
   if(position!=='afterend'||!this.parentNode)throw TypeError('unsupported insertion');
   if(n.parentNode)n.parentNode.children=n.parentNode.children.filter(x=>x!==n);
