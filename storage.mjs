@@ -44,9 +44,20 @@ export function migrateConfig(config) {
 export const STATE_KEY='lifeplan-sim-state-v1';
 export function loadStateForTransfer(){return stateForFullTransfer(loadState(),globalThis.localStorage);}
 export function saveInputDraft(key,entry){
-  assertWriteAccess();const raw=loadState();if(!raw?.config)throw Error('採用済み計画を先に読み込んでください');
+  assertWriteAccess();
+  const before=localStorage.getItem(STATE_KEY);
+  if(before===null)throw Error('採用済み計画を先に読み込んでください');
+  // Comparison-only drafts must never rewrite adopted config/scenario bytes via
+  // migrateConfig()/normalizeState(). Preserve the canonical stored values as-is.
+  const raw=JSON.parse(before);
+  assertBackupCompatibility(raw);
+  if(!raw?.config||!Array.isArray(raw.scenarios))throw Error('採用済み計画を先に読み込んでください');
   const complete=stateForFullTransfer(raw,globalThis.localStorage);
-  return saveState(setInputSnapshot(complete,key,entry),raw);
+  const next=protectNewFeatureState(setInputSnapshot(complete,key,entry));
+  const encoded=JSON.stringify(next);
+  if(localStorage.getItem(STATE_KEY)!==before)throw Error('別画面で保存内容が変わりました。再読み込みしてください。');
+  localStorage.setItem(STATE_KEY,encoded);
+  return next;
 }
 export function readInputDraft(key){return getInputSnapshot(loadState(),key);}
 export function clearInputDraft(key){return saveInputDraft(key,null);}
