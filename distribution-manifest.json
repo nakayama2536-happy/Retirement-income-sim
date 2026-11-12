@@ -389,8 +389,8 @@
     },
     {
       "name": "sync-panel.mjs",
-      "size": 42203,
-      "sha256": "1ae1db522d752f60d1a302ed1c6aa7731ea7c92d9573f18fe9d9d36a4d9ebd5c"
+      "size": 42446,
+      "sha256": "1077ffac4d00338aa21e05c1fe0e848d1e14ec25ed6d97b6b2d3be392a681e73"
     },
     {
       "name": "sync-policy.mjs",
