@@ -85,5 +85,5 @@ test('FIX C: CSV action and annual cashflow summary are connected to development
 });
 test('FIX D: full export reads integrated state and preserves its envelope',()=>{
  const exportHandler=app.split("el('exportFullBtn').addEventListener")[1].split('\n')[0];
- assert.ok(exportHandler.includes('loadState()'));assert.ok(exportHandler.includes('createFullBackup(state)'));assert.equal(exportHandler.includes('config, scenarios}'),false);
+ assert.ok(exportHandler.includes('loadStateForTransfer()'));assert.ok(exportHandler.includes('createFullBackup(state)'));assert.equal(exportHandler.includes('config, scenarios}'),false);
 });
