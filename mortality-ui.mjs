@@ -713,8 +713,8 @@ root.querySelector('#mortalityClearInputs')?.addEventListener('click',()=>{
       expenseSourceProfile:itemizedControls.read().expenseSourceProfile}:{}),
     planCalculator:runPlan,acknowledged:form.elements.reviewed.checked});
    current=x;showResult(x,{...v,survivorPension:Number(v.survivorPension),funeral:Number(v.funeral)});saveInputs();
-   state.textContent='比較計算が完了しました（採用・保存・クラウド書込みなし）。';
-   compareAnswer?.show({kind:'info',body:'万一の比較計算が完了しました。結果はこの下に表示しています。採用値・保存データ・クラウドは変更していません。'});
+   state.textContent='比較計算が完了しました。採用済み計画は変更していません。比較入力はバックアップ・同期対象に保存される場合があります。';
+   compareAnswer?.show({kind:'info',body:'万一の比較計算が完了しました。採用済みの計画は変更していません。比較入力はバックアップ・同期対象のため、保存状況を確認してください。'});
   }catch(error){invalid(`比較できません：${error.message}`);compareAnswer?.show({kind:'error',body:`比較できません：${error.message}`});}
  });
  allocationInfo();ageHint();clearPensionReference();
