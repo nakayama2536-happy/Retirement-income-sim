@@ -38,6 +38,7 @@ export async function validateLaborTrendUi({browser,createTestServer,open,load,o
  try{
   const data=JSON.parse(await fs.readFile(path.join(here,'synthetic-full.json'),'utf8'));
   const page=await open(context,fixture.url),errors=[];page.on('pageerror',e=>errors.push(e.message));await load(page,path.join(here,'synthetic-full.json'));const before=(await snapshot(page)).data;
+  const withoutUiDraft=value=>{const copy=structuredClone(value);delete copy.savedInputs;return copy;};
   for(const width of [390,1280]){
    await page.setViewportSize({width,height:900});await openTab(page,'salary');
    await page.locator('#salary-workflow-tab-1').click();const optionalLabor=page.locator('#salary details.salary-optional-labor');
@@ -60,7 +61,8 @@ export async function validateLaborTrendUi({browser,createTestServer,open,load,o
   }
   await openTab(page,'ideco');await page.locator('#ideco-workflow-tab-1').click();assert(await page.locator('#salary_receipt_ideco').isVisible());
   await page.locator('#salary_receipt_ideco').selectOption('separate');
-  assert.deepEqual((await snapshot(page)).data,before);
+  assert((await snapshot(page)).data.savedInputs?.salary?.draft,'salary comparison inputs must be included in the full backup');
+  assert.deepEqual(withoutUiDraft((await snapshot(page)).data),withoutUiDraft(before));
   await openTab(page,'salary');await page.locator('#salary-workflow-tab-0').click();await page.locator('#salaryReset').click();
   await openTab(page,'allcsv');assert.equal(await page.locator('#detailCsvPeriod').inputValue(),'monthly');
   const rowCount=await page.locator('#detailCsvTable tbody tr').count();assert(rowCount>12);
@@ -107,7 +109,7 @@ export async function validateLaborTrendUi({browser,createTestServer,open,load,o
   await page.locator('#allcsv-workspace-workflow-tab-0').click();for(const period of ['annual','calendar']){await page.locator('#detailCsvPeriod').selectOption(period);assert(await page.locator('#detailCsvTable tbody tr').count()<rowCount);assert((await page.locator('#detailCsvTable thead').innerText()).includes('NISA'));}
   await page.screenshot({path:path.join(out,'L1-selected-trend.png')});
   await openTab(page,'review');await page.locator('#makeReviewPrompt').click();assert((await page.locator('#reviewPromptText').inputValue()).includes('保存済み'));
-  assert.deepEqual((await snapshot(page)).data,before);
+  assert.deepEqual(withoutUiDraft((await snapshot(page)).data),withoutUiDraft(before));
   await openTab(page,'salary');
   await page.locator('#salary-workflow-tab-1').click();const optionalLabor=page.locator('#salary details.salary-optional-labor');
   if(!await optionalLabor.evaluate(n=>n.open))await optionalLabor.locator('summary').click();
@@ -115,9 +117,9 @@ export async function validateLaborTrendUi({browser,createTestServer,open,load,o
   await f.locator('[name=monthlyGross]').fill('4');await f.locator('[name=startDate]').fill(data.config.plan.startDate);await f.locator('[name=endDate]').fill(`${Number(data.config.plan.startDate.slice(0,4))+1}${data.config.plan.startDate.slice(4)}`);
   if(await f.locator('[name=useIndividualLabor]').count())await f.locator('[name=useIndividualLabor]').check();
   await f.locator('[type=submit]').click();assert(await page.locator('#detail-laborSpouseRegular [data-apply]').isVisible());
-  assert.deepEqual((await snapshot(page)).data,before);await openTab(page,'salary');await page.locator('#salary-workflow-tab-1').click();await page.locator('#detail-laborSpouseRegular [data-apply]').click();
+  assert.deepEqual(withoutUiDraft((await snapshot(page)).data),withoutUiDraft(before));await openTab(page,'salary');await page.locator('#salary-workflow-tab-1').click();await page.locator('#detail-laborSpouseRegular [data-apply]').click();
   const after=(await snapshot(page)).data;assert.equal(after.config.employment.spouse.regularWork.monthlyGross,4);assert.deepEqual(after.config.employment.primary,before.config.employment.primary);assert.deepEqual(after.scenarios,before.scenarios);
-  await openTab(page,'settings');await page.locator('#settingsGroup-maintenance').evaluate(el=>el.open=true);await page.locator('#detailUndo').click();assert.deepEqual((await snapshot(page)).data,before);assert.deepEqual(errors,[]);record.status='pass';
+  await openTab(page,'settings');await page.locator('#settingsGroup-maintenance').evaluate(el=>el.open=true);await page.locator('#detailUndo').click();assert.deepEqual(withoutUiDraft((await snapshot(page)).data),withoutUiDraft(before));assert.deepEqual(errors,[]);record.status='pass';
  }catch(e){record.status='failed-or-harness-error';record.error=e.stack;throw Object.assign(e,{detailRecord:record});}
  finally{await context.close();await fixture.close();}
  return record;
