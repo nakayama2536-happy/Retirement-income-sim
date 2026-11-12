@@ -32,6 +32,63 @@ function setAllocation(root,items){for(const x of items){root.querySelector(`[da
 function tableCell(tr,text,th=false){const td=makeEl(th?'th':'td');td.textContent=String(text);if(th)td.scope='col';tr.append(td);return td;}
 function formatTotal(a){return Number.isFinite(a)?`${escMoney(a)}万円`:'未確認';}
 
+const MORTALITY_SVG='http://www.w3.org/2000/svg';
+const mortalitySvgEl=(tag,attrs={},text)=>{const el=(document.createElementNS?document.createElementNS(MORTALITY_SVG,tag):document.createElement(tag));for(const [k,v] of Object.entries(attrs))el.setAttribute(k,String(v));if(text!==undefined)el.textContent=text;return el;};
+export function mortalityAssetOverlayData(periods, original, mortality){
+ if(!Array.isArray(periods)||!periods.length)throw Error('比較グラフを表示できる年齢期データがありません。');
+ if(periods.some(p=>!Number.isFinite(p.age)||!Number.isFinite(p.baselineEndAsset)||!Number.isFinite(p.previewEndAsset)))throw Error('比較グラフに必要な年齢期末資産が不足しています。');
+ const baseline=original?.monthlyDetails, worst=mortality?.monthly;
+ if(!Array.isArray(baseline)||!Array.isArray(worst)||baseline.length!==worst.length||!baseline.length||baseline.some((r,i)=>r.month!==worst[i].month||!Number.isFinite(r.endAsset)||!Number.isFinite(worst[i].endAsset)))throw Error('比較グラフの月次資産台帳が一致しません。');
+ return {rows:periods,standardFirstNegative:baseline.find(r=>r.endAsset<0)?.month??null,worstFirstNegative:worst.find(r=>r.endAsset<0)?.month??null};
+}
+function renderMortalityAssetOverlay(periods,original,mortality){
+ let result;
+ try{result=mortalityAssetOverlayData(periods,original,mortality);}catch(err){return makeEl('p','mortality-warning',err.message);}
+ const {rows,standardFirstNegative:stdShort,worstFirstNegative:worstShort}=result;
+ const W=900,H=320,L=72,R=20,T=16,B=52;
+ const values=rows.flatMap(r=>[r.baselineEndAsset,r.previewEndAsset]);
+ const lo=Math.min(0,...values),hi=Math.max(0,...values),span=Math.max(1,hi-lo),min=lo-span*.05,max=hi+span*.12;
+ const from=Math.min(...rows.map(r=>r.age)),to=Math.max(...rows.map(r=>r.age));
+ const x=a=>L+(a-from)/Math.max(1,to-from)*(W-L-R),y=v=>T+(max-v)/(max-min)*(H-T-B);
+ const wrap=makeEl('section','mortality-overlay-graph');wrap.id='mortalityOverlayGraphPanel';
+ wrap.append(makeEl('h3','','標準案と最悪ケースの資産推移（同時表示）'));
+ wrap.append(makeEl('p','muted','採用済みの標準案と、今回設定した万一の比較案を同じ尺度で表示します。どちらかが不足する場合は、開始資産や65歳以降の就労条件などの想定見直しを検討してください。比較案を保存・採用するものではありません。')); 
+ const svg=mortalitySvgEl('svg',{viewBox:`0 0 ${W} ${H}`,role:'img','aria-label':'標準案と最悪ケースの資産推移グラフ',style:'width:100%;height:auto;display:block'});
+ svg.append(mortalitySvgEl('title',{},'標準案と最悪ケースの資産推移'));
+ for(let i=0;i<=4;i++){
+   const v=min+(max-min)*i/4,yy=y(v);
+   svg.append(mortalitySvgEl('line',{x1:L,x2:W-R,y1:yy,y2:yy,stroke:'#e1d6cc'}),mortalitySvgEl('text',{x:L-8,y:yy+4,'font-size':13,'text-anchor':'end',fill:'#685f5b'},escMoney(v)));
+ }
+ if(min<0&&max>0){const y0=y(0);svg.append(mortalitySvgEl('line',{x1:L,x2:W-R,y1:y0,y2:y0,stroke:'#8a4b2f','stroke-width':1.6,'stroke-dasharray':'6 4'}));}
+ const step=Math.max(1,Math.ceil(rows.length/8));
+ rows.forEach((r,i)=>{if(i%step===0||i===rows.length-1)svg.append(mortalitySvgEl('text',{x:x(r.age),y:H-26,'font-size':13,'text-anchor':'middle',fill:'#685f5b'},String(r.age)));});
+ const series=[
+   {key:'baselineEndAsset',label:'標準案',stroke:'#386c94','width':3},
+   {key:'previewEndAsset',label:'最悪ケース',stroke:'#cb6a38','width':3}
+ ];
+ for(const line of series){
+   const points=rows.map(r=>`${x(r.age)},${y(r[line.key])}`).join(' ');
+   svg.append(mortalitySvgEl('polyline',{points,fill:'none',stroke:line.stroke,'stroke-width':line.width}));
+   for(const r of rows){
+     const point=mortalitySvgEl('circle',{cx:x(r.age),cy:y(r[line.key]),r:3,fill:line.stroke});
+     point.append(mortalitySvgEl('title',{},`${r.age}歳 ${line.label} ${formatTotal(r[line.key])}`));
+     svg.append(point);
+   }
+ }
+ wrap.append(svg);
+ const legend=makeEl('p','');
+ for(const [label,color] of [['● 標準案','#386c94'],['● 最悪ケース','#cb6a38']]){const item=makeEl('span','',label+'　');item.style.color=color;legend.append(item);} 
+ wrap.append(legend);
+ const stdLast=rows.at(-1)?.baselineEndAsset,worstLast=rows.at(-1)?.previewEndAsset;
+ wrap.append(makeEl('p','',`計画終期末の資産：標準案 ${formatTotal(stdLast)} ／ 最悪ケース ${formatTotal(worstLast)}`));
+ wrap.dataset.shortfall=(stdShort||worstShort)?'true':'false';
+ if(stdShort||worstShort){
+   wrap.append(makeEl('p','mortality-warning',`計算期間中に月末資産が0万円未満になる月があります（標準案：${stdShort??'期間内なし'}／最悪ケース：${worstShort??'期間内なし'}）。開始資産、就労収入、支出条件の見直しを検討してください。`));
+ }else wrap.append(makeEl('p','muted','両案とも計算期間内の月末資産は0万円以上です。資産が将来保証されるものではなく、目標資産の達成とは別に判定してください。'));
+ wrap.append(makeEl('p','muted','年齢期末の資産推移を表示し、資金不足判定は途中月を含む月次残高で行います。負の残高は借入残高や実際の不足総額を示すものではありません。')); 
+ return wrap;
+}
+
 /** Read-only diagnostic based on the actual monthly comparison ledger. */
 export function mortalityFirstNegativeDiagnostic(monthly,firstNegativeMonth,radius=3){
  if(!firstNegativeMonth)return [];
@@ -580,7 +637,8 @@ export function mountMortalityComparison(root,{getConfig,getBaseline,runPlan}){
     stdBtn.className=worst?'secondary':'primary';worstBtn.className=worst?'primary':'secondary';
   };
   stdBtn.addEventListener('click',()=>activate(false));worstBtn.addEventListener('click',()=>activate(true));
-  nav.append(stdBtn,worstBtn);results.replaceChildren(nav,standardPanel,worstPanel);activate(true);
+  const overlayGraph=renderMortalityAssetOverlay(periods,original,mortality);
+  nav.append(stdBtn,worstBtn);results.replaceChildren(overlayGraph,nav,standardPanel,worstPanel);activate(true);
 
  }
  form.addEventListener('input',e=>{if(e.target!==form.elements.reviewed)form.elements.reviewed.checked=false;pensionInputChanged(e.target);if(e.target.matches('[data-mortality-share],[data-mortality-factor]'))allocationInfo();ageHint();saveInputs();if(current)invalid('入力を変更したため、以前の試算は無効です。もう一度試算してください。');});
