@@ -72,5 +72,6 @@ test('万一比較は計算完了と未保存を区別し採用データに触�
  assert.match(src,/const compareAnswer=.*mountActionAnswer/);
  assert.match(src,/compareAnswer\?\.show\(\{kind:'info'/);
  assert.match(src,/compareAnswer\?\.show\(\{kind:'error'/);
- assert.match(src,/採用値・保存データ・クラウドは変更していません/);
+ assert.match(src,/比較入力はバックアップ・同期対象/);
+ assert.match(src,/採用済みの計画は変更していません/);
 });
