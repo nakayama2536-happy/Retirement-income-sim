@@ -6,7 +6,7 @@ import {mountSyncPanel,hasExternalEditorFocus,SYNC_PUBLIC_CONFIG_KEY,SYNC_MARKER
 import {FakeCipherCloud} from './sync-policy.mjs';
 import {encryptSnapshot} from './sync-crypto.mjs';
 class NodeElement{
- constructor(tag,doc){this.tagName=tag;this.ownerDocument=doc;this.children=[];this.parentNode=null;this.listeners={};this.value='';this.checked=false;this.disabled=false;this.textContent='';this.attributes={};this.classList={add(){}};}
+ constructor(tag,doc){this.tagName=tag;this.ownerDocument=doc;this.children=[];this.parentNode=null;this.dataset={};this.listeners={};this.value='';this.checked=false;this.disabled=false;this.textContent='';this.attributes={};this.classList={add(){}};}
  setAttribute(k,v){this.attributes[k]=String(v);if(k==='name')this.name=v;}
  appendChild(x){x.remove?.();x.parentNode=this;this.children.push(x);return x;}
  replaceChildren(...items){for(const child of this.children)child.parentNode=null;this.children=[];for(const x of items)this.appendChild(x);}
