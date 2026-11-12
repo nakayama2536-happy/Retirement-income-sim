@@ -66,3 +66,11 @@ test('共通詳細設定は試算後の未保存と反映後の保存完了を�
  assert.match(src,/kind:'error'/);
  for(const kind of ['nisa','ideco','retirement','budgetTable','goal','unemployment'])assert.ok(src.includes(kind),kind);
 });
+
+test('万一比較は計算完了と未保存を区別し採用データに触れない',()=>{
+ const src=fs.readFileSync(new URL('./mortality-ui.mjs',import.meta.url),'utf8');
+ assert.match(src,/const compareAnswer=.*mountActionAnswer/);
+ assert.match(src,/compareAnswer\?\.show\(\{kind:'info'/);
+ assert.match(src,/compareAnswer\?\.show\(\{kind:'error'/);
+ assert.match(src,/採用値・保存データ・クラウドは変更していません/);
+});
