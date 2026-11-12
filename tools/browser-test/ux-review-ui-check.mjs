@@ -155,10 +155,12 @@ try{
  await goal.locator('[name=amount]').fill('2345');
  await goal.locator('button[type=submit]').click();
  await page.locator('#detail-goal [data-apply]').waitFor({state:'visible'});
+ assert(await page.locator('#detail-goal button[type=submit] + [data-action-answer][data-kind="info"]').isVisible(),'試算ボタン直下に未保存アンサーを表示');
  assert.deepEqual(await snapshot(),before,'goal preview must not save');
  mark('age-100-goal-offered-when-current-horizon-95-preview-is-read-only');
  await page.locator('#detail-goal [data-apply]').click();
  await page.waitForFunction(()=>JSON.parse(localStorage.getItem('lifeplan-sim-state-v1')).config.management.thresholds[100]===2345);
+ assert(await page.locator('#detail-goal .detail-preview button[disabled] + [data-action-answer][data-kind="success"]').isVisible(),'反映位置に保存済みアンサーを保持');
  const adopted=await snapshot();
  assert.equal(adopted.config.plan.endAge,95);assert.deepEqual(adopted.scenarios,before.scenarios);
  assert.deepEqual(adopted.config.management.thresholds[95],before.config.management.thresholds[95]);
