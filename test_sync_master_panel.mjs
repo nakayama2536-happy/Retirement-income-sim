@@ -19,7 +19,7 @@ class Element{
  remove(){if(this.parentNode){this.parentNode.children=this.parentNode.children.filter(n=>n!==this);this.parentNode=null;}}
  removeChild(node){if(node.parentNode!==this)throw Error('not a child');node.remove();return node;}
  insertAdjacentElement(position,node){if(position!=='afterend'||!this.parentNode)throw Error('invalid position');node.remove?.();const siblings=this.parentNode.children,index=siblings.indexOf(this);node.parentNode=this.parentNode;siblings.splice(index+1,0,node);return node;}
- closest(selector){if(selector.startsWith('.')){for(let node=this;node;node=node.parentNode){if((node.attributes?.class||node.className||'').split(/\\s+/).includes(selector.slice(1)))return node;}}return null;}
+ closest(selector){if(selector.startsWith('.')){for(let node=this;node;node=node.parentNode){if((node.attributes?.class||node.className||'').split(/\s+/).includes(selector.slice(1)))return node;}}return null;}
 
 }
 const doc={createElement(tag){return new Element(tag,doc);},addEventListener(){},removeEventListener(){},querySelector(){return null;},activeElement:null};
