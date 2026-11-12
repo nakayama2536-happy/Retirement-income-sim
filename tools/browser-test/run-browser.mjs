@@ -282,7 +282,12 @@ async function validatePensionUi(browser){
    assert.equal(await page.locator('#primaryPensionAmount').inputValue(),'180.48');
    await page.locator('#pensionForm button[type="submit"]').click();
    assert(await page.locator('#pensionPreview').isVisible());
-   assert.deepEqual((await snapshot(page)).data,before);
+   const trialData=(await snapshot(page)).data;
+   // Comparing an unadopted pension trial should preserve the adopted plan
+   // while its input-only snapshot is now intentionally included in backups.
+   assert(trialData.savedInputs?.pension?.draft?.primary,'unadopted pension input must be backed up');
+   const removeDraft=x=>{const c=structuredClone(x);delete c.savedInputs;delete c.recoveryCompatibility.producerBuild;return c;};
+   assert.deepEqual(removeDraft(trialData),removeDraft(before));
    await openTab(page,'pension');await page.locator('#pensionOpenPrimary').click();
    const card=page.locator('#pensionForm');await card.scrollIntoViewIfNeeded();
    assert(await card.evaluate(n=>n.scrollWidth<=n.clientWidth+1));
