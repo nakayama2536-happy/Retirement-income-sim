@@ -43,6 +43,8 @@ export function organiseSyncTwoFlows({root,connection,checkActions,actions,safet
  shell.prepend(selector);root.append(shell,advanced);
  let active='upload';
  function renderVisibility(){
+  // Exceptional conflicts open the safety instructions automatically; users do not need to search for hidden controls.
+  if(!conflict.hidden)advanced.open=true;
   const enrolled=registered();
   wrappers[2].hidden=!enrolled;wrappers[3].hidden=!enrolled;
   wrappers[6].hidden=enrolled;wrappers[7].hidden=enrolled;
