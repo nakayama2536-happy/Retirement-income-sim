@@ -1,5 +1,5 @@
 import {runRetirementPlan,runForecastFromLatestActual,validateSalaryLife,integrityChecks} from './calc.mjs';
-import {configSignature,saveState} from './storage.mjs';
+import {configSignature,saveState,loadState,saveInputDraft,readInputDraft,clearInputDraft} from './storage.mjs';
 import {commitPlanState} from './state.mjs';
 
 const clone=structuredClone;
@@ -107,10 +107,10 @@ export function saveSalaryScenario(state,preview,name,save=saveState){
 }
 
 export const SALARY_DRAFT_KEY='lifeplan-sim-salary-draft-v1';
-export function saveSalaryDraft(config,draft){assertWriteAccess();localStorage.setItem(SALARY_DRAFT_KEY,JSON.stringify({context:salaryDraftContext(config),draft}));}
+export function saveSalaryDraft(config,draft){assertWriteAccess();saveInputDraft('salary',{context:salaryDraftContext(config),draft});}
 export function loadSalaryDraft(config){try{
-  const stored=JSON.parse(localStorage.getItem(SALARY_DRAFT_KEY)||'null'),d=stored?.draft;
+  const state=loadState(),stored=Object.hasOwn(state,'savedInputs')?readInputDraft('salary'):JSON.parse(localStorage.getItem(SALARY_DRAFT_KEY)||'null'),d=stored?.draft;
   return stored?.context===salaryDraftContext(config)&&d?.settings?.mode==='net-transfer-v1'&&Array.isArray(d.eventTreatments)&&Array.isArray(d.periodTreatments)&&d.eventTreatments.length===(config.events||[]).length&&d.periodTreatments.length===(config.cashflow?.periodOverrides||[]).length?d:null;
 }catch{return null;}}
-export function clearSalaryDraft(){assertWriteAccess();localStorage.removeItem(SALARY_DRAFT_KEY);}
+export function clearSalaryDraft(){assertWriteAccess();clearInputDraft('salary');}
 import {assertWriteAccess} from './write-access.mjs';
