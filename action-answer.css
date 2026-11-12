@@ -1,0 +1,11 @@
+.action-answer{border-left:4px solid transparent;border-radius:9px;padding:12px 14px;margin:8px 0 14px;line-height:1.6;font-size:.94rem}
+.action-answer[hidden]{display:none!important}
+.action-answer__title{display:block;margin-bottom:4px}
+.action-answer p{margin:4px 0}
+.action-answer[data-kind="success"]{background:#eaf6ef;color:#174b35;border-color:#287a51}
+.action-answer[data-kind="info"]{background:#eaf3fc;color:#17466b;border-color:#2366a0}
+.action-answer[data-kind="warning"]{background:#fff5e5;color:#70470c;border-color:#ae6b13}
+.action-answer[data-kind="error"]{background:#fdeeee;color:#732525;border-color:#b33b3b}
+.action-answer[data-kind="pending"]{background:#f0f3f7;color:#34465a;border-color:#607285}
+.action-answer__next{font-weight:600}
+@media (prefers-color-scheme:dark){.action-answer[data-kind="success"]{background:#17392b;color:#d7f7e7}.action-answer[data-kind="info"]{background:#19374f;color:#d9edff}.action-answer[data-kind="warning"]{background:#44351c;color:#ffebc0}.action-answer[data-kind="error"]{background:#482626;color:#ffe1e1}.action-answer[data-kind="pending"]{background:#303a48;color:#e0e8f2}}
