@@ -1,3 +1,4 @@
+import {validateInputSnapshots} from './input-snapshots.mjs';
 import {projectNisaWithdrawal} from './withdrawal-plan.mjs';
 import {STATE_KEY,migrateConfig,configSignature} from './storage.mjs';
 import {calculatePensionCandidate} from './pension.mjs';
@@ -18,6 +19,7 @@ const snapshot=storage=>MIGRATION_KEYS.map(key=>[key,storage.getItem(key)]);
 // calculated/normalized output. Migration must not adopt new planning modes.
 export function validateSavedState(state,{allowEmpty=false}={}){
   assertBackupCompatibility(state);
+  validateInputSnapshots(state?.savedInputs);
   if(!object(state)||!Array.isArray(state.scenarios))throw new Error('設定と比較案の形式が不正です。');
   if(allowEmpty&&state.config===null&&state.scenarios.length===0)return;
   if(!object(state.config))throw new Error('現在設定がありません。別系統の設定とは結合しません。');
