@@ -189,8 +189,8 @@
     },
     {
       "name": "index.html",
-      "size": 79141,
-      "sha256": "970c9b797530db69ef4ad3daa22683b828dcf2dc4da380ddea31a7f41c38ea8b"
+      "size": 79176,
+      "sha256": "2707e28a723dfbb36bbb7c19b907628cc321ee0883c421f9942f5b07368d1853"
     },
     {
       "name": "input-snapshots.mjs",
@@ -264,8 +264,8 @@
     },
     {
       "name": "pension-ui.mjs",
-      "size": 29323,
-      "sha256": "1128e28c789179863cebbfd9b02c48c750d85edf74da46f8b119c22ff8a0a84a"
+      "size": 31381,
+      "sha256": "613675b0aaf154e38a14fcc8665b3630ae0ff50c43a1663f192b80e3ddcd8391"
     },
     {
       "name": "pension.mjs",
@@ -314,8 +314,8 @@
     },
     {
       "name": "salary-ui.mjs",
-      "size": 22393,
-      "sha256": "fb28d145c75b2369214e80dd1483fb5276d932bb990d10814283235779582c05"
+      "size": 23982,
+      "sha256": "db71d0d883b5ad6634c0d4558ed7b27cc1977964f9fa7766af0ebab7b18e0e28"
     },
     {
       "name": "salary-workflow.mjs",
