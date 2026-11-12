@@ -6,7 +6,7 @@ import {FakeCipherCloud} from './sync-policy.mjs';
 const phrase='synthetic-crypto-secret-long-enough';
 const local=(amount)=>({config:{plan:{startDate:'2038-01-01',initialAsset:amount},reviews:{'70':{note:'fiction'}}},scenarios:[{id:'only-synthetic'}],futureEnvelope:{v:3}});
 class Element{
- constructor(tag,ownerDocument){this.tagName=tag.toUpperCase();this.ownerDocument=ownerDocument;this.children=[];this.parentNode=null;this.listeners={};this.checked=false;this.disabled=false;this.hidden=false;this.value='';this.textContent='';this.attributes={};this.classList={add(){}};}
+ constructor(tag,ownerDocument){this.tagName=tag.toUpperCase();this.ownerDocument=ownerDocument;this.children=[];this.parentNode=null;this.dataset={};this.listeners={};this.checked=false;this.disabled=false;this.hidden=false;this.value='';this.textContent='';this.attributes={};this.classList={add(){}};}
  setAttribute(k,v){this.attributes[k]=String(v);if(k==='name')this.name=v;}
  appendChild(x){x.remove?.();x.parentNode=this;this.children.push(x);return x;}
  replaceChildren(...items){for(const child of this.children)child.parentNode=null;this.children=[];for(const x of items)this.appendChild(x);}
