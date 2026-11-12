@@ -169,16 +169,19 @@ try{
  assert.equal(await page.locator('#backup #recoveryCheckFile').count(),1);
  const cloudGroup=page.locator('#settingsGroup-cloud');
  if(!(await cloudGroup.getAttribute('open')))await cloudGroup.locator('summary').first().click();
- await page.locator('#privateSyncCard > details > summary').click();
  assert.match(await page.locator('#privateSyncContainer .cloud-current h4').innerText(),/状態表示/);
- assert.match(await page.locator('#privateSyncContainer').innerText(),/日常の確認/);
- assert.match(await page.locator('#privateSyncContainer').innerText(),/手動の書込み・読込み/);
+ assert.match(await page.locator('#privateSyncContainer').innerText(),/パソコンからクラウドへ保存/);
+ assert.match(await page.locator('#privateSyncContainer').innerText(),/スマホでクラウドから読み込む/);
+ assert.equal(await page.locator('#privateSyncContainer [data-flow="upload"]').count(),1);
+ assert.equal(await page.locator('#privateSyncContainer [data-flow="download"]').count(),1);
  assert(await page.locator('[data-sync-action="4"]').isVisible());
  assert.equal(await page.locator('#privateSyncContainer [data-sync-action="2"]').count(),1);
- assert.deepEqual(await snapshot(),adopted,'opening cloud UI must not write local state');
- assert.match(await page.locator('[data-sync-action="4"]').innerText(),/^②/);
- assert.match(await page.locator('[data-sync-action="2"]').innerText(),/^③/);
- assert.match(await page.locator('[data-sync-action="3"]').innerText(),/^④/);
+ assert.deepEqual(await snapshot(),adopted,'switching cloud UI must not write local state');
+ assert.match(await page.locator('[data-sync-action="4"]').innerText(),/保存内容の差分を確認する/);
+ assert.match(await page.locator('[data-sync-action="2"]').innerText(),/クラウドに保存する/);
+ await page.locator('#privateSyncContainer [data-flow="download"]').click();
+ assert(await page.locator('[data-sync-action="3"]').isVisible());
+ assert.match(await page.locator('[data-sync-action="3"]').innerText(),/スマホに読み込む/);
  mark('cloud-state-and-action-groups-are-distinct-with-numbered-buttons');
  mark('ux-request-independent-backup-tab-and-secure-action-numbers');
  for(const width of [390,1280]){
