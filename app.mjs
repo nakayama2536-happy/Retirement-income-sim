@@ -8,6 +8,7 @@ import {compareFullPlan} from './full-plan-comparison.mjs';
 import {prepareSavedComparison,comparisonSourceFingerprint} from './full-plan-saved.mjs';
 import {createConfigBackup} from './backup-compatibility.mjs';
 import {mountDetailUI} from './detail-ui.mjs';
+import {mountActionAnswer} from './action-answer.mjs';
 import {mountMortalityComparison} from './mortality-ui.mjs';
 import {installWorkflowTabs,revealWorkflowTarget} from './workflow-tabs.mjs';
 import {mountSurvivorPensionScreen} from './survivor-pension-ui.mjs';
@@ -947,7 +948,15 @@ el('periodEditForm').elements.kind.addEventListener('change',e=>{
 el('cashflowViewAge').addEventListener('change', ()=>{renderExpenseDetail();planningCharts.renderExpense();});
 el('familyCashflowAge').addEventListener('change',renderFamilyAnnualQuick);
 el('expenseDisplaySource').addEventListener('change', ()=>{renderExpenseDetail();planningCharts.renderExpense();});
-el('exportAnnualCsvBtn').addEventListener('click',()=>{if(!config)return;const x=downloadAnnualCsv(config,{sourceProfile:el('expenseDisplaySource').value});showNotice(`年間収支CSV（${x.rowCount}期間）を作成しました。保存先を確認してください。`);});
+const annualCsvAnswer=mountActionAnswer(el('exportAnnualCsvBtn'));
+el('expenseDisplaySource').addEventListener('change',()=>annualCsvAnswer.invalidate());
+el('exportAnnualCsvBtn').addEventListener('click',()=>{
+ if(!config){annualCsvAnswer.show({kind:'warning',body:'採用済みの計画がありません。設定を読み込んでください。'});return;}
+ try{
+  const x=downloadAnnualCsv(config,{sourceProfile:el('expenseDisplaySource').value});
+  annualCsvAnswer.show({kind:'info',body:`年間収支CSV（${x.rowCount}期間）のダウンロードを開始しました。アプリの設定は変更していません。`,next:'端末のファイル保存先と内容を確認してください。'});
+ }catch(e){annualCsvAnswer.show({kind:'error',body:'CSV出力を開始できませんでした。条件を確認して再試行してください。'});}
+});
 el('certaintyForm').addEventListener('submit', saveCertainty);
 el('actualForm').addEventListener('submit', saveActual);
 el('actualAge').addEventListener('change', e=>populateActualForm(e.target.value));
@@ -956,13 +965,63 @@ el('saveAnnualReviewBtn').addEventListener('click', saveAnnualReview);
 el('saveScenarioBtn').addEventListener('click', saveCurrentScenario);
 el('importFile').addEventListener('change', e=>{ const f=e.target.files?.[0]; if(f) importConfig(f).catch(err=>showNotice(`読込失敗: ${err.message}`,'error')); });
 el('importFile2').addEventListener('change', e=>{ const f=e.target.files?.[0]; if(f) importConfig(f).catch(err=>showNotice(`読込失敗: ${err.message}`,'error')); });
-el('exportBtn').addEventListener('click',()=>{ if(config) downloadJson(createConfigBackup(config),`lifeplan-backup-${new Date().toISOString().slice(0,10)}.json`); });
-el('exportFullBtn').addEventListener('click',()=>{try{const state=loadStateForTransfer();if(!state.config)return;downloadJson(createFullBackup(state),`lifeplan-full-backup-${new Date().toISOString().slice(0,10)}.json`);}catch(e){showNotice(`一括バックアップを作成できません。${e.message}`,'error');}});
-el('pensionToolRun').addEventListener('click',runPensionTool);
-el('idecoToolRun').addEventListener('click',runIdecoTool);
-el('retirementToolRun').addEventListener('click',runRetirementTool);
-el('unemploymentToolRun').addEventListener('click',runUnemploymentTool);
-el('taxToolRun').addEventListener('click',runTaxSocialTool);
+function mountJsonExport(id,create,filename){
+ const answer=mountActionAnswer(el(id));
+ el(id).addEventListener('click',()=>{
+  try{
+   const payload=create();
+   if(!payload){answer.show({kind:'warning',body:'保存済み設定がありません。バックアップは開始していません。'});return;}
+   downloadJson(payload,filename());
+   answer.show({kind:'info',body:'JSONバックアップのダウンロードを開始しました。端末での保存完了は確認できません。',next:'ファイルの存在と保存先を確認し、非公開で保管してください。'});
+  }catch(e){answer.show({kind:'error',body:'バックアップのダウンロードを開始できませんでした。採用済みデータは変更していません。'});}
+ });
+}
+mountJsonExport('exportBtn',()=>config?createConfigBackup(config):null,()=>`lifeplan-backup-${new Date().toISOString().slice(0,10)}.json`);
+mountJsonExport('exportFullBtn',()=>{
+ const state=loadStateForTransfer();
+ return state.config?createFullBackup(state):null;
+},()=>`lifeplan-full-backup-${new Date().toISOString().slice(0,10)}.json`);
+
+// Display-only wrapper. Existing financial calculations are unchanged.
+function mountReferenceTool(id,run,fields,resultId,validate=()=>null){
+ const button=el(id),answer=mountActionAnswer(button),result=el(resultId);
+ const basis=el(resultId.replace('Result','Basis'));
+ const clearOutput=()=>{result.textContent='';if(basis)basis.textContent='';};
+ for(const name of fields){
+  const input=el(name);
+  for(const evt of ['input','change'])input.addEventListener(evt,()=>{clearOutput();answer.invalidate();});
+ }
+ button.addEventListener('click',()=>{
+  const issue=validate();
+  if(issue){clearOutput();answer.show({kind:'warning',body:issue});return;}
+  try{
+   run();
+   if(!result.textContent.trim())throw Error('empty-reference-result');
+   answer.show({kind:'info',body:'参考試算を表示しました。この結果は未保存で、現在の計画・資産推移・CSVへ反映されていません。'});
+  }catch(e){clearOutput();answer.show({kind:'error',body:'参考試算を実行できませんでした。入力値や現在の設定を確認してください。'});}
+ });
+}
+const validNumber=(id,{min=0,max=Infinity,integer=false}={})=>{
+ const raw=el(id).value.trim();
+ if(raw==='')return false;
+ const n=Number(raw);
+ return Number.isFinite(n)&&n>=min&&n<=max&&(!integer||Number.isInteger(n));
+};
+const referenceIssue=(checks)=>checks.every(([id,opt])=>validNumber(id,opt))?null:'入力値が未入力・不正・範囲外です。数値と単位を確認してください。';
+mountReferenceTool('pensionToolRun',runPensionTool,['pensionBase65','pensionToolAge'],'pensionToolResult',()=>referenceIssue([
+ ['pensionBase65',{min:0}],['pensionToolAge',{min:60,max:75,integer:true}]]));
+mountReferenceTool('idecoToolRun',runIdecoTool,['idecoBalance','idecoYears'],'idecoToolResult',()=>referenceIssue([
+ ['idecoBalance',{min:0}],['idecoYears',{min:5,max:20,integer:true}]]));
+mountReferenceTool('retirementToolRun',runRetirementTool,['retirementAmount','serviceYears'],'retirementToolResult',()=>referenceIssue([
+ ['retirementAmount',{min:0}],['serviceYears',{min:1,max:120,integer:true}]]));
+mountReferenceTool('unemploymentToolRun',runUnemploymentTool,[],'unemploymentToolResult',()=>config?null:'計画を読み込んでください。');
+mountReferenceTool('taxToolRun',runTaxSocialTool,['taxToolAge','taxToolSalary','taxToolPension','taxToolSpouseIncome','taxToolSpouseAge'],'taxToolResult',()=>{
+ const checks=[['taxToolAge',{min:60,max:95,integer:true}],['taxToolSalary',{min:0}],['taxToolPension',{min:0}]];
+ if(el('taxToolSpouseIncome').value.trim()!==''){
+  checks.push(['taxToolSpouseIncome',{min:0}],['taxToolSpouseAge',{min:0,max:110,integer:true}]);
+ }
+ return referenceIssue(checks);
+});
 
 document.addEventListener('click', e=>{
   const navigation=e.target.closest('[data-open-tab]');
