@@ -52,3 +52,17 @@ test('年金・給与生活の保存と試算は同じ基準の直下表示を�
  const index=fs.readFileSync(new URL('./index.html',import.meta.url),'utf8');
  for(const id of ['pensionTrial','salaryTrial'])assert.ok(index.includes('id="'+id+'"'),id);
 });
+
+
+test('共通詳細設定は試算後の未保存と反映後の保存完了を分ける',()=>{
+ const src=fs.readFileSync(new URL('./detail-ui.mjs',import.meta.url),'utf8');
+ assert.match(src,/initForm\(kind,c,completed=null\)/);
+ assert.match(src,/ctx\.trialAnswer.*mountActionAnswer/);
+ assert.match(src,/applyAnswer.*mountActionAnswer/);
+ assert.match(src,/if\(!commit\(next\)\)/);
+ assert.match(src,/kind:'info'/);
+ assert.match(src,/kind:'success'/);
+ assert.match(src,/kind:'warning'/);
+ assert.match(src,/kind:'error'/);
+ for(const kind of ['nisa','ideco','retirement','budgetTable','goal','unemployment'])assert.ok(src.includes(kind),kind);
+});
