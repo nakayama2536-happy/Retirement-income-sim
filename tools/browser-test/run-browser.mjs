@@ -149,6 +149,10 @@ async function run(browser,id,mode){
    const withoutProducer=snapshot=>{
     const copy=structuredClone(snapshot);
     delete copy.data.recoveryCompatibility.producerBuild;
+    // The new optional comparison-input snapshot is a validated backup extension,
+    // not a mutation of the stored plan, annual figures, or comparison output.
+    delete copy.data.savedInputs;
+    copy.data.recoveryCompatibility.requiredFeatures=(copy.data.recoveryCompatibility.requiredFeatures||[]).filter(f=>f!=='comparison-input-snapshot-v1');
     copy.comparison=copy.comparison.filter(row=>!age100Labels.includes(row[0]));
     return copy;
    };
