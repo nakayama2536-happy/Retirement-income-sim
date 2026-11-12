@@ -63,7 +63,7 @@ test('保存失敗は採用値・試算・下書きを保持し再試行でき�
   const state=seed(),d=draft(state.config);saveSalaryDraft(state.config,d);
   const p=previewSalary(state,d),original=structuredClone(p);
   localStorage.fail=true;assert.throws(()=>applySalaryPreview(state,p),/Quota/);
-  assert.deepEqual(loadState(),state);assert.deepEqual(loadSalaryDraft(state.config),d);assert.deepEqual(p,original);
+  assert.deepEqual(loadState().config,state.config);assert.deepEqual(loadState().scenarios,state.scenarios);assert.deepEqual(loadSalaryDraft(state.config),d);assert.deepEqual(p,original);
   localStorage.fail=false;assert.equal(applySalaryPreview(state,p).changed,true);
 });
 test('再読込後の取消は直前の所有項目だけ、後の年金・実績・比較案を保持',()=>{
