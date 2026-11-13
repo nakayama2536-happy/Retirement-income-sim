@@ -1055,7 +1055,26 @@ el('showActuals').addEventListener('change',e=>{
   if(config){renderHome();drawChart();}
 });
 
+function renderReceiptComparison(){
+  const box=el('receiptCompareSummary');if(!box)return;
+  if(!config){box.textContent='保存済みの採用条件がありません。iDeCo・退職金の設定を確認してください。';return;}
+  const r=config.retirement||{},i=config.ideco||{};
+  const ret=r.receiveDate||'',dc=i.lumpDate||'';
+  const retYear=/^\d{4}-\d{2}-\d{2}$/.test(ret)?Number(ret.slice(0,4)):null;
+  const dcYear=/^\d{4}-\d{2}-\d{2}$/.test(dc)?Number(dc.slice(0,4)):null;
+  const years=dcYear===null?[]:[dcYear,dcYear+5,dcYear+10,dcYear+15].filter((v,n,a)=>a.indexOf(v)===n);
+  const label=(year)=>{
+    if(retYear===null||year===null)return '判定不能：両方の受取年が必要';
+    if(year===retYear)return '同じ年：同一年受取の控除調整を確認';
+    if(year<retYear)return retYear-year<=9&&year>=2026?'iDeCo先行：9年内の調整対象':'iDeCo先行：9年内調整の対象外（その他の条件は別途確認）';
+    return year-retYear<=19?'退職金先行：19年内の調整対象':'退職金先行：19年内調整の対象外（その他の条件は別途確認）';
+  };
+  const value=(v,suffix='')=>v===undefined||v===null||v===''?'未設定':escapeHtml(String(v))+suffix;
+  let rows=years.length?years.map((year,idx)=>'<tr><td>'+(idx===0?'現在のiDeCo受取予定':'参考候補')+'</td><td>'+escapeHtml(String(year))+'年</td><td>'+escapeHtml(label(year))+'</td></tr>').join(''):'<tr><td colspan="3">iDeCo受取開始日が未設定のため候補年を作成できません。</td></tr>';
+  box.innerHTML='<p><strong>現在の採用条件（参照のみ）</strong></p><dl><div><dt>会社退職金受取日</dt><dd>'+value(ret)+'</dd></div><div><dt>退職金・税引前額</dt><dd>'+value(r.amount,'万円')+'</dd></div><div><dt>勤続年数</dt><dd>'+value(r.serviceYears,'年')+'</dd></div><div><dt>iDeCo受取開始日</dt><dd>'+value(dc)+'</dd></div><div><dt>iDeCo加入日</dt><dd>'+value(i.joinDate)+'</dd></div><div><dt>一時金割合</dt><dd>'+value(i.lumpPercent,'%')+'</dd></div></dl><p><strong>一時金の受取年比較（参考候補）</strong></p><table><thead><tr><th>比較案</th><th>iDeCoの受取年</th><th>退職所得控除の調整対象</th></tr></thead><tbody>'+rows+'</tbody></table><p class="muted">参考候補は受取開始年を5年刻みで動かした制度上の比較です。受給可能年齢・加入資格・運用益・受取時残高を確認した案ではありません。税額・税引後受取額は未計算です。年金受取・一時金併用・受取前残高・課税の精密計算も含みません。受取年以外の条件を採用したことにはなりません。</p>';
+}
 function switchTab(id){
+  if(id==='receiptCompare')renderReceiptComparison();
   if(['salary','pension'].includes(id)&&el('sharedTaxTool')){const container=id==='pension'&&el('pensionTaxExtra')?el('pensionTaxExtra'):el(id);container.appendChild(el('sharedTaxTool').closest('details.supplementary')||el('sharedTaxTool'));}
   const group=document.querySelector(`[data-tab="${id}"]`)?.dataset.groupItem;
   if(group){document.querySelectorAll('[data-group]').forEach(b=>b.classList.toggle('active',b.dataset.group===group));document.querySelectorAll('[data-group-item]').forEach(b=>b.hidden=b.dataset.groupItem!==group);}
@@ -1064,6 +1083,7 @@ function switchTab(id){
 }
 document.querySelectorAll('[data-group]').forEach(btn=>btn.addEventListener('click',()=>{const first=document.querySelector(`[data-group-item="${btn.dataset.group}"]`);if(first)switchTab(first.dataset.tab);}));
 document.querySelectorAll('[data-tab]').forEach(btn=>btn.addEventListener('click',()=>switchTab(btn.dataset.tab)));
+el('receiptCompareRefresh')?.addEventListener('click',renderReceiptComparison);
 installWorkflowTabs();
 const migrationPanel=mountMigration({onCommit:()=>{const saved=loadState();config=saved.config;scenarios=saved.scenarios;refresh();}});
 syncPanel=mountSyncPanel(el('privateSyncContainer'),{
