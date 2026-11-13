@@ -72,3 +72,9 @@ body details[open] > summary::after{content:'▼ 閉じる' !important}
 .workflow-pane[hidden]{display:none !important}
 .workflow-pane>article,.workflow-pane>details,.workflow-pane>.card{margin-bottom:12px}
 @media(max-width:620px){.workflow-tabs .workflow-tab{font-size:.88rem;padding:9px 10px;flex:0 0 auto}}
+
+/* Mortality output is a subordinate result, not another numbered setup step.
+   Keep data-step-no for references and inputs; suppress decorative prefixes only. */
+#mortalityWorstResultPanel > h3.step-numbered::before,
+#mortalityFamilySummary > h3.step-numbered::before,
+#mortalityStandardResultPanel > h3.step-numbered::before{content:none;display:none}
