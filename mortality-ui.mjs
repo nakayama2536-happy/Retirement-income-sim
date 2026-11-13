@@ -52,10 +52,10 @@ function renderMortalityAssetOverlay(periods,original,mortality){
  const from=Math.min(...rows.map(r=>r.age)),to=Math.max(...rows.map(r=>r.age));
  const x=a=>L+(a-from)/Math.max(1,to-from)*(W-L-R),y=v=>T+(max-v)/(max-min)*(H-T-B);
  const wrap=makeEl('section','mortality-overlay-graph');wrap.id='mortalityOverlayGraphPanel';
- wrap.append(makeEl('h3','','標準案と最悪ケースの資産推移（同時表示）'));
+ wrap.append(makeEl('h3','','現在の計画と万一の比較案の資産推移'));
  wrap.append(makeEl('p','muted','採用済みの標準案と、今回設定した万一の比較案を同じ尺度で表示します。どちらかが不足する場合は、開始資産や65歳以降の就労条件などの想定見直しを検討してください。比較案を保存・採用するものではありません。')); 
- const svg=mortalitySvgEl('svg',{viewBox:`0 0 ${W} ${H}`,role:'img','aria-label':'標準案と最悪ケースの資産推移グラフ',style:'width:100%;height:auto;display:block'});
- svg.append(mortalitySvgEl('title',{},'標準案と最悪ケースの資産推移'));
+ const svg=mortalitySvgEl('svg',{viewBox:`0 0 ${W} ${H}`,role:'img','aria-label':'現在の計画と万一の比較案の資産推移グラフ',style:'width:100%;height:auto;display:block'});
+ svg.append(mortalitySvgEl('title',{},'現在の計画と万一の比較案の資産推移'));
  for(let i=0;i<=4;i++){
    const v=min+(max-min)*i/4,yy=y(v);
    svg.append(mortalitySvgEl('line',{x1:L,x2:W-R,y1:yy,y2:yy,stroke:'#e1d6cc'}),mortalitySvgEl('text',{x:L-8,y:yy+4,'font-size':13,'text-anchor':'end',fill:'#685f5b'},escMoney(v)));
@@ -64,8 +64,8 @@ function renderMortalityAssetOverlay(periods,original,mortality){
  const step=Math.max(1,Math.ceil(rows.length/8));
  rows.forEach((r,i)=>{if(i%step===0||i===rows.length-1)svg.append(mortalitySvgEl('text',{x:x(r.age),y:H-26,'font-size':13,'text-anchor':'middle',fill:'#685f5b'},String(r.age)));});
  const series=[
-   {key:'baselineEndAsset',label:'標準案',stroke:'#386c94','width':3},
-   {key:'previewEndAsset',label:'最悪ケース',stroke:'#cb6a38','width':3}
+   {key:'baselineEndAsset',label:'現在の計画',stroke:'#386c94','width':3},
+   {key:'previewEndAsset',label:'万一の比較案',stroke:'#cb6a38','width':3}
  ];
  for(const line of series){
    const points=rows.map(r=>`${x(r.age)},${y(r[line.key])}`).join(' ');
@@ -78,13 +78,13 @@ function renderMortalityAssetOverlay(periods,original,mortality){
  }
  wrap.append(svg);
  const legend=makeEl('p','');
- for(const [label,color] of [['● 標準案','#386c94'],['● 最悪ケース','#cb6a38']]){const item=makeEl('span','',label+'　');item.style.color=color;legend.append(item);} 
+ for(const [label,color] of [['● 現在の計画','#386c94'],['● 万一の比較案','#cb6a38']]){const item=makeEl('span','',label+'　');item.style.color=color;legend.append(item);} 
  wrap.append(legend);
  const stdLast=rows.at(-1)?.baselineEndAsset,worstLast=rows.at(-1)?.previewEndAsset;
- wrap.append(makeEl('p','',`計画終期末の資産：標準案 ${formatTotal(stdLast)} ／ 最悪ケース ${formatTotal(worstLast)}`));
+ wrap.append(makeEl('p','',`計画終期末の資産：現在の計画 ${formatTotal(stdLast)} ／ 万一の比較案 ${formatTotal(worstLast)}`));
  wrap.dataset.shortfall=(stdShort||worstShort)?'true':'false';
  if(stdShort||worstShort){
-   wrap.append(makeEl('p','mortality-warning',`計算期間中に月末資産が0万円未満になる月があります（標準案：${stdShort??'期間内なし'}／最悪ケース：${worstShort??'期間内なし'}）。開始資産、就労収入、支出条件の見直しを検討してください。`));
+   wrap.append(makeEl('p','mortality-warning',`計算期間中に月末資産が0万円未満になる月があります（現在の計画：${stdShort??'期間内なし'}／万一の比較案：${worstShort??'期間内なし'}）。開始資産、就労収入、支出条件の見直しを検討してください。`));
  }else wrap.append(makeEl('p','muted','両案とも計算期間内の月末資産は0万円以上です。資産が将来保証されるものではなく、目標資産の達成とは別に判定してください。'));
  wrap.append(makeEl('p','muted','年齢期末の資産推移を表示し、資金不足判定は途中月を含む月次残高で行います。負の残高は借入残高や実際の不足総額を示すものではありません。')); 
  return wrap;
@@ -310,7 +310,8 @@ export function mountMortalityComparison(root,{getConfig,getBaseline,runPlan}){
  <p id="mortalityAllocationTotal" class="muted" role="status"></p></div>
  </fieldset>
  <label class="check-label family-review-check"><input type="checkbox" name="reviewed" required><span>年金年額・万一の月・生活費の倍率が<strong>比較用の仮定</strong>であり、現在の計画や保存済み条件は変わらないことを確認しました。</span></label>
- <button id="mortalityRun" class="primary" type="submit">比較を計算（保存しない）</button>
+ <button id="mortalityRun" class="primary" type="submit">参考比較を実行（計画には反映しない）</button>
+ <p class="muted">この操作では計画への採用を行いません。比較入力は一括バックアップや、有効なクラウド同期の対象になり得ます。比較結果の採用とは別です。</p>
  <button id="mortalityClear" class="secondary" type="button">結果表示をクリア</button>
  <button id="mortalityClearInputs" class="secondary" type="button">比較入力を初期化</button>
  </form>
