@@ -39,8 +39,8 @@
     },
     {
       "name": "app.mjs",
-      "size": 85129,
-      "sha256": "b92d2de683555bdf362183c90486f488bcd139e9cf8c358ef06a0c13a0e4a9db"
+      "size": 86211,
+      "sha256": "59dde72e36c3ee4b05e3f726d3c301ea43dfb818b91f3faa9b1df9d543bd3858"
     },
     {
       "name": "backup-compatibility.mjs",
