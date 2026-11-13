@@ -799,7 +799,7 @@ function renderCalculationBasis(){
     <div><dt>支出の正本</dt><dd>年代別年間予算（税・社保を含む）</dd></div>
     <div><dt>iDeCo一時金</dt><dd>${idecoTax}</dd></div>
     <div><dt>${config.plan.endAge}歳末</dt><dd>${money(result.finalAsset)}</dd></div>
-  </dl><p class="muted">月末資産＝月初資産＋月次運用益＋各種収入－インフレ調整後支出－臨時支出。制度ツールの税・社会保険詳細は手取・予算内訳確認用で、年代別年間予算へ重ねて加算しません。</p>`;
+  </dl><p class="muted">月末資産＝月初資産＋月次運用益＋各種収入－インフレ調整後支出－臨時支出。制度ツールの税・社会保険詳細は手取・予算内訳確認用で、年代別年間予算へ重ねて加算しません。</p><p class="muted"><strong>現在の運用益試算：</strong>NISA・特定口座・現金／預金を口座別に分けず、計画の開始資産を含む計算対象の総資産に共通の「税引後運用利回り」を適用します。年率を月次複利利回りに換算し、月初資産に運用益を計上してから当月の入出金を反映します。現金／預金も同じ利回りで計算され、実際の口座別運用益や税額を再現するものではありません。開始資産に含めないiDeCo／DCの残高・受取は別途の設定・計算によります。</p><p class="muted"><strong>将来の拡張方針：</strong>現時点でNISAを独立した運用益計算へ分離しません。将来、NISA・特定口座・現金／預金ごとの残高、利回り、入出金、売却、税金等を区別した詳細シミュレーションへの移行を検討します。移行時には資産間振替・受取の二重計上防止と既存計画との比較検証が必要です。この口座別計算は現在未実装です。</p>`;
   if(config.cashflow?.salaryLife)box.innerHTML+='<p class="muted">給与生活中は家計からの追加・取崩しを計上し、給与を再加算しません。前倒し後65歳までの支出は給与生活シートの管理予算です。掛金・臨時収支は指定した計上先で一度だけ扱います。税社保の精密な手取計算・新方式の要因分解は未対応です。</p>';
   const entries=Object.values(RULES).filter(r=>r&&typeof r==='object'&&r.title);
   source.innerHTML=`<p><strong>制度基準日 ${escapeHtml(RULES.asOf)}</strong></p><ul class="source-list">${entries.map(r=>`<li><a href="${r.url}" target="_blank" rel="noopener">${escapeHtml(r.title)}：${escapeHtml(r.source)}</a></li>`).join('')}</ul><p class="muted">将来の退職・受取時は、その時点の法令・自治体保険料・運営管理機関条件で再確認します。</p>`;
