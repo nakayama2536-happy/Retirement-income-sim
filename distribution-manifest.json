@@ -189,8 +189,8 @@
     },
     {
       "name": "index.html",
-      "size": 79238,
-      "sha256": "4ef4f8a4d4739c85a0476a7431c390b290d83656ab6e2bc6af2a69c42b7ebb5f"
+      "size": 78923,
+      "sha256": "f82397cd0508b9e561d3d0a7280e8d83087565947443689289f958c4ada27e82"
     },
     {
       "name": "input-snapshots.mjs",
@@ -424,8 +424,8 @@
     },
     {
       "name": "ui-numbering.css",
-      "size": 2694,
-      "sha256": "2a744beb87ab8fce0dffce6051ed3f3f42dc9ed65d0ceefa9d3cf32b2758debb"
+      "size": 3050,
+      "sha256": "02909913048e75969655e2362c33be7705035fdc3d4e8f88a7aa95269eba5ffb"
     },
     {
       "name": "ui-numbering.mjs",
