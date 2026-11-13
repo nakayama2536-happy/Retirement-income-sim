@@ -359,8 +359,8 @@
     },
     {
       "name": "survivor-pension-ui.mjs",
-      "size": 5975,
-      "sha256": "7beadc113a5e00ec3f2ee3c594b3400bf87fa98452f0244e8179e2d38c7b4146"
+      "size": 5976,
+      "sha256": "7e55bb16b481f345b502f298b19a973d60d7c0e344f5e4a29231e9736ddb5669"
     },
     {
       "name": "sw.js",

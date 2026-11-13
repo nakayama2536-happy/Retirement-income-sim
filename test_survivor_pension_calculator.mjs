@@ -25,3 +25,12 @@ test('reference65 never infers missing values or accepts raw yen as man-yen',()=
  c.income.pensions.spouse.reference65.basicAnnual='0';
  assert.equal(registeredSurvivorInputs(c,'primary').ownBasic,0);
 });
+
+import {readFileSync} from 'node:fs';
+test('遺族年金の表示言語タグはブラウザが受理する日本語ロケールを使う',()=>{
+ const ui=readFileSync(new URL('./survivor-pension-ui.mjs',import.meta.url),'utf8');
+ const locale=ui.match(/toLocaleString\('([^']+)'/)?.[1];
+ assert.equal(locale,'ja-JP');
+ assert.equal(Intl.getCanonicalLocales(locale)[0],'ja-JP');
+ assert.doesNotMatch(ui,/toLocaleString\('ja-J'/);
+});

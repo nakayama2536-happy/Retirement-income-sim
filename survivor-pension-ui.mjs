@@ -2,7 +2,7 @@ import {calculateSurvivor65Reference,calculateDeferredBasicReference,registeredS
 const add=(p,t,txt)=>{const e=p.ownerDocument.createElement(t);if(txt!==undefined)e.textContent=txt;p.append(e);return e;};
 const numberInput=(p,name)=>{const label=add(p,'label',name+'（万円／年） '),node=add(label,'input');node.type='number';node.min='0';node.step='0.0001';node.inputMode='decimal';node.required=true;return node;};
 const val=(e,label)=>{if(!e.value.trim())throw Error(label+'が未入力です');const n=Number(e.value);if(!Number.isFinite(n)||n<0||n>1000)throw Error(label+'は万円／年で入力してください。円の数値をそのまま入力していませんか');return n;};
-const show=(p,k,v)=>add(p,'p',k+'：'+v.toLocaleString('ja-J',{maximumFractionDigits:4})+'万円／年');
+const show=(p,k,v)=>add(p,'p',k+'：'+v.toLocaleString('ja-JP',{maximumFractionDigits:4})+'万円／年');
 export function mountSurvivorPensionScreen(root,{getConfig=()=>null,onTransfer=null}={}){
  if(!root)throw Error('遺族年金画面がありません');
  root.replaceChildren();add(root,'h2','遺族年金の独立参考試算');
