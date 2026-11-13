@@ -189,8 +189,8 @@
     },
     {
       "name": "index.html",
-      "size": 79176,
-      "sha256": "2707e28a723dfbb36bbb7c19b907628cc321ee0883c421f9942f5b07368d1853"
+      "size": 79238,
+      "sha256": "4ef4f8a4d4739c85a0476a7431c390b290d83656ab6e2bc6af2a69c42b7ebb5f"
     },
     {
       "name": "input-snapshots.mjs",
@@ -254,8 +254,8 @@
     },
     {
       "name": "mortality-ui.mjs",
-      "size": 72446,
-      "sha256": "420e4e81d771b5423c1d677a3d4fc90d82a46d9b95e29fa29fcd45204b86579b"
+      "size": 72730,
+      "sha256": "1a77c8fc3dbb84ebcae0b0f5351f8d86c494ac77c867f6478bcde851c61aa63b"
     },
     {
       "name": "pension-estimate.mjs",
@@ -359,8 +359,8 @@
     },
     {
       "name": "survivor-pension-ui.mjs",
-      "size": 5976,
-      "sha256": "7e55bb16b481f345b502f298b19a973d60d7c0e344f5e4a29231e9736ddb5669"
+      "size": 6029,
+      "sha256": "c0726a6a54aae8e06153df985588f4be5218d9fea376ec245e4ae0e5bd8a3a22"
     },
     {
       "name": "sw.js",
