@@ -37,9 +37,9 @@ test('overlay graph shows standard and worst assets together with review guidanc
  const root=ids.get('#mortalityResults');
  const panel=find(root,'#mortalityOverlayGraphPanel');
  assert.ok(panel);
- assert.match(content(panel),/標準案と最悪ケースの資産推移（同時表示）/);
+ assert.match(content(panel),/現在の計画と万一の比較案の資産推移/);
  assert.match(content(panel),/開始資産や65歳以降の就労条件/);
- assert.match(content(panel),/計画終期末の資産：標準案/);
+ assert.match(content(panel),/計画終期末の資産：現在の計画/);
 }));
 test('overlay detects monthly shortfall even if year-end values recover above zero',()=>{
  const periods=[{age:65,baselineEndAsset:10,previewEndAsset:10},{age:66,baselineEndAsset:20,previewEndAsset:20}];
