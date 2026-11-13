@@ -5,7 +5,7 @@ const val=(e,label)=>{if(!e.value.trim())throw Error(label+'が未入力です')
 const show=(p,k,v)=>add(p,'p',k+'：'+v.toLocaleString('ja-JP',{maximumFractionDigits:4})+'万円／年');
 export function mountSurvivorPensionScreen(root,{getConfig=()=>null,onTransfer=null}={}){
  if(!root)throw Error('遺族年金画面がありません');
- root.replaceChildren();add(root,'h2','遺族年金の独立参考試算');
+ root.replaceChildren();add(root,'h2','65歳基準の遺族年金参考試算（未採用）');
  add(root,'p','本人・妻の65歳基準データを年金設定から読み込みます。登録済みの受給開始額や繰下げ設定は変更しません。');
  const form=add(root,'form');form.noValidate=true;
  const choose=add(form,'label','死亡を想定する方 ');
@@ -19,7 +19,7 @@ export function mountSurvivorPensionScreen(root,{getConfig=()=>null,onTransfer=n
  const run=add(form,'button','65歳基準で試算');run.type='submit';
  const out=add(root,'div');out.setAttribute('role','status');out.setAttribute('aria-live','polite');
  const transfer=add(root,'button','「もしものときの家計」へ仮入力を渡す');transfer.type='button';transfer.disabled=true;
- const note=add(root,'p','転記先では死亡月、年金の受給資格、繰下げの影響を確認してから参考合計を計算してください。元の計画・採用値には反映しません。');
+ const note=add(root,'p','参考結果は現在の年金設定・資産計画を変更しません。転記先で死亡月・受給資格・繰下げの影響を確認してください。年金合計は自動的に確定採用しません。');
  let last=null;
  const invalidate=()=>{last=null;transfer.disabled=true;out.replaceChildren();};
  const load=()=>{
