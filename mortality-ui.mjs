@@ -606,7 +606,7 @@ export function mountMortalityComparison(root,{getConfig,getBaseline,runPlan}){
   // Both result tabs use the SAME immutable baseline and the SAME trial computation.
   // No second plan is adopted or persisted by switching the visible view.
   const worstPanel=makeEl('section');worstPanel.id='mortalityWorstResultPanel';
-  worstPanel.append(makeEl('h3','','最悪シミュレーション（比較用の仮定）'));
+  worstPanel.append(makeEl('h3','','万一の比較案（仮定）'));
   worstPanel.append(makeEl('p','muted',`対象：${parameters.deceased==='primary'?'本人':'配偶者'}／万一を想定する月：${parameters.deathMonth}。本人70歳の例は2044年8月です。別の月を選ぶと、その月の比較案になります。`));
   const advanced=makeEl('details','mortality-family-advanced');advanced.id='mortalityAdvancedDetails';
   advanced.append(makeEl('summary','','計算の詳しい内容・比較表・CSVを見る'));
@@ -634,7 +634,7 @@ export function mountMortalityComparison(root,{getConfig,getBaseline,runPlan}){
     :'基準案に100歳期がありません。計算期間を変更する場合は別画面で明示的に設定してください。'));
   const nav=makeEl('div','mortality-view-tabs');nav.setAttribute('role','tablist');nav.setAttribute('aria-label','シミュレーション結果の表示切替');
   const stdBtn=makeEl('button','secondary','標準シミュレーション');
-  const worstBtn=makeEl('button','primary','最悪シミュレーション');
+  const worstBtn=makeEl('button','primary','万一の比較案');
   stdBtn.type='button';worstBtn.type='button';stdBtn.setAttribute('role','tab');worstBtn.setAttribute('role','tab');
   stdBtn.id='mortalityStandardTab';worstBtn.id='mortalityWorstTab';
   stdBtn.setAttribute('aria-controls',standardPanel.id);worstBtn.setAttribute('aria-controls',worstPanel.id);
