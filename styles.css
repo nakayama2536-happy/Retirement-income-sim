@@ -323,3 +323,16 @@
 #cashflow .section-title>*{max-width:100%;min-width:0}
 #cashflow .section-title button.link-btn{white-space:normal;overflow-wrap:anywhere;text-align:left}
 @media(max-width:760px){#cashflow .section-title{align-items:flex-start}#cashflow .section-title button.link-btn{flex:1 1 100%}}
+
+/* P2: additive mobile control and keyboard-focus accessibility only. */
+@media (max-width:760px) {
+  .navigation-sticky .tab-groups,
+  .navigation-sticky .tabs { overscroll-behavior-x: contain; -webkit-overflow-scrolling: touch; }
+  .navigation-sticky .tab-groups > button,
+  .navigation-sticky .tabs > button { min-height:44px; }
+  .panel input:not([type="checkbox"]):not([type="radio"]),
+  .panel select, .panel textarea { font-size:16px; }
+}
+.panel input:focus-visible,
+.panel select:focus-visible,
+.panel textarea:focus-visible { outline:3px solid #d48e18; outline-offset:2px; }
