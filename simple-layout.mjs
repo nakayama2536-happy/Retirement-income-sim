@@ -19,12 +19,12 @@ export function simplifyLayout(doc) {
   card.querySelector('h2').textContent = '年次計算の確認';
   card.querySelector('.info')?.remove();
   const csv = byId('allcsv').querySelector('article');
-  csv.querySelector('h2').textContent = 'CSV出力・詳細表';
+  csv.querySelector('h2').textContent = '収支の一覧表示・CSV出力';
   const exportButton = byId('exportAnnualCsvBtn');
   exportButton.textContent = '簡易年次CSVを保存';
   csv.querySelector('h2').after(exportButton);
-  card.querySelector('p.muted').textContent = '金額は年次計算表で確認できます。簡易年次CSV・詳細CSVは「CSV出力・詳細表」にまとめました。';
-  doc.querySelector('[data-tab="allcsv"]').textContent = 'CSV出力・詳細表';
+  card.querySelector('p.muted').textContent = '金額は年次計算表で確認できます。簡易年次CSV・詳細CSVは「収支の一覧表示・CSV出力」にまとめました。';
+  doc.querySelector('[data-tab="allcsv"]').textContent = '収支の一覧表示・CSV出力';
   for (const id of ['expenseDisplaySource', 'detailCsvSource']) {
     wrap(byId(id).closest('label'), '詳細：以前の内訳データを確認');
   }

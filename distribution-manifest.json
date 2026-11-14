@@ -199,8 +199,8 @@
     },
     {
       "name": "index.html",
-      "size": 83780,
-      "sha256": "89c188233bcdea549987f8c459ee1ad74dd9d9efc6bbd9ac8931c28c43a1c18a"
+      "size": 84412,
+      "sha256": "72ab40f44ca8119091df39dfde09980db04257dbe2218cb66267dd6c55b7db70"
     },
     {
       "name": "input-snapshots.mjs",
@@ -364,8 +364,8 @@
     },
     {
       "name": "simple-layout.mjs",
-      "size": 11710,
-      "sha256": "4a0762b9f840341b52722009726ba84d2ec43589746671d05cfebb63c6371a5b"
+      "size": 11746,
+      "sha256": "c517bf06ed2562f30b8003246ec3dbd67aab1ba01f3bc3c9bec447334e70ceb2"
     },
     {
       "name": "state.mjs",
@@ -389,8 +389,8 @@
     },
     {
       "name": "styles.css",
-      "size": 37024,
-      "sha256": "e0599e97247b1019312569e41225d0c1afcbb68a5f0f6623d7176a951abfc1ee"
+      "size": 37797,
+      "sha256": "86a9b7f40d76f6b9a9b376bd9d65a788547fd2d711e59bc5d29d4e3b32dbb3a1"
     },
     {
       "name": "survivor-pension-calculator.mjs",
@@ -469,8 +469,8 @@
     },
     {
       "name": "ui-numbering.mjs",
-      "size": 6602,
-      "sha256": "19debc525104fffa821a7cd8bdf386713d84ffb099965a6d6cc5a75c63d9a195"
+      "size": 6637,
+      "sha256": "55526bec00ac953b84b518798e43be881d8d8150350980600ae089b01fd0c40a"
     },
     {
       "name": "unemployment-plan.mjs",

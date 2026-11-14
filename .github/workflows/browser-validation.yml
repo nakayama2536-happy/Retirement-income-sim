@@ -37,6 +37,8 @@ jobs:
         run: npx --no-install playwright install --with-deps chromium
       - name: Prepare public application fixture
         run: node tools/browser-test/prepare.mjs
+      - name: Verify P1 UI display, links and saved data in isolated Chromium
+        run: node tools/browser-test/p1-ui-browser-check.mjs
       - name: Exercise update failures and corresponding backup restore
         run: node tools/browser-test/run-browser.mjs
       - name: Validate receipt draft JSON export and actual browser import (fictional values)
