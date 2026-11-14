@@ -199,8 +199,8 @@
     },
     {
       "name": "index.html",
-      "size": 83780,
-      "sha256": "89c188233bcdea549987f8c459ee1ad74dd9d9efc6bbd9ac8931c28c43a1c18a"
+      "size": 84412,
+      "sha256": "72ab40f44ca8119091df39dfde09980db04257dbe2218cb66267dd6c55b7db70"
     },
     {
       "name": "input-snapshots.mjs",
@@ -389,8 +389,8 @@
     },
     {
       "name": "styles.css",
-      "size": 37024,
-      "sha256": "e0599e97247b1019312569e41225d0c1afcbb68a5f0f6623d7176a951abfc1ee"
+      "size": 37390,
+      "sha256": "4febc1a37a7700268368b6ff72574e29cafd851921376be7beb3e558a2a0b43f"
     },
     {
       "name": "survivor-pension-calculator.mjs",
