@@ -4,8 +4,8 @@
  */
 export const MAIN_SECTIONS=[['results','1'],['income','2'],['budget','3'],['expense','4'],['manage','5']];
 export const CHILD_SECTIONS={
- results:['home','cashflow','mortality','scenarios','allcsv','review'],
- income:['salary','nisa','ideco','retirement','pension','unemployment'],
+ results:['home','cashflow','mortality','survivorPension','scenarios','allcsv','review'],
+ income:['salary','nisa','ideco','retirement','pension','unemployment','receiptCompare'],
  budget:['budget'],expense:['expenses','events'],
  manage:['rules','settings','backup','actuals']
 };
