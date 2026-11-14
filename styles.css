@@ -317,3 +317,9 @@
 .panel [data-ui-status="good"]{color:#176b3c;font-weight:650}
 .panel [data-ui-status="problem"]{color:#aa1e29;font-weight:650}
 .panel [data-ui-status="unknown"]{color:#49586b;font-weight:650}
+
+/* P1: keep added cashflow settings links inside mobile viewport. */
+#cashflow .section-title{flex-wrap:wrap;min-width:0}
+#cashflow .section-title>*{max-width:100%;min-width:0}
+#cashflow .section-title button.link-btn{white-space:normal;overflow-wrap:anywhere;text-align:left}
+@media(max-width:760px){#cashflow .section-title{align-items:flex-start}#cashflow .section-title button.link-btn{flex:1 1 100%}}
