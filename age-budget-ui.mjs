@@ -32,6 +32,6 @@ export function mountAgeBudgetComparison({container,getConfig,notice,documentRef
   try{const a=documentRef.createElement('a');a.href=url;a.download='lifeplan-age-budget-preview.csv';a.click();notice?.('未反映の比較案CSVを作成しました。');}
   finally{urlRef.revokeObjectURL(url);}
  }catch(e){notice?.(e.message,'error');}});
- const delta=mountAgeBudgetDeltaComparison({container:shell,getConfig,notice,documentRef,urlRef});
+ const delta=mountAgeBudgetDeltaComparison({container,getConfig,notice,documentRef,urlRef});
  return {reset:()=>{reset();delta.reset();}};
 }
