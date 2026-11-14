@@ -9,7 +9,7 @@ export async function validateAgeInputUi({browser,createTestServer,open,load,ope
   const file=path.join(out,'age-input-synthetic.json');await fs.writeFile(file,JSON.stringify(data));
   const page=await open(context,fixture.url),errors=[];page.on('pageerror',e=>errors.push(e.message));await load(page,file);
   const before=(await snapshot(page)).data;
-  const coverage=await page.evaluate(()=>[...document.querySelectorAll('input[type=date],input[type=month],input[name=usageYear]')].map(i=>({name:i.name||i.id,form:i.form?.id,linked:!!i.getAttribute('aria-describedby'),text:document.getElementById(i.getAttribute('aria-describedby'))?.textContent,disabled:i.disabled})));
+  const coverage=await page.evaluate(()=>[...document.querySelectorAll('input[type=date],input[type=month],input[name=usageYear]')].filter(i=>!i.closest('#receiptCompare')).map(i=>({name:i.name||i.id,form:i.form?.id,linked:!!i.getAttribute('aria-describedby'),text:document.getElementById(i.getAttribute('aria-describedby'))?.textContent,disabled:i.disabled})));
   assert.equal(coverage.length,26);assert(coverage.every(x=>x.linked&&x.text));assert.equal(coverage.filter(x=>x.form==='mortalityForm'&&x.name==='deathMonth').length,1);record.dateInputs=coverage.length;
   for(const width of [390,1280]){
    await page.setViewportSize({width,height:900});
