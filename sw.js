@@ -19,6 +19,7 @@ ASSETS.push('./ui-entry-guards.mjs');
 ASSETS.push('./release-info.json');
 ASSETS.push('./mortality-preview.mjs','./mortality-comparison.mjs','./mortality-ui.mjs','./mortality-itemized.mjs','./mortality-itemized-ui.mjs','./mortality-expense-preset.mjs','./mortality-draft.mjs');
 ASSETS.push("./age-budget-ui.mjs","./age-budget-candidate.mjs","./age-budget-preview-export.mjs","./discretionary-travel.mjs");
+ASSETS.push("./age-budget-delta-ui.mjs","./age-budget-delta-candidate.mjs");
 ASSETS.push('./travel-budget-summary.mjs','./budget-travel-ui.mjs');
 ASSETS.push('./ui-numbering.css','./ui-numbering.mjs','./mortality-expense-csv.mjs','./mortality-expense-audit.mjs');
 ASSETS.push('./workflow-tabs.mjs');
