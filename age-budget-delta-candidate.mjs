@@ -1,8 +1,24 @@
 /** Standalone, non-adopted alternative to the existing absolute age budget reference. */
 import {runRetirementPlan,replaceAgeRangeOverride} from './calc.mjs';
 import {ageExpenseReference} from './discretionary-travel.mjs';
+const COMPONENTS=['medical','car','transport'];
+/** Only explicitly reviewed components absent from the source budget may change it. */
+export function reviewedAgeAdjustments(age,reference,review){
+ if(!review||review.confirmed!==true||!review.components||typeof review.components!=='object')throw Error('年齢別支出の費目反映状況を確認してください（未確認は自動適用しません）');
+ const deltas={medical:reference.medicalAdjustment,car:reference.carAdjustment,transport:reference.transportAdjustment};
+ let total=0;const components={};
+ for(const key of COMPONENTS){
+  const amount=deltas[key];
+  if(amount===0){components[key]={status:'not-applicable',amount:0};continue;}
+  const status=review.components[key];
+  if(status!=='already-in-budget'&&status!=='not-in-budget')throw Error(key+'の予算反映状態が未確認です');
+  const applied=status==='not-in-budget'?amount:0;
+  components[key]={status,amount:applied};total+=applied;
+ }
+ return {age,total,components};
+}
 const near=(a,b)=>Number.isFinite(a)&&Number.isFinite(b)&&Math.abs(a-b)<=1e-8*Math.max(1,Math.abs(a),Math.abs(b));
-export function previewAgeBudgetDelta(config,{fromAge=80,throughAge=120,referenceOptions={}}={}){
+export function previewAgeBudgetDelta(config,{fromAge=80,throughAge=120,referenceOptions={},adjustmentReview=null}={}){
  if(!Number.isInteger(fromAge)||fromAge<80||!Number.isInteger(throughAge)||throughAge<fromAge||throughAge>120)throw Error('比較対象の年齢範囲は80～120歳で指定してください');
  const original=structuredClone(config);
  const before=runRetirementPlan(config,{includeMonthlyDetails:true});
@@ -20,11 +36,13 @@ export function previewAgeBudgetDelta(config,{fromAge=80,throughAge=120,referenc
  const candidate=structuredClone(config);
  candidate.cashflow??={};
  let overrides=structuredClone(candidate.cashflow.periodOverrides??[]);
- const applied=new Map();
+ const applied=new Map(),reviewed=new Map();
  for(let age=fromAge;age<=throughAge;age++){
   if(!perAge.has(age))continue;
   const ref=ageExpenseReference(age,referenceOptions);
-  const change=ref.medicalAdjustment+ref.carAdjustment+ref.transportAdjustment;
+  const result=reviewedAgeAdjustments(age,ref,adjustmentReview);
+  const change=result.total;
+  reviewed.set(age,result);
   const monthly=perAge.get(age)+change;
   if(!Number.isFinite(monthly)||monthly<0)throw Error(age+'歳期の減額後管理予算が負になるため停止します');
   applied.set(age,change);
@@ -42,5 +60,5 @@ export function previewAgeBudgetDelta(config,{fromAge=80,throughAge=120,referenc
   return {month:m.month,age:m.age,changed,expenseBefore:m.expense,expenseAfter:x.expense,expenseDifference:x.expense-m.expense,endAssetBefore:m.endAsset,endAssetAfter:x.endAsset};
  });
  if(JSON.stringify(config)!==JSON.stringify(original))throw Error('元設定を変更しました');
- return {stage:'preview-only',mode:'delta-from-adopted-budget',adopted:false,saved:false,candidate,months,finalAssetBefore:before.finalAsset,finalAssetAfter:after.finalAsset,finalAssetDifference:after.finalAsset-before.finalAsset,limitations:['既存の絶対参考額へ置換する比較は変更しません','元の管理予算に年齢閾値の増減だけを一度適用します','対象費目に既に同じ増減が含まれる場合は重複の可能性があるため、採用前に内訳を確認してください']};
+ return {stage:'preview-only',mode:'delta-from-adopted-budget',adopted:false,saved:false,candidate,months,reviewedAdjustments:[...reviewed.values()],finalAssetBefore:before.finalAsset,finalAssetAfter:after.finalAsset,finalAssetDifference:after.finalAsset-before.finalAsset,limitations:['既存の絶対参考額へ置換する比較は変更しません','元の管理予算に年齢閾値の増減だけを一度適用します','反映済み費目は再適用せず、反映状況が未確認なら試算を停止します']};
 }
