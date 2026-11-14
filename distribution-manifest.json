@@ -54,8 +54,8 @@
     },
     {
       "name": "backup-compatibility.mjs",
-      "size": 8315,
-      "sha256": "bcbe648d2bce946196d342582494aad8c2ec36985ca318b91a516ce31b556a7c"
+      "size": 8305,
+      "sha256": "13eb8f1711867908279def7c8ae1d1d24b604db0f15b1b96330d4150b7569c5e"
     },
     {
       "name": "budget-travel-ui.mjs",
@@ -329,8 +329,8 @@
     },
     {
       "name": "release-info.json",
-      "size": 146,
-      "sha256": "e6e6bb33402ceea5c65ade683e84fe4996e816a83ae01d714a9c6dc6ab5bfeaf"
+      "size": 134,
+      "sha256": "3344aab873e99187c69da4891d3a2f437b8474ad393ec8a565a1f3ff31e274f6"
     },
     {
       "name": "retirement-comment.mjs",
@@ -404,8 +404,8 @@
     },
     {
       "name": "sw.js",
-      "size": 5030,
-      "sha256": "be0473df9917e6a097bf29c4223fcc2b11eeed00182919974dd7fd1aaf30c87d"
+      "size": 5020,
+      "sha256": "101d23996b363a3a6cac1abd4c2451dbbdc2069e937cf7f667d0112f9745a03e"
     },
     {
       "name": "sync-answer-bridge.mjs",
