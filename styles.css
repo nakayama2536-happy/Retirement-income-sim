@@ -311,3 +311,9 @@
 #pension .pension-edit-workspace>summary{cursor:pointer;font-weight:650;min-height:44px;line-height:1.6;padding:8px}
 @media(max-width:850px){#pension .pension-home-cards{grid-template-columns:minmax(0,1fr)}}
 @media print{#pension .pension-edit-workspace,#pension #pensionCurrentDetails,#pension #pensionHistoryExtra,#pension #pensionComparisonExtra,#pension #pensionTaxExtra{display:none!important}#pension .pension-home-cards{grid-template-columns:repeat(3,minmax(0,1fr));break-inside:avoid}}
+
+/* P1 UI display improvements; no state or calculation changes. */
+.panel a[href],.panel button.link-btn:not(:disabled){text-decoration:underline;text-underline-offset:3px}
+.panel [data-ui-status="good"]{color:#176b3c;font-weight:650}
+.panel [data-ui-status="problem"]{color:#aa1e29;font-weight:650}
+.panel [data-ui-status="unknown"]{color:#49586b;font-weight:650}
