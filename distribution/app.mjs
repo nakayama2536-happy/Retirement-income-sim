@@ -1,0 +1,1148 @@
+import {mountReceiptAppAdapter} from './receipt-app-adapter.mjs';
+import {mountPlanningCharts} from './planning-charts.mjs';
+import {mountAgeBudgetComparison} from './age-budget-ui.mjs';
+import {mountBudgetTravelView} from './budget-travel-ui.mjs';
+import {unemploymentEvents} from './unemployment-plan.mjs';
+import {mountStep8TrialCard} from './step8-trial-ui.mjs';
+import {mountFullPlanComparisonCard} from './full-plan-ui.mjs';
+import {compareFullPlan} from './full-plan-comparison.mjs';
+import {prepareSavedComparison,comparisonSourceFingerprint} from './full-plan-saved.mjs';
+import {createConfigBackup} from './backup-compatibility.mjs';
+import {mountDetailUI} from './detail-ui.mjs';
+import {mountActionAnswer} from './action-answer.mjs';
+import {mountMortalityComparison} from './mortality-ui.mjs';
+import {installWorkflowTabs,revealWorkflowTarget} from './workflow-tabs.mjs';
+import {mountSurvivorPensionScreen} from './survivor-pension-ui.mjs';
+import {dateWithAge,ageOn} from './date-display.mjs';
+import {mountCalendarSheet} from './calendar-ui.mjs';
+import {mountExpenseSheet} from './expense-ui.mjs';
+import {mountIncomeSheet} from './income-ui.mjs';
+import {expenseDisplayModel,expenseDisplayHtml,expenseDisplayProfile} from './expense-display.mjs';
+import {annualCashflowSummaries} from './annual-cashflow.mjs';
+import {simplifyLayout,annualCheckText,familyAgeLedgerSummary,familyAgeEndShortageSummary} from './simple-layout.mjs';
+import {basicSettingsValues,priceBaseExplanation,planPeriodUpdate,planPeriodDelete,verifyPeriodPlan,parsePeriodForm,proposalStamp,formatPeriodRow} from './ui-entry-guards.mjs';
+import {taxSocialMethodAudit,taxSocialMethodHtml} from './tax-social-audit.mjs';
+import {downloadAnnualCsv} from './annual-csv.mjs';
+import {createFullBackup,restoreFullBackup,isFullBackup} from './full-backup.mjs';
+import {assertBackupCompatibility} from './backup-compatibility.mjs';
+import {acquireWriteAccess,assertWriteAccess} from './write-access.mjs';
+import {mountRecoveryCheck} from './recovery-ui.mjs';
+import {mountSyncPanel} from './sync-panel.mjs';
+import {
+  runRetirementPlan, runForecastFromLatestActual, latestActual, planRowAtAge, scenarioMetrics,
+  formatMan, pensionAnnualFromBase65, pensionAdjustmentFactor,
+  retirementIncomeDeduction, taxableRetirementIncome, expenseDetailSummary, evaluateReviewTriggers,
+  factorDecomposition, certaintyItems, CERTAINTY_LABELS, integrityChecks, ANNUAL_REVIEW_ITEMS, RULES_VERSION,
+  projectIdeco, unemploymentComparison, idecoOverlapReference, retirementIdecoTaxSummary, estimateSimpleIncomeTaxes, retirementTaxEstimate,
+  fukuyamaCarePremium2026, lateElderlyMedicalPremium2026, lateElderlyMedicalPremium2026Details, fukuyamaNhiPremium2026, fukuyamaNhiPremium2026Details,
+  replaceAgeRangeOverride, estimateAnnualTaxSocial, applyCarDisposalTransfer, expenseDetailRows
+} from './calc.mjs';
+import { loadState, loadStateForTransfer, replaceState, STATE_KEY, downloadJson, migrateConfig, configSignature } from './storage.mjs';
+import { commitPlanState } from './state.mjs';
+import { RULES } from './rules.mjs';
+import { mountPensionSheet } from './pension-ui.mjs';
+import { mountSalarySheet } from './salary-ui.mjs';
+import { inspectMigration, MIGRATION_KEYS, validateSavedState } from './migration.mjs';
+import { mountMigration } from './migration-ui.mjs';
+
+simplifyLayout(document);
+const writeAccess=await acquireWriteAccess();
+let initialState, startupError;
+try{const check=inspectMigration();if(check.integrated.status==='invalid')throw new Error(check.integrated.error);initialState=loadState();}catch(e){initialState={config:null,scenarios:[]};startupError=e.message;}
+let config=initialState.config;
+let scenarios=initialState.scenarios;
+let syncPanel=null; // Firebase is never accessed before explicit opt-in.
+const currentConfig=()=>config;
+const currentScenarios=()=>scenarios;
+mountReceiptAppAdapter(document.getElementById('receiptCompareMount'),{getConfig:()=>config});
+let result = null;
+let forecast = null;
+let showActuals = false;
+let renderedInputValues=new Map();
+const mortalityCard=mountMortalityComparison(document.getElementById('mortalityComparisonContainer'),{getConfig:()=>config,getBaseline:()=>result,runPlan:runRetirementPlan});
+const survivorPensionCard=mountSurvivorPensionScreen(document.getElementById('survivorPensionContainer'),{getConfig:()=>config,onTransfer:reference=>{mortalityCard.stageReference(reference);switchTab('mortality');}});
+
+function inputValues(){
+  return new Map([...document.querySelectorAll('#dashboard input, #dashboard select, #dashboard textarea')]
+    .filter(input=>input.id!=='expenseDisplaySource'&&!input.closest('#mortality, #survivorPension, #pension, #salary, #salaryIdecoInputs, #calendarSheet, #expenseSheet, #incomeSheet, #receiptCompare, .detail-form, #step8TrialContainer, #fullPlanComparisonContainer, #privateSyncContainer'))
+    .map(input=>[input.id||(input.dataset.reviewKey?`review/${input.dataset.reviewKey}`:input.form?.id&&input.name?`${input.form.id}/${input.name}`:''),{input,value:input.type==='checkbox'?input.checked:input.value}])
+    .filter(([key])=>key));
+}
+
+const el = id => document.getElementById(id);
+const planningCharts=mountPlanningCharts({documentRef:document,getConfig:()=>config,getResult:()=>result,runPlan:runRetirementPlan,getExpenseModel:(age,source)=>expenseDisplayModel(config,age,{sourceProfile:source})});
+const budgetTravelView=mountBudgetTravelView(document,{getConfig:()=>config});
+const money = v => `${formatMan(v, 0)}万円`;
+const step8TrialCard=mountStep8TrialCard(el('step8TrialContainer'),()=>config);
+const fullPlanCard=mountFullPlanComparisonCard(el('fullPlanComparisonContainer'),{
+ getConfig:()=>config,getOpeningDraft:()=>step8TrialCard.getState().draft,getScenarios:()=>scenarios,
+ onSaveComparison:({result,request,name,sourceConfigSignature})=>{
+  if(JSON.stringify(config)!==sourceConfigSignature)return {ok:false,message:'採用済み条件が変わりました。再試算してください。'};
+  const fresh=compareFullPlan(config,request);
+  if(!fresh.ok)return {ok:false,message:'再試算が必要です。'+fresh.issues.map(x=>x.message).join('／')};
+  if(configSignature(fresh.proposal)!==configSignature(result?.proposal))return {ok:false,message:'比較候補の計算条件が変わりました。再試算してください。'};
+  let prepared;
+  try{prepared=prepareSavedComparison({current:config,scenarios,proposal:fresh.proposal,request,
+    expectedFingerprint:comparisonSourceFingerprint(config),name,id:crypto.randomUUID(),now:new Date().toISOString()});}
+  catch(e){return {ok:false,message:e.message};}
+  if(prepared.duplicate)return {ok:false,duplicate:true};
+  if(!commitState(config,prepared.scenarios))return {ok:false,message:'保存に失敗しました。現在設定・既存比較案を保持しました。'};
+  return {ok:true,name:prepared.scenario.name};
+ }
+});
+for(const type of ['input','change','click'])el('step8TrialContainer').addEventListener(type,()=>fullPlanCard.invalidate());
+const numOrBlank = v => v === '' || v === null || v === undefined ? null : Number(v);
+const pensionSheet=mountPensionSheet({getConfig:()=>config,showNotice,onCommit:updated=>{
+  const pending=[...inputValues()].filter(([key,entry])=>renderedInputValues.has(key)&&entry.value!==renderedInputValues.get(key));
+  config=updated.config;
+  refresh({save:false,calculated:updated});
+  const now=inputValues();
+  for(const [key,{value}] of pending){
+    const input=now.get(key)?.input;if(!input)continue;
+    if(input.type==='checkbox')input.checked=value;
+    else if(input.tagName!=='SELECT'||[...input.options].some(o=>o.value===value))input.value=value;
+  }
+}});
+const salarySheet=mountSalarySheet({getState:()=>({config,scenarios}),showNotice,onCommit:updated=>{
+  const pending=[...inputValues()].filter(([key,entry])=>renderedInputValues.has(key)&&entry.value!==renderedInputValues.get(key));
+  config=updated.config;scenarios=updated.scenarios;
+  try{refresh({calculated:updated});}catch{showNotice('保存済みですが表示を更新できません。再読み込みしてください。','error');}
+  const now=inputValues();
+  for(const [key,{value}] of pending){const input=now.get(key)?.input;if(!input)continue;if(input.type==='checkbox')input.checked=value;else if(input.tagName!=='SELECT'||[...input.options].some(o=>o.value===value))input.value=value;}
+}});
+const calendarSheet=mountCalendarSheet({getState:()=>({config,scenarios}),showNotice,onCommit:updated=>{
+  const pending=[...inputValues()].filter(([key,entry])=>renderedInputValues.has(key)&&entry.value!==renderedInputValues.get(key));
+  config=updated.config;scenarios=updated.scenarios;
+  try{refresh({calculated:updated});}catch{showNotice('保存済みですが表示を更新できません。再読み込みしてください。','error');}
+  const now=inputValues();
+  for(const [key,{value}] of pending){const input=now.get(key)?.input;if(!input)continue;if(input.type==='checkbox')input.checked=value;else if(input.tagName!=='SELECT'||[...input.options].some(o=>o.value===value))input.value=value;}
+}});
+
+const expenseSheet=mountExpenseSheet({getState:()=>({config,scenarios}),showNotice,onCommit:updated=>{
+  const pending=[...inputValues()].filter(([key,entry])=>renderedInputValues.has(key)&&entry.value!==renderedInputValues.get(key));
+  config=updated.state.config;scenarios=updated.state.scenarios;
+  if(config.expenseWorkflow?.lastApply?.sourceProfile)el('expenseDisplaySource').value=config.expenseWorkflow.lastApply.sourceProfile;
+  try{refresh({calculated:updated});}finally{
+  const now=inputValues();
+  for(const [key,{value}] of pending){const input=now.get(key)?.input;if(!input)continue;if(input.type==='checkbox')input.checked=value;else if(input.tagName!=='SELECT'||[...input.options].some(o=>o.value===value))input.value=value;}
+  }
+}});
+
+const incomeSheet=mountIncomeSheet({getState:()=>({config,scenarios}),showNotice,onCommit:updated=>{
+  const pending=[...inputValues()].filter(([key,entry])=>renderedInputValues.has(key)&&entry.value!==renderedInputValues.get(key));
+  config=updated.state.config;scenarios=updated.state.scenarios;
+  try{refresh({calculated:updated});}finally{
+    const now=inputValues();
+    for(const [key,{value}] of pending){const input=now.get(key)?.input;if(!input)continue;if(input.type==='checkbox')input.checked=value;else if(input.tagName!=='SELECT'||[...input.options].some(o=>o.value===value))input.value=value;}
+  }
+}});
+
+const detailUI=mountDetailUI({getState:()=>({config,scenarios}),commit:next=>commitState(next),notice:showNotice});
+const ageBudgetComparison=mountAgeBudgetComparison({container:el('cashflow'),getConfig:()=>config,notice:showNotice});
+
+function showNotice(msg, type='info') {
+  const n = el('notice'); n.textContent = msg; n.dataset.type = type; n.hidden = false;
+  setTimeout(()=>n.hidden=true, 4500);
+}
+
+function validateConfig(c) {
+  const errors = [];
+  if (!c?.plan) errors.push('plan がありません');
+  if (!Array.isArray(c?.budgets) || !c.budgets.length) errors.push('年間予算がありません');
+  if (!c?.income?.pensions?.primary || !c?.income?.pensions?.spouse) errors.push('夫婦別の年金設定がありません');
+  const integrityErrors=integrityChecks(c).filter(x=>x.level==='error').slice(0,3);
+  errors.push(...integrityErrors.map(x=>x.title));
+  return [...new Set(errors)];
+}
+
+function setEmptyState() {
+  el('emptyState').hidden = false;
+  el('dashboard').hidden = true;
+  renderRules();
+}
+
+function commitState(nextConfig,nextScenarios=scenarios,preserveDrafts=true){
+  const pending=preserveDrafts?[...inputValues()].filter(([key,entry])=>renderedInputValues.has(key)&&entry.value!==renderedInputValues.get(key)):[];
+  let committed;
+  try{committed=commitPlanState({config,scenarios},{config:nextConfig,scenarios:nextScenarios});}
+  catch(e){showNotice(`保存できませんでした。${e.message}`,'error');return false;}
+  config=committed.config;scenarios=committed.scenarios;
+  try{refresh({calculated:committed});}catch(e){showNotice('保存済みですが表示を更新できません。再読み込みしてください。','error');}
+  const now=inputValues();
+  for(const [key,{value}] of pending){
+    const input=now.get(key)?.input;if(!input)continue;
+    if(input.type==='checkbox')input.checked=value;
+    else if(input.tagName!=='SELECT'||[...input.options].some(o=>o.value===value))input.value=value;
+  }
+  syncPanel?.onLocalChange();
+  return true;
+}
+
+function scenarioSnapshot(c) {
+  const s = structuredClone(c);
+  delete s.actuals;
+  delete s.reviews;
+  delete s.pendingDecisions;
+  return s;
+}
+
+function refresh({calculated=null}={}) {
+  if (!config) return setEmptyState();
+  config = migrateConfig(config);
+  const errors = validateConfig(config);
+  if (errors.length) { showNotice(`設定エラー: ${errors.join(' / ')}`, 'error'); return; }
+  try {
+    result = calculated?.result || runRetirementPlan(config);
+    forecast = calculated ? calculated.forecast : runForecastFromLatestActual(config);
+  } catch (e) { showNotice(e.message, 'error'); return; }
+  el('emptyState').hidden = true;
+  el('dashboard').hidden = false;
+  renderHome(); renderExpenseDetail(); planningCharts.render(); renderYearTable(); renderAge65IncomeAudit(); renderActuals(); renderAnnualReview(); renderScenarios(); renderSettings(); renderRules(); drawChart(); renderTimeline(); renderCertainty(); renderFactors(); renderIntegrity(); renderCalculationBasis();
+  pensionSheet.render();
+  salarySheet.render();
+  calendarSheet.render();
+  expenseSheet.render();
+  incomeSheet.render();
+  detailUI.render();
+  ageBudgetComparison.reset();
+  step8TrialCard.reset();
+  fullPlanCard.reset();
+  mortalityCard.invalidate();
+  survivorPensionCard.invalidate();
+  renderedInputValues=new Map([...inputValues()].map(([key,{value}])=>[key,value]));
+  migrationPanel.render();
+}
+
+function renderHome() {
+  const end=result.endAge, start=result.startAge;
+  // Display-only target checkpoint; keep the full calculation horizon intact.
+  const goalAge=end>=99&&start<=99?99:end;
+  const goalRow=result.rows.find(r=>r.age===goalAge);
+  const target=result.keyAges.find(k=>k.age===goalAge);
+  const goalAsset=goalAge===end?result.finalAsset:(goalRow?.endAsset ?? null);
+  el('targetStatusLabel').textContent=`${goalAge}歳末の目標`;
+  el('status').textContent = target ? (goalAsset!==null&&goalAsset>=target.threshold?'目標額以上':'目標額未満') : '未設定';
+  const below=result.keyAges.filter(k=>k.age!==goalAge&&k.margin<0);
+  el('targetStatusNote').textContent=below.length?`途中の参考目標を下回る年齢：${below.map(k=>k.age+'歳末').join('・')}。生活費の不足とは別に確認してください。`:'この判定は表示年齢末の目標額との比較です。途中の資金不足や将来の安心を保証しません。';
+  el('initialAssetLabel').textContent=`${start-1}歳期末想定資産`;
+  el('initialAssetHelp').textContent=`${start}歳期の計算開始残高として登録した計画値です。実績を確定した意味ではありません。`;
+  el('finalTargetLabel').textContent=`${goalAge}歳末の目標資産額`;
+  el('finalPredictionLabel').textContent=`${goalAge}歳末の予測資産額`;
+  el('simulationPeriod').textContent=`現在の計画：${start}歳～${end}歳末（入力途中の変更は含みません）`;
+  el('assetChart').setAttribute('aria-label',`${start}歳から${end}歳末までの資産推移`);
+  const margin=target?goalAsset-target.threshold:null;
+  el('finalMarginLabel').textContent=margin===null?'目標との差':'目標'+(margin>=0?'を上回る金額':'に足りない金額');
+  el('finalMargin').textContent=margin===null?'—':`${margin>=0?'+':''}${money(margin)}`;
+  el('finalMargin').className=margin===null?'':margin<0?'neg':'pos';
+  el('status').dataset.status = target ? (margin>=0?'正常':'要見直し') : '';
+  el('currentAsset').textContent = money(config.plan.initialAsset);
+  el('finalAsset').textContent = goalAsset===null?'未計算':money(goalAsset);
+  el('finalThreshold').textContent = target ? money(target.threshold) : '未設定';
+  const checkpoint=familyAgeEndShortageSummary(result.rows);
+  el('familyHomeShortage').textContent=checkpoint.message;
+  el('reserve').textContent = money(result.reserve);
+  el('afterReserve').textContent = money(result.finalAfterReserveUse);
+  el('reserveUsedThreshold').textContent = money(result.reserveUsedThreshold);
+  el('safeAssetMinimum').textContent = money(config.reserve?.minimumSafeAsset||0);
+
+  if (forecast) {
+    el('forecastFinalAsset').textContent = money(forecast.projection.finalAsset);
+    const delta = forecast.projection.finalAsset - result.finalAsset;
+    el('forecastFinalAsset').className = delta < 0 ? 'neg' : delta > 0 ? 'pos' : '';
+    el('forecastNote').textContent = `${forecast.actual.age}歳実績から再予測（現在のシミュレーションとの差 ${delta>=0?'+':''}${money(delta)}）`;
+  } else {
+    el('forecastFinalAsset').textContent = '未入力';
+    el('forecastFinalAsset').className = '';
+    el('forecastNote').textContent = '実績入力後に自動更新';
+  }
+
+  const key = el('keyAges'); key.innerHTML = '';
+  result.keyAges.forEach(k => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${k.age}歳末</td><td>${money(k.threshold)}</td><td>${money(k.asset)}</td><td class="${k.margin<0?'neg':'pos'}">${k.margin>=0?'+':''}${money(k.margin)}</td>`;
+    key.appendChild(tr);
+  });
+
+  const check = [];
+  const ideco=projectIdeco(config);
+  if (ideco) check.push(`65歳iDeCo/DC見込は運用前提による試算です（約${formatMan(ideco.balance)}万円）`);
+  if (!config.income?.pensions?.spouse?.annualAtStart || ['unknown','assumption'].includes(config.income?.pensions?.spouse?.certainty)) check.push('配偶者の公的年金額は未確認または仮定です');
+  if (config.reserve.total > 0 && result.finalAfterReserveUse < result.reserveUsedThreshold) check.push(`急な出費に備えた予備枠をすべて使うと、${end}歳末の資産が設定した目安を下回る想定です`);
+  if (showActuals && forecast && target && forecast.projection.finalAsset < result.finalThreshold) check.push(`最新実績からの再予測が${end}歳末管理基準を下回っています`);
+  el('checks').innerHTML = check.length ? check.map(x=>`<li>${x}</li>`).join('') : '<li>主要な未確認事項はありません。</li>';
+
+  renderReviewAlerts();
+  renderPending();
+}
+
+
+function certaintyClass(level){
+  return ['confirmed','official_estimate','company_estimate'].includes(level) ? 'certainty-high'
+    : ['plan','scenario'].includes(level) ? 'certainty-mid' : 'certainty-low';
+}
+
+function renderCertainty(){
+  const items=certaintyItems(config);
+  const uncertain=items.filter(x=>['assumption','unknown'].includes(x.level)).length;
+  const rows=items.map(x=>{
+    const value=x.value==null?'—':`${formatMan(x.value, x.unit==='%'?2:0)}${x.unit}`;
+    return `<div class="certainty-row"><div><strong>${escapeHtml(x.label)}</strong><small>${value}</small></div><span class="certainty-tag ${certaintyClass(x.level)}">${escapeHtml(x.labelText)}</span></div>`;
+  }).join('');
+  el('certaintySummary').innerHTML=`<p class="muted">仮定・未確認 ${uncertain}項目。確度は計算結果を変更せず、前提の状態だけを管理します。</p><div class="certainty-list">${rows}</div>`;
+}
+
+function renderFactors(){
+  const baseline=scenarios.find(s=>s.role==='baseline') || scenarios[0];
+  const box=el('factorSummary');
+  if(!baseline){ box.innerHTML='<p class="muted">比較の基準案がありません。</p>'; return; }
+  let d;
+  try { d=factorDecomposition(baseline.config, config); }
+  catch(e){ box.innerHTML=`<p class="muted">この条件の要因別分析は未対応です。比較表で計画全体の差をご確認ください。詳細： ${escapeHtml(e.message)}</p>`; return; }
+  const max=Math.max(...d.impacts.map(x=>Math.abs(x.impact)),1);
+  const sorted=[...d.impacts].sort((a,b)=>Math.abs(b.impact)-Math.abs(a.impact));
+  const rows=sorted.map(x=>{
+    const width=Math.max(2,Math.abs(x.impact)/max*100);
+    return `<div class="factor-row"><div class="factor-label"><span>${escapeHtml(x.label)}</span><strong class="${x.impact<0?'neg':x.impact>0?'pos':''}">${x.impact>=0?'+':''}${formatMan(x.impact,0)}万円</strong></div><div class="factor-track"><i class="${x.impact<0?'factor-neg':'factor-pos'}" style="width:${width}%"></i></div></div>`;
+  }).join('');
+  const actualImpact=forecast ? forecast.projection.finalAsset-result.finalAsset : null;
+  box.innerHTML=`<p class="muted">比較の基準案：${escapeHtml(baseline.name)}。現在条件との差額を配分しています。</p><div class="factor-total"><span>比較の基準案との差</span><strong class="${d.totalDifference<0?'neg':d.totalDifference>0?'pos':''}">${d.totalDifference>=0?'+':''}${formatMan(d.totalDifference,0)}万円</strong></div>${rows}${actualImpact==null?'':`<div class="actual-impact actual-only"><span>最新実績を反映した追加影響</span><strong class="${actualImpact<0?'neg':actualImpact>0?'pos':''}">${actualImpact>=0?'+':''}${formatMan(actualImpact,0)}万円</strong></div>`}<p class="muted">要因分解は条件変更の相互作用を各項目へ配分する方式です。実績の表示を有効にした場合は、その影響を別に表示します。</p>`;
+}
+
+
+
+function renderIntegrity(){
+  const issues=integrityChecks(config);
+  const box=el('integritySummary');
+  const errors=issues.filter(x=>x.level==='error');
+  const warns=issues.filter(x=>x.level==='warn');
+  if(!issues.length){
+    box.innerHTML='<p class="integrity-ok"><strong>整合性チェック：問題なし</strong></p><p class="muted">年間予算、予備枠、生活費内訳、臨時イベントの主要整合を確認済みです。</p>';
+    return;
+  }
+  box.innerHTML=`<p><strong>${errors.length?`エラー ${errors.length}件`:'エラーなし'} / 警告 ${warns.length}件</strong></p><div class="pending-list">${issues.map(i=>`<article class="pending-item"><span class="pending-type ${i.level==='error'?'integrity-error':'integrity-warn'}">${i.level==='error'?'エラー':'警告'}</span><div><strong>${escapeHtml(i.title)}</strong><p>${escapeHtml(i.detail)}</p></div></article>`).join('')}</div>`;
+}
+
+function renderReviewAlerts() {
+  const triggers = evaluateReviewTriggers(showActuals ? config : {...config,actuals:{},reviews:{}}, result);
+  el('reviewCount').textContent = triggers.length ? `${triggers.length}件` : '該当なし';
+  el('reviewAlerts').innerHTML = triggers.length
+    ? triggers.map(t=>`<article class="pending-item"><span class="pending-type ${t.level==='review'?'review-type':''}">${t.level==='review'?'見直し':'注意'}</span><div><strong>${t.title}</strong><p>${t.detail}</p></div></article>`).join('')
+    : '<p class="muted">現在、設定済みの自動見直し条件には該当していません。</p>';
+}
+
+function renderExpenseDetail() {
+  const wrap = el('expenseDetail');
+  const reconcile = el('expenseReconcile');
+  const annual = el('annualCashflowSummary');
+  const taxAudit = el('taxSocialMethodAudit');
+  const ageSelect=el('cashflowViewAge');
+  const start=Number(config.plan?.startAge||64), end=Number(config.plan?.endAge||95);
+  if(ageSelect){
+    const selected=Number(ageSelect.value);
+    ageSelect.innerHTML=Array.from({length:end-start+1},(_,i)=>start+i).map(a=>'<option value="'+a+'">'+a+'歳</option>').join('');
+    ageSelect.value=String(Number.isFinite(selected)&&selected>=start&&selected<=end?selected:start);
+  }
+  const age=Number(ageSelect?.value||start);
+  try{
+    const source=el('expenseDisplaySource');
+    source.value=expenseDisplayProfile(config,source.value)||'';
+    const html=expenseDisplayHtml(expenseDisplayModel(config,age,{sourceProfile:source.value}),config);
+    wrap.innerHTML=html.detail;reconcile.innerHTML=html.summary;
+    annual.textContent=annualCheckText(annualCashflowSummaries(config,{sourceProfile:source.value}));
+    if(taxAudit)taxAudit.innerHTML=taxSocialMethodHtml(taxSocialMethodAudit(config,age));
+  }catch(e){wrap.textContent='内訳を表示できません。'+e.message;reconcile.textContent='未計算のため予算余裕は判定できません。';annual.textContent='年間収支を表示できません。'+e.message;if(taxAudit)taxAudit.textContent='税・社会保険の方式差を表示できません。'+e.message;}
+  renderPeriodOverrides();
+  budgetTravelView.render();
+}
+
+function renderPeriodOverrides(){
+  const box=el('periodOverrideRows'); if(!box)return;
+  if(periodPreview&&periodPreview.baseStamp!==proposalStamp({config,scenarios}))invalidatePeriodPreview();
+  const price=priceBaseExplanation(config);
+  for(const name of ['expensesPriceBase','periodPriceBase','budgetPriceBase'])if(el(name))el(name).textContent=price;
+  const carForm=el('carTransferForm');
+  if(carForm&&!carForm.dataset.initialized){
+    carForm.elements.disposeAge.value=config.car?.disposeAge??'';
+    carForm.elements.monthlyCost.value=config.car?.monthlyCost??'';
+    carForm.elements.medicalCareMonthlyIncrease.value=config.car?.medicalCareMonthlyIncrease??'';
+    carForm.dataset.initialized='true';
+  }
+  const form=el('periodEditForm');
+  if(form){
+    if(!form.fromAge.value)form.fromAge.value=String(config.plan?.startAge||64);
+    if(!form.toAge.value)form.toAge.value=String(config.plan?.endAge||95);
+  }
+  const rows=config.cashflow?.periodOverrides||[];
+  if(!rows.length){box.innerHTML='<p class="muted">期間別設定はありません。</p>';return;}
+  const names={expense:'生活費内訳',travel:'旅行費',budget:'管理予算',income:'追加収入'};
+  box.innerHTML='<table><thead><tr><th>種類</th><th>項目</th><th>年齢</th><th>金額</th><th></th></tr></thead><tbody>'+rows.map((x,i)=>'<tr><td>'+(names[x.kind]||x.kind)+'</td><td>'+escapeHtml(x.label||x.key)+'</td><td>'+x.fromAge+'〜'+x.toAge+'歳</td><td>'+formatMan(x.amount,1)+'万円/'+(x.unit==='monthly'?'月':'年')+'</td><td>'+(x.kind==='income'?'<span class="muted">専用画面で管理</span>':'<button class="link-btn" data-delete-period="'+i+'">削除</button>')+'</td></tr>').join('')+'</tbody></table>';
+}
+
+// The existing save/delete routes are now dry-run previews, never immediate commits.
+let periodPreview=null;
+function invalidatePeriodPreview(){
+  periodPreview=null;
+  el('periodChangePreview').hidden=true;
+  el('periodChangeReviewed').checked=false;
+  el('periodChangeApply').disabled=true;
+}
+function renderPeriodPreview(preview){
+  const title=preview.action==='delete'?'期間別設定を削除（未反映）':'期間別設定を追加・変更（未反映）';
+  const list=rows=>rows.length?rows.map(formatPeriodRow).join('\n'):'設定なし';
+  el('periodChangeSummary').textContent=[title,
+    '対象：'+formatPeriodRow(preview.selected),
+    '現在の該当行：\n'+list(preview.beforeRows),
+    '変更後の該当行：\n'+list(preview.afterRows),
+    '最終年齢末の資産見込（万円）：'+formatMan(preview.beforeFinal,2)+' → '+formatMan(preview.afterFinal,2),
+    preview.selected.kind==='budget'?'管理予算は資産推移の通常支出へ計上します。':'内訳・旅行費は参考情報です。管理予算に重ねて控除しません。',
+    priceBaseExplanation(config),
+    preview.changed?'内容と対象を確認し、チェック後に反映してください。':'変更はありません。保存は不要です。'
+  ].join('\n');
+  el('periodChangePreview').hidden=false;
+  el('periodChangeReviewed').checked=false;
+  el('periodChangeApply').disabled=true;
+  el('periodChangeSummary').setAttribute('tabindex','-1');
+  el('periodChangeSummary').focus({preventScroll:true});
+  el('periodChangePreview').scrollIntoView({block:'nearest',behavior:'auto'});
+}
+function savePeriodOverride(ev){
+  ev.preventDefault();
+  invalidatePeriodPreview();
+  try{
+    const state={config,scenarios};
+    const candidate=planPeriodUpdate(state,ev.currentTarget);
+    periodPreview={...candidate,formStamp:JSON.stringify(parsePeriodForm(ev.currentTarget))};
+    renderPeriodPreview(periodPreview);
+  }catch(e){showNotice(e.message,'error');}
+}
+function confirmPeriodOverride(){
+  if(!periodPreview||!el('periodChangeReviewed').checked)return;
+  const preview=periodPreview;
+  // Input edits, changed saved state or another device's edits invalidate preview.
+  try{
+    if(preview.action==='upsert'&&JSON.stringify(parsePeriodForm(el('periodEditForm')))!==preview.formStamp)
+      throw new Error('確認後に入力が変わりました。再度試算してください。');
+    const live=loadState();
+    if(proposalStamp(live)!==preview.baseStamp)throw new Error('別画面で設定が更新されました。再度試算してください。');
+    const candidate=verifyPeriodPlan({config,scenarios},preview);
+    el('periodChangeApply').disabled=true;
+    if(!commitState(candidate)){invalidatePeriodPreview();return;}
+    invalidatePeriodPreview();
+    showNotice(preview.action==='delete'?'指定した期間設定を削除・保存しました。':'指定期間を保存し、全期間を再計算しました。');
+  }catch(e){invalidatePeriodPreview();showNotice(e.message,'error');}
+}
+
+function derivePending() {
+  const items = [];
+  if (config.income?.pensions?.spouse?.certainty === 'unknown') items.push({type:'要確認', title:'配偶者の公的年金額', action:{tab:'pension',target:'spousePensionAmount',label:'配偶者年金を編集'}, reason:`設定中の配偶者年金 ${formatMan(config.income?.pensions?.spouse?.annualAtStart||0,1)}万円/年は暫定値です。ねんきん定期便等で確認後に更新します。`});
+  if (config.nisa?.accountBreakdownStatus === 'pending') items.push({type:'要判断', title:`NISA・課税口座・現金の${config.plan.startAge}歳時点内訳`, action:{tab:'nisa',target:'detail-nisa',label:'NISAの内訳を確認'}, limitation:'NISAの開始時評価額を入力できます。口座別の運用・売却税は未対応です。', reason:'総資産試算は継続できます。取崩し順序と税引後精度を高める段階で確定します。'});
+  if (config.retirement?.majorSpendDetailStatus === 'pending') items.push({type:'要判断', title:'退職金の大型支出内訳と開始資産の時点整合', action:{tab:'settings',target:'initialAssetInput',label:'開始資産を確認・編集'}, limitation:'計画期間内の個別支出は「臨時・追加収支」で登録できます。開始前の支出は開始資産との照合が必要です。', reason:`社宅退去を本業退職の約6か月前に検討するため、大型支出枠 ${formatMan(config.retirement?.majorSpendPlanned||0)}万円と開始資産の関係を詳細内訳確定時に照合します。`});
+  if (!config.care?.facilityRoomType) items.push({type:'要判断', title:'特養の個室／多床室など介護費の詳細条件', action:{tab:'budget',target:'expenseKind',label:'年間予算の編集欄へ'}, limitation:'部屋種別の編集は未対応です。予算を変更する場合は変更の種類で「管理予算」を選んでください。', reason:'現状は年代別年間予算で包含しています。施設費を個別積上げする際に必要です。'});
+  if (config.taxPolicy?.rulesAsOf) items.push({type:'要更新', title:'退職前の制度再確認', action:{tab:'rules',target:'ruleCards',label:'制度・出典を確認'}, reason:`税・社会保険・雇用保険は現在 ${config.taxPolicy.rulesAsOf} 制度による参考計算です。退職前に最新制度で更新します。`});
+  for (const title of config.pendingDecisions || []) {
+    if (!items.some(i=>i.title===title)) items.push({type:'保留',title,limitation:'この項目に対応する入力欄は未設定です。',reason:'判断または外部確認が必要なため、計算を止めず保留管理しています。'});
+  }
+  return items;
+}
+
+function renderPending() {
+  const items = derivePending();
+  el('pendingCount').textContent = `${items.length}件`;
+  el('pendingList').innerHTML = items.map(i=>`<article class="pending-item"><span class="pending-type">${escapeHtml(i.type)}</span><div><strong>${escapeHtml(i.title)}</strong><p>${escapeHtml(i.reason)}</p>${i.limitation?`<p>${escapeHtml(i.limitation)}</p>`:''}${i.action?`<button type="button" class="link-btn" data-open-tab="${i.action.tab}" data-focus-target="${i.action.target}">${i.action.label}</button>`:''}</div></article>`).join('') || '<p>現在、保留事項はありません。</p>';
+}
+
+function renderAge65IncomeAudit(){
+  const container=el('age65IncomeAudit');
+  if(!container || !result) return;
+  const row=result.rows.find(r=>r.age===65);
+  if(!row){
+    container.textContent='現在の計画に65歳期が含まれていないため、内訳は表示できません。';
+    return;
+  }
+  const events=Array.isArray(row.events)?row.events:[];
+  const sumDetail=label=>events.filter(e=>e?.label===label).reduce((v,e)=>v+(Number(e.amount)||0),0);
+  const idecoLump=sumDetail('iDeCo/DC一時金（資産計上額）');
+  const taxReference=-sumDetail('iDeCo/DC一時金税額（現行制度参考）');
+  const other=Number(row.extraIncome||0)-idecoLump;
+  const parts=[
+    ['労働収入（本人・配偶者合計）',Number(row.labor||0)],
+    ['公的年金',Number(row.pension||0)],
+    ['iDeCo年金',Number(row.idecoAnnuity||0)],
+    ['雇用保険給付（受取予定）',Number(row.unemployment||0)],
+    ['iDeCo一時金（資産計上額）',idecoLump],
+    ['その他の臨時・追加収入',other]
+  ];
+  const total=Number(row.totalIncome||0);
+  const actual=parts.reduce((v,[,n])=>v+n,0);
+  const checked=Math.abs(actual-total)<1e-6;
+  container.innerHTML=`<p class="muted">現在の採用済み条件を、65歳期の収入として分類した参考表示です。閲覧・確認だけでは設定や計算結果は変わりません。</p>
+  <div class="table-wrap"><table><thead><tr><th>収入の区分</th><th>65歳期の計上額（万円）</th></tr></thead><tbody>
+  ${parts.map(([name,amount])=>`<tr><td>${name}</td><td>${formatMan(amount)}</td></tr>`).join('')}
+  <tr><th scope="row">収入合計</th><th>${formatMan(total)}</th></tr></tbody></table></div>
+  <p class="muted" role="status">内訳と収入合計の照合：${checked?'一致':'不一致（設定・明細を確認してください）'}。iDeCo一時金の税額参考：${taxReference>0?formatMan(taxReference)+'万円（税引前一時金に対する概算控除）':'適用・計上が未確認、または0万円'}。</p>
+  <details><summary>計上条件と制度上の注意点</summary>
+  <p><strong>65歳より前：</strong>給与で生活費を賄い、計画資産の純入出金として管理する方式では、給与額が収入合計に出ない期間があります。実際の給与が0円だった意味ではありません。</p>
+  <p><strong>開始資産とiDeCo：</strong>iDeCoを開始資産に含めていない場合に限り、その受取額を資産へ追加する取扱いが整合します。開始資産の内訳はこの画面で自動確認できません。</p>
+  <p><strong>雇用保険：</strong>表示額は受取予定であり支給確定ではありません。離職時年齢、被保険者期間、求職する意思と能力、認定時期、離職後の就労状況を確認してください。65歳期の労働収入との併記だけで受給可否は判定できません。</p>
+  <p><strong>労働収入：</strong>本人・配偶者の採用済み就労条件による計上額です。税引前登録額と資産への入金額の取扱いを確認してください。就労予定が未確定なら仮定です。</p>
+  <p><strong>iDeCo税額：</strong>一時金の税額は退職金との受取順序・時期・加入期間等による参考計算です。iDeCo年金への所得税・社会保険料の精密計算は含みません。</p>
+  <p><button type="button" class="link-btn" data-open-tab="salary">給与生活の区切りを確認</button> <button type="button" class="link-btn" data-open-tab="unemployment">雇用保険の条件を確認</button> <button type="button" class="link-btn" data-open-tab="ideco">iDeCo受取を確認</button></p>
+  </details>`;
+}
+
+function renderFamilyAnnualQuick(){
+ const ageControl=el('familyCashflowAge');
+ if(!ageControl||!result)return;
+ const prev=Number(ageControl.value);
+ const rows=result.rows??[];
+ ageControl.replaceChildren(...rows.map(r=>{const option=document.createElement('option');option.value=String(r.age);option.textContent=r.age+'歳期';return option;}));
+ const age=rows.some(r=>r.age===prev)?prev:rows[0]?.age;
+ if(age!==undefined)ageControl.value=String(age);
+ const summary=familyAgeLedgerSummary(rows,age);
+ const fields=['familyAnnualIncome','familyAnnualExpense','familyAnnualBalance','familyAnnualAsset'];
+ if(summary.status!=='ready'){
+  for(const id of fields)el(id).textContent='未確認';
+  el('familyAnnualNote').textContent=summary.reason+'。保存済み条件は変わりません。';
+  return;
+ }
+ el('familyAnnualIncome').textContent=money(summary.income);
+ el('familyAnnualExpense').textContent=money(summary.expense);
+ el('familyAnnualBalance').textContent=(summary.netCashflow>=0?'+':'')+money(summary.netCashflow);
+ el('familyAnnualAsset').textContent=money(summary.endAsset);
+ el('familyAnnualBalance').className=summary.netCashflow<0?'neg':summary.netCashflow>0?'pos':'';
+ el('familyAnnualAsset').className=summary.endAsset<0?'neg':'';
+ el('familyAnnualNote').textContent=summary.age+'歳期の月次計算を集計した年額（万円）です。資産増減には運用益等も含まれるため収支差と一致しません。収支のマイナスは直ちに資金枯渇を意味しません。';
+}
+
+function renderYearTable() {
+  renderFamilyAnnualQuick();
+  const body = el('yearRows'); body.innerHTML = '';
+  result.rows.forEach(r => {
+    const a = config.actuals?.[r.age];
+    const actualAsset = a?.endAsset;
+    const diff = actualAsset === undefined || actualAsset === null ? null : Number(actualAsset) - r.endAsset;
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${r.age}</td><td>${formatMan(r.startAsset)}</td><td>${formatMan(r.investmentGain)}</td><td>${formatMan(r.labor)}</td><td>${formatMan(r.primaryPension)}</td><td>${formatMan(r.spousePension)}</td><td>${formatMan(r.idecoAnnuity)}</td><td>${formatMan(r.unemployment)}</td><td>${formatMan(r.extraIncome)}</td><td>${formatMan(r.expense+r.extraExpense)}</td><td>${formatMan(r.endAsset)}</td><td class="actual-only">${actualAsset==null?'—':formatMan(actualAsset)}</td><td class="actual-only ${diff==null?'':diff<0?'neg':'pos'}">${diff==null?'—':`${diff>=0?'+':''}${formatMan(diff)}`}</td>`;
+    body.appendChild(tr);
+  });
+}
+
+function drawPolyline(svg, points, x, y, className) {
+  if (!points.length) return;
+  const ns='http://www.w3.org/2000/svg';
+  const line=document.createElementNS(ns,'polyline');
+  line.setAttribute('points',points.map(p=>`${x(p.age)},${y(p.endAsset)}`).join(' '));
+  line.setAttribute('class',className); line.setAttribute('fill','none'); svg.appendChild(line);
+}
+
+function drawChart() {
+  const svg = el('assetChart');
+  const w = 820, h = 300, pad = {l:54,r:18,t:18,b:36};
+  svg.setAttribute('viewBox', `0 0 ${w} ${h}`); svg.innerHTML = '';
+  const planPoints = [{age:config.plan.startAge, endAsset:config.plan.initialAsset}, ...result.rows.map(r=>({age:r.age+1,endAsset:r.endAsset}))];
+  const actualPoints = Object.entries(showActuals ? (config.actuals || {}) : {}).map(([age,a])=>({age:+age,endAsset:+a.endAsset})).filter(p=>Number.isFinite(p.endAsset)).sort((a,b)=>a.age-b.age);
+  const forecastPoints = showActuals && forecast ? [{age:forecast.actual.age+1,endAsset:+forecast.actual.endAsset}, ...forecast.projection.rows.map(r=>({age:r.age+1,endAsset:r.endAsset}))] : [];
+  const targetPoints=result.keyAges.map(k=>({age:k.age+1,endAsset:k.threshold}));
+  const all = [...planPoints, ...actualPoints, ...forecastPoints, ...targetPoints];
+  const maxY = Math.max(...all.map(p=>p.endAsset), 1000) * 1.08;
+  const minAge = config.plan.startAge, maxAge = config.plan.endAge + 1;
+  const x = age => pad.l + (age-minAge)/(maxAge-minAge)*(w-pad.l-pad.r);
+  const y = val => h-pad.b - val/maxY*(h-pad.t-pad.b);
+  const ns='http://www.w3.org/2000/svg';
+
+  const roughStep=maxY/4;
+  const magnitude=Math.pow(10,Math.max(0,Math.floor(Math.log10(roughStep||1))));
+  const gridStep=Math.max(1,Math.ceil(roughStep/magnitude)*magnitude);
+  for(let v=0;v<=maxY;v+=gridStep){
+    const gy=document.createElementNS(ns,'line'); gy.setAttribute('x1',pad.l);gy.setAttribute('x2',w-pad.r);gy.setAttribute('y1',y(v));gy.setAttribute('y2',y(v));gy.setAttribute('class','grid');svg.appendChild(gy);
+    const t=document.createElementNS(ns,'text');t.textContent=`${formatMan(v)}`;t.setAttribute('x',pad.l-8);t.setAttribute('y',y(v)+4);t.setAttribute('text-anchor','end');t.setAttribute('class','axis');svg.appendChild(t);
+  }
+  [minAge,...Array.from({length:Math.max(0,Math.floor((maxAge-minAge)/5))},(_,i)=>Math.ceil((minAge+1)/5)*5+i*5),maxAge].filter((a,i,arr)=>a>=minAge&&a<=maxAge&&arr.indexOf(a)===i).forEach(a=>{
+    const t=document.createElementNS(ns,'text');t.textContent=a===maxAge?`${config.plan.endAge}歳末`:`${a}`;t.setAttribute('x',x(a));t.setAttribute('y',h-12);t.setAttribute('text-anchor','middle');t.setAttribute('class','axis');svg.appendChild(t);
+  });
+
+  drawPolyline(svg, targetPoints, x, y, 'target-line');
+  targetPoints.forEach(p=>{const dot=document.createElementNS(ns,'circle');dot.setAttribute('cx',x(p.age));dot.setAttribute('cy',y(p.endAsset));dot.setAttribute('r','4');dot.setAttribute('class','target-point');const title=document.createElementNS(ns,'title');title.textContent=`${p.age-1}歳末の目標 ${money(p.endAsset)}`;dot.appendChild(title);svg.appendChild(dot);});
+  drawPolyline(svg, planPoints, x, y, 'asset-line');
+  if (forecastPoints.length) drawPolyline(svg, forecastPoints, x, y, 'forecast-line');
+
+  actualPoints.forEach(p=>{
+    const c=document.createElementNS(ns,'circle'); c.setAttribute('cx',x(p.age)); c.setAttribute('cy',y(p.endAsset)); c.setAttribute('r','5'); c.setAttribute('class','actual-point'); svg.appendChild(c);
+  });
+  result.keyAges.forEach(k=>{
+    const c=document.createElementNS(ns,'circle');c.setAttribute('cx',x(k.age+1));c.setAttribute('cy',y(k.asset));c.setAttribute('r','3');c.setAttribute('class','key-point');svg.appendChild(c);
+  });
+}
+
+function renderTimeline(){
+  const list=el('timeline'); list.innerHTML='';
+  const ageAt=d=>ageOn(d,config.people?.primary?.birthDate)??'—';
+  const raw=[
+    [config.plan?.startDate,'老後計画開始'],
+    [config.retirement?.receiveDate,'退職金受取'],
+    [config.employment?.primary?.mainRetirement?.baseDate,'本業退職（基本）'],
+    [config.ideco?.lumpDate||config.ideco?.contributionEndDate,`iDeCo/DC受取開始（一時金 ${config.ideco?.lumpPercent??'未設定'}%）`],
+    [config.income?.pensions?.spouse?.startDate,'配偶者 公的年金開始','spouse'],
+    [config.income?.pensions?.primary?.startDate,'本人 公的年金開始'],
+    [config.employment?.spouse?.sideWork?.endDate,'配偶者アルバイト収入の計上終了（この月から計上なし）','spouse'],
+    [config.employment?.primary?.sideWork?.endDate,'本人アルバイト収入の計上終了（この月から計上なし）']
+  ].filter(x=>x[0]).map(([date,label,person='primary'])=>({date,label,person,age:ageAt(date)}));
+  const items=[...raw,...unemploymentEvents(config).map(e=>({...e,age:ageAt(e.date)})),...(config.events||[]).filter(e=>e.date).map(e=>({date:e.date,label:e.label,age:ageAt(e.date)}))].sort((a,b)=>a.date.localeCompare(b.date));
+  items.forEach(i=>{ const li=document.createElement('li'); li.innerHTML=`<strong>本人${i.age}歳</strong><span>${escapeHtml(i.label)} <small>${escapeHtml(dateWithAge(i.date,config,i.person))}</small></span>`; list.appendChild(li); });
+}
+
+function renderActuals() {
+  const select = el('actualAge');
+  const selected = select.value;
+  select.innerHTML = '';
+  for (let age=config.plan.startAge; age<=config.plan.endAge; age++) {
+    const o=document.createElement('option');o.value=age;o.textContent=`${age}歳`;select.appendChild(o);
+  }
+  const latest = latestActual(config);
+  select.value = selected || latest?.age || config.plan.startAge;
+  populateActualForm(select.value);
+
+  const body=el('actualRows'); body.innerHTML='';
+  const entries=Object.entries(config.actuals||{}).map(([age,a])=>({age:+age,...a})).sort((a,b)=>a.age-b.age);
+  entries.forEach(a=>{
+    const p=planRowAtAge(result,a.age); const diff=p?Number(a.endAsset)-p.endAsset:null;
+    const tr=document.createElement('tr');
+    tr.innerHTML=`<td>${a.age}</td><td>${p?formatMan(p.endAsset):'—'}</td><td>${formatMan(a.endAsset)}</td><td class="${diff==null?'':diff<0?'neg':'pos'}">${diff==null?'—':`${diff>=0?'+':''}${formatMan(diff)}`}</td><td>${a.expense==null?'—':formatMan(a.expense)}</td><td>${a.taxSocial==null?'—':formatMan(a.taxSocial)}</td><td>${a.safeAssetBalance==null?'—':formatMan(a.safeAssetBalance)}</td><td>${escapeHtml(a.note||'')}</td><td><button class="link-btn" data-delete-actual="${a.age}">削除</button></td>`;
+    body.appendChild(tr);
+  });
+
+  const box=el('actualSummary');
+  if(!latest){ box.innerHTML='<p>まだ実績は登録されていません。</p>'; return; }
+  const plan=planRowAtAge(result,latest.age); const diff=Number(latest.endAsset)-(plan?.endAsset||0); const pct=plan?.endAsset?diff/plan.endAsset*100:0;
+  box.innerHTML=`<dl><div><dt>最新実績</dt><dd>${latest.age}歳</dd></div><div><dt>計画資産</dt><dd>${money(plan?.endAsset||0)}</dd></div><div><dt>実績資産</dt><dd>${money(latest.endAsset)}</dd></div><div><dt>差額</dt><dd class="${diff<0?'neg':'pos'}">${diff>=0?'+':''}${money(diff)}（${pct>=0?'+':''}${pct.toFixed(1)}%）</dd></div><div><dt>${config.plan.endAge}歳末再予測</dt><dd>${forecast?money(forecast.projection.finalAsset):'—'}</dd></div></dl>`;
+}
+
+
+function populateActualForm(age){
+  const f=el('actualForm'); const a=config.actuals?.[Number(age)];
+  f.endAsset.value=a?.endAsset ?? '';
+  f.expense.value=a?.expense ?? '';
+  f.labor.value=a?.labor ?? '';
+  f.pension.value=a?.pension ?? '';
+  f.returnRate.value=a?.returnRate ?? '';
+  f.reserveBalance.value=a?.reserveBalance ?? '';
+  f.safeAssetBalance.value=a?.safeAssetBalance ?? '';
+  f.taxSocial.value=a?.taxSocial ?? '';
+  f.note.value=a?.note ?? '';
+}
+
+function saveActual(ev){
+  const config=structuredClone(currentConfig());
+  ev.preventDefault(); const f=ev.currentTarget; const age=Number(f.age.value);
+  config.actuals ||= {};
+  config.actuals[age]={
+    endAsset:Number(f.endAsset.value), expense:numOrBlank(f.expense.value), labor:numOrBlank(f.labor.value),
+    pension:numOrBlank(f.pension.value), returnRate:numOrBlank(f.returnRate.value), reserveBalance:numOrBlank(f.reserveBalance.value),
+    safeAssetBalance:numOrBlank(f.safeAssetBalance.value), taxSocial:numOrBlank(f.taxSocial.value),
+    note:f.note.value.trim(), updatedAt:new Date().toISOString()
+  };
+  if(!commitState(config))return; el('actualAge').value=age; showNotice(`${age}歳の実績を保存し、${config.plan.endAge}歳末まで再予測しました。`);
+}
+
+function deleteActual(age){
+  const config=structuredClone(currentConfig());
+  if(!config.actuals?.[age]) return;
+  delete config.actuals[age]; if(!commitState(config))return; showNotice(`${age}歳の実績を削除しました。`);
+}
+
+
+function renderAnnualReview(ageOverride=null){
+  const select=el('annualReviewAge');
+  const current=ageOverride ?? select.value;
+  select.innerHTML='';
+  for(let age=config.plan.startAge;age<=config.plan.endAge;age++){
+    const o=document.createElement('option');o.value=age;o.textContent=`${age}歳`;select.appendChild(o);
+  }
+  const latest=latestActual(config);
+  const target=Number(current || latest?.age || config.plan.startAge);
+  select.value=String(target);
+  const review=config.reviews?.[target] || {items:{},note:''};
+  const list=el('annualReviewList');
+  list.innerHTML=ANNUAL_REVIEW_ITEMS.map(item=>`<label class="review-check"><input type="checkbox" data-review-key="${item.key}" ${review.items?.[item.key]?'checked':''}><span>${escapeHtml(item.label)}</span></label>`).join('');
+  el('annualReviewNote').value=review.note || '';
+  const done=ANNUAL_REVIEW_ITEMS.filter(item=>review.items?.[item.key]).length;
+  el('annualReviewProgress').textContent=`${done}/${ANNUAL_REVIEW_ITEMS.length} 確認済み`;
+}
+
+function saveAnnualReview(){
+  const config=structuredClone(currentConfig());
+  const age=Number(el('annualReviewAge').value);
+  config.reviews ||= {};
+  const items={};
+  document.querySelectorAll('[data-review-key]').forEach(cb=>{items[cb.dataset.reviewKey]=cb.checked;});
+  config.reviews[age]={items,note:el('annualReviewNote').value.trim(),updatedAt:new Date().toISOString()};
+  if(!commitState(config))return; el('annualReviewAge').value=String(age); renderAnnualReview(age); showNotice(`${age}歳の年次点検を保存しました。`);
+}
+
+function renderScenarios(){
+  const wrap=el('scenarioList'); wrap.innerHTML='';
+  scenarios.forEach(s=>{
+    const m=scenarioMetrics(s.config);
+    const article=document.createElement('article'); article.className='scenario-item';
+    const baseline=s.role==='baseline';
+    article.innerHTML=`<label class="scenario-check"><input type="checkbox" data-scenario-select="${s.id}" ${s.selected?'checked':''}><span><strong>${escapeHtml(s.name)} ${baseline?'<em class="baseline-badge">比較の基準案</em>':''}</strong><small>${s.config.plan.endAge}歳末 ${money(m.finalAsset)} / 80歳 ${m.age80Asset==null?'—':money(m.age80Asset)}</small></span></label>${baseline?'<span class="muted">固定</span>':`<button class="link-btn" data-scenario-delete="${s.id}">削除</button>`}`;
+    wrap.appendChild(article);
+  });
+  renderScenarioCompare();
+}
+
+function renderScenarioCompare(){
+  const selected=scenarios.filter(s=>s.selected).slice(0,3);
+  if(!selected.length){ el('scenarioCompare').innerHTML='<p class="muted">比較する保存済みの案を選択してください。</p>'; return; }
+  const metrics=selected.map(s=>({s,m:scenarioMetrics(s.config)}));
+  const rows=[
+    ['最終評価年齢', x=>`${x.s.config.plan.endAge}歳末`],
+    ['各案の最終年齢末資産（評価年齢に注意）', x=>money(x.m.finalAsset)],
+    ['95歳末資産', x=>{const r=runRetirementPlan(x.s.config).rows.find(r=>r.age===95);return r?money(r.endAsset):'対象外（計算期間外）';}],
+    ['100歳末資産', x=>{const r=runRetirementPlan(x.s.config).rows.find(r=>r.age===100);return r?money(r.endAsset):'対象外（計算期間外）';}],
+    ['予備枠全使用後', x=>money(x.m.afterReserve)],
+    ['80歳末資産', x=>x.m.age80Asset==null?'—':money(x.m.age80Asset)],
+    ['90歳末資産', x=>x.m.age90Asset==null?'—':money(x.m.age90Asset)],
+    ['税引後運用利回り', x=>`${x.s.config.plan.afterTaxReturn}%`],
+    ['インフレ率', x=>`${x.s.config.plan.inflation}%`],
+    ['本人バイト終了', x=>dateWithAge(x.s.config.employment?.primary?.sideWork?.endDate?.slice(0,7),x.s.config)],
+    ['本人年金開始', x=>dateWithAge(x.s.config.income?.pensions?.primary?.startDate?.slice(0,7),x.s.config)]
+  ];
+  let html='<table><thead><tr><th>指標</th>'+metrics.map(x=>`<th>${escapeHtml(x.s.name)}</th>`).join('')+'</tr></thead><tbody>';
+  html+=rows.map(([label,fn])=>`<tr><td>${label}</td>${metrics.map(x=>`<td>${escapeHtml(fn(x))}</td>`).join('')}</tr>`).join('');
+  html+='</tbody></table>';if(new Set(selected.map(s=>s.config.plan.endAge)).size>1)html='<p class="muted">計算終了年齢が異なります。最終資産を同じ時点の比較とみなさず、95歳末など共通の年齢期末で比較してください。</p>'+html; el('scenarioCompare').innerHTML=html;
+}
+
+function saveCurrentScenario(){
+  let scenarios=structuredClone(currentScenarios());
+  const input=el('scenarioName'); const name=input.value.trim() || `シナリオ${scenarios.length+1}`;
+  scenarios.push({id:crypto.randomUUID(),name,savedAt:new Date().toISOString(),selected:scenarios.filter(s=>s.selected).length<3,config:scenarioSnapshot(config)});
+  if(!commitState(config,scenarios))return; input.value=''; renderScenarios(); showNotice(`「${name}」を保存しました。`);
+}
+
+function toggleScenario(id, checked){
+  let scenarios=structuredClone(currentScenarios());
+  const current=scenarios.filter(s=>s.selected).length;
+  const target=scenarios.find(s=>s.id===id); if(!target) return;
+  if(checked && current>=3){ showNotice('同時比較は最大3案です。','error'); renderScenarios(); return; }
+  target.selected=checked; if(!commitState(config,scenarios))return; renderScenarios();
+}
+
+function deleteScenario(id){
+  let scenarios=structuredClone(currentScenarios());
+  const target=scenarios.find(s=>s.id===id);
+  if(target?.role==='baseline'){ showNotice('基準ケースは差分管理の基準なので削除できません。','error'); return; }
+  scenarios=scenarios.filter(s=>s.id!==id); if(!commitState(config,scenarios))return; renderScenarios(); showNotice('シナリオを削除しました。');
+}
+
+function escapeHtml(s=''){ return String(s).replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c])); }
+
+function renderSettings(){
+  const f=el('settingsForm'); const p=config.plan;
+  el('initialAssetSettingLabel').textContent=`${Number(p.startAge)-1}歳期末資産（計画開始残高・万円）`;
+  f.initialAsset.value=p.initialAsset; f.afterTaxReturn.value=p.afterTaxReturn; f.inflation.value=p.inflation;
+  f.laborAnnual.value=(Number(config.employment?.primary?.sideWork?.monthlyGross||0)+Number(config.employment?.spouse?.sideWork?.monthlyGross||0))*12;
+  f.reserveTotal.value=config.reserve.total;
+  renderCertaintySettings();
+}
+
+
+function renderCertaintySettings(){
+  const form=el('certaintyForm');
+  if(!form) return;
+  const labels={initialAsset:'64歳開始資産',returnRate:'運用利回り',inflation:'インフレ率',laborIncome:'労働収入',pension:'年金',dc:'DC受取',budgets:'年間予算',retirement:'退職金'};
+  const order=Object.keys(labels);
+  const options=Object.entries(CERTAINTY_LABELS).map(([value,label])=>`<option value="${value}">${label}</option>`).join('');
+  form.innerHTML=order.map(key=>`<label>${labels[key]}<select name="${key}">${options}</select></label>`).join('')+'<button class="primary" type="submit">確度区分を保存</button>';
+  order.forEach(key=>{ if(form.elements[key]) form.elements[key].value=config.certainty?.[key] || 'unknown'; });
+}
+
+function saveCertainty(ev){
+  const config=structuredClone(currentConfig());
+  ev.preventDefault(); const f=ev.currentTarget;
+  config.certainty ||= {};
+  for(const key of ['initialAsset','returnRate','inflation','laborIncome','pension','dc','budgets','retirement']) config.certainty[key]=f.elements[key].value;
+  if(config.income?.pensions?.primary) config.income.pensions.primary.certainty=config.certainty.pension;
+  if(!commitState(config))return; showNotice('入力値の確度区分を保存しました。');
+}
+
+function applySettings(ev){
+  ev.preventDefault();
+  try{
+    // Empty is not a user-confirmed 0; this guard runs before touching saved state.
+    const values=basicSettingsValues(ev.currentTarget);
+    const config=structuredClone(currentConfig());
+    config.plan.initialAsset=values.initialAsset;
+    config.plan.afterTaxReturn=values.afterTaxReturn;
+    config.plan.inflation=values.inflation;
+    config.reserve.total=values.reserveTotal;
+    const errors=validateConfig(config);
+    if(errors.length)throw new Error(errors.join(' / '));
+    runRetirementPlan(config); // reject noncomputable assumptions before saving
+    if(!commitState(config))return;
+    showNotice(`設定を保存し、月次計算で${config.plan.endAge}歳末まで再計算しました。`);
+  }catch(e){showNotice('入力を保存しませんでした。'+e.message,'error');}
+}
+
+
+function renderCalculationBasis(){
+  const box=el('calculationBasis'), source=el('sourceStatus');
+  if(!box||!source||!config||!result) return;
+  const start=config.plan?.startDate || '—';
+  const ret=config.employment?.primary?.mainRetirement?.baseDate || '—';
+  const idecoTax=config.ideco?.applyCurrentLawTaxReference ? '現行制度参考を反映' : '税引前で計上';
+  box.innerHTML=`<dl>
+    <div><dt>計算単位</dt><dd>月次</dd></div>
+    <div><dt>計画開始</dt><dd>${escapeHtml(dateWithAge(start,config))}</dd></div>
+    <div><dt>本業退職・基本日</dt><dd>${escapeHtml(dateWithAge(ret,config))}</dd></div>
+    <div><dt>給与生活の計算方式</dt><dd>${config.cashflow?.salaryLife?'純入出金方式（最終給与月 '+escapeHtml(dateWithAge(config.cashflow.salaryLife.lastSalaryMonth,config))+'）':'旧方式'}</dd></div>
+    <div><dt>通常運用</dt><dd>税引後 ${Number(config.plan?.afterTaxReturn||0).toFixed(5)}%/年</dd></div>
+    <div><dt>インフレ</dt><dd>${Number(config.plan?.inflation||0).toFixed(2)}%/年</dd></div>
+    <div><dt>支出の正本</dt><dd>年代別年間予算（税・社保を含む）</dd></div>
+    <div><dt>iDeCo一時金</dt><dd>${idecoTax}</dd></div>
+    <div><dt>${config.plan.endAge}歳末</dt><dd>${money(result.finalAsset)}</dd></div>
+  </dl><p class="muted">月末資産＝月初資産＋月次運用益＋各種収入－インフレ調整後支出－臨時支出。制度ツールの税・社会保険詳細は手取・予算内訳確認用で、年代別年間予算へ重ねて加算しません。</p><p class="muted"><strong>現在の運用益試算：</strong>NISA・特定口座・現金／預金を口座別に分けず、計画の開始資産を含む計算対象の総資産に共通の「税引後運用利回り」を適用します。年率を月次複利利回りに換算し、月初資産に運用益を計上してから当月の入出金を反映します。現金／預金も同じ利回りで計算され、実際の口座別運用益や税額を再現するものではありません。開始資産に含めないiDeCo／DCの残高・受取は別途の設定・計算によります。</p><p class="muted"><strong>将来の拡張方針：</strong>現時点でNISAを独立した運用益計算へ分離しません。将来、NISA・特定口座・現金／預金ごとの残高、利回り、入出金、売却、税金等を区別した詳細シミュレーションへの移行を検討します。移行時には資産間振替・受取の二重計上防止と既存計画との比較検証が必要です。この口座別計算は現在未実装です。</p>`;
+  if(config.cashflow?.salaryLife)box.innerHTML+='<p class="muted">給与生活中は家計からの追加・取崩しを計上し、給与を再加算しません。前倒し後65歳までの支出は給与生活シートの管理予算です。掛金・臨時収支は指定した計上先で一度だけ扱います。税社保の精密な手取計算・新方式の要因分解は未対応です。</p>';
+  const entries=Object.values(RULES).filter(r=>r&&typeof r==='object'&&r.title);
+  source.innerHTML=`<p><strong>制度基準日 ${escapeHtml(RULES.asOf)}</strong></p><ul class="source-list">${entries.map(r=>`<li><a href="${r.url}" target="_blank" rel="noopener">${escapeHtml(r.title)}：${escapeHtml(r.source)}</a></li>`).join('')}</ul><p class="muted">将来の退職・受取時は、その時点の法令・自治体保険料・運営管理機関条件で再確認します。</p>`;
+}
+
+function renderRules(){
+  el('rulesAsOf').textContent = RULES.asOf;
+  const wrap=el('ruleCards'); wrap.innerHTML='';
+  Object.entries(RULES).filter(([k])=>k!=='asOf').forEach(([key,r])=>{
+    const article=document.createElement('article'); article.className='rule-card';
+    article.innerHTML=`<h3>${r.title}</h3><p>${r.summary}</p><small>出典：<a href="${r.url}" target="_blank" rel="noopener">${r.source}</a> / 制度基準日 ${RULES.asOf}</small>`;
+    wrap.appendChild(article);
+  });
+}
+
+function runPensionTool(){
+  const base=+el('pensionBase65').value, age=+el('pensionToolAge').value;
+  const birthYear=Number((config?.people?.primary?.birthDate||'1965-01-01').slice(0,4));
+  const factor=pensionAdjustmentFactor(age,birthYear), annual=pensionAnnualFromBase65(base,age,birthYear);
+  el('pensionToolResult').textContent=`増減率 ${(factor-1)*100>=0?'+':''}${((factor-1)*100).toFixed(1)}% → 年額 約${formatMan(annual,1)}万円`;
+}
+function runIdecoTool(){
+  const balance=+el('idecoBalance').value, years=+el('idecoYears').value;
+  const annual=years>0?balance/years:0;
+  const summary=retirementIdecoTaxSummary(config);
+  const plan=summary?.plan, overlap=summary?.overlap, lumpTax=summary?.idecoLumpTax;
+  const detail=plan?` / 現在設定の受取時見込 約${formatMan(plan.balance,1)}万円、一時金 約${formatMan(plan.lumpGross,1)}万円、年金 約${formatMan(plan.annuityAnnual,1)}万円/年`:'';
+  const warn=overlap?.within19YearRule
+    ?` / 19年ルール該当・調整後控除 約${formatMan(overlap.adjustedDeduction,0)}万円`
+    :' / 19年ルール非該当参考';
+  const net=lumpTax?` / 一時金手取参考 約${formatMan(lumpTax.net,1)}万円`:'';
+  el('idecoToolResult').textContent=`入力残高を${years}年均等なら税引前年額 約${formatMan(annual,1)}万円${detail}${warn}${net}`;
+  const basis=el('idecoToolBasis');
+  if(basis && plan){
+    let taxText='重複調整に必要な加入日・退職金情報が不足しています。';
+    if(overlap?.adjustedDeduction!=null && lumpTax){
+      taxText=`iDeCo加入期間参考 ${overlap.serviceYears}年、通常の退職所得控除 ${formatMan(overlap.fullDeduction,0)}万円。60歳退職金との年差 ${overlap.yearGap ?? '—'}年、${overlap.within19YearRule?'現行19年ルールの対象':'現行19年ルールの対象外'}。前の退職金が控除額未満のため前職期間を ${overlap.deemedYears}年相当として扱う参考計算を行い、重複期間 ${overlap.overlapYears}年、調整後控除 ${formatMan(overlap.adjustedDeduction,0)}万円。一時金の課税退職所得 約${formatMan(lumpTax.taxable,1)}万円、所得税等 約${formatMan(lumpTax.incomeTax,1)}万円、住民税 約${formatMan(lumpTax.residentTax,1)}万円、手取参考 約${formatMan(lumpTax.net,1)}万円。年金受取は公的年金等として扱い、満額1年換算では年額約${formatMan(summary.pensionGross,1)}万円、公的年金等控除後の雑所得参考 約${formatMan(summary.pensionIncome,1)}万円。`;
+    }
+    basis.textContent=`現在残高から拠出終了月まで月次複利で推計。年金受取は設定利回りで元利均等取崩し。${taxText} 一時金と年金の併用可否・比率指定は運営管理機関によって異なるため受取前に確認します。税制は2026年現行法を将来へ仮適用した参考で、受取時点に再確認します。`;
+  }
+}
+
+function runRetirementTool(){
+  const amount=+el('retirementAmount').value, years=+el('serviceYears').value;
+  const deduction=retirementIncomeDeduction(years), taxable=taxableRetirementIncome(amount,years), tax=retirementTaxEstimate(amount,deduction);
+  el('retirementToolResult').textContent=`退職所得控除 ${formatMan(deduction)}万円 / 課税退職所得 ${formatMan(taxable,1)}万円 / 税額概算 ${formatMan(tax.totalTax,1)}万円 / 手取概算 ${formatMan(tax.net,1)}万円`;
+  const basis=el('retirementToolBasis');
+  if(basis) basis.textContent=years<=20?`控除は40万円×勤続年数（最低80万円）。控除超過分の1/2を課税退職所得として税額参考を計算します。`:`控除は800万円＋70万円×（勤続年数−20年）。控除超過分の1/2を課税退職所得として税額参考を計算します。65歳のiDeCo/DC一時金側では、この退職金との19年内重複調整を別途適用します。`;
+}
+
+
+function runUnemploymentTool(){
+  const u=unemploymentComparison(config);
+  el('unemploymentToolResult').textContent=`離職前賃金日額 約${Math.round(u.wageDailyYen).toLocaleString()}円 / 65歳未満の日額 約${Math.round(u.dailyPre65Yen).toLocaleString()}円 / 65歳以上の日額 約${Math.round(u.dailyAt65Yen).toLocaleString()}円 / 65歳以後 ${u.at65.days}日・約${formatMan(u.at65.amount,1)}万円 / 65歳未満一般 ${u.pre65General.days}日・約${formatMan(u.pre65General.amount,1)}万円`;
+  const d=el('unemploymentToolBasis');
+  if(d) d.textContent=`2026/8/1制度参考。60～64歳は45～80%・日額上限7,830円、高年齢求職者給付金は30歳未満と同じ日額計算式の参考を使用。給付日数・離職理由・賃金は退職直前に再確認します。`;
+}
+function runTaxSocialTool(){
+  const age=+el('taxToolAge').value, salary=+el('taxToolSalary').value, pension=+el('taxToolPension').value;
+  const spouseIncomeRaw=el('taxToolSpouseIncome').value;
+  const spouseIncome=spouseIncomeRaw===''?null:+spouseIncomeRaw;
+  const spouseAge=+el('taxToolSpouseAge').value||65;
+  const tax=estimateSimpleIncomeTaxes({salaryGross:salary,pensionGross:pension,age,spouseIncomeMan:spouseIncome,spouseAge});
+  const ownIncome=tax.residentTotalIncome;
+  const ownTaxed=tax.residentTax>0;
+  const householdTaxed=ownTaxed || (spouseIncome!=null && spouseIncome>43);
+  const care=age>=65?fukuyamaCarePremium2026({totalIncome:ownIncome,pensionGross:pension,ownResidentTaxed:ownTaxed,householdResidentTaxed:householdTaxed}):0;
+  let medical=0, healthLabel='', healthDetail='';
+  if(age>=75){
+    const md=lateElderlyMedicalPremium2026Details(ownIncome); medical=md.total; healthLabel='後期高齢者医療2026参考';
+    healthDetail=`医療分 ${formatMan(md.medical,1)} / 子ども分 ${formatMan(md.child,1)}万円`;
+  }else{
+    const incomes=spouseIncome==null?[ownIncome]:[ownIncome,spouseIncome];
+    const md=fukuyamaNhiPremium2026Details({memberIncomesMan:incomes,members:incomes.length,adultMembers:incomes.length,careMembers40to64:age>=40&&age<65?1:0});
+    medical=md.total; healthLabel=`福山市国保2026参考（${incomes.length}人世帯）`;
+    healthDetail=`医療 ${formatMan(md.medical,1)} / 支援 ${formatMan(md.support,1)} / 介護 ${formatMan(md.care,1)} / 子ども ${formatMan(md.child,1)}万円`;
+  }
+  const net=salary+pension-tax.totalTax-care-medical;
+  el('taxToolResult').textContent=`所得税 約${formatMan(tax.incomeTax,1)}万円 / 住民税 約${formatMan(tax.residentTax,1)}万円 / 介護保険 約${formatMan(care,1)}万円 / ${healthLabel} 約${formatMan(medical,1)}万円 / 手取参考 約${formatMan(net,1)}万円`;
+  const b=el('taxToolBasis');
+  if(b){
+    const spouseText=spouseIncome==null?'配偶者控除は未指定':`配偶者控除参考：所得税 ${formatMan(tax.spouseIncomeTaxDeduction,0)}万円・住民税 ${formatMan(tax.residentSpouseDeduction,0)}万円`;
+    b.textContent=`給与所得 ${formatMan(tax.salaryIncome,1)}万円、公的年金等所得 ${formatMan(tax.pensionIncome,1)}万円、所得税基礎控除 ${formatMan(tax.baseDeduction,0)}万円。${spouseText}。${healthDetail}。年代別年間予算には税・社保を含むため、資産計算へ別加算しません。`;
+  }
+}
+
+async function importConfig(file){
+  assertWriteAccess();
+  const expected=loadState();
+  const parsed=JSON.parse(await file.text());
+  assertBackupCompatibility(parsed);
+  const full=isFullBackup(parsed);
+  if(!full && ('config' in parsed || 'scenarios' in parsed))throw new Error('一括バックアップの必須項目が不足しています。設定だけを部分復元しません。読み込み前のデータは変更されていません。');
+  if(full){
+    syncPanel?.noteExternalRestore();
+    const committed=restoreFullBackup(expected,parsed);
+    config=committed.config;scenarios=committed.scenarios;
+    detailUI.reset();pensionSheet.reset();salarySheet.reset();calendarSheet.reset();expenseSheet.reset();incomeSheet.reset();el('expenseDisplaySource').value='';delete el('carTransferForm').dataset.initialized;
+    refresh({calculated:committed});showNotice('設定・シナリオ・付帯データをまとめて復元しました。');return;
+  }
+  validateSavedState({config:parsed,scenarios:[]});
+  const next=migrateConfig(full?parsed.config:parsed);
+  if(configSignature(next)===configSignature(config)){showNotice('同じ設定は採用済みです。比較案と履歴を追加しません。');return;}
+  if(configSignature(expected)!==configSignature(loadState()))throw new Error('別画面で設定が更新されています。再読み込みしてください。');
+  const nextScenarios=full?structuredClone(parsed.scenarios):structuredClone(scenarios);
+  if(!full){
+    for(const s of nextScenarios)if(s.role==='baseline'){s.role='scenario';s.name=`${s.name||'基準ケース'}（旧基準）`;s.selected=false;}
+    nextScenarios.push({id:crypto.randomUUID(),name:next.meta?.label||'基準ケース',role:'baseline',savedAt:new Date().toISOString(),selected:true,config:scenarioSnapshot(next)});
+  }
+  syncPanel?.noteExternalRestore();
+  if(!commitState(next,nextScenarios,false))return;
+  detailUI.reset();pensionSheet.reset();salarySheet.reset();calendarSheet.reset();expenseSheet.reset();incomeSheet.reset();el('expenseDisplaySource').value='';delete el('carTransferForm').dataset.initialized;
+  refresh();showNotice(full?'設定とシナリオをまとめて復元しました。':'設定JSONを新しい基準ケースとして読み込みました。');
+}
+
+el('settingsForm').addEventListener('submit', applySettings);
+el('periodEditForm').addEventListener('submit', savePeriodOverride);
+for(const eventName of ['input','change'])el('periodEditForm').addEventListener(eventName,()=>invalidatePeriodPreview());
+el('periodChangeReviewed').addEventListener('change',e=>{el('periodChangeApply').disabled=!periodPreview||!periodPreview.changed||!e.target.checked;});
+el('periodChangeApply').addEventListener('click',confirmPeriodOverride);
+el('periodChangeCancel').addEventListener('click',()=>invalidatePeriodPreview());
+el('carTransferForm').addEventListener('submit',event=>{
+  event.preventDefault();const form=event.currentTarget;
+  try{
+    const input=structuredClone(config);input.car ||= {};
+    for(const key of ['disposeAge','monthlyCost','medicalCareMonthlyIncrease'])input.car[key]=Number(form.elements[key].value);
+    const next=applyCarDisposalTransfer(input), errors=validateConfig(next);
+    if(errors.length)throw new Error(errors.join(' / '));
+    if(!commitState(next))return;
+    showNotice(`${config.car.disposeAge}歳以降の車費用を介護・通院・移動費へ振り替えました。`);
+  }catch(e){showNotice(e.message,'error');}
+});
+el('periodEditForm').elements.kind.addEventListener('change',e=>{
+  const unit=el('periodEditForm').elements.unit;
+  const monthly=unit.querySelector('option[value="monthly"]');
+  if(e.target.value==='budget'){
+    unit.value='annual';monthly.disabled=true;
+    const f=el('periodEditForm');f.elements.key.dataset.previousKey=f.elements.key.value;f.elements.key.value='budget';f.elements.key.readOnly=true;
+    f.elements.label.dataset.previousLabel=f.elements.label.value;f.elements.label.value='管理予算';f.elements.label.readOnly=true;
+  }else{
+    monthly.disabled=false;const f=el('periodEditForm');
+    if(f.elements.key.readOnly){f.elements.key.value=f.elements.key.dataset.previousKey||'';f.elements.key.readOnly=false;}
+    if(f.elements.label.readOnly){f.elements.label.value=f.elements.label.dataset.previousLabel||'';f.elements.label.readOnly=false;}
+  }
+});
+el('cashflowViewAge').addEventListener('change', ()=>{renderExpenseDetail();planningCharts.renderExpense();});
+el('familyCashflowAge').addEventListener('change',renderFamilyAnnualQuick);
+el('expenseDisplaySource').addEventListener('change', ()=>{renderExpenseDetail();planningCharts.renderExpense();});
+const annualCsvAnswer=mountActionAnswer(el('exportAnnualCsvBtn'));
+el('expenseDisplaySource').addEventListener('change',()=>annualCsvAnswer.invalidate());
+el('exportAnnualCsvBtn').addEventListener('click',()=>{
+ if(!config){annualCsvAnswer.show({kind:'warning',body:'採用済みの計画がありません。設定を読み込んでください。'});return;}
+ try{
+  const x=downloadAnnualCsv(config,{sourceProfile:el('expenseDisplaySource').value});
+  annualCsvAnswer.show({kind:'info',body:`年間収支CSV（${x.rowCount}期間）のダウンロードを開始しました。アプリの設定は変更していません。`,next:'端末のファイル保存先と内容を確認してください。'});
+ }catch(e){annualCsvAnswer.show({kind:'error',body:'CSV出力を開始できませんでした。条件を確認して再試行してください。'});}
+});
+el('certaintyForm').addEventListener('submit', saveCertainty);
+el('actualForm').addEventListener('submit', saveActual);
+el('actualAge').addEventListener('change', e=>populateActualForm(e.target.value));
+el('annualReviewAge').addEventListener('change', e=>renderAnnualReview(e.target.value));
+el('saveAnnualReviewBtn').addEventListener('click', saveAnnualReview);
+el('saveScenarioBtn').addEventListener('click', saveCurrentScenario);
+el('importFile').addEventListener('change', e=>{ const f=e.target.files?.[0]; if(f) importConfig(f).catch(err=>showNotice(`読込失敗: ${err.message}`,'error')); });
+el('importFile2').addEventListener('change', e=>{ const f=e.target.files?.[0]; if(f) importConfig(f).catch(err=>showNotice(`読込失敗: ${err.message}`,'error')); });
+function mountJsonExport(id,create,filename){
+ const answer=mountActionAnswer(el(id));
+ el(id).addEventListener('click',()=>{
+  try{
+   const payload=create();
+   if(!payload){answer.show({kind:'warning',body:'保存済み設定がありません。バックアップは開始していません。'});return;}
+   downloadJson(payload,filename());
+   answer.show({kind:'info',body:'JSONバックアップのダウンロードを開始しました。端末での保存完了は確認できません。',next:'ファイルの存在と保存先を確認し、非公開で保管してください。'});
+  }catch(e){answer.show({kind:'error',body:'バックアップのダウンロードを開始できませんでした。採用済みデータは変更していません。'});}
+ });
+}
+mountJsonExport('exportBtn',()=>config?createConfigBackup(config):null,()=>`lifeplan-backup-${new Date().toISOString().slice(0,10)}.json`);
+mountJsonExport('exportFullBtn',()=>{
+ const state=loadStateForTransfer();
+ return state.config?createFullBackup(state):null;
+},()=>`lifeplan-full-backup-${new Date().toISOString().slice(0,10)}.json`);
+
+// Display-only wrapper. Existing financial calculations are unchanged.
+function mountReferenceTool(id,run,fields,resultId,validate=()=>null){
+ const button=el(id),answer=mountActionAnswer(button),result=el(resultId);
+ const basis=el(resultId.replace('Result','Basis'));
+ const clearOutput=()=>{result.textContent='';if(basis)basis.textContent='';};
+ for(const name of fields){
+  const input=el(name);
+  for(const evt of ['input','change'])input.addEventListener(evt,()=>{clearOutput();answer.invalidate();});
+ }
+ button.addEventListener('click',()=>{
+  const issue=validate();
+  if(issue){clearOutput();answer.show({kind:'warning',body:issue});return;}
+  try{
+   run();
+   if(!result.textContent.trim())throw Error('empty-reference-result');
+   answer.show({kind:'info',body:'参考試算を表示しました。この結果は未保存で、現在の計画・資産推移・CSVへ反映されていません。'});
+  }catch(e){clearOutput();answer.show({kind:'error',body:'参考試算を実行できませんでした。入力値や現在の設定を確認してください。'});}
+ });
+}
+const validNumber=(id,{min=0,max=Infinity,integer=false}={})=>{
+ const raw=el(id).value.trim();
+ if(raw==='')return false;
+ const n=Number(raw);
+ return Number.isFinite(n)&&n>=min&&n<=max&&(!integer||Number.isInteger(n));
+};
+const referenceIssue=(checks)=>checks.every(([id,opt])=>validNumber(id,opt))?null:'入力値が未入力・不正・範囲外です。数値と単位を確認してください。';
+mountReferenceTool('pensionToolRun',runPensionTool,['pensionBase65','pensionToolAge'],'pensionToolResult',()=>referenceIssue([
+ ['pensionBase65',{min:0}],['pensionToolAge',{min:60,max:75,integer:true}]]));
+mountReferenceTool('idecoToolRun',runIdecoTool,['idecoBalance','idecoYears'],'idecoToolResult',()=>referenceIssue([
+ ['idecoBalance',{min:0}],['idecoYears',{min:5,max:20,integer:true}]]));
+mountReferenceTool('retirementToolRun',runRetirementTool,['retirementAmount','serviceYears'],'retirementToolResult',()=>referenceIssue([
+ ['retirementAmount',{min:0}],['serviceYears',{min:1,max:120,integer:true}]]));
+mountReferenceTool('unemploymentToolRun',runUnemploymentTool,[],'unemploymentToolResult',()=>config?null:'計画を読み込んでください。');
+mountReferenceTool('taxToolRun',runTaxSocialTool,['taxToolAge','taxToolSalary','taxToolPension','taxToolSpouseIncome','taxToolSpouseAge'],'taxToolResult',()=>{
+ const checks=[['taxToolAge',{min:60,max:95,integer:true}],['taxToolSalary',{min:0}],['taxToolPension',{min:0}]];
+ if(el('taxToolSpouseIncome').value.trim()!==''){
+  checks.push(['taxToolSpouseIncome',{min:0}],['taxToolSpouseAge',{min:0,max:110,integer:true}]);
+ }
+ return referenceIssue(checks);
+});
+
+document.addEventListener('click', e=>{
+  const navigation=e.target.closest('[data-open-tab]');
+  if(navigation){
+    switchTab(navigation.dataset.openTab);
+    const target=el(navigation.dataset.focusTarget);
+    if(target){
+      revealWorkflowTarget(target);
+      document.querySelectorAll('.input-destination').forEach(n=>n.classList.remove('input-destination'));
+      for(let parent=target.parentElement;parent;parent=parent.parentElement)if(parent.tagName==='DETAILS')parent.open=true;
+      if(!target.matches('input,select,textarea,button,a'))target.setAttribute('tabindex','-1');
+      target.classList.add('input-destination');target.focus({preventScroll:true});target.scrollIntoView({block:'center',behavior:'auto'});
+    }
+  }
+  const da=e.target.closest('[data-delete-actual]'); if(da) deleteActual(Number(da.dataset.deleteActual));
+  const ds=e.target.closest('[data-scenario-delete]'); if(ds) deleteScenario(ds.dataset.scenarioDelete);
+  const dp=e.target.closest('[data-delete-period]');
+  if(dp){
+    invalidatePeriodPreview();
+    try{periodPreview=planPeriodDelete({config,scenarios},Number(dp.dataset.deletePeriod));renderPeriodPreview(periodPreview);}
+    catch(error){showNotice(error.message,'error');}
+  }
+});
+document.addEventListener('change', e=>{
+  if(e.target.matches('[data-scenario-select]')) toggleScenario(e.target.dataset.scenarioSelect,e.target.checked);
+});
+
+el('showActuals').addEventListener('change',e=>{
+  showActuals=e.target.checked;
+  document.body.classList.toggle('simulation-only',!showActuals);
+  if(config){renderHome();drawChart();}
+});
+
+function switchTab(id){
+  if(['salary','pension'].includes(id)&&el('sharedTaxTool')){const container=id==='pension'&&el('pensionTaxExtra')?el('pensionTaxExtra'):el(id);container.appendChild(el('sharedTaxTool').closest('details.supplementary')||el('sharedTaxTool'));}
+  const group=document.querySelector(`[data-tab="${id}"]`)?.dataset.groupItem;
+  if(group){document.querySelectorAll('[data-group]').forEach(b=>b.classList.toggle('active',b.dataset.group===group));document.querySelectorAll('[data-group-item]').forEach(b=>b.hidden=b.dataset.groupItem!==group);}
+  document.querySelectorAll('[data-tab]').forEach(b=>b.classList.toggle('active',b.dataset.tab===id));
+  document.querySelectorAll('.panel').forEach(p=>p.hidden=p.id!==id);
+}
+document.querySelectorAll('[data-group]').forEach(btn=>btn.addEventListener('click',()=>{const first=document.querySelector(`[data-group-item="${btn.dataset.group}"]`);if(first)switchTab(first.dataset.tab);}));
+document.querySelectorAll('[data-tab]').forEach(btn=>btn.addEventListener('click',()=>switchTab(btn.dataset.tab)));
+installWorkflowTabs();
+const migrationPanel=mountMigration({onCommit:()=>{const saved=loadState();config=saved.config;scenarios=saved.scenarios;refresh();}});
+syncPanel=mountSyncPanel(el('privateSyncContainer'),{
+ getState:()=>loadStateForTransfer(),validateState:value=>validateSavedState(value),
+ exportLocalBackup:state=>downloadJson(createFullBackup(state),`lifeplan-conflict-device-before-cloud-${new Date().toISOString().replace(/[:.]/g,'-')}.json`),
+ replaceLocal:(next,expected)=>{if(configSignature(loadStateForTransfer())!==configSignature(expected))throw Error('端末の入力条件が変更されました。再照合してください');return replaceState(next,loadState());},
+ afterReplace:()=>{const saved=loadState();config=saved.config;scenarios=saved.scenarios;refresh();},
+ writeAllowed:()=>writeAccess.writable,writeAccessReason:()=>writeAccess.reason,
+ onCloudMetadata:iso=>{
+  const node=el('cloudDataSavedAt');if(!node)return;
+  if(iso==='pending-server-timestamp'){node.textContent='書込み成功（保存時刻は再照合待ち）';return;}
+  const date=iso?new Date(iso):null;
+  node.textContent=date&&Number.isFinite(date.valueOf())?new Intl.DateTimeFormat('ja-JP',{timeZone:'Asia/Tokyo',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'}).format(date)+' JST':'未確認（保存時刻の記録なし）';
+ }
+});
+writeAccess.subscribe?.(()=>syncPanel?.refreshWriteAccess?.());
+mountRecoveryCheck();
+window.addEventListener('storage',event=>{
+  migrationPanel.invalidate(event);
+  if(event.key===null||MIGRATION_KEYS.includes(event.key)){
+    fullPlanCard.invalidate();mortalityCard.invalidate({external:true});detailUI.invalidate();pensionSheet.invalidate();salarySheet.invalidate();calendarSheet.invalidate();expenseSheet.invalidate();incomeSheet.invalidate();showNotice('別画面で設定が更新されました。再読み込みしてから編集してください。','error');
+  }
+});
+
+document.querySelectorAll('[data-help]').forEach(btn=>btn.addEventListener('click',()=>{
+  el('helpTitle').textContent=btn.dataset.help;
+  el('helpBody').textContent=btn.dataset.helpText || 'この項目は老後計画の前提値です。変更後は全期間を再計算します。';
+  el('helpDialog').showModal();
+}));
+el('helpClose').addEventListener('click',()=>el('helpDialog').close());
+
+const CURRENT_RUNTIME_BUILD='v0.9.68-receipt-integrated-candidate-20261114';
+el('appVersion').textContent=CURRENT_RUNTIME_BUILD+'（端末で実行中）';
+const freshness=el('runtimeFreshness');
+(async()=>{
+ try{
+  // The release marker alone does not prove the running bundle is current.
+  // Load the public manifest outside the offline cache, then compare actual
+  // bytes served to this page (which may come from its active service worker).
+  const markerUrl=new URL('./release-info.json',import.meta.url);
+  markerUrl.searchParams.set('verify',String(Date.now()));
+  const markerResponse=await fetch(markerUrl,{cache:'no-store',credentials:'omit'});
+  if(!markerResponse.ok)throw Error('release-marker-unavailable');
+  const marker=await markerResponse.json();
+  if(typeof marker.appBuild!=='string'||!/^v[0-9]+[.][0-9]+[.][0-9]+-/.test(marker.appBuild))throw Error('release-format-invalid');
+  if(marker.appBuild!==CURRENT_RUNTIME_BUILD){
+   freshness.textContent='更新あり（公開：'+marker.appBuild+'）';freshness.dataset.status='outdated';return;
+  }
+  if(!globalThis.crypto?.subtle)throw Error('digest-unavailable');
+  const manifestUrl=new URL('./distribution-manifest.json',import.meta.url);
+  manifestUrl.searchParams.set('verify',String(Date.now()));
+  const manifestResponse=await fetch(manifestUrl,{cache:'no-store',credentials:'omit'});
+  if(!manifestResponse.ok)throw Error('release-manifest-unavailable');
+  const manifest=await manifestResponse.json();
+  if(manifest.runtime!==CURRENT_RUNTIME_BUILD||!Array.isArray(manifest.files))throw Error('manifest-version-mismatch');
+  const targets=['index.html','app.mjs','mortality-ui.mjs','current-summary.mjs','detail-ui.mjs','styles.css'];
+  const expected=new Map(manifest.files.map(file=>[file.name,file]));
+  let mismatched=false;
+  for(const name of targets){
+   const entry=expected.get(name);
+   if(!entry||!Number.isInteger(entry.size)||!/^([a-f0-9]{64})$/.test(entry.sha256))throw Error('manifest-file-missing');
+   // Exact URLs are intentionally intercepted by the page's active SW.
+   const response=await fetch(new URL('./'+name,import.meta.url),{cache:'no-store',credentials:'same-origin'});
+   if(!response.ok)throw Error('bundle-file-unavailable');
+   const buffer=await response.arrayBuffer();
+   const digest=await crypto.subtle.digest('SHA-256',buffer);
+   const actual=[...new Uint8Array(digest)].map(byte=>byte.toString(16).padStart(2,'0')).join('');
+   if(buffer.byteLength!==entry.size||actual!==entry.sha256)mismatched=true;
+  }
+  freshness.textContent=mismatched?'更新あり（画面の実行ファイルが公開版と不一致）':'主要実行ファイル照合済み（公開版と一致）';
+  freshness.dataset.status=mismatched?'outdated':'current';
+ }catch{
+  freshness.textContent='照合不可（更新状態は未確認）';
+  freshness.dataset.status='unknown';
+ }
+})(); ; el('rulesVersion').textContent=RULES.asOf;
+if(startupError){setEmptyState();showNotice(`保存データを読み込めません。復元用バックアップを確認してください。${startupError}`,'error');}
+else refresh();
+if(!writeAccess.writable)showNotice('この画面は読み取り専用です。別の編集画面を閉じて再読み込みしてください。同時更新制御が利用できない場合も保存を停止します。','error');
+if('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js',{updateViaCache:'none'}).catch(()=>showNotice('アプリの更新を取得できませんでした。現在版と保存データを保持します。通信状態を確認してください。','error'));

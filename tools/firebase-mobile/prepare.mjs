@@ -1,6 +1,6 @@
 // Create a fresh, allowlisted preview bundle ONLY. No Firebase CLI/API or deployment.
 import {readFileSync,mkdirSync,writeFileSync,lstatSync} from 'node:fs';
-import {resolve,dirname} from 'node:path';
+import {resolve,dirname,relative,isAbsolute,sep} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {createHash} from 'node:crypto';
 import {BUILD,PROJECT,CHANNEL} from './mobile-policy.mjs';
@@ -26,7 +26,8 @@ export const HEADERS=Object.freeze([
 export function prepareBundle(destination){
  const output=resolve(destination);
  // Do not overwrite any existing output or write inside the source tree.
- if(output===root||output.startsWith(root+'/'))throw Error('Choose a fresh destination outside the repository');
+ const rel=relative(root,output);
+ if(rel===''||(!isAbsolute(rel)&&rel!=='..'&&!rel.startsWith('..'+sep)))throw Error('Choose a fresh destination outside the repository');
  const approval=JSON.parse(readFileSync(resolve(here,'preview-approval.json'),'utf8'));
  if(approval.approvalStatus!=='approved'||approval.project!==PROJECT||approval.site!==PROJECT||
     approval.channel!==CHANNEL||approval.expires!=='14d'||approval.allowAutomaticExtension!==false||

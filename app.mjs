@@ -1,3 +1,4 @@
+import {mountReceiptAppAdapter} from './receipt-app-adapter.mjs';
 import {mountPlanningCharts} from './planning-charts.mjs';
 import {mountAgeBudgetComparison} from './age-budget-ui.mjs';
 import {mountBudgetTravelView} from './budget-travel-ui.mjs';
@@ -53,6 +54,7 @@ let scenarios=initialState.scenarios;
 let syncPanel=null; // Firebase is never accessed before explicit opt-in.
 const currentConfig=()=>config;
 const currentScenarios=()=>scenarios;
+mountReceiptAppAdapter(document.getElementById('receiptCompareMount'),{getConfig:()=>config});
 let result = null;
 let forecast = null;
 let showActuals = false;
@@ -62,7 +64,7 @@ const survivorPensionCard=mountSurvivorPensionScreen(document.getElementById('su
 
 function inputValues(){
   return new Map([...document.querySelectorAll('#dashboard input, #dashboard select, #dashboard textarea')]
-    .filter(input=>input.id!=='expenseDisplaySource'&&!input.closest('#mortality, #survivorPension, #pension, #salary, #salaryIdecoInputs, #calendarSheet, #expenseSheet, #incomeSheet, .detail-form, #step8TrialContainer, #fullPlanComparisonContainer, #privateSyncContainer'))
+    .filter(input=>input.id!=='expenseDisplaySource'&&!input.closest('#mortality, #survivorPension, #pension, #salary, #salaryIdecoInputs, #calendarSheet, #expenseSheet, #incomeSheet, #receiptCompare, .detail-form, #step8TrialContainer, #fullPlanComparisonContainer, #privateSyncContainer'))
     .map(input=>[input.id||(input.dataset.reviewKey?`review/${input.dataset.reviewKey}`:input.form?.id&&input.name?`${input.form.id}/${input.name}`:''),{input,value:input.type==='checkbox'?input.checked:input.value}])
     .filter(([key])=>key));
 }
@@ -1095,7 +1097,7 @@ document.querySelectorAll('[data-help]').forEach(btn=>btn.addEventListener('clic
 }));
 el('helpClose').addEventListener('click',()=>el('helpDialog').close());
 
-const CURRENT_RUNTIME_BUILD='v0.9.60-inline-reference-export-answers-20261113';
+const CURRENT_RUNTIME_BUILD='v0.9.68-receipt-integrated-candidate-20261114';
 el('appVersion').textContent=CURRENT_RUNTIME_BUILD+'（端末で実行中）';
 const freshness=el('runtimeFreshness');
 (async()=>{

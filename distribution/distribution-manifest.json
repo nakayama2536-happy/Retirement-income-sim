@@ -1,0 +1,486 @@
+{
+  "kind": "public-release",
+  "runtime": "v0.9.68-receipt-integrated-candidate-20261114",
+  "files": [
+    {
+      "name": "action-answer.css",
+      "size": 1135,
+      "sha256": "97e2d91c43f0dedfc691a166b7bd1ebcf26f7803c1415611450c3d3eee603fdb"
+    },
+    {
+      "name": "action-answer.mjs",
+      "size": 1983,
+      "sha256": "e167e9efc2b8ebfb19581d67fb9986b699b4cbdf62ec9bab06f23f0f249c6ba6"
+    },
+    {
+      "name": "age-budget-candidate.mjs",
+      "size": 3403,
+      "sha256": "5d6c5ab989675507658c78a0e1a1fa0e819c06a391260aa34432fab911836910"
+    },
+    {
+      "name": "age-budget-preview-export.mjs",
+      "size": 2395,
+      "sha256": "cf721a183d1e21e369be2d39d280fc9c8409f8553cff9ef71fc6bcad8873f782"
+    },
+    {
+      "name": "age-budget-ui.mjs",
+      "size": 3924,
+      "sha256": "921c1e10bfb3c7b87123bb5cc279a9b1ea45c8e83189627617fe41c7d53681db"
+    },
+    {
+      "name": "annual-cashflow.mjs",
+      "size": 6596,
+      "sha256": "ebe9645015df8481bdb43fc2d64671308e268565c0e9bb846977525146975e65"
+    },
+    {
+      "name": "annual-csv.mjs",
+      "size": 4942,
+      "sha256": "357e41329534105274ba0de6312adef9b636741218b7e0025c2c5057f939935d"
+    },
+    {
+      "name": "app.mjs",
+      "size": 86386,
+      "sha256": "b6b229f3e4dc83d7e6ca48059b2dac46c4bff758629601984c015810caa010c3"
+    },
+    {
+      "name": "backup-compatibility.mjs",
+      "size": 8315,
+      "sha256": "bcbe648d2bce946196d342582494aad8c2ec36985ca318b91a516ce31b556a7c"
+    },
+    {
+      "name": "budget-travel-ui.mjs",
+      "size": 4165,
+      "sha256": "6f26ed3eda004b52869ffffc2fa626346a88dc7ad3a07a6773243bdffc746262"
+    },
+    {
+      "name": "calc.mjs",
+      "size": 61793,
+      "sha256": "6836638431335e6e0b9ab09d79134357e4d752c186ce74b783848bc503fcd4e0"
+    },
+    {
+      "name": "calendar-mode.mjs",
+      "size": 527,
+      "sha256": "1994732581f03f03d2f157df05bdd902c55732603b931fcb0b739be7df5de070"
+    },
+    {
+      "name": "calendar-ui.mjs",
+      "size": 5406,
+      "sha256": "bbbe113673b5d4619e3a4a302eb1263222c55176607637608a511accf12ab136"
+    },
+    {
+      "name": "calendar-workflow.mjs",
+      "size": 5369,
+      "sha256": "3e83db24ec394d2e9c263db314f525b4e4fdb6752082d2a7bfe49b4766286687"
+    },
+    {
+      "name": "cashflow-reconciliation.mjs",
+      "size": 8430,
+      "sha256": "329f238081ee2ed77d878dd6346fcb85a1ff43726cd7b88c9a3b004fe8dd0ba0"
+    },
+    {
+      "name": "cashflow-sources.mjs",
+      "size": 26669,
+      "sha256": "12ba0651c582d82f9cf5e0a1bc40dcf3772b05435ae4647e0151e8a9adb53a1c"
+    },
+    {
+      "name": "current-summary.mjs",
+      "size": 9713,
+      "sha256": "ebd4287f414fdadb40794c5e148d63734a9163b89bdb22d4169b43042146bbdb"
+    },
+    {
+      "name": "date-display.mjs",
+      "size": 3484,
+      "sha256": "6890da90dcfd728e30360a4f521eb49d609c78445d615e94d3ef05e445779805"
+    },
+    {
+      "name": "detail-settings.mjs",
+      "size": 25182,
+      "sha256": "b4d5c3215755ee04445981e67c41f0739189d962622426bfaba83290cd26e397"
+    },
+    {
+      "name": "detail-ui.mjs",
+      "size": 42212,
+      "sha256": "05566fd14958e340a895af9353e9a43e3d455d23a521dd21d04f88fb6a320696"
+    },
+    {
+      "name": "detailed-report.mjs",
+      "size": 16616,
+      "sha256": "8a9c7859517ec6fa83832c87af899b78e6a5020a0a50ff94a7ff81d568d98c39"
+    },
+    {
+      "name": "discretionary-travel.mjs",
+      "size": 1965,
+      "sha256": "29683e450123bc85f8e72615347809337d074ceadfca67500a23bf33b9e48877"
+    },
+    {
+      "name": "docs/USER_GUIDE.md",
+      "size": 48574,
+      "sha256": "fb8c53988fc1c87d37e9f8b0aed2bc4c74fc48ab196f5e08da975ea07254b152"
+    },
+    {
+      "name": "expense-display.mjs",
+      "size": 4997,
+      "sha256": "ccf54f9086f4e683b332ffd7f63db60c58d22c6dac9e4b1a5238aabb5744ceb8"
+    },
+    {
+      "name": "expense-preview.mjs",
+      "size": 11230,
+      "sha256": "60abf85599f65771e2af25373bf9e7ab1a75bb70d85ba9ccf2475b50d70589c8"
+    },
+    {
+      "name": "expense-ui.mjs",
+      "size": 10631,
+      "sha256": "09dbed1ae559b142274b30f2e2834a1cc4b397d51bcb6f0bf98be678314a134f"
+    },
+    {
+      "name": "expense-workflow.mjs",
+      "size": 7688,
+      "sha256": "2116cc44aca5fa27a0b6ad88dfd9a32a0fb284ede0a9aaca92bcfa4b0f3fd2ca"
+    },
+    {
+      "name": "family-warm-theme.css",
+      "size": 17515,
+      "sha256": "45e0d24974de8fcbf4bd9c971c256740b745b9386aae444521863e91b2fb2f01"
+    },
+    {
+      "name": "full-backup.mjs",
+      "size": 1612,
+      "sha256": "652306d32c4d90424420a2dd4e7c1750da0633a498fe9bb47582ac694006b9ff"
+    },
+    {
+      "name": "full-plan-comparison.mjs",
+      "size": 4050,
+      "sha256": "d3202d59fc1ebb5e161a8fea5228a5daae6dd0c29bb25b23741f51eaebf4d245"
+    },
+    {
+      "name": "full-plan-saved.mjs",
+      "size": 5210,
+      "sha256": "e8f17c2211fd5051b1e1e3769a3aaa8522832d42626f9ed0cd3016f8794302ef"
+    },
+    {
+      "name": "full-plan-ui.mjs",
+      "size": 14805,
+      "sha256": "9f04f08b4b5b5c69d1d20160a0b1900a5e8b5eb3cc5a0523a57986266bac7b8b"
+    },
+    {
+      "name": "icons/icon-192.png",
+      "size": 36192,
+      "sha256": "fc6b3a6c5a5166142433dfe26275e12079e0b4556b2b3eb88b82844d34cb2491"
+    },
+    {
+      "name": "icons/icon-512.png",
+      "size": 212465,
+      "sha256": "c3dfbe3fde9c25ed6a58d57ac7ef44aa0eccc4fbef968c41d852a85459cfd9d4"
+    },
+    {
+      "name": "income-preview.mjs",
+      "size": 7474,
+      "sha256": "fe168674cf3a42d5482fd00208b600e77b717d2787237940d63ecd3a90a4df39"
+    },
+    {
+      "name": "income-ui.mjs",
+      "size": 7637,
+      "sha256": "fb5678ddc4b7387c8fe3fbaa79df87cd02200ba232efa3d82dd47ebb51650bce"
+    },
+    {
+      "name": "income-workflow.mjs",
+      "size": 5736,
+      "sha256": "d55a5d670fdfc2feec37a0554df1b73e049a97fadec9db49b72325ff98b83f44"
+    },
+    {
+      "name": "index.html",
+      "size": 83780,
+      "sha256": "89c188233bcdea549987f8c459ee1ad74dd9d9efc6bbd9ac8931c28c43a1c18a"
+    },
+    {
+      "name": "input-snapshots.mjs",
+      "size": 4307,
+      "sha256": "4e6542dd863b9d8623d62ff5e1e2c748ece99ce06c20e20f5afdcfebf3f6b28f"
+    },
+    {
+      "name": "manifest.webmanifest",
+      "size": 341,
+      "sha256": "ac28361e39af9949b65ab97455c2dc26afc0e073efbeb60283f9a0ddcd8452d4"
+    },
+    {
+      "name": "migration-ui.mjs",
+      "size": 3302,
+      "sha256": "9a2b9aa54834bb943f7743d8dc3bb13eaa781913635f5623ec013e03bf4b446a"
+    },
+    {
+      "name": "migration.mjs",
+      "size": 5891,
+      "sha256": "02abed25ffd8af29a8320993c0cee58c5694a184d5c80ba32a64fd26a94f25d1"
+    },
+    {
+      "name": "mortality-comparison.mjs",
+      "size": 12508,
+      "sha256": "623670516011b1f980997a9bfa0a10cc925e7b496bc922b0509ab4b933523d7d"
+    },
+    {
+      "name": "mortality-draft.mjs",
+      "size": 2176,
+      "sha256": "c3abf20435f0b61f932374235ac5e40f89fb6772a29a1a220d5956ff8c86926b"
+    },
+    {
+      "name": "mortality-expense-audit.mjs",
+      "size": 2087,
+      "sha256": "02f8e5a7d1c3a2ba20ec83bc0da1de67979607a12a2a8660720b46f3d6c1a89d"
+    },
+    {
+      "name": "mortality-expense-csv.mjs",
+      "size": 7919,
+      "sha256": "09e9100a41a29edb9361ee101749c463fdf692317368143f31dbee0a05fe7eb9"
+    },
+    {
+      "name": "mortality-expense-preset.mjs",
+      "size": 1484,
+      "sha256": "312c7e102fb16b03e4757899dfb73dde1ba9a6874f30b6e9c436b320d4c857d2"
+    },
+    {
+      "name": "mortality-itemized-ui.mjs",
+      "size": 13963,
+      "sha256": "c11f6db063439ae46d215cf6b0aa899c0bf78c50b5a85a79144b9948221e2d41"
+    },
+    {
+      "name": "mortality-itemized.mjs",
+      "size": 7411,
+      "sha256": "3da9610a3c1fe4f41325711ff3a6d8677abca3ceb6778973f4668566bf160c72"
+    },
+    {
+      "name": "mortality-preview.mjs",
+      "size": 13299,
+      "sha256": "ff883b74881dc7321b2acb95a2e515cf2e57e5260743011c8ce9cd4659bbedeb"
+    },
+    {
+      "name": "mortality-ui.mjs",
+      "size": 72694,
+      "sha256": "c29582b7c170a8fafb2ce2c5691cdad5fa7e48ecb1b5e2b2774dcd8d2c8d0443"
+    },
+    {
+      "name": "pension-estimate.mjs",
+      "size": 2123,
+      "sha256": "18797728e0d8a1820875f82a490f2baad3e280168376d6f6b29187dc50c893db"
+    },
+    {
+      "name": "pension-ui.mjs",
+      "size": 31381,
+      "sha256": "613675b0aaf154e38a14fcc8665b3630ae0ff50c43a1663f192b80e3ddcd8391"
+    },
+    {
+      "name": "pension.mjs",
+      "size": 11516,
+      "sha256": "544556aefc41f40f528dc615a762415e992977a5b8e77261d7bab3f61fcd74bf"
+    },
+    {
+      "name": "planning-charts.mjs",
+      "size": 6912,
+      "sha256": "d3e84adb8353331ad341b2cbb1483d833ccf1b79af98c92b52cc19863a6ab0fe"
+    },
+    {
+      "name": "README.md",
+      "size": 5551,
+      "sha256": "1d2a67714926332429ea346a7655561ab0b31b48e6ed2a90a3bbeace6bf61a85"
+    },
+    {
+      "name": "receipt-app-adapter.mjs",
+      "size": 3334,
+      "sha256": "8a595cb2ec239f5e63f722006d51f150af580b9412194b1a6eb961b1378ef6ea"
+    },
+    {
+      "name": "receipt-comparison-ui.mjs",
+      "size": 13169,
+      "sha256": "dd828ac0322e390752a2298527880ea296f790e5da36a915e9ca550dfc5f0f21"
+    },
+    {
+      "name": "receipt-comparison.mjs",
+      "size": 4533,
+      "sha256": "de1ed4d2b524f6a84c0c9b42414db0d56e2f4f598d769cbe13eff191888e4575"
+    },
+    {
+      "name": "receipt-tax-amount.mjs",
+      "size": 5575,
+      "sha256": "554ee60c09cb8332dd995a4d5c511b8c3bdef6c956ed4d12f580710d05a26cab"
+    },
+    {
+      "name": "receipt-tax-extension.mjs",
+      "size": 4457,
+      "sha256": "5163dc6bbe290a945b4db7fdbf9de0d9bc190f34502e7b321a9759dbbddefefa"
+    },
+    {
+      "name": "receipt-tax-reference.mjs",
+      "size": 5142,
+      "sha256": "0c1a9c751c02a99b1e8c869f5e0f2121cb4770b9ad98d552fd91d6b125c46316"
+    },
+    {
+      "name": "recovery-ui.mjs",
+      "size": 1907,
+      "sha256": "46b17d0d3bad75e71a0c2d9e56af6f1d8cfca806910a971eaf072ee5f3e0c1c8"
+    },
+    {
+      "name": "release-info.json",
+      "size": 146,
+      "sha256": "84bddf718ca448827c409d1f1fac9ed8f72a59e886bc15fe1589857d92b85932"
+    },
+    {
+      "name": "retirement-comment.mjs",
+      "size": 2769,
+      "sha256": "17ef70a0115321e57c51c4dd03494d71ea770d69d5e9a65e2e83da6fd70baf30"
+    },
+    {
+      "name": "review-prompt.mjs",
+      "size": 3656,
+      "sha256": "07b3ef367407130cf35385cde1e90cafa5c14364a7527b842e07a0d567f0f825"
+    },
+    {
+      "name": "rules.mjs",
+      "size": 2766,
+      "sha256": "25ecbeda68013f810285379dcec231516c248efe93009f61e12db77d89dc63e6"
+    },
+    {
+      "name": "salary-life.mjs",
+      "size": 16720,
+      "sha256": "56c00249f8e2fbd2db497d137c230891a0b2c30cb99686f5135eadb4e88f0d1e"
+    },
+    {
+      "name": "salary-ui.mjs",
+      "size": 23982,
+      "sha256": "db71d0d883b5ad6634c0d4558ed7b27cc1977964f9fa7766af0ebab7b18e0e28"
+    },
+    {
+      "name": "salary-workflow.mjs",
+      "size": 8896,
+      "sha256": "957d72e2c23643e2de091ea1199b61f2ba9243ae5906f0ba5387ea63f15c2547"
+    },
+    {
+      "name": "simple-layout.mjs",
+      "size": 11710,
+      "sha256": "4a0762b9f840341b52722009726ba84d2ec43589746671d05cfebb63c6371a5b"
+    },
+    {
+      "name": "state.mjs",
+      "size": 1978,
+      "sha256": "982933f9534ff729228e1851f7c82f853678d549d659ec7db4e62b17e7cdb3a5"
+    },
+    {
+      "name": "step8-trial-ui.mjs",
+      "size": 6462,
+      "sha256": "5b1e345f3ea692829b9a507375bf6c8520a925b72ceda0b72e48c7151b3e88c9"
+    },
+    {
+      "name": "step8-trial-workflow.mjs",
+      "size": 11145,
+      "sha256": "2d38704738bb0bb77f9b82cbca7f913e5b10af297fc13d682c478034723ae6d9"
+    },
+    {
+      "name": "storage.mjs",
+      "size": 8727,
+      "sha256": "b773c13215a4b1c2b2cc047896c10d5fb765e4e1802875c977457dd04cdb9614"
+    },
+    {
+      "name": "styles.css",
+      "size": 37024,
+      "sha256": "e0599e97247b1019312569e41225d0c1afcbb68a5f0f6623d7176a951abfc1ee"
+    },
+    {
+      "name": "survivor-pension-calculator.mjs",
+      "size": 2817,
+      "sha256": "04a5d3bbd610b4886038e40e36415ac5e7d8c1449053901300bf7bc881719438"
+    },
+    {
+      "name": "survivor-pension-ui.mjs",
+      "size": 6029,
+      "sha256": "c0726a6a54aae8e06153df985588f4be5218d9fea376ec245e4ae0e5bd8a3a22"
+    },
+    {
+      "name": "sw.js",
+      "size": 4953,
+      "sha256": "93add1e3d450edc96f37c484a5501fcba30caf6ccf646dd235369c895bf71b58"
+    },
+    {
+      "name": "sync-answer-bridge.mjs",
+      "size": 877,
+      "sha256": "3fd27672c05de1f158dc29bf97a23e0348d162f70bd3b4c642023e0cba4c5da7"
+    },
+    {
+      "name": "sync-controller.mjs",
+      "size": 13978,
+      "sha256": "d69c7f40d7a6243c663845825b6e7943fef2a807e1fe98fb3fbbc07ae1e6077e"
+    },
+    {
+      "name": "sync-crypto.mjs",
+      "size": 4017,
+      "sha256": "2fa56ca0d4da521851298788d870e77f8b3df27c1fb4e0e2880281f519821c69"
+    },
+    {
+      "name": "sync-firebase.mjs",
+      "size": 5068,
+      "sha256": "36b8832e3f0c8fd347c017b0081b4b5076d42f0e02d5f6bb47893c0ac81cce89"
+    },
+    {
+      "name": "sync-panel.mjs",
+      "size": 42446,
+      "sha256": "1077ffac4d00338aa21e05c1fe0e848d1e14ec25ed6d97b6b2d3be392a681e73"
+    },
+    {
+      "name": "sync-policy.mjs",
+      "size": 2695,
+      "sha256": "505da533a08f8da6c908ffc10740f6a10157aa99496a7ebf2edc36dd9a63105b"
+    },
+    {
+      "name": "sync-two-flows.css",
+      "size": 716,
+      "sha256": "2fbefccb448fefd4f7ada26f1f008341e60940b8194aa01c5a074fad7d7551c8"
+    },
+    {
+      "name": "sync-two-flows.mjs",
+      "size": 4459,
+      "sha256": "2da20e8060b0fe3f2822be42253033f8bd0c0e2ffd4299e61e973159d51f521d"
+    },
+    {
+      "name": "tax-social-audit.mjs",
+      "size": 11960,
+      "sha256": "c60a42fc5a224f083db3e1ce3ab4bbed76df58eb03edef7ec9302217c60ee447"
+    },
+    {
+      "name": "travel-budget-summary.mjs",
+      "size": 3943,
+      "sha256": "3068af7d2d81558578e0940cebc32d7b7d66a02889a485956ddce50ddc343a4e"
+    },
+    {
+      "name": "ui-entry-guards.mjs",
+      "size": 5504,
+      "sha256": "8e81292e69c014232efc93c1fcfeca057e6716b966c0348925dc2812d5d64824"
+    },
+    {
+      "name": "ui-numbering.css",
+      "size": 2694,
+      "sha256": "2a744beb87ab8fce0dffce6051ed3f3f42dc9ed65d0ceefa9d3cf32b2758debb"
+    },
+    {
+      "name": "ui-numbering.mjs",
+      "size": 6602,
+      "sha256": "19debc525104fffa821a7cd8bdf386713d84ffb099965a6d6cc5a75c63d9a195"
+    },
+    {
+      "name": "unemployment-plan.mjs",
+      "size": 5590,
+      "sha256": "297107c1c4667412e46ed3ac9638deb72c72cb563d59ce31cde07b99c59ea446"
+    },
+    {
+      "name": "withdrawal-plan.mjs",
+      "size": 4133,
+      "sha256": "d7912923e1c6d8c37c3adee03197f314476ee0c7d0f3b3004c5fb73eb304e1f7"
+    },
+    {
+      "name": "workflow-tabs.mjs",
+      "size": 7817,
+      "sha256": "dd18d870265988e30cbbd41c337d02d7be35a4f818fad36e57a805b89940fbcc"
+    },
+    {
+      "name": "write-access.mjs",
+      "size": 3213,
+      "sha256": "7aa6dac98e27b09d9390e90d11de21d4d2e979d1f82d8362dcfbd4b0cfa825ce"
+    }
+  ]
+}

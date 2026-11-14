@@ -4,6 +4,7 @@ import {readFileSync,mkdtempSync,readdirSync,rmSync} from 'node:fs';
 import {tmpdir} from 'node:os';
 import {resolve} from 'node:path';
 import {createHash} from 'node:crypto';
+import {fileURLToPath} from 'node:url';
 import {assertMobileLocation,checkedConfig,loadHostingConfig,assertIdentity,safeMessage,summary,PROJECT} from './tools/firebase-mobile/mobile-policy.mjs';
 import {prepareBundle,FILES,CSP} from './tools/firebase-mobile/prepare.mjs';
 const preview='https://lifeplan-sync-sandbox--encrypted-mobile-synthetic.web.app/';
@@ -69,7 +70,7 @@ test('bundle includes only allowlisted files and exact reused runner/crypto byte
 });
 test('bundle generation refuses overwriting and repository destinations',()=>{
  const parent=mkdtempSync(resolve(tmpdir(),'lifeplan-mobile-refuse-'));
- try{assert.throws(()=>prepareBundle(parent),/EEXIST/);assert.throws(()=>prepareBundle(new URL('./tools/firebase-mobile/output',import.meta.url).pathname),/outside/);}finally{rmSync(parent,{recursive:true,force:true});}
+ try{assert.throws(()=>prepareBundle(parent),/EEXIST/);assert.throws(()=>prepareBundle(fileURLToPath(new URL('./tools/firebase-mobile/output',import.meta.url))),/outside/);}finally{rmSync(parent,{recursive:true,force:true});}
 });
 test('CSP limits endpoints, disables framing/forms/workers, and allows no inline script',()=>{
  assert.match(CSP,/frame-ancestors 'none'/);assert.match(CSP,/worker-src 'none'/);assert.match(CSP,/form-action 'none'/);

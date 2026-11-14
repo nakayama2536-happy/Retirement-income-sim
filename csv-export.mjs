@@ -9,27 +9,27 @@ function finiteOrBlank(value) {
 
 function isoDateAtAge(birthDate, age) {
   if (!birthDate) return '';
-  const d = new Date(`${birthDate}T00:00:00`);
+  const d = new Date(`${birthDate}T00:00:00Z`);
   if (Number.isNaN(d.getTime())) return '';
-  d.setFullYear(d.getFullYear() + Number(age));
+  d.setUTCFullYear(d.getUTCFullYear() + Number(age));
   return d.toISOString().slice(0, 10);
 }
 
 function fullAgeOn(dateIso, birthDate) {
   if (!dateIso || !birthDate) return '';
-  const d = new Date(`${dateIso}T00:00:00`);
-  const b = new Date(`${birthDate}T00:00:00`);
+  const d = new Date(`${dateIso}T00:00:00Z`);
+  const b = new Date(`${birthDate}T00:00:00Z`);
   if (Number.isNaN(d.getTime()) || Number.isNaN(b.getTime())) return '';
-  let age = d.getFullYear() - b.getFullYear();
-  if (d.getMonth() < b.getMonth() || (d.getMonth() === b.getMonth() && d.getDate() < b.getDate())) age--;
+  let age = d.getUTCFullYear() - b.getUTCFullYear();
+  if (d.getUTCMonth() < b.getUTCMonth() || (d.getUTCMonth() === b.getUTCMonth() && d.getUTCDate() < b.getUTCDate())) age--;
   return age;
 }
 
 function nextDayBefore(dateIso) {
   if (!dateIso) return '';
-  const d = new Date(`${dateIso}T00:00:00`);
+  const d = new Date(`${dateIso}T00:00:00Z`);
   if (Number.isNaN(d.getTime())) return '';
-  d.setDate(d.getDate() - 1);
+  d.setUTCDate(d.getUTCDate() - 1);
   return d.toISOString().slice(0, 10);
 }
 

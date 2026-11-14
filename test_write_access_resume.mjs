@@ -56,7 +56,7 @@ test('no takeover when another editor holds Web Lock on return',async()=>{
 
 test('unsupported Web Locks never fallback to unsafe localStorage locking',async()=>{
  const target=new FakeTarget(),doc=new FakeTarget();
- const lease=await acquireWriteAccess({locks:undefined,target,documentRef:doc});
+ const lease=await acquireWriteAccess({locks:null,target,documentRef:doc});
  assert.equal(lease.writable,false);
  assert.equal(lease.reason,'lock-unavailable');
  assert.throws(assertWriteAccess,/読み取り専用/);

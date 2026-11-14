@@ -1,6 +1,6 @@
 // Build ONLY an isolated fictional two-device diagnostic candidate. No deployment.
 import {readFileSync,lstatSync,mkdirSync,writeFileSync} from 'node:fs';
-import {dirname,resolve,join} from 'node:path';
+import {dirname,resolve,join,relative,isAbsolute,sep} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {createHash} from 'node:crypto';
 import {PAIR_CHANNEL,PAIR_PROJECT} from './pair-policy.mjs';
@@ -24,9 +24,12 @@ export const PAIR_HEADERS=Object.freeze([
  {key:'X-Robots-Tag',value:'noindex, nofollow, noarchive'},
  {key:'Permissions-Policy',value:'camera=(), microphone=(), geolocation=(), payment=()'}
 ]);
-export function buildPairedCandidate(destination){
+function pathWithin(base,target){
+ const rel=relative(base,target);
+ return rel===''||(!isAbsolute(rel)&&rel!=='..'&&!rel.startsWith('..'+sep));
+}export function buildPairedCandidate(destination){
  const output=resolve(destination);
- if(output===root||output.startsWith(root+'/')||output===here)throw Error('Output must be outside repository');
+ if(pathWithin(root,output))throw Error('Output must be outside repository');
  const files=Object.entries(PAIR_FILES).map(([target,source])=>{
   const path=resolve(root,source);
   const s=lstatSync(path);if(!s.isFile()||s.isSymbolicLink())throw Error('Non-regular source: '+source);
@@ -39,7 +42,7 @@ export function buildPairedCandidate(destination){
  const hashes=[];
  for(const {target,bytes} of files){
   const dest=resolve(dir,target);
-  if(!dest.startsWith(dir+'/'))throw Error('Path escaped public directory');
+  if(!pathWithin(dir,dest)||dest===dir)throw Error('Path escaped public directory');
   mkdirSync(dirname(dest),{recursive:true});writeFileSync(dest,bytes,{flag:'wx'});
   hashes.push({path:target,size:bytes.length,sha256:createHash('sha256').update(bytes).digest('hex')});
  }

@@ -1,6 +1,6 @@
 {
   "kind": "public-release",
-  "runtime": "v0.9.60-inline-reference-export-answers-20261113",
+  "runtime": "v0.9.68-receipt-integrated-candidate-20261114",
   "files": [
     {
       "name": "action-answer.css",
@@ -39,13 +39,13 @@
     },
     {
       "name": "app.mjs",
-      "size": 86211,
-      "sha256": "59dde72e36c3ee4b05e3f726d3c301ea43dfb818b91f3faa9b1df9d543bd3858"
+      "size": 86386,
+      "sha256": "b6b229f3e4dc83d7e6ca48059b2dac46c4bff758629601984c015810caa010c3"
     },
     {
       "name": "backup-compatibility.mjs",
-      "size": 8318,
-      "sha256": "db258c5002e1e878558009b240c7da3c19f30d794319560ba37e059176c48451"
+      "size": 8315,
+      "sha256": "bcbe648d2bce946196d342582494aad8c2ec36985ca318b91a516ce31b556a7c"
     },
     {
       "name": "budget-travel-ui.mjs",
@@ -189,8 +189,8 @@
     },
     {
       "name": "index.html",
-      "size": 83446,
-      "sha256": "e623da95bee5f8a5fba029ed2a12467660acd845320ce3dbb5464338168c632c"
+      "size": 83780,
+      "sha256": "89c188233bcdea549987f8c459ee1ad74dd9d9efc6bbd9ac8931c28c43a1c18a"
     },
     {
       "name": "input-snapshots.mjs",
@@ -283,14 +283,44 @@
       "sha256": "1d2a67714926332429ea346a7655561ab0b31b48e6ed2a90a3bbeace6bf61a85"
     },
     {
+      "name": "receipt-app-adapter.mjs",
+      "size": 3334,
+      "sha256": "8a595cb2ec239f5e63f722006d51f150af580b9412194b1a6eb961b1378ef6ea"
+    },
+    {
+      "name": "receipt-comparison-ui.mjs",
+      "size": 13169,
+      "sha256": "dd828ac0322e390752a2298527880ea296f790e5da36a915e9ca550dfc5f0f21"
+    },
+    {
+      "name": "receipt-comparison.mjs",
+      "size": 4533,
+      "sha256": "de1ed4d2b524f6a84c0c9b42414db0d56e2f4f598d769cbe13eff191888e4575"
+    },
+    {
+      "name": "receipt-tax-amount.mjs",
+      "size": 5575,
+      "sha256": "554ee60c09cb8332dd995a4d5c511b8c3bdef6c956ed4d12f580710d05a26cab"
+    },
+    {
+      "name": "receipt-tax-extension.mjs",
+      "size": 4457,
+      "sha256": "5163dc6bbe290a945b4db7fdbf9de0d9bc190f34502e7b321a9759dbbddefefa"
+    },
+    {
+      "name": "receipt-tax-reference.mjs",
+      "size": 5142,
+      "sha256": "0c1a9c751c02a99b1e8c869f5e0f2121cb4770b9ad98d552fd91d6b125c46316"
+    },
+    {
       "name": "recovery-ui.mjs",
       "size": 1907,
       "sha256": "46b17d0d3bad75e71a0c2d9e56af6f1d8cfca806910a971eaf072ee5f3e0c1c8"
     },
     {
       "name": "release-info.json",
-      "size": 158,
-      "sha256": "ec4729dd2db53a8c9381208284e3c3cda51d8038f3271a678aa4936b470d3bb9"
+      "size": 146,
+      "sha256": "84bddf718ca448827c409d1f1fac9ed8f72a59e886bc15fe1589857d92b85932"
     },
     {
       "name": "retirement-comment.mjs",
@@ -364,8 +394,8 @@
     },
     {
       "name": "sw.js",
-      "size": 4770,
-      "sha256": "55466462e243600cec33fcd6a370cb039a17dc11ba20414436739fb76777085b"
+      "size": 4953,
+      "sha256": "93add1e3d450edc96f37c484a5501fcba30caf6ccf646dd235369c895bf71b58"
     },
     {
       "name": "sync-answer-bridge.mjs",
