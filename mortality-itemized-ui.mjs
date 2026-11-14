@@ -14,6 +14,13 @@ export function registeredMonthlyAmount(item,month){
   if(item.priceBasis==='nominal-fixed'||item.priceBasis==='target-period-nominal')return amount;
   return null; // Unsupported price bases are not guessed.
 }
+/** Correctly label signed changes; a negative reduction is an increase. */
+export function mortalityExpenseChangeText(before,after){
+ if(!Number.isFinite(before)||!Number.isFinite(after)||before<0||after<0)throw Error('比較前後の管理予算を確認してください');
+ const delta=before-after;
+ const relation=delta>1e-10?' − 減額 ':delta< -1e-10?' ＋ 増額 ':' （変更なし）';
+ return '夫婦健在時 '+format(before)+'万円／月'+relation+(Math.abs(delta)>1e-10?format(Math.abs(delta))+'万円':'')+' ＝ 比較後 '+format(after)+'万円';
+}
 const moneyText=value=>value===null?'未確認':Number(value).toLocaleString('ja-JP',{minimumFractionDigits:2,maximumFractionDigits:2})+'万円';
 export function mortalityFactorPercentText(raw){
  if(raw===null||raw===undefined||String(raw).trim()==='')return '倍率を入力してください';
@@ -95,7 +102,7 @@ export function mountMortalityItemizedControls(root,{getConfig,runPlan,onChange}
           kind==='budget-priced'?moneyText(totals.fullBefore):
           kind==='budget-after'?moneyText(totals.fullAfter):'—';
       }
-      status.textContent='参考年月 '+next.month+'：夫婦健在時 '+format(next.expense)+'万円／月 − 減額 '+format(next.expense-revised)+'万円 ＝ 比較後 '+format(revised)+'万円。未照合残額 '+format(next.unallocated)+'万円にも倍率を適用します。';
+      status.textContent='参考年月 '+next.month+'：'+mortalityExpenseChangeText(next.expense,revised)+'。未照合残額 '+format(next.unallocated)+'万円にも倍率を適用します。';
     }catch(e){
       for(const cell of host.querySelectorAll('[data-mortality-total]'))cell.textContent='未計算';
       status.textContent='倍率の確認：'+e.message;
