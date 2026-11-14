@@ -12,7 +12,7 @@ const server=createServer(async(req,res)=>{
   const target=resolve(root,'.'+(pathname==='/'?'/index.html':pathname));
   if(req.method!=='GET'||!target.startsWith(root+sep)||target.includes('/.git/')||!['.html','.mjs','.js','.css','.json','.png','.svg'].includes(extname(target))){res.writeHead(404).end();return;}
   const bytes=await readFile(target);
-  res.writeHead(200,{'Content-Type':extname(target)==='.mjs'?'text/javascript':'text/plain','Cache-Control':'no-store'});res.end(bytes);
+  res.writeHead(200,{'Content-Type':extname(target)==='.mjs'||extname(target)==='.js'?'text/javascript':extname(target)==='.html'?'text/html':extname(target)==='.css'?'text/css':'text/plain','Cache-Control':'no-store'});res.end(bytes);
  }catch{res.writeHead(404).end();}
 });
 await new Promise(ok=>server.listen(0,'127.0.0.1',ok));
