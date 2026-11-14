@@ -10,7 +10,7 @@ function checkMoney(x,name,missing){if(!validMoney(x))missing.push(name);}
 export function overlapWindow(companyYear,idecoLumpYear){
   if(!validYear(companyYear)||!validYear(idecoLumpYear))return {status:'unconfirmed',reason:'受取年が未確認'};
   if(companyYear === idecoLumpYear)return {status:'same-year',requiresAdjustment:true,reason:'同年受取は別計算が必要'};
-  if(idecoLumpYear < companyYear){const gap=companyYear-idecoLumpYear;return {status:gap<=9?'within-9-years':'outside-9-years',requiresAdjustment:gap<=9,gap,reason:'DC一時金を先に受領し、会社退職金を後で受領'};}
+  if(idecoLumpYear < companyYear){const gap=companyYear-idecoLumpYear;const windowYears=idecoLumpYear>=2026?9:4;return {status:gap<=windowYears?`within-${windowYears}-years`:`outside-${windowYears}-years`,requiresAdjustment:gap<=windowYears,gap,reason:`DC一時金を先に受領。受取年に応じ前年以前${windowYears}年を個別確認`};}
   const gap=idecoLumpYear-companyYear;
   return {status:gap<=19?'within-19-years':'outside-19-years',requiresAdjustment:gap<=19,gap,reason:'会社退職金を先に受領し、DC一時金を後で受領'};
 }
