@@ -10,7 +10,7 @@ export function mountAgeBudgetDeltaComparison({container,getConfig,documentRef=d
  const selectors={};
  for(const [key,label] of ITEMS){
   const row=d.createElement('label');row.textContent=label+'：';
-  const sel=d.createElement('select');sel.setAttribute('aria-label',label);sel.dataset.ageBudgetComponent=key;
+  const sel=d.createElement('select');sel.setAttribute('aria-label',label);sel.setAttribute('data-age-budget-component',key);
   for(const [value,text] of [['','未確認（試算不可）'],['already-in-budget','予算に反映済み（再計上しない）'],['not-in-budget','予算に未反映（差額を適用）']]){
    const option=d.createElement('option');option.value=value;option.textContent=text;sel.append(option);
   }
