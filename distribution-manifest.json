@@ -18,14 +18,24 @@
       "sha256": "5d6c5ab989675507658c78a0e1a1fa0e819c06a391260aa34432fab911836910"
     },
     {
+      "name": "age-budget-delta-candidate.mjs",
+      "size": 5028,
+      "sha256": "84d684341a648c4a1adb3cac607607ac1c162628e7c1695cbeecf995ce217749"
+    },
+    {
+      "name": "age-budget-delta-ui.mjs",
+      "size": 5200,
+      "sha256": "c73caf7446e45f2fdd7c53ed69114b8cde196be2e941e0e515f341a0c9de12fd"
+    },
+    {
       "name": "age-budget-preview-export.mjs",
       "size": 2395,
       "sha256": "cf721a183d1e21e369be2d39d280fc9c8409f8553cff9ef71fc6bcad8873f782"
     },
     {
       "name": "age-budget-ui.mjs",
-      "size": 3924,
-      "sha256": "921c1e10bfb3c7b87123bb5cc279a9b1ea45c8e83189627617fe41c7d53681db"
+      "size": 4119,
+      "sha256": "08c4269e3366a02a572bf241cb617e97638fc31989a389b569455fab7b982e7b"
     },
     {
       "name": "annual-cashflow.mjs",
@@ -394,8 +404,8 @@
     },
     {
       "name": "sw.js",
-      "size": 4953,
-      "sha256": "93add1e3d450edc96f37c484a5501fcba30caf6ccf646dd235369c895bf71b58"
+      "size": 5030,
+      "sha256": "be0473df9917e6a097bf29c4223fcc2b11eeed00182919974dd7fd1aaf30c87d"
     },
     {
       "name": "sync-answer-bridge.mjs",
