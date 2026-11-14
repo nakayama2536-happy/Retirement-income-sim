@@ -36,6 +36,10 @@ try{
  assert.equal((await page.locator('[data-tab="mortality"]').innerText()).trim(),'もしものときの家計を比較');
  assert.match((await page.locator('[data-tab="allcsv"]').innerText()).trim(),/CSV出力/,'Runtime navigation may use its own display label; verify the action remains identifiable');
  assert.equal((await page.locator('[data-group="budget"]').innerText()).trim(),'予算を設定');
+ assert.equal(await page.locator('[data-tab="survivorPension"]').getAttribute('data-navigation-reference'),'1-4');
+ assert.equal(await page.locator('[data-tab="scenarios"]').getAttribute('data-navigation-reference'),'1-5');
+ assert.equal(await page.locator('[data-tab="receiptCompare"]').getAttribute('data-navigation-reference'),'2-7');
+ evidence.cases.push('presentation-only numbering follows visible tabs');
  evidence.cases.push('navigation labels');
  const options=await page.locator('#detailCsvSource option').evaluateAll(ns=>ns.map(n=>n.value));
  assert.deepEqual(options,['','work-v0.9.7','public-v0.9']);
