@@ -1,7 +1,7 @@
 // Scope identifies this installation. Never sweep origin-wide or legacy caches.
 const SCOPE=new URL(self.registration.scope);
 const CACHE_PREFIX=`lifeplan-sim:${encodeURIComponent(SCOPE.href)}:`;
-const CACHE=`${CACHE_PREFIX}v0.9.60-inline-reference-export-answers-20261113`;
+const CACHE=`${CACHE_PREFIX}v0.9.68-receipt-integrated-candidate-20261114`;
 const ASSETS=['./','./index.html','./styles.css','./family-warm-theme.css','./app.mjs','./calc.mjs','./calendar-mode.mjs','./calendar-workflow.mjs','./calendar-ui.mjs','./salary-life.mjs','./salary-workflow.mjs','./salary-ui.mjs','./storage.mjs','./state.mjs','./migration.mjs','./migration-ui.mjs','./pension.mjs','./pension-ui.mjs','./rules.mjs','./manifest.webmanifest','./icons/icon-192.png','./icons/icon-512.png'];
 ASSETS.push('./expense-display.mjs','./annual-cashflow.mjs','./annual-csv.mjs','./full-backup.mjs','./expense-ui.mjs','./expense-workflow.mjs','./expense-preview.mjs','./cashflow-sources.mjs','./cashflow-reconciliation.mjs');
 ASSETS.push('./income-ui.mjs','./income-workflow.mjs','./income-preview.mjs');
@@ -24,6 +24,7 @@ ASSETS.push('./ui-numbering.css','./ui-numbering.mjs','./mortality-expense-csv.m
 ASSETS.push('./workflow-tabs.mjs');
 ASSETS.push('./planning-charts.mjs');
 ASSETS.push('./survivor-pension-calculator.mjs','./survivor-pension-ui.mjs');
+ASSETS.push('./receipt-comparison.mjs','./receipt-app-adapter.mjs','./receipt-tax-amount.mjs','./receipt-tax-extension.mjs','./receipt-comparison-ui.mjs','./receipt-tax-reference.mjs');
 const URLS=ASSETS.map(path=>new URL(path,SCOPE).href);
 const ALLOWED=new Set(URLS);
 async function requireComplete(cache){

@@ -1,3 +1,4 @@
+import {fileURLToPath} from 'node:url';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -32,14 +33,14 @@ test('trial modules have no persistence or adopting save/import actions',()=>{
 });
 
 test('offline candidate assets and module dependency closure are included',()=>{
-  const {out,runtime}=collect(new URL('.',import.meta.url).pathname);
+  const {out,runtime}=collect(fileURLToPath(new URL('.',import.meta.url)));
   for(const name of ['step8-trial-ui.mjs','step8-trial-workflow.mjs','full-plan-ui.mjs','full-plan-comparison.mjs','full-plan-saved.mjs','app.mjs','calc.mjs','retirement-comment.mjs','mortality-preview.mjs','mortality-comparison.mjs','mortality-ui.mjs']){
     assert.ok(out.has(name),name);
     assert.ok(runtime.includes(name),name);
     assert.match(sw,new RegExp("\\./"+name.replaceAll('.','\\.')));
   }
-  assert.equal(runtime.length,88);
-  assert.equal(out.size,91);
+  assert.equal(runtime.length,94);
+  assert.equal(out.size,97);
 });
 
 test('candidate service worker is versioned separately without cache deletion or forced update',()=>{

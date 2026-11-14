@@ -1,0 +1,8 @@
+.sync-two-flows__selector{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:12px 0}
+.sync-two-flows__choice{padding:14px;min-height:54px;white-space:normal;border:2px solid #bacbd9;border-radius:10px;background:#fff;color:#1d3c53;font-weight:700}
+.sync-two-flows__choice[aria-pressed="true"]{border-color:#2366a0;background:#eaf3fc}
+.sync-two-flows__path[hidden],.sync-two-flows__path .cloud-action[hidden]{display:none!important}
+.sync-two-flows__step{padding:12px 14px;border:1px solid #ccd7e2;border-radius:10px;margin:10px 0}
+.sync-two-flows__step h5{font-size:1rem;margin:0 0 8px}
+.sync-two-flows__advanced{margin-top:16px}
+@media(max-width:480px){.sync-two-flows__selector{grid-template-columns:1fr}}

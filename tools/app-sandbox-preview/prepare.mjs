@@ -1,6 +1,6 @@
 // Synthetic-only full-app preview builder. Does not deploy, access Firebase or private data.
 import {readFileSync,mkdirSync,writeFileSync,lstatSync} from 'node:fs';
-import {resolve,join,dirname} from 'node:path';
+import {resolve,join,dirname,relative,isAbsolute,sep} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {createHash} from 'node:crypto';
 import {collect} from '../package-public.mjs';
@@ -10,12 +10,18 @@ const TARGET='lifeplan-sync-sandbox',CHANNEL='app-sync-check';
 const BASE_DOCUMENT="dbApi.doc(db,'owners',user().uid,'snapshots','current')";
 const TEST_DOCUMENT="dbApi.doc(db,'sandbox',user().uid,'snapshots','trial')";
 function patchOnce(source,find,next){
+ // Git on Windows may check out text with CRLF. Normalize only this synthetic
+ // preview's in-memory copy; never loosen the exact-match safety guard.
+ source=source.replace(/\r\n/g,'\n');
  if(source.split(find).length!==2)throw Error('Unexpected upstream source or multiple matches: '+find.slice(0,45));
  return source.replace(find,next);
 }
-export function prepareAppPreview(destination){
+function pathWithin(base,target){
+ const rel=relative(base,target);
+ return rel===''||(!isAbsolute(rel)&&rel!=='..'&&!rel.startsWith('..'+sep));
+}export function prepareAppPreview(destination){
  const dest=resolve(destination);
- if(dest===root||dest.startsWith(root+'/')||dest===here)throw Error('Refusing in-repo output');
+ if(pathWithin(root,dest))throw Error('Refusing in-repo output');
  const manifest=JSON.parse(readFileSync(join(root,'distribution-manifest.json'),'utf8'));
  const {out}=collect(root);
  const files=new Map();
@@ -76,7 +82,7 @@ export function prepareAppPreview(destination){
  const hashes=[];
  for(const [name,bytes] of files){
   const path=resolve(dest,'public',name);
-  if(!path.startsWith(join(dest,'public')+'/'))throw Error('Traversal');
+  if(!pathWithin(join(dest,'public'),path)||path===join(dest,'public'))throw Error('Traversal');
   mkdirSync(dirname(path),{recursive:true});writeFileSync(path,bytes,{flag:'wx'});
   hashes.push({name,size:bytes.length,sha256:digest(bytes),source:'synthetic-app-preview'});
  }

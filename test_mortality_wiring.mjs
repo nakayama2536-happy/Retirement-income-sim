@@ -1,3 +1,4 @@
+import {fileURLToPath} from 'node:url';
 import test from 'node:test';import assert from 'node:assert/strict';import fs from 'node:fs';import crypto from 'node:crypto';
 import {collect} from './tools/package-public.mjs';
 import {mountMortalityComparison,mortalityAssetOverlayData} from './mortality-ui.mjs';
@@ -10,7 +11,7 @@ test('mortality and survivor reference inputs do not count as adopted unsaved fi
 test('refresh invalidates a trial and external saved-state notifications block the cached baseline',()=>{assert.match(app,/mortalityCard\.invalidate\(\)/);assert.match(app,/mortalityCard\.invalidate\(\{external:true\}\)/);});
 test('mortality modules have no persistent data, network, adoption or restore calls',()=>{for(const n of ['mortality-ui.mjs','mortality-comparison.mjs','mortality-preview.mjs'])assert.doesNotMatch(read(n),/\b(?:localStorage|sessionStorage|indexedDB)\s*[.\[]|\b(?:fetch|commitState|replaceState|restoreFullBackup|setItem)\s*\(/);});
 test('full browser gate uses synthetic file and disallows external origins',()=>{const t=read('tools/browser-test/mortality-ui-check.mjs');assert.match(t,/mortality-synthetic\.json/);assert.match(t,/r\.abort\(\)/);assert.match(t,/__mortalityWrites/);assert.match(t,/\['webkit',webkit\]/);});
-test('new cached assets have matching manifest entries and source bytes',()=>{const {out,runtime}=collect(new URL('.',import.meta.url).pathname),manifest=JSON.parse(out.get('distribution-manifest.json'));for(const name of ['mortality-preview.mjs','mortality-comparison.mjs','mortality-ui.mjs']){assert.ok(runtime.includes(name));const row=manifest.files.find(x=>x.name===name);assert.ok(row);assert.equal(row.sha256,crypto.createHash('sha256').update(out.get(name)).digest('hex'));}});
+test('new cached assets have matching manifest entries and source bytes',()=>{const {out,runtime}=collect(fileURLToPath(new URL('.',import.meta.url))),manifest=JSON.parse(out.get('distribution-manifest.json'));for(const name of ['mortality-preview.mjs','mortality-comparison.mjs','mortality-ui.mjs']){assert.ok(runtime.includes(name));const row=manifest.files.find(x=>x.name===name);assert.ok(row);assert.equal(row.sha256,crypto.createHash('sha256').update(out.get(name)).digest('hex'));}});
 test('65-year pension is the default source for survivor reference without deriving deferred pension',()=>{
  assert.match(ui,/own\?\.reference65/);
  assert.match(ui,/dead\?\.reference65/);

@@ -1,0 +1,313 @@
+:root{font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Yu Gothic",sans-serif;color:#18212b;background:#f3f5f7;line-height:1.55;--ink:#1d2733;--accent:#2f5d8a;--line:#dce2e8;--bg:#fff;--muted:#66717d}
+*{box-sizing:border-box}body{margin:0}.topbar{background:var(--ink);color:white;padding:20px max(18px,calc((100vw - 1180px)/2));display:flex;justify-content:space-between;gap:16px;align-items:end}.topbar h1{font-size:1.35rem;margin:0}.topbar p{margin:.3rem 0 0;color:#c9d1d8;font-size:.85rem}.version{font-size:.72rem;display:flex;flex-direction:column;align-items:flex-end;color:#c9d1d8}.tabs{position:sticky;top:0;z-index:5;background:white;border-bottom:1px solid var(--line);display:flex;justify-content:center}.tabs button{border:0;background:transparent;padding:14px 18px;font-weight:700;color:#5c6670;white-space:nowrap}.tabs button.active{color:var(--accent);border-bottom:3px solid var(--accent)}main{max-width:1180px;margin:0 auto;padding:18px}.card{background:var(--bg);border:1px solid var(--line);border-radius:14px;padding:18px;box-shadow:0 2px 10px rgba(20,30,40,.035);margin-bottom:16px}.hero-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}.hero-grid .card{margin:0}.card>span{display:block;color:var(--muted);font-size:.8rem}.card>strong{font-size:1.55rem;display:block;margin-top:4px}.card small{color:var(--muted)}.status-card strong[data-status="正常"]{color:#17623a}.status-card strong[data-status="注意"]{color:#8a5b00}.status-card strong[data-status="要見直し"]{color:#a12e2e}.two-col{display:grid;grid-template-columns:1.25fr .75fr;gap:16px}.section-title{display:flex;align-items:center;justify-content:space-between;gap:8px}h2{font-size:1.05rem;margin:0 0 12px}h3{font-size:.92rem;margin:18px 0 8px}.info{border:0;background:#eef3f7;border-radius:50%;width:30px;height:30px}.table-wrap{overflow:auto}table{width:100%;border-collapse:collapse;font-size:.84rem}th,td{padding:9px 8px;border-bottom:1px solid #edf0f3;text-align:right;white-space:nowrap}th:first-child,td:first-child{text-align:left}th{color:#5d6771;font-weight:700}.pos{color:#17623a}.neg{color:#a12e2e}.checks{padding-left:1.2rem}.timeline{list-style:none;padding:0;margin:0}.timeline li{display:flex;gap:12px;padding:8px 0;border-bottom:1px solid #edf0f3}.timeline strong{min-width:50px;color:var(--accent)}#assetChart{width:100%;height:auto;min-height:250px}.asset-line{stroke:#2f5d8a;stroke-width:3;vector-effect:non-scaling-stroke}.forecast-line{stroke:#6c7784;stroke-width:3;stroke-dasharray:8 6;vector-effect:non-scaling-stroke}.grid{stroke:#e8edf1;stroke-width:1}.axis{fill:#6a7580;font-size:12px}.key-point{fill:#1d2733}.actual-point{fill:#fff;stroke:#18212b;stroke-width:3;vector-effect:non-scaling-stroke}.legend{display:flex;gap:16px;flex-wrap:wrap;color:var(--muted);font-size:.78rem;margin-top:6px}.legend span{display:flex;align-items:center;gap:6px}.legend i{display:inline-block;width:24px;height:0;border-top:3px solid}.legend-plan{border-color:#2f5d8a!important}.legend-forecast{border-color:#6c7784!important;border-top-style:dashed!important}.legend-actual{width:10px!important;height:10px!important;border:3px solid #18212b!important;border-radius:50%}.rule-grid,.tool-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}.rule-card{border:1px solid var(--line);border-radius:10px;padding:14px}.rule-card h3{margin:0 0 8px}.rule-card p{font-size:.86rem;margin:.3rem 0}.pill{background:#eef3f7;padding:5px 9px;border-radius:999px;font-size:.75rem}.tool-grid .card{margin:0}.form-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}label{display:flex;flex-direction:column;gap:5px;font-size:.82rem;color:#4f5963}input,select{font:inherit;padding:10px;border:1px solid #cfd7de;border-radius:9px;background:white;color:#18212b}button{font:inherit;cursor:pointer}.primary,.secondary,.file-btn{border:0;border-radius:9px;padding:10px 14px;font-weight:700;display:inline-block;text-align:center;margin-right:6px;margin-top:6px}.primary{background:var(--accent);color:white}.secondary,.file-btn{background:#e9eef3;color:#22313f}.file-btn input{display:none}.result{font-weight:700;min-height:1.5em}.muted{color:var(--muted);font-size:.82rem}.notice{position:fixed;z-index:10;left:50%;transform:translateX(-50%);top:76px;background:#1d2733;color:white;padding:10px 16px;border-radius:9px;box-shadow:0 5px 20px #0003}.notice[data-type="error"]{background:#922}dialog{border:0;border-radius:14px;max-width:540px;box-shadow:0 20px 50px #0004;padding:22px}dialog::backdrop{background:#1118}.empty{text-align:center;padding:42px 18px}footer{padding:24px 18px 40px;text-align:center;color:#6c7580;font-size:.72rem;max-width:900px;margin:auto}.pending-list{display:grid;gap:10px}.pending-item{display:flex;gap:12px;border-top:1px solid #edf0f3;padding-top:10px}.pending-item:first-child{border-top:0;padding-top:0}.pending-item p{margin:.2rem 0;color:var(--muted);font-size:.82rem}.pending-type{min-width:58px;height:max-content;text-align:center;border-radius:999px;background:#eef3f7;padding:4px 7px;font-size:.72rem}.summary-box dl{margin:0}.summary-box dl div{display:flex;justify-content:space-between;gap:12px;padding:9px 0;border-bottom:1px solid #edf0f3}.summary-box dt{color:var(--muted)}.summary-box dd{margin:0;font-weight:700}.link-btn{border:0;background:transparent;color:var(--accent);padding:4px;text-decoration:underline}.scenario-list{display:grid;gap:8px}.scenario-item{display:flex;align-items:center;justify-content:space-between;gap:10px;border:1px solid var(--line);border-radius:10px;padding:10px}.scenario-check{flex-direction:row;align-items:center;gap:10px;flex:1}.scenario-check input{width:20px;height:20px}.scenario-check span{display:flex;flex-direction:column;gap:2px}.scenario-check small{color:var(--muted)}
+@media(max-width:760px){.topbar{padding:16px 14px}.topbar p{display:none}.hero-grid{grid-template-columns:repeat(2,1fr)}.two-col,.rule-grid,.tool-grid,.form-grid{grid-template-columns:1fr}.tabs{justify-content:flex-start;overflow:auto}.tabs button{flex:0 0 auto;padding:12px 13px;font-size:.82rem}main{padding:12px}.card{padding:14px}.card>strong{font-size:1.3rem}.pending-item{flex-direction:column;gap:6px}.pending-type{width:max-content}.scenario-item{align-items:flex-start}}
+.review-type{background:#f9e8e8;color:#8a2626}.expense-list details{border-bottom:1px solid #edf0f3;padding:8px 0}.expense-list summary{display:flex;justify-content:space-between;gap:12px;cursor:pointer}.expense-list ul{list-style:none;padding:6px 0 0 14px;margin:0}.expense-list li{display:flex;justify-content:space-between;gap:12px;padding:4px 0;color:#56616c;font-size:.82rem}
+.certainty-list{display:grid;gap:0}.certainty-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:8px 0;border-bottom:1px solid #edf0f3}.certainty-row:last-child{border-bottom:0}.certainty-row>div{display:flex;flex-direction:column}.certainty-row small{color:var(--muted)}.certainty-tag{border-radius:999px;padding:4px 8px;font-size:.72rem;white-space:nowrap}.certainty-high{background:#e6f2ea;color:#17623a}.certainty-mid{background:#eef3f7;color:#40576d}.certainty-low{background:#f8ece5;color:#874b25}.factor-total,.actual-impact{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:8px 0 10px;border-bottom:1px solid #edf0f3}.actual-impact{margin-top:12px;border-top:1px solid #edf0f3}.factor-row{padding:8px 0}.factor-label{display:flex;justify-content:space-between;gap:10px;font-size:.82rem}.factor-track{height:7px;background:#edf0f3;border-radius:999px;overflow:hidden;margin-top:5px}.factor-track i{display:block;height:100%;border-radius:999px;background:#607b94}.factor-track .factor-neg{background:#8a6767}.baseline-badge{font-style:normal;font-size:.66rem;background:#e7edf3;color:#40576d;border-radius:999px;padding:2px 6px;margin-left:4px;vertical-align:middle}
+.review-head{display:flex;align-items:end;justify-content:space-between;gap:12px;margin-bottom:10px}.annual-review-list{display:grid;grid-template-columns:repeat(2,1fr);gap:6px 14px;margin:8px 0 12px}.review-check{flex-direction:row;align-items:center;padding:7px 0;border-bottom:1px solid #edf0f3}.review-check input{width:18px;height:18px}.integrity-ok{margin:.2rem 0;color:#17623a}.integrity-error{background:#f9e8e8;color:#8a2626}.integrity-warn{background:#fbf1d8;color:#775500}textarea{font:inherit;padding:10px;border:1px solid #cfd7de;border-radius:9px;background:white;color:#18212b;resize:vertical}@media(max-width:760px){.annual-review-list{grid-template-columns:1fr}.review-head{align-items:stretch;flex-direction:column}}
+
+.source-list{margin:.4rem 0 0;padding-left:1.15rem}.source-list li{margin:.45rem 0;font-size:.82rem}.source-list a{color:var(--accent);text-decoration:none}.source-list a:hover{text-decoration:underline}
+
+[hidden]{display:none!important}button:disabled{opacity:.5;cursor:not-allowed}button:focus-visible,summary:focus-visible{outline:3px solid #6394c2;outline-offset:3px}.pension-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}.pension-person{border:1px solid var(--line);border-radius:10px;min-width:0;padding:16px}.pension-person legend{font-weight:700;color:var(--accent)}.pension-person label{margin-top:12px}.pension-person input,.pension-person select{min-width:0;width:100%}.pension-person details{background:#f3f6f9;border-radius:8px;padding:10px;font-size:.85rem}.pension-reference{padding-left:1.2rem}.pension-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}.pension-impact{display:flex;flex-direction:column;gap:5px;margin:16px 0;padding:14px;border-radius:10px;background:#eef3f7}.pension-impact strong{font-size:1.08rem;overflow-wrap:anywhere}#pensionPreview{scroll-margin-top:70px}#pensionState[data-dirty="true"]{background:#fbf1d8;color:#775500}.inline-error{background:#f9e8e8;color:#922;padding:12px;border-radius:8px}.car-transfer{margin-top:16px}.car-transfer summary{margin-bottom:10px}@media(max-width:760px){.pension-grid{grid-template-columns:1fr;gap:12px}.pension-person{padding:12px}.pension-actions button{flex:1}.pension-actions .secondary{font-size:.8rem}}
+
+#salaryError{white-space:pre-line}#salaryPreview{scroll-margin-top:70px}#salaryState[data-dirty="true"]{background:#fbf1d8;color:#775500}.salary-comparison{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:16px 0}.salary-comparison>div{display:flex;flex-direction:column;gap:8px;padding:14px;background:#eef3f7;border-radius:10px;overflow-wrap:anywhere}#salary input,#salary select{font-size:16px;min-height:44px}#salary button{min-height:44px}#salary .pension-actions{position:static}#salary fieldset{min-width:0}#salary label{overflow-wrap:anywhere}@media(max-width:760px){.salary-comparison{grid-template-columns:1fr}#salary .section-title{align-items:flex-start;flex-wrap:wrap}#salaryPreview .primary{width:100%}#salary .pension-actions button{flex-basis:100%}}
+
+/* Simulation is the default view; existing actual records remain untouched. */
+.simulation-only .actual-only{display:none!important}
+.simulation-context p{margin:.5rem 0;color:var(--muted)}
+.display-toggle{flex-direction:row;align-items:center;gap:10px}.display-toggle input{width:auto}
+.input-destination{outline:3px solid #317ab5!important;outline-offset:4px;scroll-margin-top:90px}
+.pending-item .link-btn{margin-top:6px;text-align:left}
+/* Detail navigation and tables */
+.tab-groups{display:flex;gap:.4rem;padding:.65rem 1rem 0;max-width:1320px;margin:auto;flex-wrap:wrap}.tab-groups button{background:#e8edf3;color:#273b50;border:0;border-radius:.5rem .5rem 0 0;padding:.8rem 1rem}.tab-groups button.active{background:#243c56;color:white}.tabs [hidden]{display:none!important}.tabs{flex-wrap:wrap}.detail-form .form-grid{align-items:end}.detail-form label{min-width:0}.detail-form input,.detail-form select{max-width:100%;box-sizing:border-box}.detail-preview{border:1px solid #9db9ca;border-radius:8px;padding:1rem;margin-top:1rem;background:#f1f7fa}.detail-preview dl{display:grid;grid-template-columns:1fr 1fr;gap:.3rem}.detail-preview dd{margin:0;overflow-wrap:anywhere}#detailCsvTable{min-width:1150px}#detailCsvTable td{white-space:normal;max-width:300px}#reviewPromptText{width:100%;box-sizing:border-box;margin-top:1rem;font-size:.85rem}.target-line{stroke:#bb6d17;stroke-width:2;stroke-dasharray:7 5;fill:none}.target-point{fill:#fff;stroke:#bb6d17;stroke-width:2}.legend-target{display:inline-block;width:22px;border-top:2px dashed #bb6d17;vertical-align:middle;margin-right:5px}@media(max-width:600px){.tab-groups{padding:.5rem .5rem 0}.tab-groups button{padding:.65rem .55rem;font-size:.85rem}.tabs{gap:.3rem}.tabs button{font-size:.85rem;padding:.6rem}.detail-preview dl{grid-template-columns:1fr}.detail-preview dd{margin-bottom:.4rem}}
+/* Keep both navigation levels visible while scrolling. */
+.navigation-sticky{position:sticky;top:0;z-index:8;background:#f2f5f8;box-shadow:0 2px 5px #162d4420}
+.navigation-sticky .tabs{position:static}
+.labor-columns{grid-template-columns:repeat(2,minmax(0,1fr))}.labor-columns .form-grid{grid-template-columns:1fr}
+.column-selection{min-width:0;border:1px solid var(--line);border-radius:9px;padding:12px;margin:14px 0}
+#detailColumnPicker{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:12px}#detailColumnPicker details{min-width:0;background:#f5f8fb;border-radius:8px;padding:10px}#detailColumnPicker summary{cursor:pointer;font-weight:700}
+.check-label{flex-direction:row;align-items:flex-start;margin:10px 0;overflow-wrap:anywhere}.check-label input{flex:0 0 auto;width:18px;height:18px;margin:0}
+.trend-table-wrap{max-height:65vh;isolation:isolate;border:1px solid var(--line);border-radius:8px}
+#detailCsvTable{min-width:max-content;border-collapse:separate;border-spacing:0}
+#detailCsvTable th{position:sticky;top:0;background:#e8f0f7;z-index:2;white-space:normal;min-width:140px;max-width:220px;text-align:center}
+#detailCsvTable td{white-space:nowrap;min-width:140px;max-width:none;font-variant-numeric:tabular-nums;background:white}
+#detailCsvTable th:first-child,#detailCsvTable td:first-child{position:sticky;left:0;min-width:110px;background:#e8f0f7;z-index:1}#detailCsvTable th:first-child{z-index:3}
+#salaryPreview,#salaryForm,#salaryIdecoInputs,[data-focus-target]{scroll-margin-top:165px}
+@media(max-width:760px){.labor-columns,#detailColumnPicker{grid-template-columns:1fr}.navigation-sticky .tab-groups,.navigation-sticky .tabs{flex-wrap:nowrap;overflow-x:auto;justify-content:flex-start}.navigation-sticky button{flex-shrink:0}.navigation-sticky .tab-groups{padding-bottom:0}.trend-table-wrap{max-height:62vh}}
+
+/* Saved settings stay distinct from editable proposals. */
+.current-setting-summary{margin-top:18px;padding:16px;background:#f1f5f9;border:1px solid #d6dee8;border-radius:12px;overflow-wrap:anywhere}
+.current-setting-summary h3{margin-top:0}.current-setting-list{margin:0}.current-setting-list>div{display:grid;grid-template-columns:minmax(120px,1fr) minmax(0,3fr);gap:14px;padding:10px 0;border-top:1px solid #dbe2eb}.current-setting-list dt{font-weight:650}.current-setting-list dd{margin:0;overflow-wrap:anywhere}
+.detail-form label[hidden]{display:none!important}
+@media(max-width:600px){.current-setting-list>div{grid-template-columns:1fr;gap:4px}.current-setting-summary{padding:12px}}
+
+/* Match chart and legend despite the more specific generic legend rule. */
+.legend i.legend-target{border-top:2px dashed #bb6d17}
+.target-overview{grid-column:1/-1}.target-metrics{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;margin:14px 0}
+.target-metrics span{display:block;color:var(--muted);font-size:.85rem}.target-metrics strong{overflow-wrap:anywhere}
+@media(max-width:600px){.target-metrics{grid-template-columns:1fr;gap:10px}}
+
+#unemployment p {overflow-wrap:anywhere;}
+
+.date-age-hint{display:block;font-size:.85rem;font-weight:400;line-height:1.6;overflow-wrap:anywhere;margin-top:.25rem;}
+.date-age-hint[hidden]{display:none;}
+
+/* Home amounts share the same hierarchy on desktop and smaller screens. */
+.hero-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+.hero-grid .card{min-width:0}
+.hero-grid .card>strong,.target-metrics strong{display:block;font-size:1.55rem;line-height:1.35;font-weight:700;font-variant-numeric:tabular-nums;margin-top:4px;overflow-wrap:anywhere}
+.target-overview>strong#status{font-size:1rem}
+.target-metrics>div{min-width:0}
+@media(max-width:760px){.hero-grid .card>strong,.target-metrics strong{font-size:1.3rem}.target-overview>strong#status{font-size:1rem}}
+
+/* Income column selection: totals and component rows have distinct levels. */
+#detailColumnPicker .trend-picker-total{border-bottom:2px solid #c4d4e3;font-weight:700}
+#detailColumnPicker .trend-picker-group{min-width:0;margin:14px 0 0;padding:0 10px 6px;border:1px solid #c4d4e3;border-radius:6px}
+#detailColumnPicker .trend-picker-group legend{font-weight:700;padding:0 6px}
+#detailColumnPicker .trend-picker-child{margin-left:20px;border-left:2px solid #c4d4e3;padding-left:10px}
+#detailColumnPicker .trend-picker-row small{display:block;color:#53677b;font-weight:400}
+#detailColumnPicker .trend-picker-help{line-height:1.6}
+
+/* Salary inputs follow the reading order rather than unrelated columns. */
+#salaryInputs{grid-template-columns:1fr}#salaryInputs .pension-person{max-width:100%}.salary-labor-reference{background:#f3f6f9;border-radius:8px;padding:12px;margin-top:14px}.salary-labor-reference li{margin:8px 0;overflow-wrap:anywhere}
+
+/* UX review 2026-10-25: concise metadata, explicit controls and readable withdrawal forms. */
+.topbar{align-items:center;max-width:none}.topbar h1{flex:0 1 auto}.topbar .version{align-items:flex-end;text-align:right;gap:2px;max-width:min(66vw,640px);font-size:.78rem}.topbar .version span{display:block;overflow-wrap:anywhere}.topbar .version b{font-weight:650;color:#f1f5f9}.home-plan-range{display:block;color:#526575;margin:-3px 0 10px;font-size:.83rem}
+/* Informational text must never resemble a large disabled button. */
+:is(#settings,#backup) .settings-category{padding:0;overflow:visible;margin:0 0 12px}:is(#settings,#backup) .settings-category>summary{display:flex;align-items:center;justify-content:space-between;gap:12px;cursor:pointer;min-height:54px;padding:14px 18px;font-size:1rem;font-weight:700;color:#243c56;list-style:none}:is(#settings,#backup) .settings-category>summary::-webkit-details-marker{display:none}:is(#settings,#backup) .settings-category>summary::after{content:'開く ＋';font-weight:600;font-size:.8rem;color:#385b78}:is(#settings,#backup) .settings-category[open]>summary::after{content:'閉じる −'}:is(#settings,#backup) .settings-category>.settings-group-body{padding:0 15px 14px}:is(#settings,#backup) .settings-category>.settings-group-body>.card{margin-top:8px}:is(#settings,#backup) .settings-category[data-settings-group='backup']>summary{border-left:4px solid #2f5d8a}
+/* NISA/iDeCo inputs are top-aligned, never overlap or trail into the next column. */
+.detail-form[data-detail-kind='nisaWithdrawal']>.form-grid,.detail-form[data-detail-kind='idecoWithdrawal']>.form-grid,.detail-form[data-detail-kind='ideco']>.form-grid{grid-template-columns:repeat(2,minmax(0,1fr));align-items:start;gap:14px 18px}.detail-form[data-detail-kind='nisaWithdrawal'] .form-grid>label,.detail-form[data-detail-kind='idecoWithdrawal'] .form-grid>label,.detail-form[data-detail-kind='ideco'] .form-grid>label{min-width:0;display:flex;flex-direction:column;justify-content:flex-start;align-items:stretch;overflow-wrap:anywhere;line-height:1.55;gap:8px}.detail-form[data-detail-kind='nisaWithdrawal'] input,.detail-form[data-detail-kind='nisaWithdrawal'] select,.detail-form[data-detail-kind='idecoWithdrawal'] input,.detail-form[data-detail-kind='idecoWithdrawal'] select,.detail-form[data-detail-kind='ideco'] input,.detail-form[data-detail-kind='ideco'] select{width:100%;min-width:0;min-height:46px;box-sizing:border-box;font-size:1rem}.detail-form .date-age-hint{font-size:.83rem;overflow-wrap:anywhere;line-height:1.6}
+@media(max-width:760px){.topbar{display:block}.topbar h1{font-size:1.15rem}.topbar .version{margin-top:6px;max-width:100%;text-align:left;align-items:flex-start;font-size:.77rem}.detail-form[data-detail-kind='nisaWithdrawal']>.form-grid,.detail-form[data-detail-kind='idecoWithdrawal']>.form-grid,.detail-form[data-detail-kind='ideco']>.form-grid{grid-template-columns:minmax(0,1fr)}:is(#settings,#backup) .settings-category>summary{min-height:52px;padding:12px 14px}:is(#settings,#backup) .settings-category>.settings-group-body{padding:0 10px 10px}}
+
+/* H-UI-02: readable preview with real text; no change to financial calculation */
+.period-change-summary{white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.6}
+#periodChangePreview{border:1px solid var(--line);margin-top:12px}
+#periodChangePreview[hidden]{display:none}
+
+/* 2026-10-25 UX request: document-only display changes, no financial data mutations. */
+.visually-hidden{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important}
+.home-explanations{display:grid;grid-template-columns:1fr;gap:12px}
+.home-explanation{padding:0;overflow:visible}
+.home-explanation>summary{cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:48px;padding:13px 16px;font-weight:700;color:#243c56}
+.home-explanation>summary::after{content:'開く ＋';font-size:.8rem;font-weight:600;color:#315978}
+.home-explanation[open]>summary::after{content:'閉じる −'}
+.home-explanation>article{margin:0 12px 14px;box-shadow:none}
+.home-pending>summary .pill{margin-left:auto}
+.cashflow-table-scroll{max-height:65vh;isolation:isolate;border:1px solid var(--line);border-radius:8px;scrollbar-gutter:stable}
+#yearCashflowTable{border-collapse:separate;border-spacing:0;width:max-content;min-width:100%}
+#yearCashflowTable th,#yearCashflowTable td{background:var(--bg)}
+#yearCashflowTable thead th{position:sticky;top:0;background:#e8f0f7;z-index:2}
+#yearCashflowTable tr>th:first-child,#yearCashflowTable tr>td:first-child{position:sticky;left:0;background:#e8f0f7;z-index:1}
+#yearCashflowTable thead tr>th:first-child{z-index:3}
+.salary-step{grid-column:1/-1;min-width:0;border:1px solid var(--line);border-radius:10px;margin-bottom:10px;background:white}
+.salary-step>summary{cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:14px 16px;font-weight:700;color:#243c56;line-height:1.5}
+.salary-step>summary::after{content:'開く ＋';font-size:.8rem;font-weight:600;white-space:nowrap}
+.salary-step[open]>summary::after{content:'閉じる −'}
+.salary-step>fieldset{border:0;margin:0;padding:0 14px 14px;min-width:0}
+#backup .settings-group-body>article{margin-top:8px}
+@media(max-width:760px){.cashflow-table-scroll{max-height:60vh}.home-explanation>summary,.salary-step>summary{padding:13px 12px}}
+
+/* Isolated mortality sensitivity only: does not write or adopt any condition. */
+.mortality-form fieldset{border:1px solid #cbd9e2;border-radius:10px;padding:14px;margin:12px 0 18px}
+.mortality-form legend{font-weight:700;color:#243c56;padding:0 5px}
+.mortality-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+.mortality-form label{min-width:0}
+.mortality-form input,.mortality-form select{max-width:100%;box-sizing:border-box}
+.mortality-preset-controls{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0}
+.mortality-costs{display:grid;gap:6px}
+.mortality-cost-row{display:grid;grid-template-columns:minmax(150px,2fr) minmax(105px,1fr) minmax(90px,1fr);gap:10px;align-items:center;border-bottom:1px solid #e5ebf0;padding:6px 0}
+.mortality-cost-name{font-weight:600}
+.mortality-cost-row label{display:flex;flex-direction:column;font-size:.8rem;color:#36536b}
+.mortality-warning{background:#fff5e2;border:1px solid #dbc58e;border-radius:8px;padding:12px;line-height:1.55}
+.mortality-metrics{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:14px 0}
+.mortality-metric{display:flex;flex-direction:column;gap:6px;padding:12px;border:1px solid #cbd9e2;border-radius:10px;background:#f1f6fa}
+.mortality-metric span{color:#3c556a;font-size:.82rem}
+.mortality-metric strong{font-size:1.2rem;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.mortality-table-wrap{max-height:65vh;isolation:isolate;border:1px solid #cbd9e2;border-radius:8px}
+.mortality-table{border-collapse:separate;border-spacing:0;min-width:max-content}
+.mortality-table th{position:sticky;top:0;z-index:2;background:#e8f0f7;min-width:126px;text-align:center}
+.mortality-table td{min-width:126px;font-variant-numeric:tabular-nums;background:white}
+.mortality-table th:first-child,.mortality-table td:first-child{position:sticky;left:0;min-width:130px;background:#e8f0f7;z-index:1}
+.mortality-table thead th:first-child{z-index:3}
+@media(max-width:760px){.mortality-grid{grid-template-columns:1fr}.mortality-cost-row{grid-template-columns:minmax(96px,1.35fr) minmax(72px,1fr) minmax(65px,1fr);gap:6px}.mortality-cost-row label{font-size:.73rem}.mortality-metrics{grid-template-columns:1fr}.mortality-table-wrap{max-height:57vh}.mortality-form fieldset{padding:9px}}
+
+
+/* H-MORT-07: aligned year/pension inputs and itemized death-expense control. */
+.mortality-grid>label{display:grid;grid-template-rows:minmax(3.5rem,auto) 46px auto;gap:6px;align-content:start}
+.mortality-grid>label>input,.mortality-grid>label>select{height:46px;min-height:46px;width:100%;min-width:0;align-self:start}
+.mortality-item-rows{display:grid;gap:2px;margin:14px 0 0}
+.mortality-item-row{display:grid;grid-template-columns:minmax(150px,1.7fr) minmax(105px,1fr) minmax(120px,1.1fr) minmax(90px,.8fr) minmax(115px,1.1fr);gap:10px;align-items:center;padding:9px 6px;border-bottom:1px solid #e4eaf0;font-size:.87rem}
+.mortality-item-row input{width:100%;min-width:0;min-height:44px}
+.mortality-item-row strong{white-space:normal}
+.mortality-item-head{background:#f0f4f8}
+.mortality-remainder-row{background:#fff8e9}
+.mortality-total-row{font-weight:600;background:#f3f6fa;border-top:2px solid #b6c8d8}
+.mortality-total-remainder{background:#fff8e9;font-weight:500;border-top:1px solid #eadcc3}
+.mortality-total-budget{background:#e7f1f8;border-top:2px solid #8ba9bc}
+.mortality-total-row .mortality-total-impact{font-variant-numeric:tabular-nums}
+
+.pension-component-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.pension-component-grid label{display:flex;flex-direction:column;gap:5px}
+.pension-component-grid label>span{min-height:2.6rem}
+.pension-component-grid input{min-width:0;width:100%;min-height:44px}
+@media(max-width:760px){
+ .mortality-grid>label{grid-template-rows:auto 46px auto}
+ .mortality-item-row{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px 12px;padding:12px 6px}
+ .mortality-item-row>[data-mortality-column]::before{content:attr(data-mortality-column);display:block;font-size:.75rem;color:#506075;margin-bottom:3px}
+ .mortality-item-row>[data-mortality-column]:first-child{grid-column:1/-1;font-weight:600}
+ .mortality-item-head{display:none}
+ .mortality-remainder-row{grid-template-columns:1fr 1fr}
+ .pension-component-grid{grid-template-columns:1fr}
+ .pension-component-grid label>span{min-height:0}
+}
+
+
+/* Clear, accessible button hierarchy within the non-adopted comparison only. */
+#mortalityComparisonContainer button.primary,
+#mortalityComparisonContainer button.secondary{
+  min-height:44px;
+  border-radius:9px;
+  transition:background-color .15s ease,border-color .15s ease,box-shadow .15s ease;
+}
+#mortalityComparisonContainer button.primary:not(:disabled){
+  background:#24537e;
+  color:#fff;
+  border:2px solid #153a5f;
+  box-shadow:inset 0 0 0 2px #fff,0 2px 4px rgba(20,48,78,.17);
+}
+#mortalityComparisonContainer button.secondary:not(:disabled){
+  background:#f3f6fa;
+  color:#203e5e;
+  border:2px solid #6d849c;
+  box-shadow:0 1px 2px rgba(20,48,78,.12);
+}
+#mortalityComparisonContainer button.primary:not(:disabled):hover{background:#173c62}
+#mortalityComparisonContainer button.secondary:not(:disabled):hover{background:#e5edf5;border-color:#345a7c}
+#mortalityComparisonContainer button:focus-visible{outline:3px solid #e2a43a;outline-offset:3px}
+#mortalityComparisonContainer button:disabled{opacity:.52;box-shadow:none;border:2px solid #a7b2bd}
+#mortalityComparisonContainer .mortality-view-tabs{display:flex;gap:8px;flex-wrap:wrap;margin:14px 0}
+@media(prefers-reduced-motion:reduce){#mortalityComparisonContainer button{transition:none}}
+
+/* Current public release check distinguishes cached execution from deployed bytes. */
+#runtimeFreshness[data-status="current"]{color:#a5e7bd}
+#runtimeFreshness[data-status="outdated"]{color:#ffd58b}
+#runtimeFreshness[data-status="unknown"]{color:#e5d8bd}
+
+/* Shared action-button clarity for all tabs; navigation tabs keep their own styles. */
+.panel button.primary,.panel button.secondary,.panel .file-btn,
+#migrationPanel button.primary,#migrationPanel button.secondary,
+#emptyState button.primary,#emptyState button.secondary{
+  min-height:44px;
+  max-width:100%;
+  border-radius:9px;
+  font-weight:700;
+  line-height:1.35;
+  white-space:normal;
+  overflow-wrap:anywhere;
+  transition:background-color .15s ease,border-color .15s ease,box-shadow .15s ease;
+}
+.panel button.primary:not(:disabled),#migrationPanel button.primary:not(:disabled),#emptyState button.primary:not(:disabled){
+  color:#fff;
+  background:#24537e;
+  border:2px solid #153a5f;
+  box-shadow:inset 0 0 0 2px #fff,0 2px 4px rgba(20,48,78,.17);
+}
+.panel button.secondary:not(:disabled),.panel .file-btn,
+#migrationPanel button.secondary:not(:disabled),#emptyState button.secondary:not(:disabled){
+  color:#203e5e;
+  background:#f3f6fa;
+  border:2px solid #6d849c;
+  box-shadow:0 1px 2px rgba(20,48,78,.12);
+}
+.panel button.primary:not(:disabled):hover{background:#173c62}
+.panel button.secondary:not(:disabled):hover,.panel .file-btn:hover{background:#e5edf5;border-color:#345a7c}
+.panel button.primary:disabled,.panel button.secondary:disabled,
+#migrationPanel button:disabled,#emptyState button:disabled{
+  color:#55616f;
+  background:#e8ecf0;
+  opacity:1;
+  border:2px solid #adb8c3;
+  box-shadow:none;
+  cursor:not-allowed;
+}
+.panel button.link-btn:not(:disabled){
+  min-height:40px;
+  padding:8px 10px;
+  text-underline-offset:3px;
+  font-weight:650;
+}
+.panel button:focus-visible,#migrationPanel button:focus-visible,#emptyState button:focus-visible{
+  outline:3px solid #d48e18;
+  outline-offset:3px;
+}
+@media(max-width:760px){
+ .panel button.primary,.panel button.secondary,.panel .file-btn{
+   min-height:44px;
+ }
+}
+@media(prefers-reduced-motion:reduce){
+ .panel button.primary,.panel button.secondary,.panel .file-btn{transition:none}
+}
+
+/* Unemployment: consent checkboxes and explanatory note occupy full rows, never split checkbox/text. */
+.detail-form[data-detail-kind='unemployment']>.form-grid{grid-template-columns:repeat(2,minmax(0,1fr));align-items:start}
+.detail-form[data-detail-kind='unemployment'] .form-grid>.check-label{grid-column:1/-1;display:flex;flex-direction:row;align-items:flex-start;justify-content:flex-start;gap:10px;min-width:0;margin:4px 0;line-height:1.5}
+.detail-form[data-detail-kind='unemployment'] .form-grid>.check-label>input[type='checkbox']{flex:0 0 18px;width:18px;height:18px;min-width:18px;margin:2px 0 0;padding:0}
+.detail-form[data-detail-kind='unemployment'] .form-grid>p{grid-column:1/-1;margin:8px 0;max-width:100%;overflow-wrap:anywhere}
+@media(max-width:650px){.detail-form[data-detail-kind='unemployment']>.form-grid{grid-template-columns:minmax(0,1fr)}}
+
+/* Expense reference cards: use equal columns, avoid a cramped reconciliation panel. */
+.expense-reconcile-grid{grid-template-columns:repeat(2,minmax(0,1fr));align-items:stretch}
+.expense-reconcile-grid>.card{min-width:0;overflow-wrap:anywhere}
+.expense-reconcile-grid select{max-width:100%;min-width:0;width:100%}
+@media(max-width:900px){.expense-reconcile-grid{grid-template-columns:minmax(0,1fr)}}
+
+/* One-off expense checkbox stays beside its text and spans the complete form width. */
+.detail-form[data-detail-kind='event'] .form-grid>.detail-checkbox-row{grid-column:1/-1;display:flex;flex-direction:row;align-items:center;justify-content:flex-start;gap:10px;min-width:0;line-height:1.5;overflow-wrap:anywhere}
+.detail-form[data-detail-kind='event'] .form-grid>.detail-checkbox-row>input[type='checkbox']{flex:0 0 18px;width:18px;height:18px;min-width:18px;margin:0;padding:0}
+
+/* Budget tab: travel allowance is read-only, not an extra expense. */
+.budget-travel-values{display:grid;grid-template-columns:minmax(170px,1fr) minmax(110px,1fr);gap:9px 14px;margin:12px 0}
+.budget-travel-values dt{font-weight:600}.budget-travel-values dd{margin:0;text-align:right;font-variant-numeric:tabular-nums}
+@media(max-width:600px){.budget-travel-values{grid-template-columns:minmax(0,1fr) auto;gap:9px}.budget-travel-values dd{overflow-wrap:anywhere}}
+
+/* Pension input-first workflow: a single source-of-truth card above compact plan cards. */
+#pension .pension-reference-master{grid-column:1 / -1;min-width:0;border:1px solid var(--line);border-radius:10px;padding:14px;background:var(--surface,#fff)}
+#pension .pension-reference-master>summary{cursor:pointer;font-size:1.04rem;padding:4px 0 9px;min-height:42px}
+#pension .pension-reference-people{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+#pension .pension-reference-person{min-width:0;border:1px solid var(--line);border-radius:8px;padding:12px}
+#pension .pension-reference-person h3{margin:0 0 8px}
+#pension .pension-reference-person input{min-width:0;width:100%}
+#pension .pension-reference-person label{display:block;margin:7px 0}
+#pension .pension-plan-details>summary{cursor:pointer;font-weight:700;min-height:42px;padding:8px 0}
+#pension .pension-plan-details button{margin:8px 0}
+#pension .pension-extra-card{border:1px solid var(--line);border-radius:10px;background:#fff;margin:12px 0;padding:12px}
+#pension .pension-extra-card>summary{cursor:pointer;font-weight:700;min-height:42px;padding:8px}
+#pension .pension-extra-card>.card{margin:8px 0 0}
+@media(max-width:760px){#pension .pension-reference-people{grid-template-columns:1fr}#pension .pension-reference-master{padding:10px}}
+
+/* Family-friendly pension: clear sequence, one prominent import action, calm collapsed cards. */
+#pension .pension-reference-master>summary,#pension .pension-plan-details>summary{font-size:1rem;line-height:1.6}
+#pension .pension-person>p[id$="PensionAdopted"]{font-size:.95rem;font-weight:600;line-height:1.7;overflow-wrap:anywhere}
+#pension [id$="PensionImport65"]{min-height:46px;font-weight:700;width:100%;max-width:560px}
+#pension .pension-plan-details>details,#pension .pension-plan-details>.pension-components{margin-top:12px}
+#pension .pension-plan-details>details>summary{cursor:pointer;font-weight:600}
+#pension .pension-reference-master button{min-height:44px}
+@media(max-width:760px){#pension .pension-plan-details button,#pension .pension-reference-master button{width:100%}}
+
+/* Clear family pension workflow: status above the closed source card, secondary fields tucked away. */
+#pension .pension-reference-overview{grid-column:1/-1;margin:0 0 4px;padding:10px 12px;border:1px solid var(--line);border-radius:8px;background:var(--surface,#fff);font-weight:650;line-height:1.7}
+#pension .pension-step-label{margin:14px 0 6px;font-weight:650;line-height:1.65}
+#pension .pension-advanced{margin:12px 0;border:1px solid var(--line);border-radius:8px;padding:10px}
+#pension .pension-advanced>summary{font-weight:650;cursor:pointer;min-height:40px}
+#pension .pension-plan-details>label{display:block;margin-top:10px}
+
+/* Three-card family pension home: settings stay accessible without occupying the normal view. */
+#pension .pension-home-cards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:16px 0}
+#pension .pension-home-card{border:1px solid var(--line);border-radius:12px;background:var(--surface,#fff);padding:14px;min-width:0;display:flex;flex-direction:column;gap:10px}
+#pension .pension-home-card h3{margin:0;font-size:1rem}
+#pension .pension-home-card p{margin:0;line-height:1.7;overflow-wrap:anywhere;flex:1}
+#pension .pension-home-card button{width:100%;min-height:44px}
+#pension .pension-edit-workspace{border:1px solid var(--line);border-radius:12px;padding:12px;margin:14px 0}
+#pension .pension-edit-workspace>summary{cursor:pointer;font-weight:650;min-height:44px;line-height:1.6;padding:8px}
+@media(max-width:850px){#pension .pension-home-cards{grid-template-columns:minmax(0,1fr)}}
+@media print{#pension .pension-edit-workspace,#pension #pensionCurrentDetails,#pension #pensionHistoryExtra,#pension #pensionComparisonExtra,#pension #pensionTaxExtra{display:none!important}#pension .pension-home-cards{grid-template-columns:repeat(3,minmax(0,1fr));break-inside:avoid}}
