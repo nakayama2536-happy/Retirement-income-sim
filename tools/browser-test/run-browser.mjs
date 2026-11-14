@@ -246,7 +246,7 @@ async function validateHomeUi(browser){
   for(const id of ['spousePensionAmount','initialAssetInput','expenseKind','ruleCards']){
    await openTab(page,'home');
    await page.locator('#home details.home-pending').evaluate(el=>el.open=true);
-   await page.locator(`[data-focus-target="${id}"]`).click();
+   await page.locator(`#home details.home-pending [data-focus-target="${id}"]`).click();
    assert(await page.locator('#'+id).isVisible());assert.equal(await page.evaluate(()=>document.activeElement.id),id);
   }
   await openTab(page,'settings');await page.locator('#settingsGroup-maintenance').evaluate(el=>el.open=true);await page.locator('#showActuals').check();
