@@ -1,6 +1,6 @@
 {
   "kind": "public-release",
-  "runtime": "v0.9.68-receipt-integrated-candidate-20261114",
+  "runtime": "v0.9.69-release-integrated-20261115",
   "files": [
     {
       "name": "action-answer.css",
@@ -49,8 +49,8 @@
     },
     {
       "name": "app.mjs",
-      "size": 86386,
-      "sha256": "b6b229f3e4dc83d7e6ca48059b2dac46c4bff758629601984c015810caa010c3"
+      "size": 86376,
+      "sha256": "fb52e00225e906b367a7d850b91d26cd1ed461bdabeca1fec93843c494f75247"
     },
     {
       "name": "backup-compatibility.mjs",
