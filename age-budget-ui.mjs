@@ -1,4 +1,5 @@
 import {previewAgeBudgetCandidate} from './age-budget-candidate.mjs';
+import {mountAgeBudgetDeltaComparison} from './age-budget-delta-ui.mjs';
 import {ageBudgetPreviewView,ageBudgetPreviewCsv} from './age-budget-preview-export.mjs';
 export function mountAgeBudgetComparison({container,getConfig,notice,documentRef=document,urlRef=URL}={}){
  if(!container||typeof getConfig!=='function')throw Error('表示領域と現在設定が必要です');
@@ -31,5 +32,6 @@ export function mountAgeBudgetComparison({container,getConfig,notice,documentRef
   try{const a=documentRef.createElement('a');a.href=url;a.download='lifeplan-age-budget-preview.csv';a.click();notice?.('未反映の比較案CSVを作成しました。');}
   finally{urlRef.revokeObjectURL(url);}
  }catch(e){notice?.(e.message,'error');}});
- return {reset};
+ const delta=mountAgeBudgetDeltaComparison({container:shell,getConfig,notice,documentRef,urlRef});
+ return {reset:()=>{reset();delta.reset();}};
 }
