@@ -39,6 +39,8 @@ jobs:
         run: node tools/browser-test/prepare.mjs
       - name: Exercise update failures and corresponding backup restore
         run: node tools/browser-test/run-browser.mjs
+      - name: Validate receipt draft JSON export and actual browser import (fictional values)
+        run: node tools/browser-test/receipt-draft-browser-check.mjs
       - name: Verify encrypted diagnostic UI without real Firebase access
         run: node tools/browser-test/encrypted-sandbox-ui-check.mjs
       - name: Accept staged age-budget preview in isolated Chromium
