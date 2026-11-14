@@ -9,6 +9,7 @@ const root=resolve('.'), blocked=[],errors=[];
 const server=createServer(async(req,res)=>{
  try{
   const pathname=new URL(req.url,'http://localhost').pathname;
+  if(pathname==='/receipt-test'){res.writeHead(200,{'Content-Type':'text/html','Cache-Control':'no-store'});res.end('<!doctype html><html lang="ja"><head><meta charset="utf-8"></head><body></body></html>');return;}
   const target=resolve(root,'.'+(pathname==='/'?'/index.html':pathname));
   if(req.method!=='GET'||!target.startsWith(root+sep)||target.includes('/.git/')||!['.html','.mjs','.js','.css','.json','.png','.svg'].includes(extname(target))){res.writeHead(404).end();return;}
   const bytes=await readFile(target);
@@ -23,7 +24,7 @@ try{
  const context=await browser.newContext({acceptDownloads:true,serviceWorkers:'block'});
  await context.route('**/*',route=>{if(new URL(route.request().url()).origin===origin)return route.continue();blocked.push(route.request().url());return route.abort();});
  const page=await context.newPage();page.on('pageerror',e=>errors.push(e.message));
- await page.goto(origin,{waitUntil:'domcontentloaded'});
+ await page.goto(origin+'/receipt-test',{waitUntil:'domcontentloaded'});
  // Mount the real, shipping comparison UI without touching the adopted application form.
  await page.evaluate(async()=>{const {mountReceiptComparison}=await import('/receipt-comparison-ui.mjs');const host=document.createElement('div');host.id='isolatedReceiptDraftTest';document.body.append(host);mountReceiptComparison(host);});
  const scope=page.locator('#isolatedReceiptDraftTest');
