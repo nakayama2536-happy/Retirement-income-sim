@@ -304,8 +304,8 @@
     },
     {
       "name": "receipt-comparison.mjs",
-      "size": 4533,
-      "sha256": "de1ed4d2b524f6a84c0c9b42414db0d56e2f4f598d769cbe13eff191888e4575"
+      "size": 4650,
+      "sha256": "88183586d38e700e485ee7b088e10953853a07de039929d4b6fee0ca07dfae2a"
     },
     {
       "name": "receipt-tax-amount.mjs",
