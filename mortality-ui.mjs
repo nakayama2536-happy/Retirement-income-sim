@@ -310,7 +310,7 @@ export function mountMortalityComparison(root,{getConfig,getBaseline,runPlan}){
  <p id="mortalityAllocationTotal" class="muted" role="status"></p></div>
  </fieldset>
  <label class="check-label family-review-check"><input type="checkbox" name="reviewed" required><span>年金年額・万一の月・生活費の倍率が<strong>比較用の仮定</strong>であり、採用済みの計画は変わらず、比較入力は保存・同期対象になる場合があることを確認しました。</span></label>
- <button id="mortalityRun" class="primary" type="submit">もしものときの家計を試算（現在の計画と比較・未採用）</button>
+ <button id="mortalityRun" class="primary" type="submit">万一の家計を比較（計画は変更しません）</button>
  <p class="muted">この操作では計画への採用を行いません。比較入力は一括バックアップや、有効なクラウド同期の対象になり得ます。比較結果の採用とは別です。</p>
  <button id="mortalityClear" class="secondary" type="button">結果表示をクリア</button>
  <button id="mortalityClearInputs" class="secondary" type="button">比較入力を初期化</button>
