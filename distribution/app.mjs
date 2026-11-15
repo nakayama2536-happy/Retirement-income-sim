@@ -240,7 +240,7 @@ function renderHome() {
   const margin=target&&goalCalculated?goalAsset-target.threshold:null;
   el('finalMarginLabel').textContent=margin===null?'目標との差':zeroGoal?'参考目標0万円との差':'目標'+(margin>=0?'を上回る金額':'に足りない金額');
   el('finalMargin').textContent=margin===null?'—':`${margin>=0?'+':''}${money(margin)}`;
-  el('finalMargin').className=margin===null?'':margin<0?'neg':'pos';
+  el('finalMargin').className=margin===null||zeroGoal?'':margin<0?'neg':'pos';
   el('status').dataset.status = !target||!goalCalculated||zeroGoal ? '' : margin>=0?'正常':'要見直し';
   el('currentAsset').textContent = money(config.plan.initialAsset);
   el('finalAsset').textContent = goalAsset===null?'未計算':money(goalAsset);
@@ -266,7 +266,8 @@ function renderHome() {
   const key = el('keyAges'); key.innerHTML = '';
   result.keyAges.forEach(k => {
     const tr = document.createElement('tr');
-    tr.innerHTML = `<td>${k.age}歳末</td><td>${money(k.threshold)}</td><td>${money(k.asset)}</td><td class="${k.margin<0?'neg':'pos'}">${k.margin>=0?'+':''}${money(k.margin)}</td>`;
+    const tone=k.threshold===0?'':k.margin<0?'neg':'pos';
+    tr.innerHTML = `<td>${k.age}歳末</td><td>${money(k.threshold)}</td><td>${money(k.asset)}</td><td class="${tone}">${k.margin>=0?'+':''}${money(k.margin)}</td>`;
     key.appendChild(tr);
   });
 
