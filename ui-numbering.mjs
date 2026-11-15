@@ -38,7 +38,7 @@ export function numberExpenseDetailTree(host,prefix='4-1-3-3'){
  const visit=(parent,parentReference,isCategoryLevel)=>{
   const children=[...parent.children].filter(node=>node.matches?.('details'));
   children.forEach((detail,index)=>{
-   const number=isCategoryLevel?'4-1-3-'+(index+3):parentReference+'-'+(index+1);
+   const number=isCategoryLevel?prefix.replace(/-\d+$/,'')+'-'+(index+3):parentReference+'-'+(index+1);
    assignReferenceNumber(detail.querySelector(':scope > summary'),number);
    visit(detail,number,false);
   });
