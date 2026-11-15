@@ -1,6 +1,6 @@
 {
   "kind": "public-release",
-  "runtime": "v0.9.68-receipt-integrated-candidate-20261114",
+  "runtime": "v0.9.69-release-integrated-20261115",
   "files": [
     {
       "name": "action-answer.css",
@@ -18,14 +18,24 @@
       "sha256": "5d6c5ab989675507658c78a0e1a1fa0e819c06a391260aa34432fab911836910"
     },
     {
+      "name": "age-budget-delta-candidate.mjs",
+      "size": 5028,
+      "sha256": "84d684341a648c4a1adb3cac607607ac1c162628e7c1695cbeecf995ce217749"
+    },
+    {
+      "name": "age-budget-delta-ui.mjs",
+      "size": 5200,
+      "sha256": "c73caf7446e45f2fdd7c53ed69114b8cde196be2e941e0e515f341a0c9de12fd"
+    },
+    {
       "name": "age-budget-preview-export.mjs",
       "size": 2395,
       "sha256": "cf721a183d1e21e369be2d39d280fc9c8409f8553cff9ef71fc6bcad8873f782"
     },
     {
       "name": "age-budget-ui.mjs",
-      "size": 3924,
-      "sha256": "921c1e10bfb3c7b87123bb5cc279a9b1ea45c8e83189627617fe41c7d53681db"
+      "size": 4119,
+      "sha256": "08c4269e3366a02a572bf241cb617e97638fc31989a389b569455fab7b982e7b"
     },
     {
       "name": "annual-cashflow.mjs",
@@ -39,13 +49,13 @@
     },
     {
       "name": "app.mjs",
-      "size": 86386,
-      "sha256": "b6b229f3e4dc83d7e6ca48059b2dac46c4bff758629601984c015810caa010c3"
+      "size": 87005,
+      "sha256": "80ed523a82b0d3129207892c68b367c329c384c64872d1ce26f4fcfba9f8310a"
     },
     {
       "name": "backup-compatibility.mjs",
-      "size": 8315,
-      "sha256": "bcbe648d2bce946196d342582494aad8c2ec36985ca318b91a516ce31b556a7c"
+      "size": 8305,
+      "sha256": "13eb8f1711867908279def7c8ae1d1d24b604db0f15b1b96330d4150b7569c5e"
     },
     {
       "name": "budget-travel-ui.mjs",
@@ -138,6 +148,21 @@
       "sha256": "2116cc44aca5fa27a0b6ad88dfd9a32a0fb284ede0a9aaca92bcfa4b0f3fd2ca"
     },
     {
+      "name": "family-cashflow-readonly-ui.mjs",
+      "size": 3678,
+      "sha256": "24a7e61824f54e4e48b8c6b7df5a1610e915af9e191874a1943f406f88293977"
+    },
+    {
+      "name": "family-cashflow-readonly.css",
+      "size": 1459,
+      "sha256": "6208adcacba90ed6272d450cd371ef6e7e12e664f0e16ef43988337cb2f3d380"
+    },
+    {
+      "name": "family-cashflow-readonly.mjs",
+      "size": 3397,
+      "sha256": "4a0c9d816b4549c7db4844d923abf609d806576727ed55257001bf62a8b89e7e"
+    },
+    {
       "name": "family-warm-theme.css",
       "size": 17515,
       "sha256": "45e0d24974de8fcbf4bd9c971c256740b745b9386aae444521863e91b2fb2f01"
@@ -189,8 +214,8 @@
     },
     {
       "name": "index.html",
-      "size": 83780,
-      "sha256": "89c188233bcdea549987f8c459ee1ad74dd9d9efc6bbd9ac8931c28c43a1c18a"
+      "size": 84972,
+      "sha256": "7c44e165c03f33497c869aace22d2926d2e38fae239183ad2a69a28a06103fe2"
     },
     {
       "name": "input-snapshots.mjs",
@@ -239,8 +264,8 @@
     },
     {
       "name": "mortality-itemized-ui.mjs",
-      "size": 13963,
-      "sha256": "c11f6db063439ae46d215cf6b0aa899c0bf78c50b5a85a79144b9948221e2d41"
+      "size": 16719,
+      "sha256": "f3933172f47f66d53e37fda4aa713ac8cc7181fa5a9e846cc3c553cd300bf73f"
     },
     {
       "name": "mortality-itemized.mjs",
@@ -254,8 +279,8 @@
     },
     {
       "name": "mortality-ui.mjs",
-      "size": 72694,
-      "sha256": "c29582b7c170a8fafb2ce2c5691cdad5fa7e48ecb1b5e2b2774dcd8d2c8d0443"
+      "size": 72990,
+      "sha256": "e50d1f1f4a6ac42f0aa71490d433f62b7bf871d81dd02a6e7d2e6a55c53a7b88"
     },
     {
       "name": "pension-estimate.mjs",
@@ -294,8 +319,8 @@
     },
     {
       "name": "receipt-comparison.mjs",
-      "size": 4533,
-      "sha256": "de1ed4d2b524f6a84c0c9b42414db0d56e2f4f598d769cbe13eff191888e4575"
+      "size": 4650,
+      "sha256": "88183586d38e700e485ee7b088e10953853a07de039929d4b6fee0ca07dfae2a"
     },
     {
       "name": "receipt-tax-amount.mjs",
@@ -309,8 +334,8 @@
     },
     {
       "name": "receipt-tax-reference.mjs",
-      "size": 5142,
-      "sha256": "0c1a9c751c02a99b1e8c869f5e0f2121cb4770b9ad98d552fd91d6b125c46316"
+      "size": 5148,
+      "sha256": "6fc3324735f5b751604b2759b9b96fcb42526b788f34c7ca4ab37d44604d8756"
     },
     {
       "name": "recovery-ui.mjs",
@@ -319,8 +344,8 @@
     },
     {
       "name": "release-info.json",
-      "size": 146,
-      "sha256": "84bddf718ca448827c409d1f1fac9ed8f72a59e886bc15fe1589857d92b85932"
+      "size": 134,
+      "sha256": "3344aab873e99187c69da4891d3a2f437b8474ad393ec8a565a1f3ff31e274f6"
     },
     {
       "name": "retirement-comment.mjs",
@@ -354,8 +379,8 @@
     },
     {
       "name": "simple-layout.mjs",
-      "size": 11710,
-      "sha256": "4a0762b9f840341b52722009726ba84d2ec43589746671d05cfebb63c6371a5b"
+      "size": 11746,
+      "sha256": "c517bf06ed2562f30b8003246ec3dbd67aab1ba01f3bc3c9bec447334e70ceb2"
     },
     {
       "name": "state.mjs",
@@ -379,8 +404,13 @@
     },
     {
       "name": "styles.css",
-      "size": 37024,
-      "sha256": "e0599e97247b1019312569e41225d0c1afcbb68a5f0f6623d7176a951abfc1ee"
+      "size": 39295,
+      "sha256": "fca1a32fb25e11ffe0583c1461d5f525bddf9e2d04ca96767c4aeaac24c59d4e"
+    },
+    {
+      "name": "survivor-eligibility-guard.mjs",
+      "size": 1800,
+      "sha256": "4b8adcbfda4e8f57c8b582664a31430a9a7868ef57ecca751128d9ec3f73f9fe"
     },
     {
       "name": "survivor-pension-calculator.mjs",
@@ -389,13 +419,13 @@
     },
     {
       "name": "survivor-pension-ui.mjs",
-      "size": 6029,
-      "sha256": "c0726a6a54aae8e06153df985588f4be5218d9fea376ec245e4ae0e5bd8a3a22"
+      "size": 6474,
+      "sha256": "7e7ed96823c7215fac937dffc30e966ff86b538657c331c1fe018c83101bb82c"
     },
     {
       "name": "sw.js",
-      "size": 4953,
-      "sha256": "93add1e3d450edc96f37c484a5501fcba30caf6ccf646dd235369c895bf71b58"
+      "size": 5180,
+      "sha256": "c993d4c59fec346682b2f9a8fc7a849a9b5b97cfd458c60e7661b1ae616dd33b"
     },
     {
       "name": "sync-answer-bridge.mjs",
@@ -459,8 +489,8 @@
     },
     {
       "name": "ui-numbering.mjs",
-      "size": 6602,
-      "sha256": "19debc525104fffa821a7cd8bdf386713d84ffb099965a6d6cc5a75c63d9a195"
+      "size": 6752,
+      "sha256": "0aa1ffb38bb79db117ac17ea046ad160111a03382ccb2f212e27af2f4605c424"
     },
     {
       "name": "unemployment-plan.mjs",
