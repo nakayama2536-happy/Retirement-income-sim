@@ -25,6 +25,36 @@ test('home shows target then prediction; final success does not hide intermediat
  c.result.finalAsset=850;c.renderHome();assert.equal(el('status').textContent,'目標額未満');assert.equal(el('finalMargin').textContent,'-150万円');assert.equal(el('finalMarginLabel').textContent,'目標に足りない金額');
  c.result.keyAges=[];c.renderHome();assert.equal(el('status').textContent,'未設定');assert.equal(el('finalMargin').textContent,'—');
 });
+test('明示的な0万円目標は未設定ではなく、安全・達成判定にも使わない',()=>{
+ const {context:c,el}=setup();
+ c.result={...c.result,startAge:65,endAge:99,finalAsset:187,rows:[{age:99,endAsset:187}],keyAges:[{age:99,asset:187,threshold:0,margin:187}]};
+ const before=JSON.stringify(c.config);c.renderHome();
+ assert.equal(el('finalThreshold').textContent,'0万円');
+ assert.equal(el('finalMargin').textContent,'+187万円');
+ assert.equal(el('finalMarginLabel').textContent,'参考目標0万円との差');
+ assert.match(el('status').textContent,/参考目標0万円/);
+ assert.doesNotMatch(el('status').textContent,/目標額以上|達成|安全$/);
+ assert.match(el('targetStatusNote').textContent,/安全|安心|足りる/);
+ assert.equal(el('status').dataset.status,'');
+ assert.equal(JSON.stringify(c.config),before);
+ c.result.keyAges=[];c.renderHome();
+ assert.equal(el('finalThreshold').textContent,'未設定');
+ assert.equal(el('status').textContent,'未設定');
+});
+test('目標あり・予測資産未確認では不足や合格を自動判定しない',()=>{
+ const {context:c,el}=setup();
+ c.result={...c.result,startAge:65,endAge:99,finalAsset:null,rows:[],keyAges:[{age:99,asset:null,threshold:500,margin:null}]};
+ c.renderHome();
+ assert.equal(el('status').textContent,'予測額未確認');
+ assert.equal(el('finalMargin').textContent,'—');
+ assert.equal(el('status').dataset.status,'');
+});
+test('家庭向け操作説明では比較案の保存と直接反映の例外を明示',()=>{
+ assert.match(html,/「見る・試す・保存・反映」の違い/);
+ assert.match(html,/一部の比較入力・下書きは端末内に保存/);
+ assert.match(html,/比較用の控えを保存/);
+ assert.match(html,/ここは試算を挟まず直接保存する設定です/);
+});
 test('simulation graph excludes saved actuals without changing them; display switch can restore them',()=>{
  const {context:c,el}=setup();c.config.actuals={65:{endAsset:111}};c.forecast={actual:{age:65,endAsset:111},projection:{rows:[{age:66,endAsset:110}]}};
  const before=JSON.stringify(c.config);c.drawChart();assert.ok(!el('assetChart').children.some(n=>['forecast-line','actual-point'].includes(n.attrs.class)));
