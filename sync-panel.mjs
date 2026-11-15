@@ -124,7 +124,7 @@ export function mountSyncPanel(root,{getState,replaceLocal,validateState,afterRe
  for(const [title,value]of [['端末内データ',localValue],['クラウドとの状態',cloudValue],['一括バックアップ',backupValue]]){
   const item=el('div');append(item,el('dt',title),value);overview.appendChild(item);
  }
- append(current,el('h4','保存先ごとの確認状況（操作ボタンではありません）'),overview,status,authText,modeText,times);root.appendChild(current);
+ append(current,el('h4','状態表示：保存先ごとの確認状況（操作ボタンではありません）'),overview,status,authText,modeText,times);root.appendChild(current);
  const connection=el('section',null,{class:'cloud-card','aria-label':'ログインと暗号化解除'});
  const login=el('form',null,{id:'lifeplanCloudLogin',method:'post',autocomplete:'on'});
  function field(parent,label,name,value,type='text',attrs={}){
