@@ -47,6 +47,7 @@ jobs:
           node tools/browser-test/two-device-sync-app.mjs
           node tools/browser-test/ux-review-ui-check.mjs
           node tools/browser-test/mortality-ui-check.mjs
+          node tools/browser-test/mortality-source-selection-browser.mjs
       - name: Keep synthetic evidence only
         if: always()
         uses: actions/upload-artifact@v4
