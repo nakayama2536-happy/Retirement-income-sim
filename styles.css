@@ -336,3 +336,8 @@
 .panel input:focus-visible,
 .panel select:focus-visible,
 .panel textarea:focus-visible { outline:3px solid #d48e18; outline-offset:2px; }
+
+/* UI review: make expandable help/settings visibly interactive without changing behavior. */
+.panel details > summary {text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:1px;cursor:pointer}
+.panel details > summary:hover {text-decoration-thickness:2px}
+.panel details > summary:focus-visible {outline:3px solid #d48e18;outline-offset:3px}
