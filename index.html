@@ -4,7 +4,8 @@
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="apple-mobile-web-app-title" content="ライフプランシミュレーター">
 <meta name="theme-color" content="#1d2733"><title>ライフプランシミュレーター</title>
-<link rel="manifest" href="manifest.webmanifest"><link rel="apple-touch-icon" href="icons/icon-192.png"><link rel="stylesheet" href="styles.css"><link rel="stylesheet" href="family-warm-theme.css"><link rel="stylesheet" href="ui-numbering.css">
+<link rel="manifest" href="manifest.webmanifest"><link rel="apple-touch-icon" href="icons/icon-192.png"><link rel="stylesheet" href="styles.css"><link rel="stylesheet" href="family-warm-theme.css">
+<link rel="stylesheet" href="family-cashflow-readonly.css"><link rel="stylesheet" href="ui-numbering.css">
 <link rel="stylesheet" href="./action-answer.css">
 <link rel="stylesheet" href="./sync-two-flows.css">
 </head>
@@ -88,6 +89,7 @@
   <div><span>収入と支出の差（年額）</span><strong id="familyAnnualBalance">未確認</strong></div>
   <div><span>年齢期末の計算上の資産</span><strong id="familyAnnualAsset">未確認</strong></div>
  </div>
+ <div id="familyIncomeSplit" role="region" aria-label="月平均と収入の種類" aria-live="polite"><p>月平均を確認しています。</p></div>
  <p class="muted" id="familyAnnualNote">同じ年齢期の月次計算を年額に集計した参考値です。収支差と資産増減は運用益などのため一致しません。生活費内訳や資産間振替は二重加算しません。</p>
 </article>
 <details class="card home-explanation" id="cashflowReadingGuide"><summary><strong>収入と支出の表の見方</strong></summary><p>気になる年齢が見つかったら、その年の収入・支出の内訳を確認できます。金額は万円単位です。</p><p class="muted">生活費の内訳は支出合計に含まれています。NISAの売却・振替など、資産内でお金を移動するだけの取引は収入に重複して数えません。</p></details>
