@@ -42,6 +42,13 @@ test('rendering optional sync panel never starts Firebase or changes local data'
  assert.equal(calls,0);assert.equal(ui.getState().connected,false);
  assert.equal(btn(root,'この端末を初回の同期元にする').disabled,true);
  assert.equal(btn(root,'確認したクラウドをこの端末へ初回取込').disabled,true);
+ const overview=walk(root).find(x=>x.attributes.class==='cloud-storage-summary');
+ assert.ok(overview,'separate readable local/cloud/file status');
+ const rows=walk(overview).filter(x=>x.tagName==='dd');
+ assert.equal(rows.length,3);
+ assert.match(rows[0].textContent,/保存済みデータを読み込めます/);
+ assert.match(rows[1].textContent,/同期完了は未確認/);
+ assert.match(rows[2].textContent,/確認できません/);
  assert.equal(store.data.size,0);ui.destroy();
 });
 test('initial connection requires explicit local config, passphrase, backup confirmation and source choice',async()=>{
