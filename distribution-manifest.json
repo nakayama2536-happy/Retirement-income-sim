@@ -49,8 +49,8 @@
     },
     {
       "name": "app.mjs",
-      "size": 86608,
-      "sha256": "7bbb3f5040112894a0ea55fb7dcaf54508dc2d4647c0986f636f594b8b754e24"
+      "size": 87005,
+      "sha256": "80ed523a82b0d3129207892c68b367c329c384c64872d1ce26f4fcfba9f8310a"
     },
     {
       "name": "backup-compatibility.mjs",
@@ -148,6 +148,21 @@
       "sha256": "2116cc44aca5fa27a0b6ad88dfd9a32a0fb284ede0a9aaca92bcfa4b0f3fd2ca"
     },
     {
+      "name": "family-cashflow-readonly-ui.mjs",
+      "size": 3678,
+      "sha256": "24a7e61824f54e4e48b8c6b7df5a1610e915af9e191874a1943f406f88293977"
+    },
+    {
+      "name": "family-cashflow-readonly.css",
+      "size": 1459,
+      "sha256": "6208adcacba90ed6272d450cd371ef6e7e12e664f0e16ef43988337cb2f3d380"
+    },
+    {
+      "name": "family-cashflow-readonly.mjs",
+      "size": 3397,
+      "sha256": "4a0c9d816b4549c7db4844d923abf609d806576727ed55257001bf62a8b89e7e"
+    },
+    {
       "name": "family-warm-theme.css",
       "size": 17515,
       "sha256": "45e0d24974de8fcbf4bd9c971c256740b745b9386aae444521863e91b2fb2f01"
@@ -199,8 +214,8 @@
     },
     {
       "name": "index.html",
-      "size": 84759,
-      "sha256": "8e3ebd15708824995cbca02182c8dbd8b7650e7f3e1ade405c6054fa6b4b39b7"
+      "size": 84972,
+      "sha256": "7c44e165c03f33497c869aace22d2926d2e38fae239183ad2a69a28a06103fe2"
     },
     {
       "name": "input-snapshots.mjs",
@@ -409,8 +424,8 @@
     },
     {
       "name": "sw.js",
-      "size": 5055,
-      "sha256": "31fdd6f05bd6fbea7e8441a4f83a615c9aab2928c4ad032337b81a85fe847060"
+      "size": 5180,
+      "sha256": "c993d4c59fec346682b2f9a8fc7a849a9b5b97cfd458c60e7661b1ae616dd33b"
     },
     {
       "name": "sync-answer-bridge.mjs",
