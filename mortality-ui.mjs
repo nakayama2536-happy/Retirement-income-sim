@@ -310,7 +310,7 @@ export function mountMortalityComparison(root,{getConfig,getBaseline,runPlan}){
  <p id="mortalityAllocationTotal" class="muted" role="status"></p></div>
  </fieldset>
  <label class="check-label family-review-check"><input type="checkbox" name="reviewed" required><span>年金年額・万一の月・生活費の倍率が<strong>比較用の仮定</strong>であり、現在の計画や保存済み条件は変わらないことを確認しました。</span></label>
- <button id="mortalityRun" class="primary" type="submit">参考比較を実行（計画には反映しない）</button>
+ <button id="mortalityRun" class="primary" type="submit">もしものときの家計を試算（現在の計画と比較・未採用）</button>
  <p class="muted">この操作では計画への採用を行いません。比較入力は一括バックアップや、有効なクラウド同期の対象になり得ます。比較結果の採用とは別です。</p>
  <button id="mortalityClear" class="secondary" type="button">結果表示をクリア</button>
  <button id="mortalityClearInputs" class="secondary" type="button">比較入力を初期化</button>
@@ -607,7 +607,7 @@ export function mountMortalityComparison(root,{getConfig,getBaseline,runPlan}){
   // No second plan is adopted or persisted by switching the visible view.
   const worstPanel=makeEl('section');worstPanel.id='mortalityWorstResultPanel';
   worstPanel.append(makeEl('h3','','万一の比較案（仮定）'));
-  worstPanel.append(makeEl('p','muted',`対象：${parameters.deceased==='primary'?'本人':'配偶者'}／万一を想定する月：${parameters.deathMonth}。本人70歳の例は2044年8月です。別の月を選ぶと、その月の比較案になります。`));
+  worstPanel.append(makeEl('p','muted',`対象：${parameters.deceased==='primary'?'本人':'配偶者'}／万一を想定する月：${parameters.deathMonth}。選択した月を起点に比較します。計画の設定値は変更しません。`));
   const advanced=makeEl('details','mortality-family-advanced');advanced.id='mortalityAdvancedDetails';
   advanced.append(makeEl('summary','','計算の詳しい内容・比較表・CSVを見る'));
   const advancedBody=makeEl('div','mortality-family-advanced-body');advancedBody.append(...Array.from(results.children));advanced.append(advancedBody);
