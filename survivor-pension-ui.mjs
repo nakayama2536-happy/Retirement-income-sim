@@ -1,4 +1,5 @@
 import {calculateSurvivor65Reference,calculateDeferredBasicReference,registeredSurvivorInputs} from './survivor-pension-calculator.mjs';
+import {screenSurvivorReference} from './survivor-eligibility-guard.mjs';
 const add=(p,t,txt)=>{const e=p.ownerDocument.createElement(t);if(txt!==undefined)e.textContent=txt;p.append(e);return e;};
 const numberInput=(p,name)=>{const label=add(p,'label',name+'（万円／年） '),node=add(label,'input');node.type='number';node.min='0';node.step='0.0001';node.inputMode='decimal';node.required=true;return node;};
 const val=(e,label)=>{if(!e.value.trim())throw Error(label+'が未入力です');const n=Number(e.value);if(!Number.isFinite(n)||n<0||n>1000)throw Error(label+'は万円／年で入力してください。円の数値をそのまま入力していませんか');return n;};
@@ -18,9 +19,13 @@ export function mountSurvivorPensionScreen(root,{getConfig=()=>null,onTransfer=n
  add(form,'p','単位は万円／年です。例：123万4567円 → 123.4567。円単位の整数をそのまま入力すると誤計算になります。');
  const run=add(form,'button','65歳基準で試算');run.type='submit';
  const out=add(root,'div');out.setAttribute('role','status');out.setAttribute('aria-live','polite');
+ const eligibilityStatus=add(root,'p');eligibilityStatus.dataset.survivorReview='pending';
  const transfer=add(root,'button','「もしものときの家計」へ仮入力を渡す');transfer.type='button';transfer.disabled=true;
  const note=add(root,'p','参考結果は現在の年金設定・資産計画を変更しません。転記先で死亡月・受給資格・繰下げの影響を確認してください。年金合計は自動的に確定採用しません。');
  let last=null;
+ // The existing pension reference is deliberately unaffected by the review-only screen.
+ const review=()=>{const r=screenSurvivorReference();eligibilityStatus.textContent='適用条件の確認：'+r.reasons.join('／')+'。参考額は自動採用しません。';};
+ review();
  const invalidate=()=>{last=null;transfer.disabled=true;out.replaceChildren();};
  const load=()=>{
   invalidate();
