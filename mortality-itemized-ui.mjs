@@ -114,6 +114,8 @@ export function mountMortalityItemizedControls(root,{getConfig,runPlan,onChange}
     if(deceased!==lastDeceased){savedFactors={};lastDeceased=deceased;takeCurrent=false;}
     if(takeCurrent)for(const input of host.querySelectorAll('[data-mortality-itemfactor]'))savedFactors[input.dataset.mortalityItemfactor]=input.value;
     host.replaceChildren();model=null;
+    // Keep a visible explanation when no registered expense source can be rendered.
+    host.append(el('p','muted','費目内訳を確認中です。'));
     root.querySelector('#mortalityRemainderAmount').textContent='未計算';
     status.textContent='費目内訳を確認中';
     const cfg=getConfig();
@@ -157,6 +159,7 @@ export function mountMortalityItemizedControls(root,{getConfig,runPlan,onChange}
         root.querySelector('#mortalityItemSourceNote').textContent='死亡後の参考月額は対象外です。元の計画や保存値は変更していません。';
         return;
       }
+      host.replaceChildren();
       const header=el('div','mortality-item-row mortality-item-head');
       const labels=['登録済み費目','登録月額（基準額）',month.month+' の月額（物価反映後）','万一の後の倍率','万一の後の概算額'];
       for(const h of labels)header.append(el('strong','',h));
