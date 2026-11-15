@@ -34,6 +34,15 @@ try{
  const snapshot=()=>page.evaluate(()=>JSON.parse(localStorage.getItem('lifeplan-sim-state-v1')));
  const openTab=async(group,tab)=>{await page.locator(`[data-group="${group}"]`).click();if(group===tab){await page.locator(`#${tab}`).waitFor({state:'visible'});return;}await page.locator(`[data-tab="${tab}"]`).click();};
  await page.goto(origin,{waitUntil:'networkidle'});await page.locator('#dashboard').waitFor({state:'visible'});
+ // Read-only storage overview does not require a Firebase login.
+ const overview=page.locator('#privateSyncContainer .cloud-storage-summary');
+ assert.equal(await overview.count(),1,'storage overview exists');
+ const overviewValues=await overview.locator('dd').allTextContents();
+ assert.equal(overviewValues.length,3);
+ assert.match(overviewValues[0],/読み込めます/);
+ assert.match(overviewValues[1],/同期完了は未確認/);
+ assert.match(overviewValues[2],/確認できません/);
+ mark('storage-overview-separates-local-cloud-backup-without-login');
  const before=await snapshot(),beforeEnd=before.config.plan.endAge;
  assert.equal(beforeEnd,95);
  assert.equal(await page.locator('.topbar h1').innerText(),'ライフプランシミュレーター');
