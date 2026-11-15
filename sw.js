@@ -24,7 +24,7 @@ ASSETS.push('./travel-budget-summary.mjs','./budget-travel-ui.mjs');
 ASSETS.push('./ui-numbering.css','./ui-numbering.mjs','./mortality-expense-csv.mjs','./mortality-expense-audit.mjs');
 ASSETS.push('./workflow-tabs.mjs');
 ASSETS.push('./planning-charts.mjs');
-ASSETS.push('./survivor-pension-calculator.mjs','./survivor-pension-ui.mjs');
+ASSETS.push('./survivor-pension-calculator.mjs','./survivor-pension-ui.mjs','./survivor-eligibility-guard.mjs');
 ASSETS.push('./receipt-comparison.mjs','./receipt-app-adapter.mjs','./receipt-tax-amount.mjs','./receipt-tax-extension.mjs','./receipt-comparison-ui.mjs','./receipt-tax-reference.mjs');
 const URLS=ASSETS.map(path=>new URL(path,SCOPE).href);
 const ALLOWED=new Set(URLS);
