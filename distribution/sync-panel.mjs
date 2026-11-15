@@ -115,7 +115,7 @@ export function mountSyncPanel(root,{getState,replaceLocal,validateState,afterRe
  const now=()=>clock();
  root.replaceChildren();root.classList.add('cloud-panel');
  append(root,el('style',panelStyle),el('h3','クラウド保存・読込み'),
-  el('p','共通の正本はクラウドです。端末で確定・保存した変更を書き込み、他端末の変更を読み込みます。',{class:'cloud-lead'}));
+  el('p','クラウド同期を有効にした場合、端末で確定・保存した変更をクラウドと照合し、必要な書込み・読込みを行います。未接続ではクラウドへの保存は確認できません。',{class:'cloud-lead'}));
  const current=el('section',null,{class:'cloud-card cloud-current','aria-label':'現在の保存状態'});
  const authText=el('p'),modeText=el('p'),status=el('p',null,{class:'cloud-status',role:'status','aria-live':'polite'});
  const times=el('p',null,{class:'cloud-times'});
