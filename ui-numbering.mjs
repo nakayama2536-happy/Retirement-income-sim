@@ -89,7 +89,7 @@ function numberOtherPanel(root,panel,tabNumber){
  // A label is addressable beneath its nearest numbered heading; all labels are
  // numbered, including dynamically rendered and previously unnumbered settings.
  const controls=[...panel.querySelectorAll('label:has(input),label:has(select),label:has(textarea),details > summary')];
- let current=tabNumber+'-0',count=0;
+ let current=tabNumber,count=0; // Controls before the first heading belong directly to the panel.
  const nodes=[...new Set([...blocks,...controls])].sort((a,b)=>{
   const pos=a.compareDocumentPosition(b);
   return pos&Node.DOCUMENT_POSITION_FOLLOWING?-1:pos&Node.DOCUMENT_POSITION_PRECEDING?1:0;
