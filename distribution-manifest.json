@@ -1,6 +1,6 @@
 {
   "kind": "public-release",
-  "runtime": "v0.9.69-release-integrated-20261115-ui-rev03-p0",
+  "runtime": "v0.9.70-family-storage-20261116",
   "files": [
     {
       "name": "action-answer.css",
@@ -49,13 +49,13 @@
     },
     {
       "name": "app.mjs",
-      "size": 87612,
-      "sha256": "c7238d32b15a31a9946923b62f38497156157e6544531267309605123a59d06c"
+      "size": 87596,
+      "sha256": "0dcb72274182c0ec0702a0431404ab581ba2645af0902695d2877c923dbe7516"
     },
     {
       "name": "backup-compatibility.mjs",
-      "size": 8317,
-      "sha256": "551e9cae1ba7f5f1baebe6f9afc478b62e52ab628a0099c7b5a643a1fa8ec708"
+      "size": 8301,
+      "sha256": "81a282dfb6d14bc80ab1fd4be6403a4c52214147b489ffe44ca6b7cd75e31519"
     },
     {
       "name": "budget-travel-ui.mjs",
@@ -161,6 +161,11 @@
       "name": "family-cashflow-readonly.mjs",
       "size": 3397,
       "sha256": "4a0c9d816b4549c7db4844d923abf609d806576727ed55257001bf62a8b89e7e"
+    },
+    {
+      "name": "family-storage-status.mjs",
+      "size": 2394,
+      "sha256": "6360e9172d832e1ee69d8f80ba7fb05b8c21eceac66185ab9172ea959544c236"
     },
     {
       "name": "family-warm-theme.css",
@@ -344,8 +349,8 @@
     },
     {
       "name": "release-info.json",
-      "size": 146,
-      "sha256": "aa06869cd4ac2b4872b4a29cfc31c28291e0c25edf15d07c11eedd8e0f328c6b"
+      "size": 130,
+      "sha256": "5f9489714bd6ea51a5f191b91edf7b63889f8ea93d0569ff476a6374cbb51b36"
     },
     {
       "name": "retirement-comment.mjs",
@@ -424,8 +429,8 @@
     },
     {
       "name": "sw.js",
-      "size": 5183,
-      "sha256": "8fe080aca245a8156af71077906ea5c0bfeb07f49a12b21709c984c154dec899"
+      "size": 5211,
+      "sha256": "53cc2349969ad15c679f3ed45541cba7d7c1d320eea696e38c67f6ce48fc2e5b"
     },
     {
       "name": "sync-answer-bridge.mjs",
@@ -449,8 +454,8 @@
     },
     {
       "name": "sync-panel.mjs",
-      "size": 42446,
-      "sha256": "1077ffac4d00338aa21e05c1fe0e848d1e14ec25ed6d97b6b2d3be392a681e73"
+      "size": 43880,
+      "sha256": "06d4106deb9828ccc226e7fd39d65f1deeb3a3fb9b579b416d4e9315786ea2aa"
     },
     {
       "name": "sync-policy.mjs",
