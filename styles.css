@@ -341,3 +341,12 @@
 .panel details > summary {text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:1px;cursor:pointer}
 .panel details > summary:hover {text-decoration-thickness:2px}
 .panel details > summary:focus-visible {outline:3px solid #d48e18;outline-offset:3px}
+
+/* Mortality comparison: keep primary action and companion controls readable on narrow screens. */
+#mortalityRun{max-width:100%;white-space:normal;overflow-wrap:anywhere;text-align:center}
+@media(max-width:760px){
+ #mortalityForm button{max-width:100%;white-space:normal;overflow-wrap:anywhere;min-height:44px}
+ #mortalityRun,#mortalityClear,#mortalityClearInputs,#mortalityOpenPension{width:100%;display:block}
+ #mortalityClear,#mortalityClearInputs{margin-top:8px}
+ #mortalityPensionSettings>button{display:block;width:100%;margin-top:8px}
+}
