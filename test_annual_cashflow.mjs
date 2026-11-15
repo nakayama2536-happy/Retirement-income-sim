@@ -44,5 +44,12 @@ test('HTMLはラベルをエスケープし、合計へ再加算しない説明�
 });
 test('画面入口とキャッシュに年間収支を接続',()=>{
  const app=fs.readFileSync(new URL('./app.mjs',import.meta.url),'utf8'),html=fs.readFileSync(new URL('./index.html',import.meta.url),'utf8'),sw=fs.readFileSync(new URL('./sw.js',import.meta.url),'utf8');
- assert.match(app,/annualCheckText\(annualCashflowSummaries\(config/);assert.match(html,/id="annualCashflowSummary"/);assert.match(sw,/annual-cashflow\.mjs/);
+ assert.match(app,/const annualRows=annualCashflowSummaries\(config/);
+ assert.match(app,/annual\.textContent=annualCheckText\(annualRows\)/);
+ assert.match(app,/familyCashflowSummaryCache=annualRows/);
+ assert.match(app,/renderFamilyCashflowReadonly\(el\('familyIncomeSplit'\),current\)/);
+ assert.match(html,/id="annualCashflowSummary"/);
+ assert.match(html,/id="familyIncomeSplit"/);
+ assert.match(sw,/annual-cashflow\.mjs/);
+ assert.match(sw,/family-cashflow-readonly\.mjs/);
 });

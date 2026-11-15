@@ -1,0 +1,14 @@
+/* Presentation only. Scoped to existing family annual card. */
+#familyIncomeSplit{margin-top:1.15rem;padding:1rem;border:1px solid #ded8d2;border-radius:12px;background:var(--card-bg,#fff);min-width:0}
+#familyIncomeSplit h4{margin:0 0 .55rem;font-size:1.07rem}
+#familyIncomeSplit .family-readonly-caption{color:var(--muted,#595959);font-size:.91rem;line-height:1.65;margin:.65rem 0}
+#familyIncomeSplit .family-readonly-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,170px),1fr));gap:.75rem;margin:.9rem 0}
+#familyIncomeSplit .family-readonly-metric{display:flex;flex-direction:column;gap:.3rem;padding:.7rem;border:1px solid #e3e0dc;border-radius:9px;min-width:0}
+#familyIncomeSplit dt{font-weight:normal;color:var(--muted,#595959);font-size:.91rem}
+#familyIncomeSplit dd{margin:0;font-size:1.18rem;font-weight:700;overflow-wrap:anywhere;font-variant-numeric:tabular-nums}
+#familyIncomeSplit details{margin-top:.85rem;padding:.75rem;border:1px solid #e3e0dc;border-radius:9px}
+#familyIncomeSplit summary{font-weight:600;cursor:pointer}
+#familyIncomeSplit details dl{display:grid;gap:.65rem;margin:.85rem 0}
+#familyIncomeSplit .family-readonly-warning{border-left:3px solid #bd601d;padding:.65rem .8rem;background:#fff6ec}
+#familyIncomeSplit .family-readonly-unavailable{margin:0;color:var(--muted,#595959)}
+@media(max-width:375px){#familyIncomeSplit{padding:.8rem}#familyIncomeSplit .family-readonly-grid{grid-template-columns:1fr}}

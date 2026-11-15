@@ -19,6 +19,7 @@ import {mountExpenseSheet} from './expense-ui.mjs';
 import {mountIncomeSheet} from './income-ui.mjs';
 import {expenseDisplayModel,expenseDisplayHtml,expenseDisplayProfile} from './expense-display.mjs';
 import {annualCashflowSummaries} from './annual-cashflow.mjs';
+import {renderFamilyCashflowReadonly} from './family-cashflow-readonly-ui.mjs';
 import {simplifyLayout,annualCheckText,familyAgeLedgerSummary,familyAgeEndShortageSummary} from './simple-layout.mjs';
 import {basicSettingsValues,priceBaseExplanation,planPeriodUpdate,planPeriodDelete,verifyPeriodPlan,parsePeriodForm,proposalStamp,formatPeriodRow} from './ui-entry-guards.mjs';
 import {taxSocialMethodAudit,taxSocialMethodHtml} from './tax-social-audit.mjs';
@@ -56,6 +57,7 @@ const currentConfig=()=>config;
 const currentScenarios=()=>scenarios;
 mountReceiptAppAdapter(document.getElementById('receiptCompareMount'),{getConfig:()=>config});
 let result = null;
+let familyCashflowSummaryCache=null;
 let forecast = null;
 let showActuals = false;
 let renderedInputValues=new Map();
@@ -197,6 +199,7 @@ function refresh({calculated=null}={}) {
   } catch (e) { showNotice(e.message, 'error'); return; }
   el('emptyState').hidden = true;
   el('dashboard').hidden = false;
+  familyCashflowSummaryCache=null;
   renderHome(); renderExpenseDetail(); planningCharts.render(); renderYearTable(); renderAge65IncomeAudit(); renderActuals(); renderAnnualReview(); renderScenarios(); renderSettings(); renderRules(); drawChart(); renderTimeline(); renderCertainty(); renderFactors(); renderIntegrity(); renderCalculationBasis();
   pensionSheet.render();
   salarySheet.render();
@@ -348,9 +351,11 @@ function renderExpenseDetail() {
     source.value=expenseDisplayProfile(config,source.value)||'';
     const html=expenseDisplayHtml(expenseDisplayModel(config,age,{sourceProfile:source.value}),config);
     wrap.innerHTML=html.detail;reconcile.innerHTML=html.summary;
-    annual.textContent=annualCheckText(annualCashflowSummaries(config,{sourceProfile:source.value}));
+    const annualRows=annualCashflowSummaries(config,{sourceProfile:source.value});
+    familyCashflowSummaryCache=annualRows;
+    annual.textContent=annualCheckText(annualRows);
     if(taxAudit)taxAudit.innerHTML=taxSocialMethodHtml(taxSocialMethodAudit(config,age));
-  }catch(e){wrap.textContent='内訳を表示できません。'+e.message;reconcile.textContent='未計算のため予算余裕は判定できません。';annual.textContent='年間収支を表示できません。'+e.message;if(taxAudit)taxAudit.textContent='税・社会保険の方式差を表示できません。'+e.message;}
+  }catch(e){familyCashflowSummaryCache=null;wrap.textContent='内訳を表示できません。'+e.message;reconcile.textContent='未計算のため予算余裕は判定できません。';annual.textContent='年間収支を表示できません。'+e.message;if(taxAudit)taxAudit.textContent='税・社会保険の方式差を表示できません。'+e.message;}
   renderPeriodOverrides();
   budgetTravelView.render();
 }
@@ -499,6 +504,8 @@ function renderFamilyAnnualQuick(){
  const age=rows.some(r=>r.age===prev)?prev:rows[0]?.age;
  if(age!==undefined)ageControl.value=String(age);
  const summary=familyAgeLedgerSummary(rows,age);
+ const current=familyCashflowSummaryCache?.find(s=>s.age===Number(age));
+ renderFamilyCashflowReadonly(el('familyIncomeSplit'),current);
  const fields=['familyAnnualIncome','familyAnnualExpense','familyAnnualBalance','familyAnnualAsset'];
  if(summary.status!=='ready'){
   for(const id of fields)el(id).textContent='未確認';
@@ -1097,7 +1104,7 @@ document.querySelectorAll('[data-help]').forEach(btn=>btn.addEventListener('clic
 }));
 el('helpClose').addEventListener('click',()=>el('helpDialog').close());
 
-const CURRENT_RUNTIME_BUILD='v0.9.69-release-integrated-20261115';
+const CURRENT_RUNTIME_BUILD='v0.9.69-release-integrated-20261115-ui-rev03';
 el('appVersion').textContent=CURRENT_RUNTIME_BUILD+'（端末で実行中）';
 const freshness=el('runtimeFreshness');
 (async()=>{
