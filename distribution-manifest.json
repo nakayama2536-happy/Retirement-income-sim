@@ -199,8 +199,8 @@
     },
     {
       "name": "index.html",
-      "size": 84445,
-      "sha256": "b3e40984845429de443789583094a2e4f80dae01b13eb7abd07c30ce97ad07ea"
+      "size": 84759,
+      "sha256": "8e3ebd15708824995cbca02182c8dbd8b7650e7f3e1ade405c6054fa6b4b39b7"
     },
     {
       "name": "input-snapshots.mjs",
