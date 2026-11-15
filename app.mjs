@@ -1060,7 +1060,7 @@ el('showActuals').addEventListener('change',e=>{
 function switchTab(id){
   if(['salary','pension'].includes(id)&&el('sharedTaxTool')){const container=id==='pension'&&el('pensionTaxExtra')?el('pensionTaxExtra'):el(id);container.appendChild(el('sharedTaxTool').closest('details.supplementary')||el('sharedTaxTool'));}
   const group=document.querySelector(`[data-tab="${id}"]`)?.dataset.groupItem;
-  if(group){document.querySelectorAll('[data-group]').forEach(b=>b.classList.toggle('active',b.dataset.group===group));document.querySelectorAll('[data-group-item]').forEach(b=>b.hidden=b.dataset.groupItem!==group);}
+  if(group){document.querySelectorAll('[data-group]').forEach(b=>{const selected=b.dataset.group===group;b.classList.toggle('active',selected);if(selected)b.setAttribute('aria-current','page');else b.removeAttribute('aria-current');});document.querySelectorAll('[data-group-item]').forEach(b=>b.hidden=b.dataset.groupItem!==group);}
   document.querySelectorAll('[data-tab]').forEach(b=>{const selected=b.dataset.tab===id;b.classList.toggle('active',selected);if(selected)b.setAttribute('aria-current','page');else b.removeAttribute('aria-current');});
   document.querySelectorAll('.panel').forEach(p=>p.hidden=p.id!==id);
 }
