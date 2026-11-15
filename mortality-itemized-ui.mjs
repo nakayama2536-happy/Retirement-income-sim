@@ -114,9 +114,9 @@ export function mountMortalityItemizedControls(root,{getConfig,runPlan,onChange}
     if(deceased!==lastDeceased){savedFactors={};lastDeceased=deceased;takeCurrent=false;}
     if(takeCurrent)for(const input of host.querySelectorAll('[data-mortality-itemfactor]'))savedFactors[input.dataset.mortalityItemfactor]=input.value;
     host.replaceChildren();model=null;
+    root.querySelector('#mortalityRemainderAmount').textContent='未計算';
     // Keep a visible explanation when no registered expense source can be rendered.
     host.append(el('p','muted','費目内訳を確認中です。'));
-    root.querySelector('#mortalityRemainderAmount').textContent='未計算';
     status.textContent='費目内訳を確認中';
     const cfg=getConfig();
     if(!cfg){status.textContent='現在の設定を読み込んでください。';return;}
