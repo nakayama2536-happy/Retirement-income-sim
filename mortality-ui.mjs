@@ -277,7 +277,7 @@ export function mountMortalityComparison(root,{getConfig,getBaseline,runPlan}){
  <p>遺族年金だけの金額ではありません。資料で確認できない金額は確定額として扱わず、仮定を明示して比較してください。</p>
  <button type="button" class="secondary" id="mortalityOpenPension">年金の確認・入力欄を開く</button>
  </div>
- <details id="mortalityPensionSettings"><summary>詳しい年金の入力・参考計算（任意）</summary>
+ <details id="mortalityPensionSettings"><summary>残された方の年金合計を確認・入力する（必須）／詳しい参考計算</summary>
   <div class="form-grid mortality-grid">
    <label>残された人の公的年金合計（試算に使用する仮年額・万円／年）<input name="survivorPension" type="number" step="any" min="0" required placeholder="要確認：遺族年金を含む合計年額"></label>
    <label id="mortalityPreClaimRow" hidden>残された人の老齢年金受給前の公的年金合計（万円／年、仮置き）<input name="preClaimPension" type="number" step="any" min="0" placeholder="受給前の参考年額"><small id="mortalityPreClaimHint" class="muted">繰下げと受給権は別途確認</small></label>
