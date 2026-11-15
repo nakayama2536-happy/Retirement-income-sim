@@ -10,6 +10,7 @@ import {syncAnswerFromResult} from './sync-answer-bridge.mjs';
 export const SYNC_PUBLIC_CONFIG_KEY='lifeplan-private-sync-config-v1';
 export const SYNC_MARKER_KEY='lifeplan-private-sync-marker-v1';
 export const SYNC_ROLLBACK_KEY='lifeplan-private-sync-previous-v1';
+import {familyStorageStatus} from './family-storage-status.mjs';
 export const SYNC_REVIEW_KEY='lifeplan-private-sync-pending-review-v1';
 export const SYNC_AUTO_RESUME_KEY='lifeplan-private-sync-auto-resume-v1';
 export const CLOUD_ACTIONS=Object.freeze({
@@ -70,7 +71,7 @@ function safeError(e){
 const panelStyle=`
 .cloud-panel{color:inherit;line-height:1.6}.cloud-panel [hidden]{display:none!important}
 .cloud-panel h3,.cloud-panel h4{margin:0 0 .5rem}.cloud-panel p{margin:.4rem 0}
-.cloud-panel .cloud-lead{font-size:.92rem}.cloud-panel .cloud-card{border:1px solid #ccd7e2;border-radius:12px;padding:1rem;margin:1rem 0;background:#f6f9fc}
+.cloud-panel .cloud-storage-summary{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,205px),1fr));gap:.65rem;margin:.75rem 0}.cloud-panel .cloud-storage-summary>div{padding:.7rem;background:#fff;border:1px solid #d6dfe7;border-radius:8px}.cloud-panel .cloud-storage-summary dt{font-weight:700;margin-bottom:.25rem}.cloud-panel .cloud-storage-summary dd{margin:0;line-height:1.6;font-size:.89rem;overflow-wrap:anywhere}.cloud-panel .cloud-lead{font-size:.92rem}.cloud-panel .cloud-card{border:1px solid #ccd7e2;border-radius:12px;padding:1rem;margin:1rem 0;background:#f6f9fc}
 .cloud-panel .cloud-current{border-left:4px solid #31638a}.cloud-panel .cloud-status{font-weight:700;font-size:1.05rem}
 .cloud-panel .cloud-check-actions{max-width:460px;margin:8px 0 22px}.cloud-panel .cloud-action-4 button{font-weight:750}.cloud-panel .cloud-check-actions .cloud-action small{font-size:.86rem}.cloud-panel .cloud-grid .cloud-action button{border:1px solid #c3d0dc}.cloud-panel .cloud-current p{margin:.22rem 0}.cloud-panel .cloud-times{border-top:1px solid #d7e1eb;padding-top:.5rem}
 .cloud-panel .cloud-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,230px),1fr));gap:.75rem}
@@ -114,11 +115,16 @@ export function mountSyncPanel(root,{getState,replaceLocal,validateState,afterRe
  const now=()=>clock();
  root.replaceChildren();root.classList.add('cloud-panel');
  append(root,el('style',panelStyle),el('h3','クラウド保存・読込み'),
-  el('p','共通の正本はクラウドです。端末で確定・保存した変更を書き込み、他端末の変更を読み込みます。',{class:'cloud-lead'}));
+  el('p','クラウド同期を有効にした場合、端末で確定・保存した変更をクラウドと照合し、必要な書込み・読込みを行います。未接続ではクラウドへの保存は確認できません。',{class:'cloud-lead'}));
  const current=el('section',null,{class:'cloud-card cloud-current','aria-label':'現在の保存状態'});
  const authText=el('p'),modeText=el('p'),status=el('p',null,{class:'cloud-status',role:'status','aria-live':'polite'});
  const times=el('p',null,{class:'cloud-times'});
- append(current,el('h4','状態表示（操作ボタンではありません）'),status,authText,modeText,times);root.appendChild(current);
+ const overview=el('dl',null,{class:'cloud-storage-summary','aria-label':'保存先別の確認状況'});
+ const localValue=el('dd','未確認'),cloudValue=el('dd','未確認'),backupValue=el('dd','未確認');
+ for(const [title,value]of [['端末内データ',localValue],['クラウドとの状態',cloudValue],['一括バックアップ',backupValue]]){
+  const item=el('div');append(item,el('dt',title),value);overview.appendChild(item);
+ }
+ append(current,el('h4','状態表示：保存先ごとの確認状況（操作ボタンではありません）'),overview,status,authText,modeText,times);root.appendChild(current);
  const connection=el('section',null,{class:'cloud-card','aria-label':'ログインと暗号化解除'});
  const login=el('form',null,{id:'lifeplanCloudLogin',method:'post',autocomplete:'on'});
  function field(parent,label,name,value,type='text',attrs={}){
@@ -230,6 +236,15 @@ export function mountSyncPanel(root,{getState,replaceLocal,validateState,afterRe
  function render(){
   if(destroyed)return;
   const reg=registered(),active=!!coordinator;
+  let localReadable=false;
+  try{const state=getState();localReadable=!!state?.config&&Array.isArray(state.scenarios);}catch{}
+  const overviewState=familyStorageStatus({
+    localReadable,connected:active,registered:reg,reviewPending:reviewBarrier(),
+    pendingEdits:hasPendingEdits(),working,outcome:lastOutcome
+  });
+  localValue.textContent=overviewState.local;
+  cloudValue.textContent=overviewState.cloud;
+  backupValue.textContent=overviewState.backup;
   authText.textContent='本人認証：'+({checking:'確認中',unknown:'未確認','signed-in':'ログイン済み','signed-out':'ログインが必要',mismatch:'登録アカウントの確認が必要'}[authMode]||'未確認');
   const held=['STOP','CONFLICT','PENDING_OFFLINE','LOCAL_PENDING_REVIEW','REMOTE_PENDING_REVIEW','REMOTE_EMPTY'].includes(lastOutcome.status)||['CONFLICT','STOP'].includes(lastOutcome.syncAction);
   modeText.textContent='自動書込み・読込み：'+(active?(reg?(held?'保留中':'動作中'):'初回登録待ち'):(authMode==='signed-in'?'暗号化解除待ち':'停止中'));
