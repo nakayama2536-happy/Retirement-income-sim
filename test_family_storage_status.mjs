@@ -40,6 +40,6 @@ test('backup file existence can never be inferred by app',()=>{
 });
 test('readability and storage success are not confused, no personal data exposed',()=>{
  const s=familyStorageStatus({localReadable:true,outcome:{status:'SYNCED'},personalValue:908000});
- assert.match(s.local,/読込み/);assert.match(s.local,/保存完了を意味しません/);
+ assert.match(s.local,/読み込めます/);assert.match(s.local,/保存完了を意味しません/);
  assert.doesNotMatch(JSON.stringify(s),/908000/);
 });
