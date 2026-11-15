@@ -1,0 +1,14 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
+import {screenSurvivorReference} from './survivor-eligibility-guard.mjs';
+const baseline={survivorBirthDate:'1973-05-01',deathDate:'2038-05-01',rightDate:'2038-05-01',entitlementConfirmed:true,claimConfirmed:true,deferralReviewed:true,reformReviewed:true};
+test('missing exact dates cannot be silently inferred',()=>{const x=screenSurvivorReference();assert.equal(x.canShowAge65Formula,false);assert.equal(x.canAdopt,false);assert.equal(x.status,'needs-review');});
+test('birthday eve satisfies 65-year age threshold',()=>assert.equal(screenSurvivorReference({...baseline,deathDate:'2038-04-30'}).canShowAge65Formula,true));
+test('day before birthday eve is under 65',()=>assert.equal(screenSurvivorReference({...baseline,deathDate:'2038-04-29'}).canShowAge65Formula,false));
+test('new-year birthdays honor previous calendar year',()=>assert.equal(screenSurvivorReference({...baseline,survivorBirthDate:'1973-01-01',deathDate:'2037-12-31'}).canShowAge65Formula,true));
+test('February 29 birth remains review-only if anniversary rolls',()=>assert.equal(screenSurvivorReference({...baseline,survivorBirthDate:'1980-02-29',deathDate:'2045-03-01'}).canShowAge65Formula,false));
+test('missing reform confirmation never adopts',()=>{const x=screenSurvivorReference({...baseline,reformReviewed:false});assert.equal(x.status,'needs-review');assert.equal(x.canAdopt,false);});
+test('deferral always not determined',()=>{const x=screenSurvivorReference(baseline);assert.equal(x.basicDeferral,'not-determined');assert.equal(x.employeeDeferral,'not-determined');});
+test('screening does not mutate caller inputs',()=>{const x=structuredClone(baseline);screenSurvivorReference(x);assert.deepEqual(x,baseline);});
+test('existing pension reference and transfer contracts retained',()=>{const ui=readFileSync(new URL('./survivor-pension-ui.mjs',import.meta.url),'utf8');assert.match(ui,/calculateSurvivor65Reference\(/);assert.match(ui,/transfer.disabled=typeof onTransfer/);assert.match(ui,/screenSurvivorReference\(\)/);assert.match(ui,/参考額は自動採用しません/);});
