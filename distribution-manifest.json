@@ -393,19 +393,24 @@
       "sha256": "fca1a32fb25e11ffe0583c1461d5f525bddf9e2d04ca96767c4aeaac24c59d4e"
     },
     {
+      "name": "survivor-eligibility-guard.mjs",
+      "size": 1800,
+      "sha256": "4b8adcbfda4e8f57c8b582664a31430a9a7868ef57ecca751128d9ec3f73f9fe"
+    },
+    {
       "name": "survivor-pension-calculator.mjs",
       "size": 2817,
       "sha256": "04a5d3bbd610b4886038e40e36415ac5e7d8c1449053901300bf7bc881719438"
     },
     {
       "name": "survivor-pension-ui.mjs",
-      "size": 6029,
-      "sha256": "c0726a6a54aae8e06153df985588f4be5218d9fea376ec245e4ae0e5bd8a3a22"
+      "size": 6474,
+      "sha256": "7e7ed96823c7215fac937dffc30e966ff86b538657c331c1fe018c83101bb82c"
     },
     {
       "name": "sw.js",
-      "size": 5020,
-      "sha256": "101d23996b363a3a6cac1abd4c2451dbbdc2069e937cf7f667d0112f9745a03e"
+      "size": 5055,
+      "sha256": "31fdd6f05bd6fbea7e8441a4f83a615c9aab2928c4ad032337b81a85fe847060"
     },
     {
       "name": "sync-answer-bridge.mjs",
