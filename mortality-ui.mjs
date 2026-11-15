@@ -296,9 +296,9 @@ export function mountMortalityComparison(root,{getConfig,getBaseline,runPlan}){
   <p id="mortalityEstimateNotice" class="muted" role="status"></p>
  </details>
  </fieldset>
- <fieldset><legend>2．残された人の生活費（費目別の変更）</legend><p>倍率の見方：<strong>1.0倍＝元と同じ100％、0.8倍＝80％（20％減）、1.2倍＝120％（20％増）</strong>です。費目ごとに入力した倍率で比較します。入力しただけでは現在の計画は変更されません。</p>
+ <fieldset><legend>2．残された人の生活費（費目別の変更）</legend><p>生活費が亡くなった後に何倍になるかを費目ごとに設定します。<strong>1.0倍＝変化なし、0.8倍＝20％減、1.2倍＝20％増</strong>です。採用済みの計画は変更しません。</p>
  <p class="muted">登録済みの生活費を費目別に参照し、残された人の生活費倍率を設定します。支出は「元の管理予算 − 減額分」で計算し、物価係数の二重適用を防ぎます。</p>
- <p class="family-factor-helper">入力例：<strong>1.0＝100％（変化なし）／0.8＝80％（20％減）／0.5＝50％（半分）／0＝0％</strong>。倍率は費目ごとに設定でき、画面の合計額へ反映されます。</p>
+ <p class="family-factor-helper">入力例：<strong>1.0＝変化なし／0.8＝20％減／0.5＝半分／0＝支出なし</strong>。倍率は画面の比較額へ反映されます。</p>
  <input type="hidden" id="mortalityExpenseSource" value="work-v0.9.7"><p class="muted">登録済みの費目内訳を参照します。専用の死亡後倍率が設定されている場合は、その登録元と倍率を初期値として読み込みます。各倍率は試算用です。採用済み予算は変更しませんが、比較入力の条件はバックアップ・同期対象になる場合があります。</p>
  <p id="mortalityItemSourceNote" class="muted"></p>
  <div id="mortalityItemHost" class="mortality-item-rows"></div>
