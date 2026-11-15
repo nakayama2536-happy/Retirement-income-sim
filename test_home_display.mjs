@@ -36,6 +36,8 @@ test('明示的な0万円目標は未設定ではなく、安全・達成判定�
  assert.doesNotMatch(el('status').textContent,/目標額以上|達成|安全$/);
  assert.match(el('targetStatusNote').textContent,/安全|安心|足りる/);
  assert.equal(el('status').dataset.status,'');
+ assert.equal(el('finalMargin').className,'');
+ assert.match(el('keyAges').children[0].innerHTML,/class=""/);
  assert.equal(JSON.stringify(c.config),before);
  c.result.keyAges=[];c.renderHome();
  assert.equal(el('finalThreshold').textContent,'未設定');
