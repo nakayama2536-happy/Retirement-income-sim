@@ -44,10 +44,12 @@ try{
         const context=await browser.newContext({serviceWorkers:'block'});
         const errors=[],external=[];
         context.on('page',p=>p.on('pageerror',e=>errors.push(e.message)));
-        await context.addInitScript(data=>{
-          if(!localStorage.getItem('lifeplan-sim-state-v1'))
+        await context.addInitScript(({data,allowedOrigin})=>{
+          // Playwright also executes init scripts in about:blank and opaque frames.
+          if(location.origin!==allowedOrigin)return;
+          if(localStorage.getItem('lifeplan-sim-state-v1')===null)
             localStorage.setItem('lifeplan-sim-state-v1',JSON.stringify(data));
-        },variant(kind));
+        },{data:variant(kind),allowedOrigin:origin});
         await context.route('**/*',route=>{
           if(new URL(route.request().url()).origin===origin)return route.continue();
           external.push(route.request().url());return route.abort();
