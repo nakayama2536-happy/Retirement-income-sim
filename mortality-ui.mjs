@@ -258,7 +258,7 @@ function renderTransition(root,baseline,mortality,allocation,itemized=null,itemF
 export function mountMortalityComparison(root,{getConfig,getBaseline,runPlan}){
  if(!root||typeof getConfig!=='function'||typeof getBaseline!=='function'||typeof runPlan!=='function')throw Error('missing-mortality-ui-dependency');
  root.innerHTML=`
- <p class="muted">この画面は<strong>万一の時期による仮置き比較専用</strong>です。現在の採用条件・比較案・バックアップ・クラウドは変更しません。お二人とも万一の場合、相続、制度の受給資格、所得税・社会保険の精密な変更は未対応です。</p>
+ <p class="muted">この画面は<strong>万一の時期による仮置き比較専用</strong>です。採用済みの計画は変更しません。ただし比較用の入力条件は、一括バックアップや有効なクラウド同期の対象になる場合があります。お二人とも万一の場合、相続、制度の受給資格、所得税・社会保険の精密な変更は未対応です。</p>
  <form id="mortalityForm" class="mortality-form">
  <fieldset><legend>1．誰が・いつ万一となるか</legend>
  <div class="form-grid mortality-grid">
@@ -299,7 +299,7 @@ export function mountMortalityComparison(root,{getConfig,getBaseline,runPlan}){
  <fieldset><legend>2．残された人の生活費（費目別の変更）</legend><p>倍率の見方：<strong>1.0倍＝元と同じ100％、0.8倍＝80％（20％減）、1.2倍＝120％（20％増）</strong>です。費目ごとに入力した倍率で比較します。入力しただけでは現在の計画は変更されません。</p>
  <p class="muted">登録済みの生活費を費目別に参照し、残された人の生活費倍率を設定します。支出は「元の管理予算 − 減額分」で計算し、物価係数の二重適用を防ぎます。</p>
  <p class="family-factor-helper">入力例：<strong>1.0＝100％（変化なし）／0.8＝80％（20％減）／0.5＝50％（半分）／0＝0％</strong>。倍率は費目ごとに設定でき、画面の合計額へ反映されます。</p>
- <input type="hidden" id="mortalityExpenseSource" value="work-v0.9.7"><p class="muted">登録済みの費目内訳を参照します。専用の死亡後倍率が設定されている場合は、その登録元と倍率を初期値として読み込みます。各倍率は試算用で、採用済み予算やクラウドを変更しません。</p>
+ <input type="hidden" id="mortalityExpenseSource" value="work-v0.9.7"><p class="muted">登録済みの費目内訳を参照します。専用の死亡後倍率が設定されている場合は、その登録元と倍率を初期値として読み込みます。各倍率は試算用です。採用済み予算は変更しませんが、比較入力の条件はバックアップ・同期対象になる場合があります。</p>
  <p id="mortalityItemSourceNote" class="muted"></p>
  <div id="mortalityItemHost" class="mortality-item-rows"></div>
  <div class="mortality-item-row mortality-remainder-row"><strong>内訳に含まれない管理予算の支出（税社保・不明費用を含む）</strong><span id="mortalityRemainderAmount">未計算</span><input id="mortalityRemainderFactor" type="number" min="0" max="3" step="0.05" value="1" aria-label="未照合の予算残額の倍率"><span>倍率を指定できます</span></div>
@@ -309,13 +309,13 @@ export function mountMortalityComparison(root,{getConfig,getBaseline,runPlan}){
  <div id="mortalityCostRows" class="mortality-costs"></div>
  <p id="mortalityAllocationTotal" class="muted" role="status"></p></div>
  </fieldset>
- <label class="check-label family-review-check"><input type="checkbox" name="reviewed" required><span>年金年額・万一の月・生活費の倍率が<strong>比較用の仮定</strong>であり、現在の計画や保存済み条件は変わらないことを確認しました。</span></label>
+ <label class="check-label family-review-check"><input type="checkbox" name="reviewed" required><span>年金年額・万一の月・生活費の倍率が<strong>比較用の仮定</strong>であり、採用済みの計画は変わらず、比較入力は保存・同期対象になる場合があることを確認しました。</span></label>
  <button id="mortalityRun" class="primary" type="submit">もしものときの家計を試算（現在の計画と比較・未採用）</button>
  <p class="muted">この操作では計画への採用を行いません。比較入力は一括バックアップや、有効なクラウド同期の対象になり得ます。比較結果の採用とは別です。</p>
  <button id="mortalityClear" class="secondary" type="button">結果表示をクリア</button>
  <button id="mortalityClearInputs" class="secondary" type="button">比較入力を初期化</button>
  </form>
- <p id="mortalityState" role="status" class="muted">まだ比較していません。現在の資産計算や保存データは変わりません。</p>
+ <p id="mortalityState" role="status" class="muted">まだ比較していません。計画への採用は行いません。比較入力は保存・同期対象になる場合があります。</p>
  <p id="mortalityDraftSaveNotice" role="status" class="muted"></p>
  <div id="mortalityResults" hidden></div>
  `;
