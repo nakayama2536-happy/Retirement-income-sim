@@ -1,6 +1,6 @@
 {
   "kind": "public-release",
-  "runtime": "v0.9.69-release-integrated-20261115-ui-rev03-p0",
+  "runtime": "v0.9.70-comparison-premises-p0-20261117",
   "files": [
     {
       "name": "action-answer.css",
@@ -49,13 +49,13 @@
     },
     {
       "name": "app.mjs",
-      "size": 87612,
-      "sha256": "c7238d32b15a31a9946923b62f38497156157e6544531267309605123a59d06c"
+      "size": 87604,
+      "sha256": "e19681872645be32a063ad1dd4885a0ffd09cafb2ed3cb0660a5dc4010315392"
     },
     {
       "name": "backup-compatibility.mjs",
-      "size": 8317,
-      "sha256": "551e9cae1ba7f5f1baebe6f9afc478b62e52ab628a0099c7b5a643a1fa8ec708"
+      "size": 8309,
+      "sha256": "f30b4490844d4b49c4516f17d2dd902cc212d3ecac0d6e6a183936306cc4d701"
     },
     {
       "name": "budget-travel-ui.mjs",
@@ -174,8 +174,8 @@
     },
     {
       "name": "full-plan-comparison.mjs",
-      "size": 4050,
-      "sha256": "d3202d59fc1ebb5e161a8fea5228a5daae6dd0c29bb25b23741f51eaebf4d245"
+      "size": 4181,
+      "sha256": "58208860a65324e40af67ddc1a531d35b11172440365c869bafa46dc690a6496"
     },
     {
       "name": "full-plan-saved.mjs",
@@ -184,8 +184,8 @@
     },
     {
       "name": "full-plan-ui.mjs",
-      "size": 14805,
-      "sha256": "9f04f08b4b5b5c69d1d20160a0b1900a5e8b5eb3cc5a0523a57986266bac7b8b"
+      "size": 15522,
+      "sha256": "9d54abc3f59facad5937b44b30f5f528a0a95f54a826585c9633a699e1775e03"
     },
     {
       "name": "icons/icon-192.png",
@@ -221,6 +221,11 @@
       "name": "input-snapshots.mjs",
       "size": 4307,
       "sha256": "4e6542dd863b9d8623d62ff5e1e2c748ece99ce06c20e20f5afdcfebf3f6b28f"
+    },
+    {
+      "name": "lifeplan-comparison-premises.mjs",
+      "size": 2682,
+      "sha256": "5fbce984bf74e6d6ea09848b6d8584c2cd22528a9252bbcc7e229b2eea06b248"
     },
     {
       "name": "manifest.webmanifest",
@@ -424,8 +429,8 @@
     },
     {
       "name": "sw.js",
-      "size": 5183,
-      "sha256": "8fe080aca245a8156af71077906ea5c0bfeb07f49a12b21709c984c154dec899"
+      "size": 5212,
+      "sha256": "823996a90b8ddd9816d12705b341fd2c6ee2373693e823a958918e71fe4c5f00"
     },
     {
       "name": "sync-answer-bridge.mjs",
