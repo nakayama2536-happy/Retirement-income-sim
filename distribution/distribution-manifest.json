@@ -349,8 +349,8 @@
     },
     {
       "name": "release-info.json",
-      "size": 146,
-      "sha256": "aa06869cd4ac2b4872b4a29cfc31c28291e0c25edf15d07c11eedd8e0f328c6b"
+      "size": 138,
+      "sha256": "1d5abd55a1f42ea95fcb8ec32502440c995c730980e5833f6474a21466c26470"
     },
     {
       "name": "retirement-comment.mjs",
