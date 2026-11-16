@@ -135,6 +135,15 @@ export function mountFullPlanComparisonCard(root,{getConfig,getOpeningDraft,getS
    lastResult=comparison;lastRequest=clone(inputs);status.textContent='未反映比較と年齢期CSVの照合が完了。採用済み設定は無変更です。';
    resultBox.appendChild(elem('p','現在設定の最終資産 '+formatter(comparison.baseFinalAsset)+'／比較案 '+formatter(comparison.candidateFinalAsset)+'／差額 '+formatter(comparison.candidateFinalAsset-comparison.baseFinalAsset)));
    resultBox.appendChild(elem('p','月数 '+comparison.monthlyCount+'／最初の残高負値月 '+(comparison.firstNegativeMonth??'なし（この仮定での結果）')));
+   const premises=comparison.premises;
+   resultBox.appendChild(elem('h4','最終資産差額の比較前提'));
+   const premiseWrap=elem('div',null,{class:'table-wrap'}),premiseTable=elem('table'),premiseHead=elem('tr');
+   ['前提項目','現在設定','比較案'].forEach(label=>premiseHead.appendChild(elem('th',label)));
+   premiseTable.appendChild(premiseHead);
+   for(const row of premises.rows){const tr=elem('tr');[row.label,row.base,row.candidate].forEach(v=>tr.appendChild(elem('td',v)));premiseTable.appendChild(tr);}
+   premiseWrap.appendChild(premiseTable);resultBox.appendChild(premiseWrap);
+   resultBox.appendChild(elem('p',premises.warning));
+   resultBox.appendChild(elem('p',premises.notice));
    const wrap=elem('div',null,{class:'table-wrap'}),table=elem('table'),head=elem('thead'),htr=elem('tr');
    ['本人の年齢期末','比較後の資産','参考目標','差額（予測−目標）'].forEach(h=>htr.appendChild(elem('th',h)));
    head.appendChild(htr);table.appendChild(head);const body=elem('tbody');
