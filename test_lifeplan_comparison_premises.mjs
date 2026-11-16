@@ -1,0 +1,11 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {comparisonPremises} from './lifeplan-comparison-premises.mjs';
+const c=()=>({plan:{startDate:'2044-09-27',initialAsset:100,openingBalance:{asOfMonth:'2044-08'},priceBaseMonth:'2044-08',afterTaxReturn:0,inflation:0,initialAssetIncludesIdeco:false}});
+const r=()=>({monthlyDetails:[{month:'2044-09'},{month:'2044-10'}]});
+test('same key premises still not declared full equality',()=>{const x=comparisonPremises(c(),c(),r(),r());assert.equal(x.different,false);assert.match(x.warning,/全条件一致を意味しません/);});
+test('different starting periods warn about attribution',()=>{const a=c(),b=c();b.plan.startDate='2045-09-27';const x=comparisonPremises(a,b,r(),r());assert.equal(x.different,true);assert.match(x.warning,/単一条件/);});
+test('legacy true and false must differ',()=>{const a=c(),b=c();b.plan.initialAssetIncludesIdeco=true;assert.equal(comparisonPremises(a,b,r(),r()).different,true);});
+test('missing conditions flagged',()=>{const a=c();delete a.plan.afterTaxReturn;const x=comparisonPremises(a,c(),r(),r());assert.equal(x.unknown,true);});
+test('non-string date safe',()=>{const a=c();a.plan.startDate={bad:true};assert.equal(comparisonPremises(a,c(),r(),r()).unknown,true);});
+test('final evaluation month and counts disclosed',()=>{const x=comparisonPremises(c(),c(),r(),{monthlyDetails:[{month:'2044-09'}]});assert.equal(x.different,true);assert.equal(x.rows.find(a=>a.label==='評価月数').candidate,'1');});
