@@ -5,7 +5,7 @@ const ITEMS=[['medical','80歳以降の医療費増加'],['car','85歳以降の�
 export function mountAgeBudgetDeltaComparison({container,getConfig,documentRef=document,notice,urlRef=URL}={}){
  if(!container||typeof getConfig!=='function')throw Error('表示先と設定の取得方法が必要です');
  const d=documentRef, panel=d.createElement('details');panel.id='ageBudgetDeltaReviewPanel';panel.className='card';
- const summary=d.createElement('summary');summary.textContent='元の予算への増減額を比較する（確認後・未反映）';panel.append(summary);
+ const summary=d.createElement('summary');summary.textContent='【差額調整はこちら】元の管理予算から減額・増額する（確認後・未反映）';panel.append(summary);
  const note=d.createElement('p');note.textContent='各費目が現在の管理予算に既に含まれるか確認してください。「未確認」のままでは試算しません。比較は未採用です。';panel.append(note);
  const selectors={};
  for(const [key,label] of ITEMS){
