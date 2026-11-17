@@ -1,11 +1,12 @@
 import {previewAgeBudgetCandidate} from './age-budget-candidate.mjs';
+import {mountAgeBudgetDeltaComparison} from './age-budget-delta-ui.mjs';
 import {ageBudgetPreviewView,ageBudgetPreviewCsv} from './age-budget-preview-export.mjs';
 export function mountAgeBudgetComparison({container,getConfig,notice,documentRef=document,urlRef=URL}={}){
  if(!container||typeof getConfig!=='function')throw Error('表示領域と現在設定が必要です');
  const shell=documentRef.createElement('details');
  shell.className='card';shell.id='ageBudgetReferencePanel';
- const summary=documentRef.createElement('summary');summary.textContent='80歳・85歳以降の支出切替を比較する（未反映）';shell.append(summary);
- const note=documentRef.createElement('p');note.className='muted';note.textContent='参考値による比較です。現在の管理予算・保存データは変更しません。変更後の費目と税額は別途確認してください。';shell.append(note);
+ const summary=documentRef.createElement('summary');summary.textContent='参考支出額への置換を比較する（元予算からの減額ではありません・未反映）';shell.append(summary);
+ const note=documentRef.createElement('p');note.className='muted';note.textContent='この方式は元の管理予算を参考支出額に丸ごと置き換えます。元予算が参考額より小さい場合は支出が増えます。減額分だけを差し引く場合は下の「元の予算への増減額を比較する」を使用してください。現在の管理予算・保存データは変更しません。';shell.append(note);
  const run=documentRef.createElement('button');run.type='button';run.className='secondary';run.textContent='現在の計画と比較する';shell.append(run);
  const exportBtn=documentRef.createElement('button');exportBtn.type='button';exportBtn.className='secondary';exportBtn.textContent='比較案CSVを保存';exportBtn.disabled=true;shell.append(exportBtn);
  const status=documentRef.createElement('p');status.setAttribute('role','status');shell.append(status);
@@ -31,5 +32,6 @@ export function mountAgeBudgetComparison({container,getConfig,notice,documentRef
   try{const a=documentRef.createElement('a');a.href=url;a.download='lifeplan-age-budget-preview.csv';a.click();notice?.('未反映の比較案CSVを作成しました。');}
   finally{urlRef.revokeObjectURL(url);}
  }catch(e){notice?.(e.message,'error');}});
- return {reset};
+ const delta=mountAgeBudgetDeltaComparison({container,getConfig,notice,documentRef,urlRef});
+ return {reset:()=>{reset();delta.reset();}};
 }

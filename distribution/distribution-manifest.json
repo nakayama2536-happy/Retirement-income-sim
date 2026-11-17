@@ -1,6 +1,6 @@
 {
   "kind": "public-release",
-  "runtime": "v0.9.70-comparison-premises-p0-20261117",
+  "runtime": "v0.9.71-threshold-ui-20261117",
   "files": [
     {
       "name": "action-answer.css",
@@ -24,8 +24,8 @@
     },
     {
       "name": "age-budget-delta-ui.mjs",
-      "size": 5200,
-      "sha256": "c73caf7446e45f2fdd7c53ed69114b8cde196be2e941e0e515f341a0c9de12fd"
+      "size": 5233,
+      "sha256": "8ddb4fd6d1221edd395418cdafbfc8519bc237ca3e8b0200a8ff447ec697df53"
     },
     {
       "name": "age-budget-preview-export.mjs",
@@ -34,8 +34,8 @@
     },
     {
       "name": "age-budget-ui.mjs",
-      "size": 4119,
-      "sha256": "08c4269e3366a02a572bf241cb617e97638fc31989a389b569455fab7b982e7b"
+      "size": 4340,
+      "sha256": "1d56c59c1ea5a46d89d9ce29d69d08ef214d23414a8f32765b889ec4072d245c"
     },
     {
       "name": "annual-cashflow.mjs",
@@ -49,13 +49,13 @@
     },
     {
       "name": "app.mjs",
-      "size": 87604,
-      "sha256": "e19681872645be32a063ad1dd4885a0ffd09cafb2ed3cb0660a5dc4010315392"
+      "size": 87594,
+      "sha256": "8ef2749c9fb7d4b15f4f995e3281fde160e6155df731ad14dee78ca308199f2b"
     },
     {
       "name": "backup-compatibility.mjs",
-      "size": 8309,
-      "sha256": "f30b4490844d4b49c4516f17d2dd902cc212d3ecac0d6e6a183936306cc4d701"
+      "size": 8299,
+      "sha256": "fd56cd20aa0ec2b91a179dfcaaebff3d9cedc6b00a13474a77ba5a57080b6d1a"
     },
     {
       "name": "budget-travel-ui.mjs",
@@ -349,8 +349,8 @@
     },
     {
       "name": "release-info.json",
-      "size": 138,
-      "sha256": "1d5abd55a1f42ea95fcb8ec32502440c995c730980e5833f6474a21466c26470"
+      "size": 128,
+      "sha256": "1a935a5dce8325e9f3bede68ac6e86fc699c3318b3a6909918e20fd1aad8093b"
     },
     {
       "name": "retirement-comment.mjs",
@@ -429,8 +429,8 @@
     },
     {
       "name": "sw.js",
-      "size": 5212,
-      "sha256": "823996a90b8ddd9816d12705b341fd2c6ee2373693e823a958918e71fe4c5f00"
+      "size": 5202,
+      "sha256": "a71b730db18863046bc5635f3d18e73eab9dd798733dd72b5b6134d1223587b6"
     },
     {
       "name": "sync-answer-bridge.mjs",
