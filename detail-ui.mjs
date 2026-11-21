@@ -17,7 +17,7 @@ const num=(name,label,v='')=>input(name,label,'number',v,'required');
 const amount=()=>num('amount','金額（万円）')+select('unit','金額の単位',[['monthly','月額'],['annual','年額']]);
 const dates=(c)=>num('fromAge','本人の開始年齢',c.plan.startAge)+num('toAge','本人の終了年齢',c.plan.endAge);
 const treatment=()=>select('fundingTreatment','給与生活中の扱い',[['separate','資産へ別枠計上'],['net_transfer','家計の入出金に含む（重ねて計上しない）']]);
-const profile=()=>select('profile','編集・集計する内訳',[['','保存元を選択'],['work-v0.9.7','標準の生活費内訳'],['public-v0.9','旧形式の生活費内訳']]);
+const profile=()=>select('profile','編集・集計する内訳',[['','標準の内訳が未登録なら編集不可'],['work-v0.9.7','標準の生活費内訳']]);
 const laborEditors={laborPrimaryRegular:['primary','regularWork'],laborPrimarySide:['primary','sideWork'],laborSpouseRegular:['spouse','regularWork'],laborSpouseSide:['spouse','sideWork']};
 const fname={horizon:'計算終了年齢を延長（100歳末まで）',budgetTable:'年齢別の年間予算を入力',unemployment:'失業給付の受取予定を設定',goal:'年齢別の目標資産額を再設定',laborPrimaryRegular:'本人：正社員収入',laborPrimarySide:'本人：アルバイト収入',laborSpouseRegular:'配偶者：正社員収入',laborSpouseSide:'配偶者：アルバイト収入',nisa:'1. 開始時点のNISA残高',nisaWithdrawal:'2. 毎月の取り崩し設定',ideco:'iDeCoの残高・積立と基本条件',idecoWithdrawal:'iDeCoの取り崩し・受取プラン',retirement:'退職金の条件と受取',expense:'生活費・保険を項目ごとに設定',budget:'内訳合計を年間予算にする',event:'臨時収入・追加請求を設定',extra:'継続する追加収入を設定'};
 // Only data that supplies this editor's inputs/options. Other settings still
