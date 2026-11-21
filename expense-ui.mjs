@@ -57,7 +57,9 @@ export function mountExpenseSheet({getState,onCommit,showNotice,storage=localSto
   if(!getState().config)return;
   try{
    const current=loadExpenseState(storage);assertExpenseScreenMatches(current,getState());
-   if(!base){base=current;rebuild();}
+   if(!base){base=current;
+    if(!el('Source').value&&current.config?.expenseDetail?.monthlyCategories?.length)el('Source').value='work-v0.9.7';
+    rebuild();}
    else if(signature(base)!==signature(current)){blocked=true;invalidate();error('別の操作で設定が更新されました。入力は残しています。再読み込みして再試算してください。');}
    const w=current.config.expenseWorkflow;
    el('History').textContent=w?.lastApply?`反映日時：${new Intl.DateTimeFormat('ja-JP',{timeZone:'Asia/Tokyo',dateStyle:'short',timeStyle:'medium'}).format(new Date(w.lastApply.at))} 日本時間`:'取消できる直前反映はありません。';
