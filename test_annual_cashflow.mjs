@@ -30,10 +30,10 @@ test('内訳だけを変えても管理予算・期末資産は変わらない',
  const c=fixture(),a=annualCashflowSummary(c,65,{sourceProfile:'work-v0.9.7'});c.expenseDetail.monthlyCategories[0].amount=9;const b=annualCashflowSummary(c,65,{sourceProfile:'work-v0.9.7'});
  assert.equal(a.managementExpense,b.managementExpense);assert.equal(a.endAsset,b.endAsset);assert.notEqual(a.referenceKnownSubtotal,b.referenceKnownSubtotal);
 });
-test('混在出典は合算せず、合計は表示し参考内訳だけ未選択にする',()=>{
+test('混在出典は合算せず標準を優先し、未確定内訳は未確定のまま表示する',()=>{
  const c=fixture();c.cashflow.expenseCategories=[{key:'living',label:'生活費',items:[{key:'base',label:'基本',periods:[{fromAge:64,toAge:90,amount:8}]}]}];
- const s=annualCashflowSummary(c,65);assert.equal(s.status,'ready');assert.equal(s.sourceProfile,null);assert.equal(s.referenceDetail,null);assert.equal(s.managementExpense,36);
- assert.match(annualCashflowHtml(s),/出典未選択/);
+ const s=annualCashflowSummary(c,65);assert.equal(s.status,'ready');assert.equal(s.sourceProfile,'work-v0.9.7');assert.equal(s.referenceDetail,null);assert.equal(s.managementExpense,36);
+ assert.match(annualCashflowHtml(s),/標準の生活費内訳/);
 });
 test('計画外の年齢は0円を作らず、対象期間なしを返す',()=>{
  const s=annualCashflowSummary(fixture(),99,{sourceProfile:'work-v0.9.7'});assert.equal(s.status,'no-period');assert.match(annualCashflowHtml(s),/計算結果はありません/);

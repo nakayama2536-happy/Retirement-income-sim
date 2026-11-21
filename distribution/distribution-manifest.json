@@ -1,6 +1,6 @@
 {
   "kind": "public-release",
-  "runtime": "v0.9.71-threshold-ui-20261117",
+  "runtime": "v0.9.72-standard-expense-ui-20261122",
   "files": [
     {
       "name": "action-answer.css",
@@ -49,13 +49,13 @@
     },
     {
       "name": "app.mjs",
-      "size": 87594,
-      "sha256": "8ef2749c9fb7d4b15f4f995e3281fde160e6155df731ad14dee78ca308199f2b"
+      "size": 87601,
+      "sha256": "47b7b531c6dd97fd0d975db824d98fce5cbc2281efea7902b659b9f47bfb5c2a"
     },
     {
       "name": "backup-compatibility.mjs",
-      "size": 8299,
-      "sha256": "fd56cd20aa0ec2b91a179dfcaaebff3d9cedc6b00a13474a77ba5a57080b6d1a"
+      "size": 8306,
+      "sha256": "96dfd0ac7dad1a977e5977c3bf0a6d2f56f8c1a8e2c7d0d0f794eb9518be4b9d"
     },
     {
       "name": "budget-travel-ui.mjs",
@@ -109,8 +109,8 @@
     },
     {
       "name": "detail-ui.mjs",
-      "size": 42212,
-      "sha256": "05566fd14958e340a895af9353e9a43e3d455d23a521dd21d04f88fb6a320696"
+      "size": 42193,
+      "sha256": "7496e772900d07b16e60b5526fba0afea0239d110fb6419e2c752c0932ed8539"
     },
     {
       "name": "detailed-report.mjs",
@@ -129,8 +129,8 @@
     },
     {
       "name": "expense-display.mjs",
-      "size": 4997,
-      "sha256": "ccf54f9086f4e683b332ffd7f63db60c58d22c6dac9e4b1a5238aabb5744ceb8"
+      "size": 4733,
+      "sha256": "8be5916b0a56d0b420cff2a6a60fe3c2b3787f4c89f5eace246bbabd2b8adfc7"
     },
     {
       "name": "expense-preview.mjs",
@@ -139,8 +139,8 @@
     },
     {
       "name": "expense-ui.mjs",
-      "size": 10631,
-      "sha256": "09dbed1ae559b142274b30f2e2834a1cc4b397d51bcb6f0bf98be678314a134f"
+      "size": 10755,
+      "sha256": "b54082c737d05586f26973efffc508e69c0ef1259bcc09c96199e65ce61772e6"
     },
     {
       "name": "expense-workflow.mjs",
@@ -214,8 +214,8 @@
     },
     {
       "name": "index.html",
-      "size": 85968,
-      "sha256": "6d99291502b082f9f120b1c17b99b7f58ab80d633afa30c64dc1f0dd14af1d23"
+      "size": 85721,
+      "sha256": "82cee15d7a8dabf4e050ef7de5691f6b4d8f4fb76e4250427903fccef134dea9"
     },
     {
       "name": "input-snapshots.mjs",
@@ -349,8 +349,8 @@
     },
     {
       "name": "release-info.json",
-      "size": 128,
-      "sha256": "1a935a5dce8325e9f3bede68ac6e86fc699c3318b3a6909918e20fd1aad8093b"
+      "size": 135,
+      "sha256": "c6332b11452cb05bdd8ec935a2fc837aba512b11f517b647be995ffe77a56566"
     },
     {
       "name": "retirement-comment.mjs",
@@ -429,8 +429,8 @@
     },
     {
       "name": "sw.js",
-      "size": 5202,
-      "sha256": "a71b730db18863046bc5635f3d18e73eab9dd798733dd72b5b6134d1223587b6"
+      "size": 5209,
+      "sha256": "a10a5e1e60e5c6b24b3f127df5e418d87bd6516bde01ca886bec91a595636c56"
     },
     {
       "name": "sync-answer-bridge.mjs",

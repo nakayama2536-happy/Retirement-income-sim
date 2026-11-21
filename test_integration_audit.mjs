@@ -42,20 +42,20 @@ test('saved comparison metrics and scenario attributes remain independent of cur
  const n=await applyExpensePreview(state,preview(state,'work-v0.9.7','budget',144),{storage});
  assert.deepEqual(n.state.scenarios,state.scenarios);assert.deepEqual(n.state.scenarios.map(s=>scenarioMetrics(s.config)),metrics);
 });
-test('FIX A: public-format saved detail appears in the shared display',async()=>{
+test('FIX A: historic public-format updates stay in data, normal display prefers standard',async()=>{
  const {state,storage}=setup(),p=preview(state,'public-v0.9','detail',9);
  assert.ok(p.months.some(m=>m.detailBefore!==m.detailAfter||m.knownSubtotalBefore!==m.knownSubtotalAfter));
  const n=await applyExpensePreview(state,p,{storage});assert.equal(n.state.config.cashflow.expenseCategories[0].items[0].periods[0].amount,9);
- const display=expenseDisplayModel(n.state.config,65);assert.equal(display.sourceProfile,'public-v0.9');assert.equal(display.rows.find(r=>r.itemId==='expense/key:housing').amount,108);
- const rendered=expenseDisplayHtml(display);assert.match(rendered.detail,/108万円/);assert.match(rendered.detail,/旧形式の生活費内訳/);
+ const display=expenseDisplayModel(n.state.config,65);assert.equal(display.sourceProfile,'work-v0.9.7');assert.equal(display.rows.find(r=>r.itemId==='expense/key:housing').amount,60);
+ const historic=expenseDisplayModel(n.state.config,65,{sourceProfile:'public-v0.9'});assert.equal(historic.rows.find(r=>r.itemId==='expense/key:housing').amount,108);
 });
-test('FIX B: public-only data is displayed without a Work detail object',()=>{
+test('FIX B: public-only data remains available explicitly but normal UI does not use it',()=>{
  const {state}=setup();delete state.config.expenseDetail;assert.equal(expenseDetailSummary(state.config,65),null);
  assert.ok(inspectCashflowSources(state.config,{sourceProfile:'public-v0.9'}).rules.some(r=>r.itemId==='expense/key:housing/key:rent'));
- const display=expenseDisplayModel(state.config,65);assert.equal(display.status,'ready');assert.equal(display.rows.find(r=>r.itemId==='expense/key:housing').amount,96);assert.ok(!app.includes('if (!detail?.monthlyCategories?.length)'));
+ const display=expenseDisplayModel(state.config,65);assert.equal(display.status,'choose-source');assert.equal(expenseDisplayModel(state.config,65,{sourceProfile:'public-v0.9'}).rows.find(r=>r.itemId==='expense/key:housing').amount,96);assert.ok(!app.includes('if (!detail?.monthlyCategories?.length)'));
 });
-test('mixed formats require explicit source and are never summed',()=>{
- const {state}=setup();assert.equal(expenseDisplayModel(state.config,65).status,'choose-source');
+test('mixed formats default to standard and never sum with historic data',()=>{
+ const {state}=setup();assert.equal(expenseDisplayModel(state.config,65).sourceProfile,'work-v0.9.7');
  assert.equal(expenseDisplayModel(state.config,65,{sourceProfile:'work-v0.9.7'}).rows.find(r=>r.itemId==='expense/key:housing').amount,60);
  assert.equal(expenseDisplayModel(state.config,65,{sourceProfile:'public-v0.9'}).rows.find(r=>r.itemId==='expense/key:housing').amount,96);
 });
@@ -66,18 +66,18 @@ test('display is immutable and period budget/total/gap match preview after adopt
 });
 test('stored last source survives reload; explicit other display does not change stored choice',async()=>{
  const {state,storage}=setup();await applyExpensePreview(state,preview(state,'public-v0.9','detail',9),{storage});const c=JSON.parse(storage.raw).config;
- assert.equal(expenseDisplayProfile(c),'public-v0.9');assert.equal(expenseDisplayProfile(c,'work-v0.9.7'),'work-v0.9.7');assert.equal(c.expenseWorkflow.lastApply.sourceProfile,'public-v0.9');
+ assert.equal(expenseDisplayProfile(c),'work-v0.9.7');assert.equal(expenseDisplayProfile(c,'work-v0.9.7'),'work-v0.9.7');assert.equal(c.expenseWorkflow.lastApply.sourceProfile,'public-v0.9');
 });
 test('unknown source is not silently replaced and labels are HTML escaped',()=>{
  const {state}=setup();assert.equal(expenseDisplayModel(state.config,65,{sourceProfile:'unexpected'}).status,'choose-source');state.config.expenseDetail.monthlyCategories[0].label='<img src=x onerror=evil()>';
  assert.ok(!expenseDisplayHtml(expenseDisplayModel(state.config,65,{sourceProfile:'work-v0.9.7'})).detail.includes('<img'));
 });
-test('real detail render function displays public-only data and uses chosen period',()=>{
+test('real detail render hides public-only data without changing the stored data',()=>{
  const {state}=setup();delete state.config.expenseDetail;
  const nodes={expenseDetail:{},expenseReconcile:{},annualCashflowSummary:{},cashflowViewAge:{value:'65'},expenseDisplaySource:{value:''}};
  const start=app.indexOf('function renderExpenseDetail()'),end=app.indexOf('\nfunction ',start+10);
  vm.runInNewContext(app.slice(start,end)+';renderExpenseDetail();',{config:state.config,el:id=>nodes[id],expenseDisplayModel,expenseDisplayHtml,expenseDisplayProfile,annualCashflowSummary:()=>({status:'ready'}),annualCashflowHtml:()=>'<p>annual</p>',renderPeriodOverrides(){},budgetTravelView:{render(){}}});
- assert.equal(nodes.expenseDisplaySource.value,'public-v0.9');assert.match(nodes.expenseDetail.innerHTML,/96万円/);assert.match(nodes.expenseReconcile.innerHTML,/120万円/);
+ assert.equal(nodes.expenseDisplaySource.value,'');assert.match(nodes.expenseDetail.innerHTML,/表示する内訳の出典を選択/);assert.equal(nodes.expenseReconcile.innerHTML.includes('96万円'),false);
 });
 test('FIX C: CSV action and annual cashflow summary are connected to development entrypoints',()=>{
  const html=fs.readFileSync(new URL('./index.html',import.meta.url),'utf8');

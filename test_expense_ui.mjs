@@ -31,7 +31,7 @@ function setup({raw=false,brokenCommit=false}={}){
  async function confirm(){node('Reviewed').checked=true;await node('Reviewed').emit('change');}
  return {node,api,storage,trial,confirm,choose,get:()=>JSON.parse(storage.raw),setDisplay:s=>display=s,display:()=>display,notices};
 }
-test('expense UI requires explicit source; opening never writes',()=>{const t=setup();assert.equal(t.storage.writes,0);assert.equal(t.node('Trial').disabled,true);assert.equal(t.node('Apply').disabled,true);});
+test('expense UI prefers registered standard source on open; never writes or applies',()=>{const t=setup();assert.equal(t.storage.writes,0);assert.equal(t.node('Source').value,'work-v0.9.7');assert.equal(t.node('Amount').value,'5');assert.equal(t.node('Trial').disabled,false);assert.equal(t.node('Apply').disabled,true);});
 test('detail preview and confirmation then apply/reload/undo retain scenarios and unknown fields',async()=>{
  const t=setup();const before=t.get();await t.trial();assert.equal(t.node('Preview').hidden,false);assert.match(t.node('PreviewBody').textContent,/資産推移は変更しません/);assert.equal(t.node('Apply').disabled,true);await t.confirm();await t.node('Apply').emit('click');
  assert.equal(t.get().config.expenseDetail.monthlyCategories[0].items[0].amount,6);assert.deepEqual(t.get().scenarios,before.scenarios);assert.deepEqual(t.get().future,before.future);assert.match(t.node('History').textContent,/日本時間/);assert.equal(t.node('Status').textContent,'反映済み');await t.node('Undo').emit('click');assert.equal(t.get().config.expenseDetail.monthlyCategories[0].items[0].amount,5);

@@ -16,9 +16,9 @@ test('家計内振替とiDeCo掛金は内数列で、合計へ再加算しない
  const c=fixture();Object.assign(c.cashflow.salaryLife,{monthlyAddition:2,monthlyWithdrawal:1});c.ideco={asOfDate:'2044-08-27',currentBalance:0,monthlyContribution:1,contributionEndDate:'2045-08-27',lumpDate:'2045-08-27',accumulationReturn:0,lumpPercent:100,annuityPercent:0,annuityYears:5,annuityReturn:0};c.cashflow.salaryLife.idecoFunding={before:{source:'salary'}};
  const r=annualCsvRows(c,{sourceProfile:'work-v0.9.7'})[0];assert.equal(r.householdAddition,24);assert.equal(r.householdWithdrawal,12);assert.equal(r.idecoContributionFromAsset,0);assert.equal(r.incomeTotal,24);assert.equal(r.totalExpense,12);assert.equal(r.cashBalance,12);
 });
-test('未選択・未確定の参考値は空欄で、0円に変換しない',()=>{
+test('標準形式を優先しても未確定参考額は空欄で、0円に変換しない',()=>{
  const c=fixture();c.cashflow.expenseCategories=[{key:'living',items:[{key:'base',periods:[{fromAge:64,toAge:90,amount:8}]}]}];const rows=annualCsvRows(c),text=annualCsvText(c);
- assert.equal(rows[1].referenceSource,'未選択');assert.equal(rows[1].referenceDetail,null);assert.equal(rows[1].unresolvedMonthCount,null);const lines=text.trim().split(/\r?\n/);assert.ok(lines[2].includes(',未選択,,,'));
+ assert.equal(rows[1].referenceSource,'Work v0.9.7形式');assert.equal(rows[1].referenceDetail,null);assert.equal(rows[1].unresolvedMonthCount,12);const lines=text.trim().split(/\r?\n/);assert.ok(lines[2].includes('Work v0.9.7形式'));
 });
 test('列数は全行で一定、BOM・CRLF・日本語見出しを持つ',()=>{
  const text=annualCsvText(fixture(),{sourceProfile:'work-v0.9.7'});assert.ok(text.startsWith('\uFEFF年齢期,'));assert.ok(text.endsWith('\r\n'));const lines=text.slice(1).trim().split('\r\n');assert.equal(lines.length,4);
