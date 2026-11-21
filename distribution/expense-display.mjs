@@ -6,13 +6,8 @@ const profiles=['public-v0.9','work-v0.9.7'];
 export function expenseDisplayProfile(config,requested=''){
  if(profiles.includes(requested))return requested;
  if(requested)return null;
- const selected=config.cashflow?.detailSourceProfile;if(profiles.includes(selected))return selected;
- const applied=config.expenseWorkflow?.lastApply?.sourceProfile;
- if(profiles.includes(applied))return applied;
- const present=[];
- if(config.cashflow?.expenseCategories?.length)present.push('public-v0.9');
- if(config.expenseDetail?.monthlyCategories?.length)present.push('work-v0.9.7');
- return present.length===1?present[0]:null;
+ // Standard data is preferred for normal UI; a historic profile is never silently adopted.
+ return config?.expenseDetail?.monthlyCategories?.length?'work-v0.9.7':null;
 }
 export function expenseDisplayModel(config,age,{sourceProfile=''}={}){
  const profile=expenseDisplayProfile(config,sourceProfile);
