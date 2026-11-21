@@ -42,7 +42,7 @@ try{
  evidence.cases.push('presentation-only numbering follows visible tabs');
  evidence.cases.push('navigation labels');
  const options=await page.locator('#detailCsvSource option').evaluateAll(ns=>ns.map(n=>n.value));
- assert.deepEqual(options,['','work-v0.9.7','public-v0.9']);
+ assert.deepEqual(options,['','work-v0.9.7']);
  assert.equal(await page.locator('#detailCsvSource').getAttribute('aria-describedby'),'detailCsvSourceHelp');
  evidence.cases.push('CSV value compatibility');
  await page.locator('[data-group="results"]').click();await page.locator('[data-tab="cashflow"]').click();
