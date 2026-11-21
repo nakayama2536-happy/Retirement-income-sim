@@ -12,8 +12,8 @@ const options=id=>{
 test('normal expense selectors expose only standard source',()=>{
  for(const id of ['budgetTravelSource','expenseSource','expenseDisplaySource','detailCsvSource']){
   const choices=options(id);
-  assert.match(choices,/work-v0\\.9\\.7/);
-  assert.doesNotMatch(choices,/public-v0\\.9|旧形式|以前の形式/);
+  assert.ok(choices.includes('work-v0.9.7'));
+  assert.ok(!choices.includes('public-v0.9')&&!choices.includes('旧形式')&&!choices.includes('以前の形式'));
  }
 });
 test('standard source is preferred and legacy-only does not silently become standard',()=>{
@@ -29,6 +29,6 @@ test('legacy data remain available to explicit internal compatibility path',()=>
 });
 test('expense editor does not auto-target an arbitrary existing row',()=>{
  const src=fs.readFileSync(new URL('./detail-ui.mjs',import.meta.url),'utf8');
- assert.doesNotMatch(src,/entries\\[0\\]\\.path/);
- assert.match(src,/if\\(kind==='expense'&&e\\.target\\.name==='target'\\)/);
+ assert.ok(!src.includes('entries[0].path'));
+ assert.ok(src.includes("if(kind==='expense'&&e.target.name==='target')"));
 });
