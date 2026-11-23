@@ -19,10 +19,15 @@ export function expenseDisplayModel(config,age,{sourceProfile=''}={}){
   const item=view.items.find(i=>i.itemId===id),variant=item?.variants.find(v=>v.profile===profile);
   const valid=entries.length===months.length&&entries.every(e=>e.priced.status==='resolved'&&Number.isFinite(e.priced.amount));
   const childIds=[...new Set(entries.flatMap(e=>(e.children||[]).map(c=>c.itemId)))];
+  const sourceRefs=[...new Set(entries.flatMap(e=>(e.base.sourceRefs||[]).map(x=>x.path)))];
+  // Diagnostics can point to the exact stored row even when resolution failed.
+  const storedPaths=(variant?.sourceRefs||[]).map(r=>r.path);
+  const diagnostics=view.diagnostics.filter(d=>[...storedPaths,...sourceRefs].includes(d.path)).map(d=>d.code);
+  const unresolvedReasons=[...new Set(entries.filter(e=>e.priced.status!=='resolved').flatMap(e=>[e.base.reason,e.priced.reason].filter(Boolean)))];
   return {itemId:id,label:variant?.label||item?.label||id,amount:valid?entries.reduce((s,e)=>s+e.priced.amount,0):null,
    children:childIds.map(child=>aggregate(child,entries.flatMap(e=>(e.children||[]).filter(c=>c.itemId===child)))),
-   sourceRefs:[...new Set(entries.flatMap(e=>(e.base.sourceRefs||[]).map(x=>x.path)))],
-   unresolvedReasons:[...new Set(entries.filter(e=>e.priced.status!=='resolved').map(e=>e.priced.reason||'未確定'))]};
+   sourceRefs,diagnosticCodes:diagnostics,
+   unresolvedReasons};
  }
  const ids=[...new Set(months.flatMap(m=>m.details.map(d=>d.itemId)))];
  return {status:'ready',sourceProfile:profile,age:Number(age),period,rows:ids.map(id=>aggregate(id,months.flatMap(m=>m.details.filter(d=>d.itemId===id)))),
@@ -30,11 +35,29 @@ export function expenseDisplayModel(config,age,{sourceProfile=''}={}){
   diagnostics:rec.comparisonDiagnostics,limitations:rec.limitations};
 }
 const escape=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+// Convert provenance/validation statuses into actionable labels without changing source data.
+export function expenseUnresolvedGuidance(reasons=[], diagnostics=[]){
+ const codes=new Set([...reasons,...diagnostics]);
+ const messages=[];
+ if(codes.has('identity-unresolved')||codes.has('missing-identity'))messages.push('項目を識別するID・キーが不足しています。保存済みデータの照合が必要です。');
+ if(codes.has('invalid-or-missing-amount'))messages.push('金額が未入力または不正です。0円には置き換えません。');
+ if(codes.has('deferred-tax-calculation')||codes.has('work-income-tax-estimate-or-fallback'))messages.push('税・社会保険の算定条件が未確定です。参考額を採用しません。');
+ if(codes.has('unresolved-price-basis')||codes.has('missing-engine-price-factor'))messages.push('価格基準または物価換算条件が未確定です。');
+ if(codes.has('overlapping-rules')||codes.has('invalid-period'))messages.push('期間設定が重複または不正です。');
+ if(!messages.length&&codes.size)messages.push('内訳に未確定の条件があります。項目・金額・適用期間を確認してください。');
+ return messages;
+}
 const money=n=>n===null||n===undefined||!Number.isFinite(n)?'未確定':`${n.toLocaleString('ja-JP',{maximumFractionDigits:2})}万円`;
 export function expenseDisplayHtml(model,config){
  if(model.status!=='ready')return {detail:`<p>${escape(model.message)}</p>`,summary:'<p>未選択・未計算の値を0円として扱いません。</p>'};
  const label=model.sourceProfile==='public-v0.9'?'旧形式の生活費内訳':'標準の生活費内訳';
- function row(r){return `<details><summary>${escape(r.label)}：${money(r.amount)}（この年齢期の合計）</summary><p>内部ID：${escape(r.itemId)}</p>${r.children.map(row).join('')}<p>参照元：${escape(r.sourceRefs.join('、'))}</p>${r.unresolvedReasons.length?'<p>一部の月・価格基準等が未確定です。子項目と親項目は二重加算しません。</p>':''}</details>`;}
+ function row(r){
+  const guidance=r.amount===null?expenseUnresolvedGuidance(r.unresolvedReasons,r.diagnosticCodes):[];
+  const explanation=guidance.length?`<ul>${guidance.map(g=>`<li>${escape(g)}</li>`).join('')}</ul>`:'';
+  // Raw paths are retained for auditing but hidden from ordinary reading.
+  const audit=`<details><summary>技術情報（確認用）</summary><p>内部ID：${escape(r.itemId)}</p><p>参照元：${escape(r.sourceRefs.join('、'))}</p></details>`;
+  return `<details><summary>${escape(r.label)}：${money(r.amount)}（この年齢期の合計）</summary>${explanation}${r.children.map(row).join('')}${audit}${r.amount===null?'<p>未確定の費目は0円として合計せず、親子費目も二重加算しません。</p>':''}</details>`;
+ }
  const p=model.period;
  return {detail:`<p>表示出典：${label}／${model.age}歳期・${p.monthCount}か月。月額ではなく、計算対象月を合計しています。</p>${model.rows.map(row).join('')}`,
   summary:`<dl><dt>資産計算の管理予算支出</dt><dd>${money(p.actualExpense)}</dd><dt>内訳合計（資産から支払う月のみ）</dt><dd>${money(p.detailTotal)}</dd><dt>予算との差（同じ対象月）</dt><dd>${money(p.gap)}</dd><dt>予算超過月</dt><dd>${escape(p.overBudgetMonths.map(m=>dateWithAge(m,config)).join('、')||'検出なし')}</dd><dt>未確定の照合月</dt><dd>${p.unresolvedMonthCount}か月</dd><dt>給与生活等の家計参考月</dt><dd>${p.familyReferenceMonthCount}か月</dd></dl><p>内訳・税社保参考額・資産振替は資産推移へ再加算しません。家計参考月は上の内訳合計・余裕判定に含みません。未確定がある場合、超過の検出なしは予算十分の保証ではありません。</p><p>${model.limitations.map(escape).join(' ')}</p>${model.diagnostics.length?`<p>出典・項目等の確認事項：${model.diagnostics.length}件。全内訳の確定とは扱いません。</p>`:''}`};
