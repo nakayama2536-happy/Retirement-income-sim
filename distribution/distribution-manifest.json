@@ -1,6 +1,6 @@
 {
   "kind": "public-release",
-  "runtime": "v0.9.74-expense-diagnostic-20261123",
+  "runtime": "v0.9.75-expense-readiness-20261123",
   "files": [
     {
       "name": "action-answer.css",
@@ -49,13 +49,13 @@
     },
     {
       "name": "app.mjs",
-      "size": 87600,
-      "sha256": "df09d1518a0bd67c777e1a8b15b20cfab7896854b1a00366e622117ade2030d4"
+      "size": 87599,
+      "sha256": "971cd40228861902f92bf1571966f0cf13cddc7ed003bfbec6b5d4ea3672f499"
     },
     {
       "name": "backup-compatibility.mjs",
-      "size": 8305,
-      "sha256": "a081ca4c819ed7815f9173010cd872c516ea9e5042ca9782e766e507fdfc697c"
+      "size": 8304,
+      "sha256": "8af95935884782ed85bd2f813ea59fdaa7879994c2646bf58ffbb7e05f727f9f"
     },
     {
       "name": "budget-travel-ui.mjs",
@@ -129,13 +129,18 @@
     },
     {
       "name": "expense-display.mjs",
-      "size": 9504,
-      "sha256": "d52cc0f4a58558fa476e0155be29ffa556adb353c7ce4dafce184784d5c7b6a2"
+      "size": 10617,
+      "sha256": "1785457b7e41652a254d45ce0a3ff04316614e5c837d4521e15de2b8b83a434f"
     },
     {
       "name": "expense-preview.mjs",
       "size": 11230,
       "sha256": "60abf85599f65771e2af25373bf9e7ab1a75bb70d85ba9ccf2475b50d70589c8"
+    },
+    {
+      "name": "expense-source-readiness.mjs",
+      "size": 2981,
+      "sha256": "e35bc6311134c653f5a3f9d48320113cd6fa5b60bf13d3fd8fda47188972189e"
     },
     {
       "name": "expense-ui.mjs",
@@ -349,8 +354,8 @@
     },
     {
       "name": "release-info.json",
-      "size": 134,
-      "sha256": "ca884ba5d428a0b32bec0ea5606237f089d60f61cc96d2cd0bf4f5a7fa610003"
+      "size": 133,
+      "sha256": "3051077fb8f2fd63b6ac70b5b70efac0d54fc7ed6859c17a2360101e750da055"
     },
     {
       "name": "retirement-comment.mjs",
@@ -429,8 +434,8 @@
     },
     {
       "name": "sw.js",
-      "size": 5208,
-      "sha256": "59ffc8d0fa303a80b470bd1efcfe3e9f8d9812ae7b11eb607ad14c2b48e8929e"
+      "size": 5240,
+      "sha256": "0e0cdc0d55c61c58324929bcb9874fd6092a297e419fa273d9be386d72c44a3f"
     },
     {
       "name": "sync-answer-bridge.mjs",
