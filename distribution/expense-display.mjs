@@ -47,6 +47,40 @@ export function expenseUnresolvedGuidance(reasons=[], diagnostics=[]){
  if(!messages.length&&codes.size)messages.push('内訳に未確定の条件があります。項目・金額・適用期間を確認してください。');
  return messages;
 }
+// A read-only view: never modifies saved expense rows or attempts to derive missing values.
+export function expenseDiagnosticSummary(model){
+ if(model?.status!=='ready')return {total:0,items:[],counts:{identity:0,amount:0,tax:0,period:0,price:0,other:0}};
+ const items=[];
+ function visit(row,parents=[]){
+  const children=Array.isArray(row.children)?row.children:[];
+  const unresolvedChildren=children.filter(c=>c.amount===null);
+  for(const child of children)visit(child,[...parents,row.label]);
+  // Count only the most specific affected row to avoid reporting a parent twice.
+  if(row.amount!==null && row.amount!==undefined)return;
+  if(unresolvedChildren.length)return;
+  const codes=new Set([...(row.unresolvedReasons||[]),...(row.diagnosticCodes||[])]);
+  const categories=[];
+  if(codes.has('missing-identity')||codes.has('identity-unresolved')||codes.has('duplicate-identity')||codes.has('duplicate-key')||codes.has('incompatible-identity'))categories.push('identity');
+  if(codes.has('invalid-or-missing-amount'))categories.push('amount');
+  if(codes.has('deferred-tax-calculation')||codes.has('work-income-tax-estimate-or-fallback'))categories.push('tax');
+  if(codes.has('overlapping-rules')||codes.has('invalid-period')||codes.has('no-period')||codes.has('missing-periods'))categories.push('period');
+  if(codes.has('unresolved-price-basis')||codes.has('missing-engine-price-factor'))categories.push('price');
+  if(!categories.length)categories.push('other');
+  items.push({label:[...parents,row.label].join(' ＞ '),categories});
+ }
+ for(const row of model.rows||[])visit(row);
+ const counts={identity:0,amount:0,tax:0,period:0,price:0,other:0};
+ for(const item of items)for(const category of item.categories)counts[category]++;
+ return {total:items.length,items,counts};
+}
+export function expenseDiagnosticSummaryHtml(model){
+ const info=expenseDiagnosticSummary(model);
+ if(!info.total)return '';
+ const labels={identity:'識別情報不足',amount:'金額未入力・不正',tax:'税・社会保険の算定待ち',period:'適用期間の確認',price:'物価換算条件の確認',other:'その他・要確認'};
+ const counts=Object.entries(info.counts).filter(([,n])=>n).map(([key,n])=>`${labels[key]}${n}件`).join('／');
+ const entries=info.items.map(item=>`<li>${escape(item.label)}：${item.categories.map(c=>labels[c]).join('、')}</li>`).join('');
+ return `<details class="expense-diagnostic-summary"><summary>未確定の原因一覧（${info.total}項目・読取り専用）</summary><p>${counts}。複数原因がある項目はそれぞれ計上しています。確定値への変更や自動補完は行いません。</p><ul>${entries}</ul><p>管理予算の資産計算には、この参考内訳を追加しません。</p></details>`;
+}
 const money=n=>n===null||n===undefined||!Number.isFinite(n)?'未確定':`${n.toLocaleString('ja-JP',{maximumFractionDigits:2})}万円`;
 export function expenseDisplayHtml(model,config){
  if(model.status!=='ready')return {detail:`<p>${escape(model.message)}</p>`,summary:'<p>未選択・未計算の値を0円として扱いません。</p>'};
@@ -59,6 +93,6 @@ export function expenseDisplayHtml(model,config){
   return `<details><summary>${escape(r.label)}：${money(r.amount)}（この年齢期の合計）</summary>${explanation}${r.children.map(row).join('')}${audit}${r.amount===null?'<p>未確定の費目は0円として合計せず、親子費目も二重加算しません。</p>':''}</details>`;
  }
  const p=model.period;
- return {detail:`<p>表示出典：${label}／${model.age}歳期・${p.monthCount}か月。月額ではなく、計算対象月を合計しています。</p>${model.rows.map(row).join('')}`,
+ return {detail:`<p>表示出典：${label}／${model.age}歳期・${p.monthCount}か月。月額ではなく、計算対象月を合計しています。</p>${expenseDiagnosticSummaryHtml(model)}${model.rows.map(row).join('')}`,
   summary:`<dl><dt>資産計算の管理予算支出</dt><dd>${money(p.actualExpense)}</dd><dt>内訳合計（資産から支払う月のみ）</dt><dd>${money(p.detailTotal)}</dd><dt>予算との差（同じ対象月）</dt><dd>${money(p.gap)}</dd><dt>予算超過月</dt><dd>${escape(p.overBudgetMonths.map(m=>dateWithAge(m,config)).join('、')||'検出なし')}</dd><dt>未確定の照合月</dt><dd>${p.unresolvedMonthCount}か月</dd><dt>給与生活等の家計参考月</dt><dd>${p.familyReferenceMonthCount}か月</dd></dl><p>内訳・税社保参考額・資産振替は資産推移へ再加算しません。家計参考月は上の内訳合計・余裕判定に含みません。未確定がある場合、超過の検出なしは予算十分の保証ではありません。</p><p>${model.limitations.map(escape).join(' ')}</p>${model.diagnostics.length?`<p>出典・項目等の確認事項：${model.diagnostics.length}件。全内訳の確定とは扱いません。</p>`:''}`};
 }
