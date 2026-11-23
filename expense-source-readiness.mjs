@@ -11,7 +11,7 @@ export function expenseSourceReadiness(config){
  const roots=config?.expenseDetail?.monthlyCategories;
  if(!Array.isArray(roots))return {status:'not-registered',items:[],counts:{missingId:0,missingAmount:0,invalidAmount:0,ready:0,needsReview:0}};
  const items=[];
- function visit(row,path,parentLabel='',seen=new Set(),parentKey=false){
+ function visit(row,path,parentLabel='',duplicate=false){
   const label=String(row?.label||row?.key||'名称未設定');
   const location=parentLabel?parentLabel+' ＞ '+label:label;
   if(!row||typeof row!=='object'||Array.isArray(row)){
@@ -34,12 +34,11 @@ export function expenseSourceReadiness(config){
     const duplicate=validId(token)&&current.has(String(token));
     if(validId(token))current.add(String(token));
     const childPath=path+'/items/'+i;
-    visit(child,childPath,location);
-    if(duplicate)items.at(-1).action='同じ大項目内の識別キー重複を確認';
+    visit(child,childPath,location,duplicate);
    }
   }else{
    const amount=amountStatus(row.amount);
-   const action=identity==='missing'?'本人が識別情報を確認':amount==='missing'?'本人が保存元の金額を確認':amount==='invalid'?'元データの金額形式を確認':'確認済みの基礎入力';
+   const action=duplicate?'同じ大項目内の識別キー重複を確認':identity==='missing'?'本人が識別情報を確認':amount==='missing'?'本人が保存元の金額を確認':amount==='invalid'?'元データの金額形式を確認':'確認済みの基礎入力';
    items.push({label:location,path,identity,amount,action});
   }
  }
