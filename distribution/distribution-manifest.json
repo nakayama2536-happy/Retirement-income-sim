@@ -1,6 +1,6 @@
 {
   "kind": "public-release",
-  "runtime": "v0.9.72-standard-expense-ui-20261122",
+  "runtime": "v0.9.73-expense-guidance-20261123",
   "files": [
     {
       "name": "action-answer.css",
@@ -49,13 +49,13 @@
     },
     {
       "name": "app.mjs",
-      "size": 87601,
-      "sha256": "47b7b531c6dd97fd0d975db824d98fce5cbc2281efea7902b659b9f47bfb5c2a"
+      "size": 87598,
+      "sha256": "fd6e1d1165ab0e1e773d8bc760d24ea88385c3516bca9474bf3d7181e93a6229"
     },
     {
       "name": "backup-compatibility.mjs",
-      "size": 8306,
-      "sha256": "96dfd0ac7dad1a977e5977c3bf0a6d2f56f8c1a8e2c7d0d0f794eb9518be4b9d"
+      "size": 8303,
+      "sha256": "1a0fd64bf4bb11c2e7cfc5bd920905c45872da3b00dc4f60e3be52978e519e0d"
     },
     {
       "name": "budget-travel-ui.mjs",
@@ -129,8 +129,8 @@
     },
     {
       "name": "expense-display.mjs",
-      "size": 4733,
-      "sha256": "8be5916b0a56d0b420cff2a6a60fe3c2b3787f4c89f5eace246bbabd2b8adfc7"
+      "size": 6688,
+      "sha256": "54eb407a9c080d27e1eea91b1d289d89d9c36d6fc2a70717a5a4715c8457f230"
     },
     {
       "name": "expense-preview.mjs",
@@ -349,8 +349,8 @@
     },
     {
       "name": "release-info.json",
-      "size": 135,
-      "sha256": "8f539840fb2c99f6c66d551bc7c9412ae5a9218940c370a25c59f1be4c91019c"
+      "size": 132,
+      "sha256": "d2fc9372393cdd3a0952136321591bfb9a87685eaf233756e0ffcc634ba7e6b1"
     },
     {
       "name": "retirement-comment.mjs",
@@ -429,8 +429,8 @@
     },
     {
       "name": "sw.js",
-      "size": 5209,
-      "sha256": "a10a5e1e60e5c6b24b3f127df5e418d87bd6516bde01ca886bec91a595636c56"
+      "size": 5206,
+      "sha256": "3fd36a82b108189cb9c35d23e09b7d3aaa686472973e501acf121cf89aeee0ca"
     },
     {
       "name": "sync-answer-bridge.mjs",
