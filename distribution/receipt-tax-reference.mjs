@@ -15,7 +15,7 @@ export function retirementOverlapDeduction({company,ideco,priorType='auto'}={}){
  const cYear=yr(company.receiptDate),iYear=yr(ideco.receiptDate);
  if(cYear===iYear)return {status:'requires-same-year-method',issues:['同年受取の合算退職所得計算は別途必要'],adjustedDeductionMan:null};
  const prior=iYear<cYear?ideco:company, later=iYear<cYear?company:ideco, priorIsIdeco=iYear<cYear;
- const gap=Math.abs(cYear-iYear), applicable=priorIsIdeco?(iYear>=2026&&gap<=9):(gap<=19);
+ const gap=Math.abs(cYear-iYear), applicable=priorIsIdeco?(iYear>=2026?gap<=9:gap<=4):(gap<=19);
  // Pre-2026 DC lump sums may still fall under the preceding four-year rule.
  // The existing calculator lacks the transitional-period allocation; stop safely.
  if(priorIsIdeco && iYear<2026 && cYear>=2026 && gap<=4)

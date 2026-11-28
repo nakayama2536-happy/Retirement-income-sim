@@ -4,8 +4,8 @@
  */
 export const MAIN_SECTIONS=[['results','1'],['income','2'],['budget','3'],['expense','4'],['manage','5']];
 export const CHILD_SECTIONS={
- results:['home','cashflow','mortality','scenarios','allcsv','review'],
- income:['salary','nisa','ideco','retirement','pension','unemployment'],
+ results:['home','cashflow','mortality','survivorPension','scenarios','allcsv','review'],
+ income:['salary','nisa','ideco','retirement','pension','unemployment','receiptCompare'],
  budget:['budget'],expense:['expenses','events'],
  manage:['rules','settings','backup','actuals']
 };
@@ -38,7 +38,7 @@ export function numberExpenseDetailTree(host,prefix='4-1-3-3'){
  const visit=(parent,parentReference,isCategoryLevel)=>{
   const children=[...parent.children].filter(node=>node.matches?.('details'));
   children.forEach((detail,index)=>{
-   const number=isCategoryLevel?'4-1-3-'+(index+3):parentReference+'-'+(index+1);
+   const number=isCategoryLevel?prefix.replace(/-\d+$/,'')+'-'+(Number(prefix.split('-').at(-1))+index):parentReference+'-'+(index+1);
    assignReferenceNumber(detail.querySelector(':scope > summary'),number);
    visit(detail,number,false);
   });
@@ -89,7 +89,7 @@ function numberOtherPanel(root,panel,tabNumber){
  // A label is addressable beneath its nearest numbered heading; all labels are
  // numbered, including dynamically rendered and previously unnumbered settings.
  const controls=[...panel.querySelectorAll('label:has(input),label:has(select),label:has(textarea),details > summary')];
- let current=tabNumber+'-0',count=0;
+ let current=tabNumber,count=0; // Controls before the first heading belong directly to the panel.
  const nodes=[...new Set([...blocks,...controls])].sort((a,b)=>{
   const pos=a.compareDocumentPosition(b);
   return pos&Node.DOCUMENT_POSITION_FOLLOWING?-1:pos&Node.DOCUMENT_POSITION_PRECEDING?1:0;
