@@ -1,6 +1,6 @@
 {
   "kind": "public-release",
-  "runtime": "v0.9.75-expense-readiness-20261123",
+  "runtime": "v0.9.76-income-chart-20261124",
   "files": [
     {
       "name": "action-answer.css",
@@ -49,13 +49,13 @@
     },
     {
       "name": "app.mjs",
-      "size": 87599,
-      "sha256": "971cd40228861902f92bf1571966f0cf13cddc7ed003bfbec6b5d4ea3672f499"
+      "size": 87594,
+      "sha256": "19cd49d3ef61227448d7206cb770fb68e56c8847b1e8bf29841c19eabe61624b"
     },
     {
       "name": "backup-compatibility.mjs",
-      "size": 8304,
-      "sha256": "8af95935884782ed85bd2f813ea59fdaa7879994c2646bf58ffbb7e05f727f9f"
+      "size": 8299,
+      "sha256": "e3982f89cb7566a7906a25d0c10bc2eb52ef1da25e76cb71edf16ba393c520cd"
     },
     {
       "name": "budget-travel-ui.mjs",
@@ -309,8 +309,8 @@
     },
     {
       "name": "planning-charts.mjs",
-      "size": 6912,
-      "sha256": "d3e84adb8353331ad341b2cbb1483d833ccf1b79af98c92b52cc19863a6ab0fe"
+      "size": 9410,
+      "sha256": "2e76f29ffb272e773a6842ee2e347618cb8223af3399ff2f6871b512bb747e1c"
     },
     {
       "name": "README.md",
@@ -354,8 +354,8 @@
     },
     {
       "name": "release-info.json",
-      "size": 133,
-      "sha256": "3051077fb8f2fd63b6ac70b5b70efac0d54fc7ed6859c17a2360101e750da055"
+      "size": 128,
+      "sha256": "9beea279253f50c20d84f4562c154c49fedfa418efd883992deed7b43e19e1b3"
     },
     {
       "name": "retirement-comment.mjs",
@@ -434,8 +434,8 @@
     },
     {
       "name": "sw.js",
-      "size": 5240,
-      "sha256": "0e0cdc0d55c61c58324929bcb9874fd6092a297e419fa273d9be386d72c44a3f"
+      "size": 5235,
+      "sha256": "3be9543e41549d45d6d7a55b6594aad254f29aa146e70ce5ab822f422adeeec1"
     },
     {
       "name": "sync-answer-bridge.mjs",

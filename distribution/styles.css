@@ -311,3 +311,42 @@
 #pension .pension-edit-workspace>summary{cursor:pointer;font-weight:650;min-height:44px;line-height:1.6;padding:8px}
 @media(max-width:850px){#pension .pension-home-cards{grid-template-columns:minmax(0,1fr)}}
 @media print{#pension .pension-edit-workspace,#pension #pensionCurrentDetails,#pension #pensionHistoryExtra,#pension #pensionComparisonExtra,#pension #pensionTaxExtra{display:none!important}#pension .pension-home-cards{grid-template-columns:repeat(3,minmax(0,1fr));break-inside:avoid}}
+
+/* P1 UI display improvements; no state or calculation changes. */
+.panel a[href],.panel button.link-btn:not(:disabled){text-decoration:underline;text-underline-offset:3px}
+.panel [data-ui-status="good"]{color:#176b3c;font-weight:650}
+.panel [data-ui-status="problem"]{color:#aa1e29;font-weight:650}
+.panel [data-ui-status="unknown"]{color:#49586b;font-weight:650}
+
+/* P1: keep added cashflow settings links inside mobile viewport. */
+#cashflow .section-title{flex-wrap:wrap;min-width:0}
+#cashflow .section-title>*{max-width:100%;min-width:0}
+#cashflow .section-title button.link-btn{white-space:normal;overflow-wrap:anywhere;text-align:left}
+@media(max-width:760px){#cashflow .section-title{align-items:flex-start}#cashflow .section-title button.link-btn{flex:1 1 100%}}
+
+/* P2: additive mobile control and keyboard-focus accessibility only. */
+@media (max-width:760px) {
+  .navigation-sticky .tab-groups,
+  .navigation-sticky .tabs { overscroll-behavior-x: contain; -webkit-overflow-scrolling: touch; }
+  .navigation-sticky .tab-groups > button,
+  .navigation-sticky .tabs > button { min-height:44px; }
+  .panel input:not([type="checkbox"]):not([type="radio"]),
+  .panel select, .panel textarea { font-size:16px; }
+}
+.panel input:focus-visible,
+.panel select:focus-visible,
+.panel textarea:focus-visible { outline:3px solid #d48e18; outline-offset:2px; }
+
+/* UI review: make expandable help/settings visibly interactive without changing behavior. */
+.panel details > summary {text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:1px;cursor:pointer}
+.panel details > summary:hover {text-decoration-thickness:2px}
+.panel details > summary:focus-visible {outline:3px solid #d48e18;outline-offset:3px}
+
+/* Mortality comparison: keep primary action and companion controls readable on narrow screens. */
+#mortalityRun{max-width:100%;white-space:normal;overflow-wrap:anywhere;text-align:center}
+@media(max-width:760px){
+ #mortalityForm button{max-width:100%;white-space:normal;overflow-wrap:anywhere;min-height:44px}
+ #mortalityRun,#mortalityClear,#mortalityClearInputs,#mortalityOpenPension{width:100%;display:block}
+ #mortalityClear,#mortalityClearInputs{margin-top:8px}
+ #mortalityPensionSettings>button{display:block;width:100%;margin-top:8px}
+}

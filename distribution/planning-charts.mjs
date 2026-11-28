@@ -39,7 +39,45 @@ function show(d,id,description,rows,names,unit){
 }
 export function mountPlanningCharts({documentRef=document,getConfig,getResult,runPlan,getExpenseModel}){
  const d=documentRef,el=id=>d.getElementById(id);
- function renderIncome(){if(!el('planningIncomeChart'))return;try{show(d,'planningIncomeChart','採用済み資産計上収入。年齢期の合計。振替・参考内訳は重ねて加算しません。',incomeGraphData(getResult().rows),['収入合計','労働収入','公的年金','iDeCo年金','その他・雇用保険'],'万円／年齢期');}catch(e){el('planningIncomeChart').replaceChildren(dom(d,'p',e.message));}}
+ // View state is intentionally local. Never save or mutate adopted plan data.
+ let incomeMode='main',incomeAge=null;
+ const incomeNames=['収入合計','労働収入','公的年金','iDeCo年金','その他・雇用保険'];
+ function renderIncome(){
+  const area=el('planningIncomeChart');if(!area)return;
+  try{
+   // Replacing a graph during a whole-app refresh must not steal keyboard focus.
+   // Focus is preserved for either of the two chart controls only.
+   const focusedLabel=d.activeElement?.getAttribute?.('aria-label');
+   const restoreFocus=['収入グラフの表示系列','収入グラフの表示年齢期'].includes(focusedLabel)?focusedLabel:null;
+   const series=incomeGraphData(getResult().rows);
+   if(!series.some(r=>r.age===incomeAge))incomeAge=series[0].age;
+   const shown=incomeMode==='all'?incomeNames.length:3;
+   const selected=series.map(r=>({age:r.age,values:r.values.slice(0,shown)}));
+   show(d,'planningIncomeChart','採用済み資産計上収入。年齢期の合計。振替・参考内訳は重ねて加算しません。',selected,incomeNames.slice(0,shown),'万円／年齢期');
+   const controls=dom(d,'div','');controls.setAttribute('role','group');controls.setAttribute('aria-label','収入グラフ表示設定');
+   const modeLabel=dom(d,'label','表示系列：');
+   const mode=d.createElement('select');mode.setAttribute('aria-label','収入グラフの表示系列');
+   for(const [value,title] of [['main','主要3系列'],['all','全5系列']]){
+    const opt=dom(d,'option',title);opt.value=value;mode.append(opt);
+   }
+   mode.value=incomeMode;
+   mode.addEventListener?.('change',()=>{if(mode.value!==incomeMode){incomeMode=mode.value==='all'?'all':'main';renderIncome();el('planningIncomeChart')?.querySelector?.('select[aria-label="収入グラフの表示系列"]')?.focus?.();}});
+   modeLabel.append(mode);controls.append(modeLabel);
+   const ageLabel=dom(d,'label','表示年齢期：');
+   const age=d.createElement('select');age.setAttribute('aria-label','収入グラフの表示年齢期');
+   for(const r of series){const opt=dom(d,'option',r.age+'歳期');opt.value=String(r.age);age.append(opt);}
+   age.value=String(incomeAge);
+   const detail=dom(d,'p','');detail.setAttribute('role','status');detail.setAttribute('aria-live','polite');
+   function updateDetail(){
+    const r=series.find(x=>x.age===incomeAge);
+    detail.textContent=r.age+'歳期：'+incomeNames.slice(0,shown).map((name,i)=>name+' '+fmt(r.values[i])+'万円').join('／')+'（年齢期合計）';
+   }
+   age.addEventListener?.('change',()=>{const n=Number(age.value);if(series.some(r=>r.age===n)){incomeAge=n;updateDetail();}});
+   ageLabel.append(age);controls.append(ageLabel);area.append(controls,detail);
+   updateDetail();
+   if(restoreFocus)area.querySelector?.('select[aria-label="'+restoreFocus+'"]')?.focus?.();
+  }catch(e){area.replaceChildren(dom(d,'p',e.message));}
+ }
  function renderBudget(){if(!el('planningBudgetChart'))return;try{show(d,'planningBudgetChart','採用済み管理予算の月平均（管理予算計上月のみ）。',budgetGraphData(getResult().rows,runPlan(getConfig(),{includeMonthlyDetails:true}).monthlyDetails),['物価反映後','価格基準額'],'万円／月');}catch(e){el('planningBudgetChart').replaceChildren(dom(d,'p',e.message));}}
  function renderExpense(){const area=el('planningExpenseChart');if(!area)return;try{const cfg=getConfig(),age=Number(el('cashflowViewAge')?.value||cfg.plan?.startAge),source=el('expenseDisplaySource')?.value||'',model=expenseGraphData(getResult().rows,getExpenseModel(age,source));show(d,'planningExpenseChart','年齢期別の採用済み支出。費目内訳は管理予算に重ねて加算しません。',model.ages,['管理予算','臨時・別枠支出'],'万円／年齢期');area.append(dom(d,'p',model.message));if(model.items){area.append(dom(d,'h3',age+'歳期：登録費目の対象月合計'));const top=Math.max(1,...model.items.filter(x=>x.amount!==null).map(x=>x.amount));for(const it of model.items){const row=dom(d,'div',it.label+'：'+(it.amount===null?'未確定':fmt(it.amount)+'万円'));if(it.amount!==null){const bar=dom(d,'div','');bar.style.cssText='height:12px;background:#cb6a38;border-radius:4px;width:'+Math.max(0,100*it.amount/top)+'%';row.append(bar);}area.append(row);}area.append(dom(d,'p','未入力は0円とみなさず、親子費目の二重加算を行いません。'));}}catch(e){area.replaceChildren(dom(d,'p',e.message));}}
  return {render(){if(getConfig()&&getResult()){renderIncome();renderBudget();renderExpense();}},renderExpense};

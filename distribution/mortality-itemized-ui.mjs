@@ -1,5 +1,6 @@
 /** H-MORT-07 item-by-item expense UI. Read-only references, no adopted writes. */
 import {inspectMortalityExpenseBudget} from './mortality-itemized.mjs';
+import {inspectCashflowSources} from './cashflow-sources.mjs';
 import {readMortalityExpensePreset,mortalityFactorForItem} from './mortality-expense-preset.mjs';
 const format=n=>Number(n).toLocaleString('ja-JP',{maximumFractionDigits:2});
 const el=(tag,cls='',t='')=>{const x=document.createElement(tag);if(cls)x.className=cls;if(t)x.textContent=t;return x;};
@@ -13,6 +14,13 @@ export function registeredMonthlyAmount(item,month){
   }
   if(item.priceBasis==='nominal-fixed'||item.priceBasis==='target-period-nominal')return amount;
   return null; // Unsupported price bases are not guessed.
+}
+/** Correctly label signed changes; a negative reduction is an increase. */
+export function mortalityExpenseChangeText(before,after){
+ if(!Number.isFinite(before)||!Number.isFinite(after)||before<0||after<0)throw Error('比較前後の管理予算を確認してください');
+ const delta=before-after;
+ const relation=delta>1e-10?' − 減額 ':delta< -1e-10?' ＋ 増額 ':' （変更なし）';
+ return '夫婦健在時 '+format(before)+'万円／月'+relation+(Math.abs(delta)>1e-10?format(Math.abs(delta))+'万円':'')+' ＝ 比較後 '+format(after)+'万円';
 }
 const moneyText=value=>value===null?'未確認':Number(value).toLocaleString('ja-JP',{minimumFractionDigits:2,maximumFractionDigits:2})+'万円';
 export function mortalityFactorPercentText(raw){
@@ -95,7 +103,7 @@ export function mountMortalityItemizedControls(root,{getConfig,runPlan,onChange}
           kind==='budget-priced'?moneyText(totals.fullBefore):
           kind==='budget-after'?moneyText(totals.fullAfter):'—';
       }
-      status.textContent='参考年月 '+next.month+'：夫婦健在時 '+format(next.expense)+'万円／月 − 減額 '+format(next.expense-revised)+'万円 ＝ 比較後 '+format(revised)+'万円。未照合残額 '+format(next.unallocated)+'万円にも倍率を適用します。';
+      status.textContent='参考年月 '+next.month+'：'+mortalityExpenseChangeText(next.expense,revised)+'。未照合残額 '+format(next.unallocated)+'万円にも倍率を適用します。';
     }catch(e){
       for(const cell of host.querySelectorAll('[data-mortality-total]'))cell.textContent='未計算';
       status.textContent='倍率の確認：'+e.message;
@@ -107,15 +115,43 @@ export function mountMortalityItemizedControls(root,{getConfig,runPlan,onChange}
     if(takeCurrent)for(const input of host.querySelectorAll('[data-mortality-itemfactor]'))savedFactors[input.dataset.mortalityItemfactor]=input.value;
     host.replaceChildren();model=null;
     root.querySelector('#mortalityRemainderAmount').textContent='未計算';
+    // Keep a visible explanation when no registered expense source can be rendered.
+    host.append(el('p','muted','費目内訳を確認中です。'));
     status.textContent='費目内訳を確認中';
     const cfg=getConfig();
     if(!cfg){status.textContent='現在の設定を読み込んでください。';return;}
     try{
+      const view=inspectCashflowSources(cfg,{sourceProfile:'unknown'});
+      const available=view.availableProfiles.filter(p=>['public-v0.9','work-v0.9.7'].includes(p)&&view.items.some(item=>item.kind==='expense'&&item.route==='budget-detail'&&item.variants.some(v=>v.profile===p)));
       const plan=runPlan(cfg,{includeMonthlyDetails:true});
       const registered=readMortalityExpensePreset(cfg);
       const preset=registered?.deceased===deceased?registered:null;
-      if(selectedProfile===null)selectedProfile=registered?.sourceProfile||'work-v0.9.7';
+      // Only a unique registered source can be selected automatically.
+      // A stored, explicit choice is preserved, but a stale one must fail closed.
+      if(selectedProfile===null){
+        const suggested=preset?.sourceProfile;
+        selectedProfile=suggested||(available.length===1?available[0]:'');
+      }
+      const options=[{value:'',label:available.length>1?'参照元を選択してください':available.length===0?'登録された費目内訳なし':'参照元を選択してください'},
+        ...available.map(profile=>({value:profile,label:profile==='public-v0.9'?'旧形式の登録内訳':'標準形式の登録内訳'}))];
+      select.replaceChildren();
+      for(const option of options){const node=el('option','',option.label);node.value=option.value;select.append(node);}
       select.value=selectedProfile;
+      if(selectedProfile&&!available.includes(selectedProfile)){
+        status.textContent='前回の参照元は現在の登録データにありません。参照元を確認してください。';
+        root.querySelector('#mortalityItemSourceNote').textContent='別の形式へ自動変更しません。元の計画・保存値は変更していません。';
+        return;
+      }
+      if(available.length===0){
+        status.textContent='登録された費目内訳がありません。参照元を確認してください。';
+        root.querySelector('#mortalityItemSourceNote').textContent='不明な費目を自動で0円にせず、元の計画・保存値は変更しません。';
+        return;
+      }
+      if(available.length>1&&!selectedProfile){
+        status.textContent='登録済みの内訳が複数あります。参照元を選択してから試算してください。';
+        root.querySelector('#mortalityItemSourceNote').textContent='出典の異なる費目を自動合算・自動統合しません。';
+        return;
+      }
       model=inspectMortalityExpenseBudget(cfg,plan.monthlyDetails,{sourceProfile:select.value});
       const month=referenceExpenseMonth(model.months,dateInput.value);
       if(!month){
@@ -123,6 +159,7 @@ export function mountMortalityItemizedControls(root,{getConfig,runPlan,onChange}
         root.querySelector('#mortalityItemSourceNote').textContent='死亡後の参考月額は対象外です。元の計画や保存値は変更していません。';
         return;
       }
+      host.replaceChildren();
       const header=el('div','mortality-item-row mortality-item-head');
       const labels=['登録済み費目','登録月額（基準額）',month.month+' の月額（物価反映後）','万一の後の倍率','万一の後の概算額'];
       for(const h of labels)header.append(el('strong','',h));
@@ -178,14 +215,14 @@ export function mountMortalityItemizedControls(root,{getConfig,runPlan,onChange}
     if(typeof fromDraft==='string'&&!['public-v0.9','work-v0.9.7'].includes(fromDraft)){
       model=null;status.textContent='保存された支出内訳の参照元が不正です。下書きを確認してください。';return;
     }
-    selectedProfile=fromDraft||readMortalityExpensePreset(getConfig())?.sourceProfile||'work-v0.9.7';
+    selectedProfile=fromDraft||readMortalityExpensePreset(getConfig())?.sourceProfile||null;
     if(typeof v.residualFactor==='string')remain.value=v.residualFactor;
     savedFactors={...(draft.factors||{})};
     refresh({takeCurrent:false});
   }
   select.addEventListener('change',()=>{selectedProfile=select.value;savedFactors={};refresh({takeCurrent:false});onChange();});
   remain.addEventListener('input',()=>{factorText();onChange();});
-  function clear(){savedFactors={};const p=readMortalityExpensePreset(getConfig());selectedProfile=p?.sourceProfile||'work-v0.9.7';select.value=selectedProfile;remain.value=String(p?.unallocatedFactor??1);refresh({takeCurrent:false});}
+  function clear(){savedFactors={};const p=readMortalityExpensePreset(getConfig());selectedProfile=p?.sourceProfile||null;remain.value=String(p?.unallocatedFactor??1);refresh({takeCurrent:false});}
   try{remain.value=String(readMortalityExpensePreset(getConfig())?.unallocatedFactor??1);}
   catch{remain.value='1';} // refresh() reports invalid saved values and blocks the comparison.
   refresh();
